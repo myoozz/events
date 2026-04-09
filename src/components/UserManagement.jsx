@@ -94,6 +94,42 @@ export default function UserManagement({ session }) {
     setUsers(prev => prev.filter(u => u.id !== userId))
   }
 
+  const [resending, setResending] = useState(null) // userId being resent
+  const [resendMsg, setResendMsg] = useState({})   // { userId: message }
+
+  async function handleResend(userId, email) {
+    setResending(userId)
+    setResendMsg(prev => ({ ...prev, [userId]: '' }))
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const res = await fetch(`${supabaseUrl}/functions/v1/invite-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ email }),
+      })
+      const json = await res.json()
+      if (!res.ok || json.error) {
+        const msg = (json.error || '').toLowerCase()
+        if (msg.includes('already registered')) {
+          setResendMsg(prev => ({ ...prev, [userId]: '✓ Already set up — they can log in' }))
+        } else {
+          setResendMsg(prev => ({ ...prev, [userId]: `Failed: ${json.error || 'unknown error'}` }))
+        }
+      } else {
+        setResendMsg(prev => ({ ...prev, [userId]: '✓ Invite sent' }))
+      }
+    } catch (err) {
+      setResendMsg(prev => ({ ...prev, [userId]: `Failed: ${err.message}` }))
+    }
+    setResending(null)
+    // Clear message after 4 seconds
+    setTimeout(() => setResendMsg(prev => ({ ...prev, [userId]: '' })), 4000)
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
@@ -283,7 +319,17 @@ export default function UserManagement({ session }) {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {/* Inline resend message */}
+                {resendMsg[u.id] && (
+                  <span style={{
+                    fontSize: '11px',
+                    color: resendMsg[u.id].startsWith('✓') ? 'var(--green)' : '#A32D2D',
+                    fontFamily: 'var(--font-body)',
+                  }}>
+                    {resendMsg[u.id]}
+                  </span>
+                )}
                 <select
                   value={u.role}
                   onChange={e => handleRoleChange(u.id, e.target.value)}
@@ -297,6 +343,22 @@ export default function UserManagement({ session }) {
                 >
                   {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                 </select>
+                <button
+                  onClick={() => handleResend(u.id, u.email)}
+                  disabled={resending === u.id}
+                  title="Resend invite email"
+                  style={{
+                    padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
+                    background: 'none', border: '0.5px solid var(--border-strong)',
+                    borderRadius: 'var(--radius-sm)', cursor: resending === u.id ? 'wait' : 'pointer',
+                    color: 'var(--text-secondary)', opacity: resending === u.id ? 0.5 : 1,
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseOver={e => { if (resending !== u.id) e.currentTarget.style.borderColor = 'var(--text)' }}
+                  onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+                >
+                  {resending === u.id ? 'Sending...' : '↻ Resend invite'}
+                </button>
                 <button
                   onClick={() => handleRemove(u.id, u.email)}
                   style={{
