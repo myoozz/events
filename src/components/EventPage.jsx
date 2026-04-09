@@ -10,6 +10,7 @@ import CueSheet from './CueSheet'
 import EventMilestone from './EventMilestone'
 import PageDescription from './PageDescription'
 import { supabase } from '../supabase'
+import AssignEvent from './AssignEvent'
 
 // ── Tab definitions — single source of truth for bar + bottom nav ──
 const TABS = [
@@ -76,6 +77,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   const [showWonModal, setShowWonModal] = useState(false)
   const [currentEvent, setCurrentEvent] = useState(event)
   const [teamUsers,    setTeamUsers]    = useState([])
+  const [assignedTo,   setAssignedTo]   = useState(event.assigned_to || [])
+  const [revokeConfirm, setRevokeConfirm] = useState(null) // email to revoke
+  const [showAssignModal, setShowAssignModal] = useState(false)
 
   useEffect(() => {
     async function fetchTeam() {
@@ -112,6 +116,21 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     setSavingStatus(true)
     await supabase.from('events').update({ status: 'lost', loss_reason: reason }).eq('id', event.id)
     setSavingStatus(false)
+  }
+
+  // Revoke a person's access to this event
+  async function handleRevoke(email) {
+    const updated = assignedTo.filter(e => e !== email)
+    await supabase.from('events').update({ assigned_to: updated }).eq('id', event.id)
+    setAssignedTo(updated)
+    setRevokeConfirm(null)
+    if (onUpdated) onUpdated({ ...event, assigned_to: updated })
+  }
+
+  // Name lookup helper
+  function getName(email) {
+    const u = teamUsers.find(u => u.email === email)
+    return u?.full_name || email.split('@')[0]
   }
 
   return (
@@ -311,6 +330,76 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
             <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '3px' }}>GST</div>
             <div style={{ fontSize: '13px', color: 'var(--text)' }}>{event.gst_percent}%</div>
           </div>
+
+          {/* Assigned team — admin sees pills with ✕ revoke */}
+          {assignedTo.length > 0 && (
+            <div>
+              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Assigned to</div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {assignedTo.map(email => (
+                  <span key={email} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '5px',
+                    fontSize: '12px', color: 'var(--text)',
+                    padding: '3px 8px 3px 10px', borderRadius: '20px',
+                    background: 'var(--bg-secondary)',
+                    border: '0.5px solid var(--border)',
+                    fontFamily: 'var(--font-body)',
+                  }}>
+                    {getName(email)}
+                    {isAdmin && (
+                      <button
+                        onClick={() => setRevokeConfirm(email)}
+                        title={`Remove ${getName(email)} from this event`}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: 'var(--text-tertiary)', padding: '0', lineHeight: 1,
+                          fontSize: '11px', display: 'flex', alignItems: 'center',
+                        }}
+                        onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
+                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </span>
+                ))}
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowAssignModal(true)}
+                    style={{
+                      fontSize: '12px', color: 'var(--text-tertiary)',
+                      background: 'none', border: '0.5px dashed var(--border-strong)',
+                      borderRadius: '20px', padding: '3px 10px',
+                      cursor: 'pointer', fontFamily: 'var(--font-body)',
+                    }}
+                    onMouseOver={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--text)' }}
+                    onMouseOut={e => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-strong)' }}
+                  >
+                    + Manage
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          {/* Admin can assign if nobody assigned yet */}
+          {assignedTo.length === 0 && isAdmin && (
+            <div>
+              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Assigned to</div>
+              <button
+                onClick={() => setShowAssignModal(true)}
+                style={{
+                  fontSize: '12px', color: 'var(--text-tertiary)',
+                  background: 'none', border: '0.5px dashed var(--border-strong)',
+                  borderRadius: '20px', padding: '4px 12px',
+                  cursor: 'pointer', fontFamily: 'var(--font-body)',
+                }}
+                onMouseOver={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--text)' }}
+                onMouseOut={e => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-strong)' }}
+              >
+                + Assign team
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -469,6 +558,44 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
           Myoozz Events · Myoozz Consulting Pvt. Ltd.
         </p>
       </div>
+
+      {/* ── Revoke confirmation dialog ── */}
+      {revokeConfirm && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(26,25,21,0.45)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:600, padding:'24px' }}>
+          <div style={{ background:'var(--bg)', border:'0.5px solid var(--border)', borderRadius:'var(--radius)', padding:'28px 32px', maxWidth:'380px', width:'100%' }}>
+            <h3 style={{ fontFamily:'var(--font-display)', fontSize:'20px', fontWeight:500, color:'var(--text)', marginBottom:'8px' }}>
+              Remove access?
+            </h3>
+            <p style={{ fontSize:'13px', color:'var(--text-secondary)', lineHeight:1.6, marginBottom:'24px' }}>
+              Remove <strong>{getName(revokeConfirm)}</strong> from <strong>{event.event_name}</strong>?
+              They will no longer see this event in their workspace.
+            </p>
+            <div style={{ display:'flex', gap:'10px', justifyContent:'flex-end' }}>
+              <button onClick={() => setRevokeConfirm(null)}
+                style={{ padding:'8px 18px', fontSize:'13px', fontFamily:'var(--font-body)', background:'none', border:'0.5px solid var(--border-strong)', borderRadius:'var(--radius-sm)', cursor:'pointer', color:'var(--text)' }}>
+                Cancel
+              </button>
+              <button onClick={() => handleRevoke(revokeConfirm)}
+                style={{ padding:'8px 18px', fontSize:'13px', fontWeight:500, fontFamily:'var(--font-body)', background:'#A32D2D', color:'white', border:'none', borderRadius:'var(--radius-sm)', cursor:'pointer' }}>
+                Yes, remove access
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Assign modal (Option B — from header + Manage button) ── */}
+      {showAssignModal && (
+        <AssignEvent
+          event={{ ...event, assigned_to: assignedTo }}
+          onClose={() => setShowAssignModal(false)}
+          onUpdated={(updated) => {
+            setAssignedTo(updated.assigned_to || [])
+            setShowAssignModal(false)
+            if (onUpdated) onUpdated(updated)
+          }}
+        />
+      )}
 
       {/* ── Won celebration modal ── */}
       {showWonModal && (

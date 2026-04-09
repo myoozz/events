@@ -54,8 +54,11 @@ export default function AssignEvent({ event, onClose, onUpdated }) {
         }}>
           Assign team members
         </h3>
-        <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '20px' }}>
+        <p style={{ fontSize: '14px', fontWeight:500, color: 'var(--text-secondary)', marginBottom: '4px' }}>
           {event.event_name}
+        </p>
+        <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginBottom: '20px', lineHeight: 1.5 }}>
+          Tick to give access · Untick to remove access. Changes take effect immediately on save.
         </p>
 
         {users.length === 0 ? (
