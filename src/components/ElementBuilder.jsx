@@ -107,6 +107,17 @@ function parsePaste(text){
       items:items.map((el,i)=>({...el,id:'new-'+Date.now()+'-'+i}))}))
 }
 
+// Bug fix: central responsive hook used by ElementRow and CityElements
+function useWindowSize() {
+  const [w, setW] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200)
+  useEffect(() => {
+    const fn = () => setW(window.innerWidth)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return w
+}
+
 // Shared input style
 const inp = (amber,locked) => ({
   width:'100%',fontSize:'13px',padding:'6px 8px',
@@ -143,21 +154,20 @@ const modeToggle = (isLump, onUnit, onLump, amber) => (
 
 function ElementRow({el,isAdmin,locked,onUpdate,onSave,onDelete,onCycleStatus,elementName,otherCategories,onMove,fieldVis,teamUsers}){
   const fv = fieldVis||{days:true,source:true,status:true,size:true,finish:true}
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768)
-  useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', fn)
-    return () => window.removeEventListener('resize', fn)
-  }, [])
+  // Bug fix: replaced local state+effect with shared hook
+  const w = useWindowSize()
+  const isMobile = w < 768
   const sc=STATUS_STYLES[el.cost_status]||STATUS_STYLES['Estimated']
   const clientAmt=calcClient(el)
   const internalAmt=calcInternal(el)
   const margin=clientAmt-internalAmt
 
-  // grid: name | finish | size/qty/days | client cost | [internal] | [source] | status | del
-  const cols = isAdmin
-    ? '2fr 1.6fr 1.2fr 1.2fr 1.2fr 1.2fr 72px 24px'
-    : '2fr 1.6fr 1.2fr 1.6fr 72px 24px'
+  // Bug fix: responsive grid — on mobile use 2 cols, on desktop use full grid
+  const cols = isMobile
+    ? '1fr 1fr'
+    : isAdmin
+      ? '2fr 1.6fr 1.2fr 1.2fr 1.2fr 1.2fr 72px 24px'
+      : '2fr 1.6fr 1.2fr 1.6fr 72px 24px'
 
   return(
     <div style={{
@@ -532,6 +542,8 @@ function CityElements({event,city,userRole,teamUsers}){
   const [showImport,setShowImport]=useState(false)
   const [showCategoryPicker,setShowCategoryPicker]=useState(false)
   const [showSheetSettings,setShowSheetSettings]=useState(false)
+  // Bug fix: add responsive hook
+  const w = useWindowSize()
 
   async function handleDownloadElementMaster() {
     const { exportElementMaster } = await import('../utils/excelExport')
@@ -917,7 +929,7 @@ function CityElements({event,city,userRole,teamUsers}){
           borderTop:'0.5px solid var(--border)',
           paddingTop:'16px',
           display:'grid',
-          gridTemplateColumns:isAdmin?'repeat(4,1fr)':'1fr',
+          gridTemplateColumns:isAdmin?(w<768?'1fr 1fr':'repeat(4,1fr)'):'1fr',
           gap:'8px',
         }}>
           <div style={{background:'var(--bg-secondary)',borderRadius:'var(--radius-sm)',padding:'14px 18px',border:'0.5px solid var(--border)'}}>

@@ -31,6 +31,17 @@ function fmt(n){ return (!n||n===0)?'—':'₹'+Math.round(n).toLocaleString('en
 function calcClient(el){ return el.lump_sum?(el.amount||0):(el.rate||0)*(el.qty||1)*(el.days||1) }
 function calcInternal(el){ return el.internal_lump?(el.internal_amount||0):(el.internal_rate||0)*(el.qty||1)*(el.days||1) }
 
+// Bug fix: reactive responsive hook
+function useWindowSize() {
+  const [w, setW] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200)
+  useEffect(() => {
+    const fn = () => setW(window.innerWidth)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return w
+}
+
 function CategoryBreakdown({ cities, getCitySummary, isAdmin }) {
   const [expandedCats, setExpandedCats] = useState({})
 
@@ -165,6 +176,9 @@ export default function CostSummary({ event, userRole }) {
   const [tncSaved, setTncSaved] = useState(false)
   const isAdmin = userRole === 'admin'
   const cities = event.cities?.length > 0 ? event.cities : ['General']
+  // Bug fix: reactive responsive hook
+  const w = useWindowSize()
+  const isMobile = w < 640
 
   useEffect(() => { loadData() }, [event.id])
 
@@ -303,9 +317,9 @@ export default function CostSummary({ event, userRole }) {
           </div>
         </div>
 
-        {/* Admin margin summary */}
+        {/* Admin margin summary — Bug fix: was repeat(3,1fr) always, now responsive */}
         {isAdmin && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px', marginTop: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap: '8px', marginTop: '12px' }}>
             {[
               { label: 'Total internal cost', value: fmt(grandInternal) || '—', color: '#92400E', bg: '#FFFBEB', border: '#F59E0B' },
               { label: 'Gross margin', value: fmt(totalMargin) || '₹0', color: totalMargin > 0 ? '#15803D' : totalMargin === 0 ? '#92400E' : '#B91C1C', bg: totalMargin > 0 ? '#F0FDF4' : totalMargin === 0 ? '#FFFBEB' : '#FEF2F2', border: totalMargin > 0 ? '#22C55E' : totalMargin === 0 ? '#F59E0B' : '#F87171' },

@@ -30,6 +30,17 @@ const DEFAULT_CLAUSES = [
   { id:'g3', text:'Myoozz Consulting Pvt. Ltd. shall not be held responsible for any delay or disruption caused by factors beyond human control (force majeure).' },
 ]
 
+// Bug fix: was using non-reactive window.innerWidth — replaced with reactive hook
+function useWindowSize() {
+  const [w, setW] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200)
+  useEffect(() => {
+    const fn = () => setW(window.innerWidth)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return w
+}
+
 function Toggle({ label, checked, onChange, desc }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '0.5px solid var(--border)' }}>
@@ -64,6 +75,8 @@ export default function ExportPreview({ event, userRole }) {
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
   const [collapsedSections, setCollapsedSections] = useState({})
+  const w = useWindowSize()
+  const isMobile = w < 768
 
   function toggleSection(key) {
     setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }))
@@ -192,7 +205,7 @@ export default function ExportPreview({ event, userRole }) {
     <div>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: typeof window !== 'undefined' && window.innerWidth < 768 ? '1fr' : '1fr 300px',
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 300px',
         gap: '32px', alignItems: 'start'
       }}>
 
@@ -342,7 +355,7 @@ export default function ExportPreview({ event, userRole }) {
         </div>
 
         {/* Right — Controls */}
-        <div style={{ position: typeof window !== 'undefined' && window.innerWidth < 768 ? 'static' : 'sticky', top: '20px', maxHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? 'none' : 'calc(100vh - 100px)', overflowY: 'auto' }}>
+        <div style={{ position: isMobile ? 'static' : 'sticky', top: '20px', maxHeight: isMobile ? 'none' : 'calc(100vh - 100px)', overflowY: 'auto' }}>
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 500, color: 'var(--text)', marginBottom: '16px' }}>
             Export settings
           </h3>

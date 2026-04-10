@@ -281,6 +281,17 @@ function ProductionRow({ task, teamUsers, onUpdate }) {
 }
 
 // ─── Main Production component ────────────────────────────
+// Bug fix: add responsive hook
+function useWindowSize() {
+  const [w, setW] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200)
+  useEffect(() => {
+    const fn = () => setW(window.innerWidth)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return w
+}
+
 export default function Production({ event, teamUsers = [] }) {
   async function handleDownload() {
     const { exportProductionList } = await import('../utils/excelExport')
@@ -297,6 +308,8 @@ export default function Production({ event, teamUsers = [] }) {
   const [filterStatus, setFilterStatus] = useState('')
   const [collapsedCats, setCollapsedCats] = useState(new Set())
   const [activeCity, setActiveCity] = useState('__all__')
+  const w = useWindowSize()
+  const isMobile = w < 768
 
   function toggleCat(key) {
     setCollapsedCats(prev => {
@@ -469,23 +482,27 @@ export default function Production({ event, teamUsers = [] }) {
               <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{catDone}/{catTasks.length} done</span>
             </div>
             {!isCollapsed && (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>
-                    <th style={{ ...thStyle, minWidth: '180px' }}>Element</th>
-                    <th style={thStyle}>Type</th>
-                    <th style={thStyle}>Creative</th>
-                    <th style={thStyle}>Fabrication</th>
-                    <th style={thStyle}>Print / Procurement</th>
-                    <th style={thStyle}>Assigned to</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {catTasks.map(task => (
-                    <ProductionRow key={task.id} task={task} teamUsers={teamUsers} onUpdate={updateTask} />
-                  ))}
-                </tbody>
-              </table>
+              // Bug fix: Production table is dense data — correct fix is horizontal scroll
+              // with sticky element column, not a card layout (status comparison is the point)
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isMobile ? '600px' : 'auto' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ ...thStyle, minWidth: '160px', position: isMobile ? 'sticky' : 'static', left: 0, zIndex: 1, boxShadow: isMobile ? '2px 0 4px rgba(0,0,0,0.06)' : 'none' }}>Element</th>
+                      <th style={{ ...thStyle, minWidth: '100px' }}>Type</th>
+                      <th style={{ ...thStyle, minWidth: '120px' }}>Creative</th>
+                      <th style={{ ...thStyle, minWidth: '120px' }}>Fabrication</th>
+                      <th style={{ ...thStyle, minWidth: '140px' }}>Print / Procurement</th>
+                      <th style={{ ...thStyle, minWidth: '100px' }}>Assigned to</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {catTasks.map(task => (
+                      <ProductionRow key={task.id} task={task} teamUsers={teamUsers} onUpdate={updateTask} isMobile={isMobile} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )
