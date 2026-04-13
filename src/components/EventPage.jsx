@@ -98,8 +98,19 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   const [lossReason,   setLossReason]   = useState(event.loss_reason || '')
   const [customReason, setCustomReason] = useState('')
   const [savingStatus, setSavingStatus] = useState(false)
-  const sc      = statusColor[status] || statusColor.pitch
-  const isAdmin = userRole === 'admin'
+  const sc        = statusColor[status] || statusColor.pitch
+  const isAdmin   = userRole === 'admin'
+  const isManager = userRole === 'manager'
+  const canAssign = isAdmin || isManager
+
+  const [delegationScope, setDelegationScope] = useState(event.delegation_scope || {})
+  const SCOPE_TABS = {
+    full: ['elements','costs','export','tasks','production','delivered','cuesheet'],
+    ops:  ['elements','tasks','production','cuesheet'],
+    view: ['elements','costs'],
+  }
+  const myScope    = canAssign ? 'full' : (delegationScope[session?.user?.email] || 'full')
+  const visibleTabs = TABS.filter(t => (SCOPE_TABS[myScope] || SCOPE_TABS.full).includes(t.key))
 
   async function handleStatusChange(newStatus) {
     if (newStatus === 'won') setShowWonModal(true)
@@ -346,7 +357,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                     fontFamily: 'var(--font-body)',
                   }}>
                     {getName(email)}
-                    {isAdmin && (
+                    {canAssign && (
                       <button
                         onClick={() => setRevokeConfirm(email)}
                         title={`Remove ${getName(email)} from this event`}
@@ -363,7 +374,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                     )}
                   </span>
                 ))}
-                {isAdmin && (
+                {canAssign && (
                   <button
                     onClick={() => setShowAssignModal(true)}
                     style={{
@@ -382,7 +393,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
             </div>
           )}
           {/* Admin can assign if nobody assigned yet */}
-          {assignedTo.length === 0 && isAdmin && (
+          {assignedTo.length === 0 && canAssign && (
             <div>
               <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Assigned to</div>
               <button
@@ -408,7 +419,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
       {/* ── Tab bar ── */}
       <div style={{ display: 'flex', borderBottom: '0.5px solid var(--border)', marginBottom: isMobile ? '20px' : '32px', gap: '4px', overflowX: 'auto' }}>
-        {TABS.map(tab => (
+        {visibleTabs.map(tab => (
           <button key={tab.key} style={tabStyle(activeTab === tab.key)}
             onClick={() => handleTabChange(tab.key)}>
             {tab.key === 'tasks'      ? '⚡ ' + tab.label :
@@ -505,9 +516,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
       {/* ── Bug 5: Section navigation — clean secondary buttons ── */}
       {(() => {
-        const currentIdx = TABS.findIndex(t => t.key === activeTab)
-        const prev = currentIdx > 0 ? TABS[currentIdx - 1] : null
-        const next = currentIdx < TABS.length - 1 ? TABS[currentIdx + 1] : null
+        const currentIdx = visibleTabs.findIndex(t => t.key === activeTab)
+        const prev = currentIdx > 0 ? visibleTabs[currentIdx - 1] : null
+        const next = currentIdx < visibleTabs.length - 1 ? visibleTabs[currentIdx + 1] : null
         const btnStyle = {
           padding: '8px 16px', fontSize: '13px', fontFamily: 'var(--font-body)',
           background: 'none', border: '0.5px solid var(--border-strong)',
@@ -591,6 +602,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
           onClose={() => setShowAssignModal(false)}
           onUpdated={(updated) => {
             setAssignedTo(updated.assigned_to || [])
+            setDelegationScope(updated.delegation_scope || {})
             setShowAssignModal(false)
             if (onUpdated) onUpdated(updated)
           }}

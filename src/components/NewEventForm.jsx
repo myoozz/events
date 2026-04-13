@@ -35,7 +35,7 @@ function useWindowSize() {
   return w
 }
 
-export default function NewEventForm({ onClose, onCreated, onUpdated, session, event }) {
+export default function NewEventForm({ onClose, onCreated, onUpdated, session, event, userRole }) {
   const isEdit = !!event
   const w = useWindowSize()
   const isMobile = w < 600
@@ -123,6 +123,8 @@ export default function NewEventForm({ onClose, onCreated, onUpdated, session, e
             gst_percent:         form.gst,
             status:              'pitch',
             created_by:          session.user.email,
+            created_by_role:     userRole || 'admin',
+            review_status:       'approved',
           })
           .select('*, clients(group_name, brand_name)')
           .single()

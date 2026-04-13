@@ -428,6 +428,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
           onUpdated={handleUpdated}
           session={session}
           event={editEvent}
+		userRole={userRole}
         />
       )}
 
