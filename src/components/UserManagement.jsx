@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
-const ROLES = ['admin', 'team']
-const ROLE_LABELS = { admin: 'Admin', team: 'Team member' }
+const ROLES = ['admin', 'manager', 'event_lead', 'team']
+const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team' }
 const ROLE_DESC = {
-  admin: 'Full access — create events, see all costs and margins, manage team',
-  team: 'Assigned events only — build element sheets, enter costs, submit for review',
+  admin: 'Full access — all events, costs, margins, team management',
+  manager: 'Creates & manages events — elements, proposals, assigns Event Leads and Team',
+  event_lead: 'Delegated authority per event — scope set by Manager on assignment',
+  team: 'Task execution only — assigned tasks, notes, no event-level access',
 }
 
-export default function UserManagement({ session }) {
+export default function UserManagement({ session, userRole = 'admin' }) {
+  // Roles this user is allowed to create
+  const inviteableRoles = userRole === 'admin'
+    ? ['admin', 'manager', 'event_lead', 'team']
+    : userRole === 'manager'
+    ? ['event_lead', 'team']
+    : ['team'] // event_lead can only invite team
+
+  const defaultInviteRole = userRole === 'admin' ? 'team' : userRole === 'manager' ? 'event_lead' : 'team'
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ fullName: '', email: '', role: 'team' })
+  const [form, setForm] = useState({ fullName: '', email: '', role: defaultInviteRole })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -214,8 +224,8 @@ export default function UserManagement({ session }) {
               <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-tertiary)', marginBottom: '10px' }}>
                 Role *
               </label>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                {ROLES.map(role => (
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {inviteableRoles.map(role => (
                   <div
                     key={role}
                     onClick={() => setForm(f => ({ ...f, role }))}
@@ -335,13 +345,19 @@ export default function UserManagement({ session }) {
                   onChange={e => handleRoleChange(u.id, e.target.value)}
                   style={{
                     padding: '5px 10px', fontSize: '12px', fontFamily: 'var(--font-body)',
-                    background: u.role === 'admin' ? 'var(--green-light)' : 'var(--bg-secondary)',
-                    color: u.role === 'admin' ? 'var(--green)' : 'var(--text-secondary)',
+                    background: u.role === 'admin' ? 'var(--green-light)'
+                      : u.role === 'manager' ? '#EFF6FF'
+                      : u.role === 'event_lead' ? '#FEF3C7'
+                      : 'var(--bg-secondary)',
+                    color: u.role === 'admin' ? 'var(--green)'
+                      : u.role === 'manager' ? '#1D4ED8'
+                      : u.role === 'event_lead' ? '#92400E'
+                      : 'var(--text-secondary)',
                     border: '0.5px solid var(--border)', borderRadius: '20px',
                     cursor: 'pointer', outline: 'none', fontWeight: 500,
                   }}
                 >
-                  {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                  {inviteableRoles.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                 </select>
                 <button
                   onClick={() => handleResend(u.id, u.email)}

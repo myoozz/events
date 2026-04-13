@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   {
     key: 'events',
     label: 'Events',
-    adminOnly: false,
+    roles: ['admin', 'manager', 'event_lead', 'team'],
     icon: (active) => (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <rect x="2" y="2" width="6" height="6" rx="1.5" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} />
@@ -27,7 +27,7 @@ const NAV_ITEMS = [
   {
     key: 'team',
     label: 'Team',
-    adminOnly: true,
+    roles: ['admin', 'manager'],
     icon: (active) => (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <circle cx="7" cy="6" r="3" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} />
@@ -40,7 +40,7 @@ const NAV_ITEMS = [
   {
     key: 'activitylog',
     label: 'Activity log',
-    adminOnly: true,
+    roles: ['admin'],
     icon: (active) => (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <rect x="3" y="2" width="12" height="14" rx="1.5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none"/>
@@ -51,7 +51,7 @@ const NAV_ITEMS = [
   {
     key: 'earlyaccess',
     label: 'Early access',
-    adminOnly: true,
+    roles: ['admin'],
     icon: (active) => (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M9 2L11 7H16L12 10.5L13.5 16L9 13L4.5 16L6 10.5L2 7H7L9 2Z" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} />
@@ -61,7 +61,7 @@ const NAV_ITEMS = [
   {
     key: 'feedback',
     label: 'Feedback',
-    adminOnly: true,
+    roles: ['admin'],
     icon: (active) => (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M2 4a2 2 0 012-2h10a2 2 0 012 2v7a2 2 0 01-2 2H6l-4 3V4z" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none" strokeLinejoin="round"/>
@@ -71,7 +71,7 @@ const NAV_ITEMS = [
   {
     key: 'ratecard',
     label: 'Rate cards',
-    adminOnly: true,
+    roles: ['admin', 'manager', 'event_lead'],
     icon: (active) => (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <rect x="2" y="4" width="14" height="10" rx="1.5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none"/>
@@ -81,6 +81,14 @@ const NAV_ITEMS = [
     ),
   },
 ]
+
+const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team' }
+const ROLE_COLORS = {
+  admin:       { bg: 'var(--green-light)', color: 'var(--green)' },
+  manager:     { bg: '#EFF6FF',            color: '#1D4ED8'       },
+  event_lead:  { bg: '#FEF3C7',            color: '#92400E'       },
+  team:        { bg: 'var(--bg)',          color: 'var(--text-secondary)' },
+}
 
 export default function AppShell({ session }) {
   const navigate = useNavigate()
@@ -147,7 +155,7 @@ export default function AppShell({ session }) {
   }
 
   const sidebarWidth = collapsed ? '60px' : '220px'
-  const visibleItems = NAV_ITEMS.filter(item => !item.adminOnly || userRole === 'admin')
+  const visibleItems = NAV_ITEMS.filter(item => item.roles.includes(userRole))
 
   if (userLoading) return (
     <div style={{
@@ -291,11 +299,11 @@ export default function AppShell({ session }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{
                     width: '28px', height: '28px', borderRadius: '50%',
-                    background: userRole === 'admin' ? 'var(--green-light)' : 'var(--bg)',
+                    background: (ROLE_COLORS[userRole] || ROLE_COLORS.team).bg,
                     border: '0.5px solid var(--border)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '11px', fontWeight: 500,
-                    color: userRole === 'admin' ? 'var(--green)' : 'var(--text-secondary)',
+                    color: (ROLE_COLORS[userRole] || ROLE_COLORS.team).color,
                     flexShrink: 0,
                   }}>
                     {userName.charAt(0).toUpperCase()}
@@ -305,7 +313,7 @@ export default function AppShell({ session }) {
                       {userName}
                     </div>
                     <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                      {userRole === 'admin' ? 'Admin' : 'Team'}
+                      {ROLE_LABELS[userRole] || userRole}
                     </div>
                   </div>
                 </div>
@@ -388,9 +396,9 @@ export default function AppShell({ session }) {
         }}>
           {[
             { key: 'events', icon: '📋', label: 'Events' },
-            ...(userRole === 'admin' ? [{ key: 'team', icon: '👥', label: 'Team' }] : []),
+            ...((userRole === 'admin' || userRole === 'manager') ? [{ key: 'team', icon: '👥', label: 'Team' }] : []),
             ...(userRole === 'admin' ? [{ key: 'activitylog', icon: '📋', label: 'Log' }] : []),
-            ...(userRole === 'admin' ? [{ key: 'ratecard', icon: '₹', label: 'Rates' }] : []),
+            ...((userRole === 'admin' || userRole === 'manager' || userRole === 'event_lead') ? [{ key: 'ratecard', icon: '₹', label: 'Rates' }] : []),
           ].map(item => (
             <button
               key={item.key}
@@ -445,8 +453,8 @@ export default function AppShell({ session }) {
               resetKey={dashboardResetKey}
             />
           )}
-          {activeTab === 'team' && userRole === 'admin' && (
-            <UserManagement session={session} />
+          {activeTab === 'team' && (userRole === 'admin' || userRole === 'manager') && (
+            <UserManagement session={session} userRole={userRole} />
           )}
           {activeTab === 'activitylog' && userRole === 'admin' && (
             <ActivityLog />
@@ -454,7 +462,7 @@ export default function AppShell({ session }) {
           {activeTab === 'earlyaccess' && userRole === 'admin' && (
             <EarlyAccess />
           )}
-          {activeTab === 'ratecard' && userRole === 'admin' && (
+          {activeTab === 'ratecard' && (userRole === 'admin' || userRole === 'manager' || userRole === 'event_lead') && (
             <RateCard session={session} />
           )}
           {activeTab === 'feedback' && userRole === 'admin' && (

@@ -6,7 +6,7 @@ import ModeSelector from './ModeSelector'
 import EventPage from './EventPage'
 import AssignEvent from './AssignEvent'
 
-const statusColor = {
+import { logEventCreated, logEventArchived, logEventRestored, logEventAssigned } from '../utils/activityLogger'
   pitch: { bg: 'var(--blue-light)', color: 'var(--blue)' },
   submitted: { bg: 'var(--amber-light)', color: 'var(--amber)' },
   won: { bg: 'var(--green-light)', color: 'var(--green)' },
@@ -113,11 +113,13 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
             {ev.cities.join(' · ')}
           </div>
         )}
-        <div style={{ fontSize: '11px', color: ev.assigned_to?.length > 0 ? 'var(--text-secondary)' : 'var(--text-tertiary)' }}>
-          {ev.assigned_to?.length > 0
-            ? `Assigned to: ${getNames(ev.assigned_to)}`
-            : 'Not yet assigned'}
-        </div>
+        {(userRole === 'admin' || userRole === 'manager') && (
+          <div style={{ fontSize: '11px', color: ev.assigned_to?.length > 0 ? 'var(--text-secondary)' : 'var(--text-tertiary)' }}>
+            {ev.assigned_to?.length > 0
+              ? `Assigned to: ${getNames(ev.assigned_to)}`
+              : 'Not yet assigned'}
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -129,7 +131,7 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
           {STATUS_LABELS[ev.status] || ev.status}
         </span>
 
-        {userRole === 'admin' && (
+        {(userRole === 'admin' || userRole === 'manager') && (
           <div style={{ position: 'relative' }} ref={menuRef}>
             <button
               onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
@@ -147,9 +149,10 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
                 borderRadius: 'var(--radius-sm)', zIndex: 10, minWidth: '160px', overflow: 'hidden',
               }}>
                 {[
-                  { label: 'Open event',   action: () => { onOpen(ev); setMenuOpen(false) },    color: 'var(--text)' },
-                  { label: 'Edit details', action: () => { onEdit(ev); setMenuOpen(false) },    color: 'var(--text)' },
-                  { label: 'Assign team',  action: () => { onAssign(ev); setMenuOpen(false) },  color: 'var(--text)' },
+                  { label: 'Open event',   action: () => { onOpen(ev); setMenuOpen(false) },   color: 'var(--text)' },
+                  { label: 'Edit details', action: () => { onEdit(ev); setMenuOpen(false) },   color: 'var(--text)' },
+                  ...(userRole === 'admin' ? [{ label: 'Assign team', action: () => { onAssign(ev); setMenuOpen(false) }, color: 'var(--text)' }] : []),
+                  ...(userRole === 'manager' ? [{ label: 'Assign team', action: () => { onAssign(ev); setMenuOpen(false) }, color: 'var(--text)' }] : []),
                   null,
                   { label: 'Archive event', action: () => { onArchive(ev); setMenuOpen(false) }, color: '#A32D2D', hoverBg: '#FCEBEB' },
                 ].map((item, i) => item === null ? (
@@ -232,16 +235,26 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
       .eq('archived', false)
       .order('created_at', { ascending: false })
 
-    if (userRole === 'team') {
+    if (userRole === 'team' || userRole === 'event_lead') {
       activeQuery = activeQuery.or(`assigned_to.cs.{"${session.user.email}"},created_by.eq.${session.user.email}`)
     }
 
     const { data: active } = await activeQuery
-    const { data: archived } = await supabase
+
+    // Archived — role-filtered
+    let archivedQuery = supabase
       .from('events')
       .select('*, clients(group_name, brand_name)')
       .eq('archived', true)
       .order('created_at', { ascending: false })
+
+    if (userRole === 'team' || userRole === 'event_lead') {
+      archivedQuery = archivedQuery.or(`assigned_to.cs.{"${session.user.email}"},created_by.eq.${session.user.email}`)
+    } else if (userRole === 'manager') {
+      archivedQuery = archivedQuery.eq('created_by', session.user.email)
+    }
+
+    const { data: archived } = await archivedQuery
 
     const approved = (active || []).filter(e => e.review_status !== 'pending_review')
     const pending  = (active || []).filter(e => e.review_status === 'pending_review')
@@ -255,6 +268,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
   function handleCreated(newEvent) {
     setEvents(prev => [newEvent, ...prev])
     setModeSelectorEvent(newEvent)
+    logEventCreated(newEvent, session)
   }
 
   async function handleDuplicate(ev) {
@@ -435,7 +449,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
         <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
           {events.length} active · {archivedEvents.length} archived
         </p>
-        {userRole === 'admin' && view === 'active' && (
+        {(userRole === 'admin' || userRole === 'manager') && view === 'active' && (
           <button
             onClick={() => setShowNewEvent(true)}
             style={{
@@ -582,7 +596,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
           </p>
           <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
             {view === 'active'
-              ? userRole === 'admin'
+              ? (userRole === 'admin' || userRole === 'manager')
                 ? 'Create your first event to get started.'
                 : 'No events have been assigned to you yet.'
               : 'Archived events will appear here. You can restore them anytime.'}
@@ -611,7 +625,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
                     {ev.clients?.group_name}{ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : ''}
                   </div>
                 </div>
-                {userRole === 'admin' && (
+                {(userRole === 'admin' || userRole === 'manager') && (
                   <button
                     onClick={() => handleRestore(ev)}
                     style={{

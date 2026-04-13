@@ -68,8 +68,19 @@ function ProtectedRoute({ children, session, loading }) {
 
 // ─── App ──────────────────────────────────────────────────
 export default function App() {
-  const [session, setSession] = useState(undefined) // undefined = not yet checked
+  const [session, setSession] = useState(undefined)
   const [loading, setLoading] = useState(true)
+
+  // Capture invite/recovery token SYNCHRONOUSLY on first render —
+  // before onAuthStateChange fires and before LoginPage clears the hash.
+  // This prevents the race condition where session is set and /login redirects to /app
+  // before the user has set their password.
+  const [isPasswordSetupFlow] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const params = new URLSearchParams(window.location.hash.replace('#', ''))
+    const type = params.get('type')
+    return type === 'invite' || type === 'recovery'
+  })
 
   useEffect(() => {
     // Get existing session
@@ -105,7 +116,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={
-            session ? <Navigate to="/app" replace /> : <LoginPage />
+            (session && !isPasswordSetupFlow) ? <Navigate to="/app" replace /> : <LoginPage />
           } />
           <Route path="/task/:token" element={<PublicTask />} />
           <Route path="/app" element={
