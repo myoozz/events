@@ -1,685 +1,711 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../supabase'
-import { MASTER_CATEGORIES } from './CategoryLibrary'
+import { useEffect, useState, useRef } from 'react';
+import { supabase } from '../supabase';
+import { logActivity } from '../utils/activityLogger';
 
-const STATUS_OPTIONS = ['not_started', 'in_progress', 'arranged', 'on_site', 'done']
-const STATUS_LABELS = {
-  not_started: 'Not started',
-  in_progress: 'In progress',
-  arranged:    'Arranged',
-  on_site:     'On site',
-  done:        'Done ✓',
-}
-const STATUS_COLORS = {
-  not_started: { bg: '#F3F4F6', color: '#6B7280' },
-  in_progress: { bg: '#DBEAFE', color: '#1E40AF' },
-  arranged:    { bg: '#FEF3C7', color: '#92400E' },
-  on_site:     { bg: '#EDE9FE', color: '#5B21B6' },
-  done:        { bg: '#D1FAE5', color: '#065F46' },
-}
+/* ─── helpers ──────────────────────────────────────────────── */
+const SCHEMA = import.meta.env.VITE_SUPABASE_SCHEMA || 'public';
 
-// Bug fix: central responsive hook
-function useWindowSize() {
-  const [w, setW] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200)
+const db = (table) => supabase.schema(SCHEMA).from(table);
+
+const STATUS_OPTIONS = ['pending', 'in_progress', 'done', 'blocked'];
+
+const STATUS_META = {
+  pending:     { label: 'Pending',     color: '#9CA3AF', bg: '#F3F4F6' },
+  in_progress: { label: 'In Progress', color: '#D97706', bg: '#FFFBEB' },
+  done:        { label: 'Done',        color: '#059669', bg: '#ECFDF5' },
+  blocked:     { label: 'Blocked',     color: '#DC2626', bg: '#FEF2F2' },
+};
+
+const ROLE_CAN_ASSIGN = (role, scope) => {
+  if (role === 'admin' || role === 'manager') return true;
+  if (role === 'event_lead' && (scope === 'full' || scope === 'ops')) return true;
+  return false;
+};
+
+const initials = (name = '') =>
+  name.trim().split(/\s+/).map((w) => w[0]?.toUpperCase() ?? '').slice(0, 2).join('');
+
+/* ─── component ────────────────────────────────────────────── */
+export default function TaskBoard({ eventId, event, session, userRole, delegationScope, eventCities = [] }) {
+  const [tasks,       setTasks]       = useState([]);
+  const [users,       setUsers]       = useState([]);
+  const [activeCity,  setActiveCity]  = useState('');
+  const [collapsed,   setCollapsed]   = useState({});
+  const [loading,     setLoading]     = useState(true);
+  const [modal,       setModal]       = useState(null);   // { taskId, taskTitle }
+  const [assignTo,    setAssignTo]    = useState('');
+  const [saving,      setSaving]      = useState(false);
+  const [statusMenu,  setStatusMenu]  = useState(null);   // taskId
+  const [addOpen,     setAddOpen]     = useState(false);
+  const [newTask,     setNewTask]     = useState({ title: '', category: '', city: '', due_date: '', notes: '' });
+  const [adding,      setAdding]      = useState(false);
+  const modalRef  = useRef(null);
+  const statusRef = useRef(null);
+
+  const canAssign = ROLE_CAN_ASSIGN(userRole, delegationScope);
+  const canAdd    = userRole === 'admin' || userRole === 'manager' || userRole === 'event_lead';
+
+  /* cities: prefer eventCities prop, else derive from tasks */
+  const cities = eventCities.length > 0
+    ? eventCities
+    : [...new Set(tasks.map((t) => t.city).filter(Boolean))];
+
+  /* ── fetch ── */
   useEffect(() => {
-    const fn = () => setW(window.innerWidth)
-    window.addEventListener('resize', fn)
-    return () => window.removeEventListener('resize', fn)
-  }, [])
-  return w
-}
+    if (!eventId) return;
+    fetchTasks();
+    fetchUsers();
+  }, [eventId]);
 
-function generateToken() {
-  return Math.random().toString(36).substr(2, 12) + Date.now().toString(36)
-}
-function fmt(date) {
-  if (!date) return '—'
-  return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-}
+  /* set default city tab once tasks + cities load */
+  useEffect(() => {
+    if (!activeCity && cities.length > 0) setActiveCity(cities[0]);
+  }, [cities.length]);
 
-// ── TaskRow — desktop table row + mobile card ─────────────
-function TaskRow({ task, teamUsers, freelancers, onUpdate, onDelete, isMobile }) {
-  const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ ...task })
-  const sc = STATUS_COLORS[task.status] || STATUS_COLORS.not_started
+  /* close modals on outside click */
+  useEffect(() => {
+    const handler = (e) => {
+      if (modal      && modalRef.current  && !modalRef.current.contains(e.target))  setModal(null);
+      if (statusMenu && statusRef.current && !statusRef.current.contains(e.target)) setStatusMenu(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [modal, statusMenu]);
 
-  async function save() {
-    await supabase.from('tasks').update({
-      category_owner: form.category_owner,
-      assigned_to:    form.assigned_to,
-      assigned_name:  form.assigned_name,
-      assigned_phone: form.assigned_phone,
-      deadline:       form.deadline || null,
-      status:         form.status,
-      notes:          form.notes,
-    }).eq('id', task.id)
-    onUpdate({ ...task, ...form })
-    setEditing(false)
+  async function fetchTasks() {
+    setLoading(true);
+    const { data, error } = await db('tasks').select('*').eq('event_id', eventId).order('sort_order', { ascending: true });
+    if (!error) setTasks(data || []);
+    setLoading(false);
   }
 
-  async function cycleStatus() {
-    const next = STATUS_OPTIONS[(STATUS_OPTIONS.indexOf(task.status) + 1) % STATUS_OPTIONS.length]
-    const updates = { status: next, completed_at: next === 'done' ? new Date().toISOString() : null }
-    await supabase.from('tasks').update(updates).eq('id', task.id)
-    onUpdate({ ...task, ...updates })
+  async function fetchUsers() {
+    const { data } = await db('users').select('id, full_name, role').order('full_name');
+    setUsers(data || []);
   }
 
-  async function copyPublicLink() {
-    let token = task.public_token
-    if (!token) {
-      token = generateToken()
-      await supabase.from('tasks').update({ public_token: token }).eq('id', task.id)
-      onUpdate({ ...task, public_token: token })
+  /* ── derived: city-filtered tasks grouped by category ── */
+  const cityTasks = tasks.filter((t) => {
+    if (!activeCity) return true;
+    return !t.city || t.city === activeCity;
+  });
+
+  const categories = [...new Set(cityTasks.map((t) => t.category || 'General'))];
+
+  const grouped = categories.reduce((acc, cat) => {
+    acc[cat] = cityTasks.filter((t) => (t.category || 'General') === cat);
+    return acc;
+  }, {});
+
+  /* ── assign ── */
+  function openAssign(task) {
+    setAssignTo(task.assigned_to || '');
+    setModal({ taskId: task.id, taskTitle: task.title });
+  }
+
+  async function saveAssign() {
+    if (!modal) return;
+    setSaving(true);
+    const user = users.find((u) => u.id === assignTo);
+    const { error } = await db('tasks').update({
+      assigned_to:      assignTo || null,
+      assigned_to_name: user?.full_name || null,
+    }).eq('id', modal.taskId);
+
+    if (!error) {
+      await logActivity({
+        action:      'task_assigned',
+        entity_type: 'task',
+        entity_name: modal.taskTitle,
+        event_id:    eventId,
+        details:     { assigned_to: user?.full_name || 'Unassigned' },
+        session,
+      });
+      await fetchTasks();
+      setModal(null);
     }
-    const url = `${window.location.origin}/task/${token}`
-    navigator.clipboard.writeText(url)
-    alert(`Link copied!\n\n${url}\n\nShare on WhatsApp — no login needed.`)
+    setSaving(false);
   }
 
-  const allPeople = [
-    ...teamUsers.map(u => ({ label: u.full_name || u.email, value: u.email, type: 'team' })),
-    ...freelancers.map(f => ({ label: `${f.full_name} (${f.city || 'freelancer'})`, value: f.full_name, type: 'freelancer' })),
-  ]
+  /* ── status ── */
+  async function updateStatus(taskId, taskTitle, status) {
+    const { error } = await db('tasks').update({ status }).eq('id', taskId);
+    if (!error) {
+      await logActivity({
+        action:      'task_status_changed',
+        entity_type: 'task',
+        entity_name: taskTitle,
+        event_id:    eventId,
+        details:     { status },
+        session,
+      });
+      await fetchTasks();
+    }
+    setStatusMenu(null);
+  }
 
-  // ── EDIT MODE ─────────────────────────────────────────────
-  if (editing) {
-    const editFields = (
-      <>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-          <div>
-            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '3px' }}>Category owner</div>
-            <input list="people-list-edit" value={form.category_owner}
-              onChange={e => setForm(p => ({ ...p, category_owner: e.target.value }))}
-              placeholder="Category owner"
-              style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: '4px', fontFamily: 'var(--font-body)', boxSizing: 'border-box' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '3px' }}>Assigned to</div>
-            <input list="people-list-edit" value={form.assigned_name || form.assigned_to}
-              onChange={e => {
-                const found = teamUsers.find(u => u.full_name === e.target.value || u.email === e.target.value)
-                setForm(p => ({ ...p, assigned_to: found?.email || '', assigned_name: e.target.value }))
+  /* ── add task ── */
+  async function handleAddTask(e) {
+    e.preventDefault();
+    if (!newTask.title.trim()) return;
+    setAdding(true);
+    const { error } = await db('tasks').insert({
+      event_id:   eventId,
+      title:      newTask.title.trim(),
+      category:   newTask.category || 'General',
+      city:       newTask.city || activeCity || null,
+      due_date:   newTask.due_date || null,
+      notes:      newTask.notes || null,
+      status:     'pending',
+      sort_order: tasks.length,
+    });
+    if (!error) {
+      await fetchTasks();
+      setNewTask({ title: '', category: '', city: '', due_date: '', notes: '' });
+      setAddOpen(false);
+    }
+    setAdding(false);
+  }
+
+  /* ─── render ──────────────────────────────────────────────── */
+  return (
+    <div style={styles.root}>
+
+      {/* ── city tabs ── */}
+      {cities.length > 1 && (
+        <div style={styles.tabRow}>
+          {cities.map((city) => (
+            <button
+              key={city}
+              onClick={() => setActiveCity(city)}
+              style={{
+                ...styles.tab,
+                ...(activeCity === city ? styles.tabActive : {}),
               }}
-              placeholder="Assigned to"
-              style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: '4px', fontFamily: 'var(--font-body)', boxSizing: 'border-box' }} />
-            <datalist id="people-list-edit">
-              {allPeople.map(p => <option key={p.value} value={p.label} />)}
-            </datalist>
-          </div>
-          <div>
-            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '3px' }}>Phone</div>
-            <input value={form.assigned_phone || ''}
-              onChange={e => setForm(p => ({ ...p, assigned_phone: e.target.value }))}
-              placeholder="+91 98..."
-              style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: '4px', fontFamily: 'var(--font-body)', boxSizing: 'border-box' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '3px' }}>Deadline</div>
-            <input type="date" value={form.deadline || ''}
-              onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))}
-              style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: '4px', fontFamily: 'var(--font-body)', boxSizing: 'border-box' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '3px' }}>Status</div>
-            <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
-              style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: '4px', fontFamily: 'var(--font-body)', boxSizing: 'border-box' }}>
-              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
-            </select>
-          </div>
-          <div>
-            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '3px' }}>Notes</div>
-            <input value={form.notes || ''}
-              onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-              placeholder="Notes..."
-              style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: '4px', fontFamily: 'var(--font-body)', boxSizing: 'border-box' }} />
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button onClick={save} style={{ padding: '7px 16px', fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Save</button>
-          <button onClick={() => setEditing(false)} style={{ padding: '7px 10px', fontSize: '12px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-tertiary)' }}>✕</button>
-        </div>
-      </>
-    )
-
-    // Mobile: edit as card
-    if (isMobile) {
-      return (
-        <div style={{ padding: '12px 14px', background: '#FFFBEB', borderBottom: '0.5px solid var(--border)' }}>
-          <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '10px' }}>{task.element_name}</div>
-          {editFields}
-        </div>
-      )
-    }
-    // Desktop: edit as table row
-    return (
-      <tr style={{ background: '#FFFBEB' }}>
-        <td style={{ padding: '8px 10px', fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>
-          <div>{task.element_name}</div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
-            {task.size && <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>{task.size}{task.size_unit ? ' '+task.size_unit : ''}</span>}
-            {task.qty && <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>Qty: {task.qty}</span>}
-            {task.days && <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>{task.days}d</span>}
-          </div>
-        </td>
-        <td colSpan={7} style={{ padding: '8px 10px' }}>{editFields}</td>
-      </tr>
-    )
-  }
-
-  // ── VIEW MODE — Mobile card ───────────────────────────────
-  if (isMobile) {
-    return (
-      <div style={{ padding: '12px 14px', borderBottom: '0.5px solid var(--border)', background: task.status === 'done' ? '#F9FFF9' : 'var(--bg)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '3px' }}>
-              {task.element_name || <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>—</span>}
-            </div>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {task.size && <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{task.size}{task.size_unit ? ' '+task.size_unit : ''}</span>}
-              {task.qty && <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>×{task.qty}</span>}
-              {task.city && <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>📍{task.city}</span>}
-            </div>
-          </div>
-          <button onClick={cycleStatus}
-            style={{ padding: '3px 10px', fontSize: '11px', fontWeight: 500, fontFamily: 'var(--font-body)', background: sc.bg, color: sc.color, border: 'none', borderRadius: '20px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-            {STATUS_LABELS[task.status]}
-          </button>
-        </div>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-          {(task.assigned_name || task.assigned_to) && (
-            <span>👤 {task.assigned_name || task.assigned_to}</span>
-          )}
-          {!task.assigned_name && !task.assigned_to && (
-            <span style={{ color: '#A32D2D', fontSize: '11px' }}>Unassigned</span>
-          )}
-          {task.deadline && (
-            <span style={{ color: task.deadline && new Date(task.deadline) < new Date() && task.status !== 'done' ? '#A32D2D' : 'var(--text-secondary)' }}>
-              📅 {fmt(task.deadline)}
-            </span>
-          )}
-        </div>
-        {task.notes && <div style={{ fontSize: '11px', color: '#92400E', marginBottom: '8px' }}>Note: {task.notes}</div>}
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button onClick={() => setEditing(true)}
-            style={{ padding: '5px 12px', fontSize: '11px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-            Edit
-          </button>
-          <button onClick={copyPublicLink}
-            style={{ padding: '5px 12px', fontSize: '11px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-            🔗 Copy link
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // ── VIEW MODE — Desktop table row ────────────────────────
-  return (
-    <tr style={{ borderBottom: '0.5px solid var(--border)', background: task.status === 'done' ? '#F9FFF9' : 'var(--bg)' }}
-      onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
-      onMouseOut={e => e.currentTarget.style.background = task.status === 'done' ? '#F9FFF9' : 'var(--bg)'}
-    >
-      <td style={{ padding: '8px 10px', fontSize: '13px', color: 'var(--text)', fontWeight: 500 }}>
-        <div>{task.element_name || <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>—</span>}</div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '3px' }}>
-          {task.size && <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{task.size}{task.size_unit ? ' '+task.size_unit : ''}</span>}
-          {task.qty && <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Qty: {task.qty}</span>}
-          {task.days && <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{task.days} day{task.days > 1 ? 's' : ''}</span>}
-          {task.finish && <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{task.finish}</span>}
-        </div>
-        {task.source && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>Vendor: {task.source}</div>}
-        {task.notes && <div style={{ fontSize: '11px', color: '#92400E', marginTop: '2px' }}>Note: {task.notes}</div>}
-      </td>
-      <td style={{ padding: '8px 10px', fontSize: '12px', color: 'var(--text-secondary)' }}>{task.category_owner || <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</td>
-      <td style={{ padding: '8px 10px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-        {task.assigned_name || task.assigned_to || <span style={{ color: '#A32D2D', fontSize: '11px' }}>Unassigned</span>}
-      </td>
-      <td style={{ padding: '8px 10px', fontSize: '11px', color: 'var(--text-tertiary)' }}>{task.assigned_phone || '—'}</td>
-      <td style={{ padding: '8px 10px', fontSize: '12px', color: task.deadline && new Date(task.deadline) < new Date() && task.status !== 'done' ? '#A32D2D' : 'var(--text-secondary)' }}>
-        {fmt(task.deadline)}
-      </td>
-      <td style={{ padding: '8px 10px' }}>
-        <button onClick={cycleStatus} title="Click to change status"
-          style={{ padding: '3px 10px', fontSize: '11px', fontWeight: 500, fontFamily: 'var(--font-body)', background: sc.bg, color: sc.color, border: 'none', borderRadius: '20px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-          {STATUS_LABELS[task.status]}
-        </button>
-      </td>
-      <td style={{ padding: '8px 10px', fontSize: '11px', color: 'var(--text-tertiary)' }}>{task.city || '—'}</td>
-      <td style={{ padding: '8px 6px' }}>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button onClick={() => setEditing(true)} title="Edit task"
-            style={{ padding: '3px 8px', fontSize: '11px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '3px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-            Edit
-          </button>
-          <button onClick={copyPublicLink} title="Copy public link for freelancer"
-            style={{ padding: '3px 8px', fontSize: '11px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '3px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-            🔗
-          </button>
-        </div>
-      </td>
-    </tr>
-  )
-}
-
-// ── Main TaskBoard ────────────────────────────────────────
-export default function TaskBoard({ event, userRole, session }) {
-  const [tasks,          setTasks]          = useState([])
-  const [loading,        setLoading]        = useState(true)
-  const [generating,     setGenerating]     = useState(false)
-  const [teamUsers,      setTeamUsers]      = useState([])
-  const [freelancers,    setFreelancers]    = useState([])
-  const [filterCategory, setFilterCategory] = useState('')
-  const [filterStatus,   setFilterStatus]   = useState('')
-  const [filterPerson,   setFilterPerson]   = useState('')
-  const [showFreelancers,setShowFreelancers]= useState(false)
-  const [newFreelancer,  setNewFreelancer]  = useState({ full_name: '', phone: '', email: '', city: '', categories: [], notes: '' })
-  const [collapsedCats,  setCollapsedCats]  = useState(new Set())
-  const [activeCity,     setActiveCity]     = useState('__all__')
-
-  const w        = useWindowSize()
-  const isMobile = w < 768
-
-  function toggleCat(key) {
-    setCollapsedCats(prev => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key); else next.add(key)
-      return next
-    })
-  }
-
-  useEffect(() => { loadAll() }, [event.id])
-
-  async function handleDownloadTasks() {
-    const { exportTaskAssignment } = await import('../utils/excelExport')
-    const { data: client } = await supabase.from('clients').select('*').eq('id', event.client_id).single()
-    await exportTaskAssignment(event, tasks, client)
-  }
-
-  async function copyAllLinks() {
-    const tasksNeedingTokens = tasks.filter(t => !t.public_token)
-    if (tasksNeedingTokens.length > 0) {
-      for (const t of tasksNeedingTokens) {
-        const token = generateToken()
-        await supabase.from('tasks').update({ public_token: token }).eq('id', t.id)
-        setTasks(prev => prev.map(x => x.id === t.id ? { ...x, public_token: token } : x))
-      }
-      await loadAll()
-      return
-    }
-    const lines = []
-    lines.push(`*${event.event_name} — Task Links*`)
-    lines.push(`Share with your team. No login needed.`)
-    lines.push('')
-    const cats = [...new Set(tasks.map(t => t.category))]
-    cats.forEach(cat => {
-      const catTasks = tasks.filter(t => t.category === cat)
-      lines.push(`*${cat}*`)
-      catTasks.forEach(t => {
-        if (t.public_token) {
-          const url = `${window.location.origin}/task/${t.public_token}`
-          const who = t.assigned_name || t.assigned_to || 'Unassigned'
-          lines.push(`${t.element_name} (${who}): ${url}`)
-        }
-      })
-      lines.push('')
-    })
-    const text = lines.join('\n')
-    try {
-      await navigator.clipboard.writeText(text)
-      alert('✓ All ' + tasks.filter(t => t.public_token).length + ' task links copied!\n\nPaste directly into WhatsApp or any messenger.')
-    } catch {
-      const ta = document.createElement('textarea')
-      ta.value = text
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-      alert('Links copied!')
-    }
-  }
-
-  async function loadAll() {
-    setLoading(true)
-    const [{ data: t }, { data: u }, { data: f }] = await Promise.all([
-      supabase.from('tasks').select('*, elements(element_name,size,size_unit,qty,days,finish,source,city)').eq('event_id', event.id).order('category'),
-      supabase.from('users').select('email,full_name').neq('status','inactive'),
-      supabase.from('freelancers').select('*').order('full_name'),
-    ])
-    if (t) setTasks(t.map(task => ({
-      ...task,
-      element_name: task.elements?.element_name || task.element_name || '',
-      size:         task.elements?.size         || '',
-      size_unit:    task.elements?.size_unit    || '',
-      qty:          task.elements?.qty          || '',
-      days:         task.elements?.days         || '',
-      finish:       task.elements?.finish       || '',
-      source:       task.elements?.source       || '',
-      city:         task.elements?.city         || '',
-    })))
-    setTeamUsers(u || [])
-    setFreelancers(f || [])
-    setLoading(false)
-  }
-
-  async function generateTasks() {
-    setGenerating(true)
-    const { data: elements } = await supabase.from('elements').select('*').eq('event_id', event.id)
-    if (!elements?.length) { setGenerating(false); return }
-    await supabase.from('tasks').delete().eq('event_id', event.id)
-    const taskRows = elements.map(el => ({
-      event_id:       event.id,
-      element_id:     el.id,
-      category:       el.category,
-      category_owner: '',
-      assigned_to:    el.responsibility || '',
-      assigned_name:  el.responsibility || '',
-      assigned_phone: '',
-      deadline:       null,
-      status:         'not_started',
-      notes:          '',
-      public_token:   generateToken(),
-    }))
-    const batchSize = 50
-    for (let i = 0; i < taskRows.length; i += batchSize) {
-      await supabase.from('tasks').insert(taskRows.slice(i, i + batchSize))
-    }
-    await loadAll()
-    setGenerating(false)
-  }
-
-  function updateTask(updated) {
-    setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
-  }
-
-  async function setCategoryOwnerBulk(category, owner) {
-    await supabase.from('tasks').update({ category_owner: owner }).eq('event_id', event.id).eq('category', category)
-    setTasks(prev => prev.map(t => t.category === category ? { ...t, category_owner: owner } : t))
-  }
-  async function setDeadlineBulk(category, deadline) {
-    await supabase.from('tasks').update({ deadline }).eq('event_id', event.id).eq('category', category)
-    setTasks(prev => prev.map(t => t.category === category ? { ...t, deadline } : t))
-  }
-  async function setAssigneeBulk(category, name) {
-    const found = teamUsers.find(u => u.full_name === name || u.email === name)
-    await supabase.from('tasks').update({ assigned_to: found?.email || '', assigned_name: name }).eq('event_id', event.id).eq('category', category)
-    setTasks(prev => prev.map(t => t.category === category ? { ...t, assigned_to: found?.email || '', assigned_name: name } : t))
-  }
-  async function addFreelancer() {
-    if (!newFreelancer.full_name.trim()) return
-    await supabase.from('freelancers').insert({ ...newFreelancer, added_by: session?.user?.email })
-    setNewFreelancer({ full_name: '', phone: '', email: '', city: '', categories: [], notes: '' })
-    const { data } = await supabase.from('freelancers').select('*').order('full_name')
-    setFreelancers(data || [])
-  }
-
-  const total      = tasks.length
-  const done       = tasks.filter(t => t.status === 'done').length
-  const unassigned = tasks.filter(t => !t.assigned_name && !t.assigned_to).length
-  const overdue    = tasks.filter(t => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length
-  const pct        = total > 0 ? Math.round((done / total) * 100) : 0
-
-  const filtered = tasks.filter(t => {
-    const matchCat    = !filterCategory || t.category === filterCategory
-    const matchStatus = !filterStatus   || t.status === filterStatus
-    const matchPerson = !filterPerson   || t.assigned_name?.includes(filterPerson) || t.assigned_to?.includes(filterPerson) || t.category_owner?.includes(filterPerson)
-    return matchCat && matchStatus && matchPerson
-  })
-
-  const cities      = event.cities?.length > 0 ? event.cities : [...new Set(tasks.map(t => t.city).filter(Boolean))]
-  const isMultiCity = cities.length > 1
-  const cityFiltered = filtered.filter(t =>
-    activeCity === '__all__' || !isMultiCity || t.city === activeCity || (!t.city && activeCity === cities[0])
-  )
-
-  const grouped = {}
-  cityFiltered.forEach(t => {
-    if (!grouped[t.category]) grouped[t.category] = []
-    grouped[t.category].push(t)
-  })
-
-  const categories = [...new Set(tasks.map(t => t.category))]
-  const allPeople = [...new Set([
-    ...tasks.map(t => t.category_owner).filter(Boolean),
-    ...tasks.map(t => t.assigned_name || t.assigned_to).filter(Boolean),
-  ])].sort()
-
-  const thStyle = { padding: '6px 10px', fontSize: '10px', fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'left', background: 'var(--bg-secondary)', borderBottom: '0.5px solid var(--border)' }
-
-  return (
-    <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>Task board</h3>
-          <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
-            {total === 0
-              ? 'Generate tasks from approved elements to start execution.'
-              : `${done}/${total} done · ${pct}% complete${unassigned > 0 ? ` · ${unassigned} unassigned` : ''}${overdue > 0 ? ` · ${overdue} overdue` : ''}`}
-          </p>
-        </div>
-        {/* Bug fix: on mobile stack the buttons vertically */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button onClick={() => setShowFreelancers(!showFreelancers)}
-            style={{ padding: '8px 14px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}>
-            👥 Ground staff ({freelancers.length})
-          </button>
-          {tasks.length > 0 && (
-            <button onClick={copyAllLinks}
-              style={{ padding: '8px 14px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}>
-              🔗 All links
-            </button>
-          )}
-          {tasks.length > 0 && (
-            <button onClick={handleDownloadTasks}
-              style={{ padding: '8px 14px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}>
-              ↓ Export
-            </button>
-          )}
-          <button onClick={generateTasks} disabled={generating}
-            style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', opacity: generating ? 0.6 : 1 }}>
-            {generating ? 'Generating...' : tasks.length > 0 ? '↻ Regenerate' : '⚡ Generate tasks'}
-          </button>
-        </div>
-      </div>
-
-      {/* Progress bar */}
-      {total > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ height: '6px', background: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${pct}%`, background: pct === 100 ? 'var(--green)' : 'var(--text)', borderRadius: '3px', transition: 'width 0.3s' }} />
-          </div>
-        </div>
-      )}
-
-      {/* City tabs */}
-      {isMultiCity && (
-        <div style={{ display: 'flex', gap: '0', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', width: 'fit-content', marginBottom: '20px' }}>
-          {cities.map(city => (
-            <button key={city} onClick={() => setActiveCity(city)}
-              style={{ padding: '7px 18px', fontSize: '13px', fontWeight: activeCity === city ? 500 : 400, fontFamily: 'var(--font-body)', background: activeCity === city ? 'var(--text)' : 'var(--bg)', color: activeCity === city ? 'var(--bg)' : 'var(--text-tertiary)', border: 'none', borderRight: '0.5px solid var(--border)', cursor: 'pointer' }}>
+            >
               {city}
             </button>
           ))}
         </div>
       )}
 
-      {/* Bug fix: Freelancer panel — was '1fr 1fr 1fr 1fr 1fr auto' (6 cols) — now stacks on mobile */}
-      {showFreelancers && (
-        <div style={{ border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '16px', marginBottom: '20px', background: 'var(--bg-secondary)' }}>
-          <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '12px' }}>Ground staff / Freelancers</p>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-            {[
-              { key: 'full_name', placeholder: 'Full name *' },
-              { key: 'phone',     placeholder: 'Phone / WhatsApp' },
-              { key: 'city',      placeholder: 'City' },
-              { key: 'email',     placeholder: 'Email' },
-              { key: 'notes',     placeholder: 'Notes (skill, role...)' },
-            ].map(f => (
-              <input key={f.key} value={newFreelancer[f.key]}
-                onChange={e => setNewFreelancer(p => ({ ...p, [f.key]: e.target.value }))}
-                placeholder={f.placeholder}
-                style={{ padding: '7px 10px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: '4px', fontFamily: 'var(--font-body)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }} />
-            ))}
-            <button onClick={addFreelancer} disabled={!newFreelancer.full_name.trim()}
-              style={{ padding: '7px 14px', fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: '4px', cursor: 'pointer', opacity: newFreelancer.full_name.trim() ? 1 : 0.5 }}>
-              Add
+      {/* ── add task ── */}
+      {canAdd && (
+        <div style={styles.addWrap}>
+          {!addOpen ? (
+            <button style={styles.addBtn} onClick={() => setAddOpen(true)}>
+              <span style={styles.addIcon}>+</span> Add Task
             </button>
-          </div>
-          {freelancers.length > 0 && (
-            <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-              {freelancers.map(f => (
-                <div key={f.id} style={{ display: 'flex', gap: '12px', padding: '6px 0', borderBottom: '0.5px solid var(--border)', fontSize: '12px', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 500, color: 'var(--text)', minWidth: '120px' }}>{f.full_name}</span>
-                  <span>{f.phone || '—'}</span>
-                  <span>{f.city || '—'}</span>
-                  <span style={{ color: 'var(--text-tertiary)' }}>{f.notes || ''}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Filters */}
-      {total > 0 && (
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-          <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)}
-            style={{ padding: '7px 10px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
-            <option value="">All categories</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-            style={{ padding: '7px 10px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
-            <option value="">All statuses</option>
-            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
-          </select>
-          <input value={filterPerson} onChange={e => setFilterPerson(e.target.value)}
-            placeholder="Filter by person..."
-            style={{ padding: '7px 10px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)', outline: 'none', minWidth: '140px' }} />
-          {(filterCategory || filterStatus || filterPerson) && (
-            <button onClick={() => { setFilterCategory(''); setFilterStatus(''); setFilterPerson('') }}
-              style={{ padding: '7px 12px', fontSize: '12px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-tertiary)' }}>
-              Clear
-            </button>
-          )}
-          {!isMobile && (
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {STATUS_OPTIONS.map(s => {
-                const count = tasks.filter(t => t.status === s).length
-                if (!count) return null
-                const sc = STATUS_COLORS[s]
-                return (
-                  <span key={s} style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', background: sc.bg, color: sc.color, fontWeight: 500 }}>
-                    {STATUS_LABELS[s]} {count}
-                  </span>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && total === 0 && (
-        <div style={{ border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius)', padding: '60px 32px', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: 'var(--text)', marginBottom: '8px' }}>Ready to execute</p>
-          <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '24px', lineHeight: 1.6 }}>
-            Click "Generate tasks" to create a task for every element in this event.<br/>
-            Then assign owners, set deadlines, and track to completion.
-          </p>
-        </div>
-      )}
-
-      {/* Task groups */}
-      {Object.entries(grouped).map(([category, catTasks]) => {
-        const catKey      = `${activeCity}__${category}`
-        const isCollapsed = collapsedCats.has(catKey)
-        const catDone     = catTasks.filter(t => t.status === 'done').length
-        const catOwner    = catTasks[0]?.category_owner || ''
-        const catDeadline = catTasks[0]?.deadline || ''
-        const catAssignee = catTasks.every(t => (t.assigned_name||t.assigned_to) === (catTasks[0]?.assigned_name||catTasks[0]?.assigned_to))
-          ? (catTasks[0]?.assigned_name || catTasks[0]?.assigned_to || '') : ''
-
-        return (
-          <div key={catKey} style={{ marginBottom: '16px', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-            {/* Category header */}
-            <div style={{ padding: isMobile ? '10px 14px' : '10px 14px', background: 'var(--bg-secondary)', borderBottom: isCollapsed ? 'none' : '0.5px solid var(--border)', cursor: 'pointer' }}
-              onClick={() => toggleCat(catKey)}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--text-tertiary)', padding: '0', flexShrink: 0 }}>
-                  {isCollapsed ? '▶' : '▼'}
-                </button>
-                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', flex: 1 }}>{category}</span>
-                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{catDone}/{catTasks.length} done</span>
+          ) : (
+            <form onSubmit={handleAddTask} style={styles.addForm}>
+              <div style={styles.addRow}>
+                <input
+                  style={{ ...styles.input, flex: 2 }}
+                  placeholder="Task title *"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                  required
+                  autoFocus
+                />
+                <input
+                  style={styles.input}
+                  placeholder="Category"
+                  value={newTask.category}
+                  onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
+                />
+                <select
+                  style={styles.input}
+                  value={newTask.city}
+                  onChange={(e) => setNewTask({ ...newTask, city: e.target.value })}
+                >
+                  <option value="">City (all)</option>
+                  {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <input
+                  style={styles.input}
+                  type="date"
+                  value={newTask.due_date}
+                  onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+                />
               </div>
-              {/* Bulk controls — shown below on mobile, inline on desktop */}
-              {!isCollapsed && (
-                <div onClick={e => e.stopPropagation()}
-                  style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px', paddingTop: '8px', borderTop: '0.5px solid var(--border)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>Owner:</span>
-                    <input defaultValue={catOwner} onBlur={e => setCategoryOwnerBulk(category, e.target.value)}
-                      list="people-list-cat" placeholder="Set owner"
-                      style={{ padding: '3px 8px', fontSize: '12px', border: '0.5px solid var(--border)', borderRadius: '4px', fontFamily: 'var(--font-body)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', width: isMobile ? '130px' : '150px' }} />
-                    <datalist id="people-list-cat">
-                      {teamUsers.map(u => <option key={u.email} value={u.full_name || u.email} />)}
-                    </datalist>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>Assign all:</span>
-                    <input defaultValue={catAssignee} onBlur={e => e.target.value && setAssigneeBulk(category, e.target.value)}
-                      list={`assignee-list-${category}`} placeholder="Assign all to..."
-                      style={{ padding: '3px 8px', fontSize: '12px', border: '0.5px solid var(--border)', borderRadius: '4px', fontFamily: 'var(--font-body)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', width: isMobile ? '130px' : '150px' }} />
-                    <datalist id={`assignee-list-${category}`}>
-                      {teamUsers.map(u => <option key={u.email} value={u.full_name || u.email} />)}
-                      {freelancers.map(f => <option key={f.id} value={f.full_name} />)}
-                    </datalist>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>By:</span>
-                    <input type="date" defaultValue={catDeadline} onBlur={e => setDeadlineBulk(category, e.target.value || null)}
-                      style={{ padding: '3px 8px', fontSize: '12px', border: '0.5px solid var(--border)', borderRadius: '4px', fontFamily: 'var(--font-body)', background: 'var(--bg)', color: 'var(--text)', outline: 'none' }} />
-                  </div>
-                </div>
-              )}
-            </div>
+              <div style={styles.addActions}>
+                <button
+                  type="button"
+                  style={styles.cancelBtn}
+                  onClick={() => { setAddOpen(false); setNewTask({ title: '', category: '', city: '', due_date: '', notes: '' }); }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" style={styles.saveBtn} disabled={adding}>
+                  {adding ? 'Adding…' : 'Add Task'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
 
-            {/* Bug fix: on mobile show cards, on desktop show table */}
-            {!isCollapsed && (
-              isMobile ? (
-                <div>
-                  {catTasks.map(task => (
-                    <TaskRow key={task.id} task={task} teamUsers={teamUsers} freelancers={freelancers}
-                      onUpdate={updateTask} onDelete={() => {}} isMobile={true} />
-                  ))}
-                </div>
-              ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr>
-                      <th style={thStyle}>Element · Details</th>
-                      <th style={thStyle}>Category owner</th>
-                      <th style={thStyle}>Assigned to</th>
-                      <th style={thStyle}>Phone</th>
-                      <th style={thStyle}>Deadline</th>
-                      <th style={thStyle}>Status</th>
-                      <th style={thStyle}>City</th>
-                      <th style={thStyle}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {catTasks.map(task => (
-                      <TaskRow key={task.id} task={task} teamUsers={teamUsers} freelancers={freelancers}
-                        onUpdate={updateTask} onDelete={() => {}} isMobile={false} />
-                    ))}
-                  </tbody>
-                </table>
-              )
+      {/* ── task categories ── */}
+      {loading ? (
+        <div style={styles.empty}>Loading tasks…</div>
+      ) : cityTasks.length === 0 ? (
+        <div style={styles.empty}>No tasks yet for {activeCity || 'this event'}.</div>
+      ) : (
+        categories.map((cat) => (
+          <div key={cat} style={styles.category}>
+            {/* category header */}
+            <button
+              style={styles.catHeader}
+              onClick={() => setCollapsed((p) => ({ ...p, [cat]: !p[cat] }))}
+            >
+              <span style={styles.catTitle}>{cat}</span>
+              <span style={styles.catMeta}>
+                <span style={styles.catCount}>{grouped[cat].length}</span>
+                <span style={styles.catChevron}>{collapsed[cat] ? '▸' : '▾'}</span>
+              </span>
+            </button>
+
+            {/* tasks */}
+            {!collapsed[cat] && (
+              <div style={styles.taskList}>
+                {grouped[cat].map((task) => {
+                  const sm   = STATUS_META[task.status] || STATUS_META.pending;
+                  const ini  = task.assigned_to_name ? initials(task.assigned_to_name) : null;
+                  return (
+                    <div key={task.id} style={styles.card}>
+                      <div style={styles.cardLeft}>
+                        {/* status pill */}
+                        <div style={{ position: 'relative' }}>
+                          <button
+                            style={{ ...styles.statusPill, color: sm.color, background: sm.bg }}
+                            onClick={() => canAssign && setStatusMenu(statusMenu === task.id ? null : task.id)}
+                            title={canAssign ? 'Change status' : sm.label}
+                          >
+                            {sm.label}
+                            {canAssign && <span style={{ marginLeft: 3, fontSize: 9 }}>▾</span>}
+                          </button>
+                          {statusMenu === task.id && (
+                            <div ref={statusRef} style={styles.statusDropdown}>
+                              {STATUS_OPTIONS.map((s) => {
+                                const m = STATUS_META[s];
+                                return (
+                                  <button
+                                    key={s}
+                                    style={{ ...styles.statusOption, color: m.color }}
+                                    onClick={() => updateStatus(task.id, task.title, s)}
+                                  >
+                                    {m.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                        <span style={styles.taskTitle}>{task.title}</span>
+                      </div>
+
+                      <div style={styles.cardRight}>
+                        {task.due_date && (
+                          <span style={styles.dueDate}>
+                            {new Date(task.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                          </span>
+                        )}
+
+                        {/* assigned user pill */}
+                        {ini ? (
+                          <button
+                            style={styles.assignedPill}
+                            onClick={() => canAssign && openAssign(task)}
+                            title={canAssign ? `Reassign (${task.assigned_to_name})` : task.assigned_to_name}
+                          >
+                            <span style={styles.initialsCircle}>{ini}</span>
+                            <span style={styles.assignedName}>{task.assigned_to_name}</span>
+                          </button>
+                        ) : (
+                          canAssign && (
+                            <button style={styles.assignBtn} onClick={() => openAssign(task)}>
+                              Assign
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
-        )
-      })}
+        ))
+      )}
+
+      {/* ── assign modal ── */}
+      {modal && (
+        <div style={styles.overlay}>
+          <div ref={modalRef} style={styles.modal}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>Assign Task</h3>
+              <button style={styles.modalClose} onClick={() => setModal(null)}>✕</button>
+            </div>
+            <p style={styles.modalSub}>{modal.taskTitle}</p>
+
+            <label style={styles.label}>Assign to</label>
+            <select
+              style={styles.select}
+              value={assignTo}
+              onChange={(e) => setAssignTo(e.target.value)}
+            >
+              <option value="">— Unassigned —</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.full_name}
+                  {u.role ? ` (${u.role.replace('_', ' ')})` : ''}
+                </option>
+              ))}
+            </select>
+
+            <div style={styles.modalActions}>
+              <button style={styles.cancelBtn} onClick={() => setModal(null)}>Cancel</button>
+              <button style={styles.saveBtn} onClick={saveAssign} disabled={saving}>
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }
+
+/* ─── styles ──────────────────────────────────────────────── */
+const styles = {
+  root: {
+    fontFamily: "'DM Sans', sans-serif",
+    color: '#1a1a1a',
+  },
+  tabRow: {
+    display: 'flex',
+    gap: 6,
+    marginBottom: 20,
+    flexWrap: 'wrap',
+  },
+  tab: {
+    padding: '6px 16px',
+    borderRadius: 20,
+    border: '1.5px solid #E5E1DC',
+    background: 'transparent',
+    cursor: 'pointer',
+    fontSize: 13,
+    fontFamily: "'DM Sans', sans-serif",
+    color: '#6B7280',
+    transition: 'all 0.15s',
+  },
+  tabActive: {
+    background: '#bc1723',
+    borderColor: '#bc1723',
+    color: '#fff',
+    fontWeight: 600,
+  },
+
+  /* add task */
+  addWrap:  { marginBottom: 20 },
+  addBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    background: 'transparent',
+    border: '1.5px dashed #D1CBC3',
+    borderRadius: 8,
+    padding: '8px 16px',
+    cursor: 'pointer',
+    color: '#9CA3AF',
+    fontSize: 13,
+    fontFamily: "'DM Sans', sans-serif",
+    transition: 'border-color 0.15s, color 0.15s',
+  },
+  addIcon: { fontSize: 18, lineHeight: 1 },
+  addForm: {
+    background: '#FAFAF8',
+    border: '1.5px solid #E5E1DC',
+    borderRadius: 10,
+    padding: 16,
+  },
+  addRow: {
+    display: 'flex',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  input: {
+    flex: 1,
+    minWidth: 120,
+    padding: '8px 12px',
+    border: '1.5px solid #E5E1DC',
+    borderRadius: 6,
+    fontSize: 13,
+    fontFamily: "'DM Sans', sans-serif",
+    background: '#fff',
+    color: '#1a1a1a',
+    outline: 'none',
+  },
+  addActions: { display: 'flex', gap: 8, justifyContent: 'flex-end' },
+
+  /* category */
+  category:  { marginBottom: 12 },
+  catHeader: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '10px 14px',
+    borderRadius: 8,
+    transition: 'background 0.1s',
+    ':hover': { background: '#F5F0EB' },
+  },
+  catTitle: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: 17,
+    fontWeight: 600,
+    color: '#1a1a1a',
+    letterSpacing: '0.01em',
+  },
+  catMeta:  { display: 'flex', alignItems: 'center', gap: 8 },
+  catCount: {
+    background: '#F0EBE5',
+    color: '#6B7280',
+    borderRadius: 12,
+    padding: '2px 8px',
+    fontSize: 12,
+    fontWeight: 500,
+  },
+  catChevron: { color: '#9CA3AF', fontSize: 13 },
+
+  taskList: { paddingLeft: 0, display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 },
+
+  /* task card */
+  card: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    background: '#fff',
+    border: '1px solid #EDE8E2',
+    borderRadius: 8,
+    padding: '10px 14px',
+    gap: 12,
+    transition: 'box-shadow 0.15s',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+  },
+  cardLeft:  { display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 },
+  cardRight: { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 },
+
+  taskTitle: {
+    fontSize: 14,
+    color: '#1a1a1a',
+    fontWeight: 450,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+
+  /* status pill */
+  statusPill: {
+    padding: '3px 10px',
+    borderRadius: 12,
+    fontSize: 11,
+    fontWeight: 600,
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: "'DM Sans', sans-serif",
+    letterSpacing: '0.02em',
+    textTransform: 'uppercase',
+    whiteSpace: 'nowrap',
+  },
+  statusDropdown: {
+    position: 'absolute',
+    top: '110%',
+    left: 0,
+    background: '#fff',
+    border: '1px solid #E5E1DC',
+    borderRadius: 8,
+    padding: '4px 0',
+    zIndex: 50,
+    minWidth: 130,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.10)',
+  },
+  statusOption: {
+    display: 'block',
+    width: '100%',
+    padding: '7px 14px',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 12,
+    fontWeight: 600,
+    fontFamily: "'DM Sans', sans-serif",
+    textAlign: 'left',
+    textTransform: 'uppercase',
+    letterSpacing: '0.02em',
+    transition: 'background 0.1s',
+  },
+
+  /* due date */
+  dueDate: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    whiteSpace: 'nowrap',
+  },
+
+  /* assign */
+  assignBtn: {
+    padding: '4px 12px',
+    border: '1.5px solid #E5E1DC',
+    borderRadius: 14,
+    background: 'transparent',
+    cursor: 'pointer',
+    fontSize: 12,
+    color: '#6B7280',
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 500,
+    transition: 'border-color 0.15s, color 0.15s',
+  },
+  assignedPill: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    border: '1.5px solid #E5E1DC',
+    borderRadius: 14,
+    background: '#FAFAF8',
+    padding: '3px 10px 3px 4px',
+    cursor: 'pointer',
+    fontFamily: "'DM Sans', sans-serif",
+    transition: 'border-color 0.15s',
+  },
+  initialsCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: '50%',
+    background: '#bc1723',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 10,
+    fontWeight: 700,
+    flexShrink: 0,
+  },
+  assignedName: {
+    fontSize: 12,
+    color: '#374151',
+    fontWeight: 500,
+    maxWidth: 100,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+
+  /* empty */
+  empty: {
+    textAlign: 'center',
+    color: '#9CA3AF',
+    fontSize: 14,
+    padding: '40px 0',
+  },
+
+  /* modal overlay */
+  overlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.35)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 200,
+    padding: 20,
+  },
+  modal: {
+    background: '#FAFAF8',
+    borderRadius: 14,
+    width: '100%',
+    maxWidth: 400,
+    padding: 24,
+    boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
+  },
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  modalTitle: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: 22,
+    fontWeight: 600,
+    margin: 0,
+    color: '#1a1a1a',
+  },
+  modalClose: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 16,
+    color: '#9CA3AF',
+    padding: 4,
+    lineHeight: 1,
+  },
+  modalSub: {
+    fontSize: 13,
+    color: '#6B7280',
+    margin: '0 0 20px',
+    fontStyle: 'italic',
+  },
+  label: {
+    display: 'block',
+    fontSize: 12,
+    fontWeight: 600,
+    color: '#374151',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+  select: {
+    width: '100%',
+    padding: '10px 12px',
+    border: '1.5px solid #E5E1DC',
+    borderRadius: 8,
+    fontSize: 14,
+    fontFamily: "'DM Sans', sans-serif",
+    background: '#fff',
+    color: '#1a1a1a',
+    outline: 'none',
+    marginBottom: 20,
+    cursor: 'pointer',
+  },
+  modalActions: { display: 'flex', gap: 10, justifyContent: 'flex-end' },
+
+  /* shared buttons */
+  cancelBtn: {
+    padding: '9px 18px',
+    border: '1.5px solid #E5E1DC',
+    borderRadius: 8,
+    background: 'transparent',
+    cursor: 'pointer',
+    fontSize: 13,
+    fontFamily: "'DM Sans', sans-serif",
+    color: '#6B7280',
+    fontWeight: 500,
+  },
+  saveBtn: {
+    padding: '9px 22px',
+    border: 'none',
+    borderRadius: 8,
+    background: '#bc1723',
+    color: '#fff',
+    cursor: 'pointer',
+    fontSize: 13,
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 600,
+    transition: 'opacity 0.15s',
+  },
+};
