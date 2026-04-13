@@ -7,6 +7,7 @@ import EventPage from './EventPage'
 import AssignEvent from './AssignEvent'
 
 import { logEventCreated, logEventArchived, logEventRestored, logEventAssigned } from '../utils/activityLogger'
+const STATUS_COLORS = {
   pitch: { bg: 'var(--blue-light)', color: 'var(--blue)' },
   submitted: { bg: 'var(--amber-light)', color: 'var(--amber)' },
   won: { bg: 'var(--green-light)', color: 'var(--green)' },
