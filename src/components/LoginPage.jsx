@@ -313,13 +313,42 @@ export default function LoginPage() {
 
         </div>
 
-        <p style={{
-          textAlign: 'center', fontSize: '12px',
-          color: 'var(--text-tertiary)', marginTop: '24px', lineHeight: 1.6,
-        }}>
-          Access is by invitation only.<br />
-          Contact your admin to get access.
-        </p>
+        <div style={{ textAlign: 'center', marginTop: '24px' }}>
+          <p style={{
+            fontSize: '12px', color: 'var(--text-tertiary)',
+            lineHeight: 1.6, marginBottom: '16px',
+          }}>
+            Access is by invitation only.<br />
+            Contact your admin to get access.
+          </p>
+          <a
+            href="https://myoozz.events/#earlyaccess"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              padding: '10px 20px',
+              fontSize: '13px', fontWeight: 500,
+              fontFamily: 'var(--font-body)',
+              color: '#bc1723',
+              background: 'rgba(188,23,35,0.06)',
+              border: '0.5px solid rgba(188,23,35,0.2)',
+              borderRadius: 'var(--radius-sm)',
+              textDecoration: 'none',
+              transition: 'all 0.18s',
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.background = 'rgba(188,23,35,0.1)'
+              e.currentTarget.style.borderColor = 'rgba(188,23,35,0.35)'
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = 'rgba(188,23,35,0.06)'
+              e.currentTarget.style.borderColor = 'rgba(188,23,35,0.2)'
+            }}
+          >
+            Request credentials →
+          </a>
+        </div>
 
       </div>
     </div>
