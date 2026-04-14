@@ -5,6 +5,7 @@ import { supabase } from '../supabase'
 import Dashboard from './Dashboard'
 import UserManagement from './UserManagement'
 import TeamView from './TeamView'
+import AnalyticsDashboard from './AnalyticsDashboard'
 import EarlyAccess from './EarlyAccess'
 import RateCard from './RateCard'
 import FeedbackButton from './FeedbackButton'
@@ -606,7 +607,10 @@ export default function AppShell({ session }) {
               resetKey={dashboardResetKey}
             />
           )}
-          {activeTab === 'team' && (userRole === 'admin' || userRole === 'manager') && (
+          {activeTab === 'analytics' && (
+        <AnalyticsDashboard userId={userId} userRole={userRole} />
+      )}
+      {activeTab === 'team' && (userRole === 'admin' || userRole === 'manager') && (
             <div>
               <TeamView
                 userId={session?.user?.id}
