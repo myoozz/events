@@ -10,7 +10,7 @@ const ROLE_DESC = {
   team: 'Task execution only — assigned tasks, notes, no event-level access',
 }
 
-export default function UserManagement({ session, userRole = 'admin' }) {
+export default function UserManagement({ session, userRole = 'admin', onViewProfile }) {
   // Roles this user is allowed to create
   const inviteableRoles = userRole === 'admin'
     ? ['admin', 'manager', 'event_lead', 'team']
@@ -22,7 +22,7 @@ export default function UserManagement({ session, userRole = 'admin' }) {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ fullName: '', email: '', role: defaultInviteRole })
+  const [form, setForm] = useState({ fullName: '', email: '', role: defaultInviteRole, base_city: '', phone: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -57,6 +57,8 @@ export default function UserManagement({ session, userRole = 'admin' }) {
         role: form.role,
         status: 'active',
         created_by: session.user.id,
+        ...(form.base_city ? { base_city: form.base_city } : {}),
+        ...(form.phone     ? { phone: form.phone }         : {}),
       }, { onConflict: 'email' })
 
       if (dbError) throw new Error(`Could not save user: ${dbError.message}`)
@@ -81,10 +83,10 @@ export default function UserManagement({ session, userRole = 'admin' }) {
           setError(`Email invite failed — ${json.error || 'unknown error'}. Invite manually from Supabase dashboard → Auth → Users.`)
         }
       } else {
-        setSuccess(`✓ Invite sent to ${form.email}.`)
+        setSuccess(`✓ Invite sent to ${form.email}. They'll be guided to complete their profile when they first log in.`)
       }
 
-      setForm({ fullName: '', email: '', role: 'team' })
+      setForm({ fullName: '', email: '', role: 'team', base_city: '', phone: '' })
       setShowForm(false)
       fetchUsers()
     } catch (err) {
@@ -247,6 +249,60 @@ export default function UserManagement({ session, userRole = 'admin' }) {
               </div>
             </div>
 
+            {/* Optional profile fields */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-tertiary)', marginBottom: '6px' }}>
+                  Base city <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--text-tertiary)', opacity: 0.7 }}>(optional)</span>
+                </label>
+                <input
+                  placeholder="e.g. Mumbai"
+                  value={form.base_city}
+                  onChange={e => setForm(f => ({ ...f, base_city: e.target.value }))}
+                  style={{
+                    width: '100%', padding: '9px 12px', fontSize: '14px',
+                    fontFamily: 'var(--font-body)', background: 'var(--bg)',
+                    border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text)', outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-tertiary)', marginBottom: '6px' }}>
+                  Phone <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--text-tertiary)', opacity: 0.7 }}>(optional)</span>
+                </label>
+                <input
+                  type="tel"
+                  placeholder="+91 XXXXX XXXXX"
+                  value={form.phone}
+                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  style={{
+                    width: '100%', padding: '9px 12px', fontSize: '14px',
+                    fontFamily: 'var(--font-body)', background: 'var(--bg)',
+                    border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text)', outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Profile tip */}
+            <div style={{
+              background: '#FFF8F0', border: '0.5px solid #F5DFC0',
+              borderRadius: 'var(--radius-sm)', padding: '12px 16px', marginBottom: '20px',
+              display: 'flex', gap: '10px', alignItems: 'flex-start',
+            }}>
+              <span style={{ fontSize: '16px', flexShrink: 0 }}>💡</span>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#92400E', marginBottom: '4px' }}>
+                  They'll complete the rest themselves
+                </div>
+                <div style={{ fontSize: '12px', color: '#92400E', lineHeight: 1.6, opacity: 0.85 }}>
+                  Once they log in, they'll be guided to add their bio, LinkedIn, Instagram and more — each with a reason why it helps them get the right assignments.
+                </div>
+              </div>
+            </div>
+
             {error && (
               <div style={{
                 fontSize: '13px', color: '#A32D2D', background: '#FCEBEB',
@@ -312,24 +368,62 @@ export default function UserManagement({ session, userRole = 'admin' }) {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{
-                  width: '36px', height: '36px', borderRadius: '50%',
-                  background: 'var(--bg-secondary)', border: '0.5px solid var(--border)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)',
-                  flexShrink: 0,
-                }}>
+                <div
+                  onClick={() => onViewProfile && onViewProfile(u.id)}
+                  title="View profile"
+                  style={{
+                    width: '36px', height: '36px', borderRadius: '50%',
+                    background: '#bc1723',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '13px', fontWeight: 700, color: '#fff',
+                    flexShrink: 0,
+                    cursor: onViewProfile ? 'pointer' : 'default',
+                    transition: 'opacity 0.15s',
+                  }}
+                  onMouseOver={e => { if (onViewProfile) e.currentTarget.style.opacity = '0.8' }}
+                  onMouseOut={e => e.currentTarget.style.opacity = '1'}
+                >
                   {(u.full_name || u.email).charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>
                     {u.full_name || '—'}
                   </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{u.email}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{u.email}</span>
+                    {u.base_city && (
+                      <span style={{
+                        fontSize: '11px', color: 'var(--text-tertiary)',
+                        display: 'flex', alignItems: 'center', gap: '3px',
+                      }}>
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="M5 1C3.34 1 2 2.34 2 4c0 2.25 3 5.5 3 5.5S8 6.25 8 4c0-1.66-1.34-3-3-3z" stroke="#9CA3AF" strokeWidth="1" fill="none"/>
+                          <circle cx="5" cy="4" r="1" fill="#9CA3AF"/>
+                        </svg>
+                        {u.base_city}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {/* View profile */}
+                {onViewProfile && (
+                  <button
+                    onClick={() => onViewProfile(u.id)}
+                    style={{
+                      padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
+                      background: 'none', border: '0.5px solid var(--border-strong)',
+                      borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                      color: 'var(--text-secondary)', transition: 'all 0.15s',
+                    }}
+                    onMouseOver={e => { e.currentTarget.style.borderColor = '#bc1723'; e.currentTarget.style.color = '#bc1723' }}
+                    onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                  >
+                    View profile
+                  </button>
+                )}
                 {/* Inline resend message */}
                 {resendMsg[u.id] && (
                   <span style={{
