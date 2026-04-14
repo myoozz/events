@@ -171,7 +171,7 @@ function ProductSim() {
   const [step, setStep] = useState(0)
   const w = useWindowSize()
   const isMobile = w < 640
-  const STEPS = ['Brief', 'Elements', 'Costs', 'Export', 'Execute', 'Deliver']
+  const STEPS = ['Brief', 'Elements', 'Team', 'Track', 'Analyse', 'Deliver']
   const DOCS  = ['Proposal', 'Element master', 'Task sheet', 'Cue sheet']
 
   return (
@@ -233,84 +233,208 @@ function ProductSim() {
 function SimContent({ step, DOCS }) {
   return (
     <div style={{ padding:'24px' }}>
+
+      {/* ── BRIEF ── */}
       {step===0 && (
         <div>
           <div style={{ fontSize:'11px', fontWeight:700, color:C.text3, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'16px' }}>Event brief</div>
-          {[['Event name',"Your Client's product launch"],['Client','Your client · Consumer brand'],['Cities','Delhi · Mumbai'],['Date','15 Mar · 22 Mar'],['Agency fee','15%'],['GST','18%']].map(([l,v],i)=>(
-            <div key={i} style={{ display:'flex', gap:'12px', marginBottom:'10px', fontSize:'13px', flexWrap:'wrap' }}>
+          {[
+            ['Event name',"Your Client's product launch"],
+            ['Client','Your client · Consumer brand'],
+            ['Cities','Delhi · Mumbai'],
+            ['Date','15 Mar · 22 Mar'],
+            ['Agency fee','15%'],
+            ['GST','18%'],
+          ].map(([l,v],i)=>(
+            <div key={i} style={{ display:'flex', gap:'12px', marginBottom:'10px', fontSize:'13px', flexWrap:'wrap', animation:`slideIn 0.35s ease ${i*0.06}s both` }}>
               <span style={{ color:C.text3, width:'96px', flexShrink:0 }}>{l}</span>
               <span style={{ color:C.text, fontWeight:500 }}>{v}</span>
             </div>
           ))}
         </div>
       )}
+
+      {/* ── ELEMENTS → TASKS ── */}
       {step===1 && (
         <div>
-          <div style={{ fontSize:'11px', fontWeight:700, color:C.text3, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'16px' }}>Elements — Production</div>
-          {[['Stage 40×20ft','40×20 ft','×1'],['LED Wall P3.9','10×6 ft','×2'],['Arch Gate','9×16 ft','×1'],['Registration Desk','8×3 ft','×3']].map(([n,s,q],i)=>(
-            <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto', gap:'8px', padding:'8px 0', borderBottom:`1px solid ${C.border}`, fontSize:'12px', alignItems:'center' }}>
-              <span style={{ color:C.text, fontWeight:500 }}>{n}</span>
-              <span style={{ color:C.text3 }}>{s}</span>
-              <span style={{ color:C.text3 }}>{q}</span>
-              <span style={{ width:'8px', height:'8px', borderRadius:'50%', background:'#FCD34D', display:'inline-block' }}/>
+          <div style={{ fontSize:'11px', fontWeight:700, color:C.text3, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'12px' }}>Elements — Stage & AV · Delhi</div>
+          {[
+            { el:'Stage 40×20 ft',   assigned:true,  assignee:'Abhishek', delay:0 },
+            { el:'LED Wall P3.9 · 24×12 ft', assigned:true, assignee:'Naveen', delay:0.07 },
+            { el:'Sound Line Array', assigned:false, assignee:null, delay:0.14 },
+            { el:'Registration Backdrop', assigned:false, assignee:null, delay:0.21 },
+          ].map((item,i) => (
+            <div key={i} style={{
+              display:'flex', alignItems:'center', gap:'10px',
+              padding:'10px 12px',
+              background: item.assigned ? 'rgba(188,23,35,0.04)' : C.bg,
+              border:`1px solid ${item.assigned ? 'rgba(188,23,35,0.2)' : C.border}`,
+              borderRadius:'8px', marginBottom:'8px',
+              animation: item.assigned
+                ? `slideIn 0.4s ease ${item.delay}s both`
+                : `slideIn 0.4s ease ${item.delay}s both, taskPop 2.4s ease ${1.2+i*0.3}s infinite`,
+            }}>
+              <div style={{ flex:1, fontSize:'12px', color:C.text, fontWeight: item.assigned ? 500 : 400 }}>{item.el}</div>
+              {item.assigned ? (
+                <>
+                  <span style={{ fontSize:'9px', fontWeight:700, color:C.red, background:C.redDim, padding:'2px 8px', borderRadius:'20px', letterSpacing:'0.3px', flexShrink:0 }}>TASK</span>
+                  <div style={{ width:'22px', height:'22px', borderRadius:'50%', background:C.bg2, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'9px', fontWeight:700, color:C.text2, flexShrink:0 }}>{item.assignee[0]}</div>
+                </>
+              ) : (
+                <span style={{ fontSize:'10px', color:C.text3 }}>+ assign →</span>
+              )}
             </div>
           ))}
+          <p style={{ fontSize:'11px', color:C.text3, marginTop:'10px' }}>21 categories pre-loaded. Every element becomes a task with one tap.</p>
         </div>
       )}
+
+      {/* ── TEAM ── */}
       {step===2 && (
         <div>
-          <div style={{ fontSize:'11px', fontWeight:700, color:C.text3, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'16px' }}>Cost summary — Delhi</div>
-          {[['Production','₹8,40,000'],['Sound & Light','₹3,20,000'],['Branding','₹1,85,000'],['Manpower','₹72,000']].map(([cat,amt],i)=>(
-            <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:`1px solid ${C.border}`, fontSize:'13px' }}>
-              <span style={{ color:C.text2 }}>{cat}</span>
-              <span style={{ color:C.text, fontWeight:600, fontFamily:"'Cormorant Garamond',serif", fontSize:'15px' }}>{amt}</span>
+          <div style={{ fontSize:'11px', fontWeight:700, color:C.text3, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'14px' }}>Team · Roles & Access</div>
+          {[
+            { role:'Admin',       scope:'Full access',     color:'#bc1723', desc:'Creates events · manages team · sees all' },
+            { role:'Manager',     scope:'Assigned events', color:'#2563EB', desc:'Elements · costs · vendors · documents' },
+            { role:'Event Lead',  scope:'Ops or Full',     color:'#7C3AED', desc:'Tasks · production · execution' },
+            { role:'Team',        scope:'View only',       color:'#374151', desc:'Assigned work · ground execution' },
+          ].map((r,i) => (
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:'10px', padding:'10px 12px', background:C.bg, border:`1px solid ${C.border}`, borderRadius:'8px', marginBottom:'8px', animation:`slideIn 0.4s cubic-bezier(0.16,1,0.3,1) ${i*0.1}s both` }}>
+              <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:r.color, flexShrink:0 }}/>
+              <div style={{ flex:1 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <span style={{ fontSize:'12px', fontWeight:600, color:C.text }}>{r.role}</span>
+                  <span style={{ fontSize:'9px', color:r.color, background:`${r.color}18`, padding:'2px 8px', borderRadius:'20px', fontWeight:700, letterSpacing:'0.2px' }}>{r.scope}</span>
+                </div>
+                <div style={{ fontSize:'10px', color:C.text3, marginTop:'2px' }}>{r.desc}</div>
+              </div>
             </div>
           ))}
-          <div style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', fontSize:'14px', marginTop:'4px' }}>
-            <span style={{ color:C.text, fontWeight:600 }}>Grand total (with fees)</span>
-            <span style={{ color:C.red, fontWeight:700, fontFamily:"'Cormorant Garamond',serif", fontSize:'18px' }}>₹16,54,200</span>
+          <div style={{ marginTop:'10px', padding:'9px 12px', background:C.redDim, border:`1px solid rgba(188,23,35,0.12)`, borderRadius:'7px' }}>
+            <span style={{ fontSize:'11px', color:C.red, fontWeight:600 }}>Ground staff · </span>
+            <span style={{ fontSize:'11px', color:C.text2 }}>WhatsApp link only — no login, no app download needed.</span>
           </div>
         </div>
       )}
+
+      {/* ── TRACK ── */}
       {step===3 && (
         <div>
-          <div style={{ fontSize:'11px', fontWeight:700, color:C.text3, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'16px' }}>Documents ready</div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
-            {DOCS.map((doc,i) => (
-              <div key={i} style={{ padding:'12px 14px', background:C.white, border:`1px solid ${C.border}`, borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'space-between', fontFamily:"'DM Sans',sans-serif" }}>
-                <span style={{ fontSize:'12px', fontWeight:500, color:C.text }}>{doc}</span>
-                <span style={{ fontSize:'11px', color:C.red, cursor:'pointer' }}>↓</span>
+          <div style={{ fontSize:'11px', fontWeight:700, color:C.text3, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'14px' }}>Live notifications · Task tracking</div>
+          {/* Bell */}
+          <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'14px', padding:'10px 14px', background:C.bg, border:`1px solid ${C.border}`, borderRadius:'8px', animation:'slideIn 0.3s ease both' }}>
+            <div style={{ position:'relative', flexShrink:0 }}>
+              <span style={{ fontSize:'20px', lineHeight:1 }}>🔔</span>
+              <div style={{ position:'absolute', top:'-3px', right:'-5px', width:'14px', height:'14px', borderRadius:'50%', background:C.red, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'8px', color:'#fff', fontWeight:700, animation:'pulse 1.8s infinite' }}>3</div>
+            </div>
+            <span style={{ fontSize:'12px', color:C.text2 }}>3 new · tap to mark read</span>
+          </div>
+          {/* Notifications */}
+          {[
+            { icon:'✅', msg:'Stage setup assigned to Abhishek', time:'2m ago', border:'rgba(22,163,74,0.18)', bg:'rgba(22,163,74,0.04)' },
+            { icon:'🗂️', msg:'Annual Summit approved — ready to execute', time:'14m ago', border:'rgba(188,23,35,0.18)', bg:'rgba(188,23,35,0.03)' },
+            { icon:'🔄', msg:'Naveen marked sound check in-progress', time:'1h ago', border:C.border, bg:C.bg },
+          ].map((n,i) => (
+            <div key={i} style={{ display:'flex', gap:'10px', padding:'10px 12px', background:n.bg, border:`1px solid ${n.border}`, borderRadius:'8px', marginBottom:'7px', animation:`notifSlide 0.5s cubic-bezier(0.16,1,0.3,1) ${0.1+i*0.13}s both` }}>
+              <span style={{ fontSize:'15px', flexShrink:0, lineHeight:'1.4' }}>{n.icon}</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:'12px', color:C.text, lineHeight:1.4 }}>{n.msg}</div>
+                <div style={{ fontSize:'10px', color:C.text3, marginTop:'3px' }}>{n.time}</div>
+              </div>
+            </div>
+          ))}
+          {/* WhatsApp link */}
+          <div style={{ marginTop:'10px', padding:'9px 12px', background:'rgba(37,99,235,0.04)', border:'1px solid rgba(37,99,235,0.15)', borderRadius:'7px', animation:'slideIn 0.4s ease 0.5s both' }}>
+            <div style={{ fontSize:'11px', fontWeight:600, color:'#2563EB', marginBottom:'2px' }}>WhatsApp public link</div>
+            <div style={{ fontSize:'11px', color:C.text2 }}>Joseph (Delhi ground) opens link → sees his task → marks done → you see it live.</div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ANALYSE ── */}
+      {step===4 && (
+        <div>
+          <div style={{ fontSize:'11px', fontWeight:700, color:C.text3, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'14px' }}>Analytics · Admin only</div>
+          {/* Event pipeline */}
+          <div style={{ marginBottom:'18px' }}>
+            <div style={{ fontSize:'12px', fontWeight:600, color:C.text, marginBottom:'9px' }}>Event pipeline</div>
+            {[
+              { label:'Active',           pct:62, color:C.red },
+              { label:'Pending approval', pct:24, color:'#F59E0B' },
+              { label:'Delivered',        pct:14, color:'#16A34A' },
+            ].map((b,i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'7px', animation:`slideIn 0.35s ease ${i*0.08}s both` }}>
+                <div style={{ fontSize:'11px', color:C.text2, width:'110px', flexShrink:0 }}>{b.label}</div>
+                <div style={{ flex:1, height:'6px', background:C.bg3, borderRadius:'3px', overflow:'hidden' }}>
+                  <div style={{ height:'100%', background:b.color, borderRadius:'3px', '--bar-w':`${b.pct}%`, width:`${b.pct}%`, animation:`barGrow 0.9s cubic-bezier(0.16,1,0.3,1) ${0.3+i*0.15}s both` }}/>
+                </div>
+                <div style={{ fontSize:'10px', color:C.text3, width:'22px', textAlign:'right', flexShrink:0 }}>{b.pct}%</div>
+              </div>
+            ))}
+          </div>
+          {/* Team workload */}
+          <div>
+            <div style={{ fontSize:'12px', fontWeight:600, color:C.text, marginBottom:'9px' }}>Team workload</div>
+            {[
+              { name:'Abhishek', done:8, total:11 },
+              { name:'Naveen',   done:5, total:11 },
+              { name:'Joseph',   done:2, total:11 },
+            ].map((p,i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:'9px', marginBottom:'8px', animation:`slideIn 0.35s ease ${0.4+i*0.1}s both` }}>
+                <div style={{ width:'24px', height:'24px', borderRadius:'50%', background:C.bg3, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', fontWeight:700, color:C.text2, flexShrink:0 }}>{p.name[0]}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'3px' }}>
+                    <span style={{ fontSize:'11px', color:C.text }}>{p.name}</span>
+                    <span style={{ fontSize:'10px', color:C.text3 }}>{p.done}/{p.total}</span>
+                  </div>
+                  <div style={{ display:'flex', height:'4px', borderRadius:'2px', overflow:'hidden', background:C.bg3 }}>
+                    <div style={{ width:`${(p.done/p.total)*100}%`, background:p.done>6?'#16A34A':p.done>3?'#F59E0B':C.red, transition:'width 0.9s ease' }}/>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize:'10px', color:C.text3, marginTop:'12px' }}>Volume and velocity only — no financials shown here.</p>
+        </div>
+      )}
+
+      {/* ── DELIVER ── */}
+      {step===5 && (
+        <div>
+          <div style={{ textAlign:'center', paddingBottom:'14px', paddingTop:'4px' }}>
+            <div style={{ fontSize:'34px', marginBottom:'6px', animation:'float 3s ease-in-out infinite' }}>🎉</div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'20px', fontWeight:600, color:C.text }}>Event delivered.</div>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'6px' }}>
+            {[
+              { icon:'📄', name:'Proposal',             done:true },
+              { icon:'📋', name:'Element master',       done:true },
+              { icon:'👥', name:'Task sheet',           done:true },
+              { icon:'🎨', name:'Production list',      done:true },
+              { icon:'📞', name:'Vendor sheet',         done:true },
+              { icon:'📅', name:'Visual control chart', done:true },
+              { icon:'🎬', name:'Cue sheet',            done:true },
+              { icon:'✈️', name:'Travel plan',          done:false, soon:true },
+            ].map((doc,i) => (
+              <div key={i} style={{
+                display:'flex', alignItems:'center', gap:'7px', padding:'8px 10px',
+                background: doc.soon ? C.bg : 'rgba(22,163,74,0.05)',
+                border:`1px solid ${doc.soon ? C.border : 'rgba(22,163,74,0.15)'}`,
+                borderRadius:'6px',
+                animation: doc.done ? `slideIn 0.4s ease ${i*0.07}s both, dlPulse 1s ease ${0.4+i*0.07}s both` : `slideIn 0.4s ease ${i*0.07}s both`,
+              }}>
+                <span style={{ fontSize:'13px' }}>{doc.icon}</span>
+                <span style={{ fontSize:'11px', color: doc.soon ? C.text3 : C.text, fontWeight: doc.soon ? 300 : 500, flex:1 }}>{doc.name}</span>
+                {doc.soon
+                  ? <span style={{ fontSize:'8px', color:C.text3, background:C.bg3, padding:'1px 5px', borderRadius:'3px' }}>soon</span>
+                  : <span style={{ fontSize:'12px', color:'#16A34A', fontWeight:700 }}>✓</span>
+                }
               </div>
             ))}
           </div>
         </div>
       )}
-      {step===4 && (
-        <div>
-          <div style={{ fontSize:'11px', fontWeight:700, color:C.text3, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'16px' }}>Execution — assigned</div>
-          {[
-            { n:'Abhishek', r:'Stage & Production', s:'In progress', c:'#2563EB' },
-            { n:'Naveen',   r:'Sound & Light',      s:'Not started', c:C.text3 },
-            { n:'Joseph',   r:'Ground Delhi',        s:'Public link', c:'#D97706' },
-          ].map((p,i) => (
-            <div key={i} style={{ display:'flex', alignItems:'center', gap:'12px', padding:'8px 0', borderBottom:`1px solid ${C.border}` }}>
-              <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:C.bg2, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:700, color:C.text2, flexShrink:0 }}>{p.n[0]}</div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:'12px', fontWeight:500, color:C.text }}>{p.n}</div>
-                <div style={{ fontSize:'11px', color:C.text3 }}>{p.r}</div>
-              </div>
-              <span style={{ fontSize:'11px', fontWeight:600, color:p.c }}>{p.s}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      {step===5 && (
-        <div style={{ textAlign:'center', paddingTop:'24px' }}>
-          <div style={{ fontSize:'48px', marginBottom:'16px' }}>🎉</div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'22px', fontWeight:600, color:C.text, marginBottom:'8px' }}>Event delivered.</div>
-          <div style={{ fontSize:'13px', color:C.text2, lineHeight:1.7 }}>All 8 documents saved. Client proposal sent. Final accounts reconciled.</div>
-        </div>
-      )}
+
     </div>
   )
 }
@@ -338,7 +462,7 @@ export default function LandingPage() {
   async function handleSubmit(e) {
     e.preventDefault(); if (!email.trim() || !name.trim()) return
     setSubmitting(true)
-    try { await supabase.from('early_access').insert({ email:email.trim(), full_name:name.trim(), company:company.trim(), status:'pending' }); setSubmitted(true) }
+    try { await supabase.from('access_requests').insert({ email:email.trim(), full_name:name.trim(), company:company.trim(), status:'pending' }); setSubmitted(true) }
     catch(err) { console.error(err) }
     setSubmitting(false)
   }
@@ -357,11 +481,11 @@ export default function LandingPage() {
 
   const FEATURES = [
     { icon:'📋', tag:'Core',        title:'Proposals that close',           body:'21 standard categories, pre-loaded. Import your existing Excel or build from scratch. Track your cost and client cost separately — always know where you stand. Export a branded proposal in minutes.' },
-    { icon:'⚡', tag:'Core',        title:'Execution without chaos',         body:'Every element becomes a task. Assign to team or freelancer — registered or not. Share one public link on WhatsApp. They mark it done. You see it. No app download, no signup.' },
+    { icon:'⚡', tag:'Core',        title:'Execution without chaos',         body:'Every element becomes a task. Assign to any team member — registered, freelancer, or ground staff. Real-time notifications on every assignment, status change, and approval. Share one public WhatsApp link for staff who need no login, no app.' },
     { icon:'🎨', tag:'Operations',  title:'Production that never misses',    body:'Three streams tracked: creative, fabrication, print. Creative must be client-approved before print. QC confirmation required before anything is marked done. Nothing goes out wrong.' },
     { icon:'🎬', tag:'Production',  title:'Show flow in minutes',            body:'Name every screen — Main LED, Left Panel, Sound, Light, Followspot. Enter duration, end fills automatically. Multi-city, one sheet per city, exported branded.' },
     { icon:'🧠', tag:'AI',          title:'Rate cards that remember',        body:'Upload vendor rate cards and the system learns your costs from day one. No rate cards yet? System generates intelligent suggestions per element, per category — built from 100+ years of collective expertise.' },
-    { icon:'🗂', tag:'Multi-purpose', title:'Start anywhere. End complete.', body:'Just need a cue sheet tonight? Start there. Quick estimate? Done in minutes. Running the full lifecycle? Everything connects. One system, every entry point.' },
+    { icon:'🏋️', tag:'Team',        title:'Train your team how to run an event.',  body:'Add your team — managers, leads, ground staff. Each role sees exactly what they need. Assign tasks with one tap, set deadlines, track execution. Your team learns the workflow by working it. Every event, everyone gets sharper.' },
   ]
 
   const DOCS = [
@@ -386,6 +510,11 @@ export default function LandingPage() {
         ::-webkit-scrollbar-thumb{background:${C.border2};border-radius:2px}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes barGrow{from{width:0}to{width:var(--bar-w,100%)}}
+        @keyframes notifSlide{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes taskPop{0%{border-color:rgba(188,23,35,0.15);background:rgba(188,23,35,0.03)}50%{border-color:rgba(188,23,35,0.45);background:rgba(188,23,35,0.09)}100%{border-color:rgba(188,23,35,0.15);background:rgba(188,23,35,0.03)}}
+        @keyframes dlPulse{0%,100%{box-shadow:0 0 0 0 rgba(188,23,35,0)}60%{box-shadow:0 0 0 5px rgba(188,23,35,0.12)}}
         @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
       `}</style>
 
@@ -559,10 +688,18 @@ export default function LandingPage() {
         <div style={{ maxWidth:mw, margin:'0 auto' }}>
           <R style={{ textAlign:'center', marginBottom: isMobile ? '32px' : '52px' }}>
             <span style={s.chip}>Live product</span>
-            <h2 style={{ ...s.h2, textAlign:'center', marginBottom:'16px' }}>See exactly how it works.</h2>
-            <p style={{ ...s.body, margin:'0 auto', textAlign:'center', maxWidth:'480px' }}>A real event proposal, from blank to delivered. Tap any step.</p>
+            <h2 style={{ ...s.h2, textAlign:'center', marginBottom:'16px' }}>Your best event, every time.</h2>
+            <p style={{ ...s.body, margin:'0 auto', textAlign:'center', maxWidth:'480px' }}>Walk any stage. See how every role fits — from brief to final delivery.</p>
           </R>
           <ProductSim/>
+          <R style={{ textAlign:'center', marginTop:'28px' }}>
+            <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer"
+              style={{ display:'inline-flex', alignItems:'center', gap:'6px', padding:'11px 22px', border:`1px solid ${C.border2}`, borderRadius:'8px', fontSize:'13px', color:C.text2, textDecoration:'none', background:C.white, transition:'all 0.18s', fontFamily:"'DM Sans',sans-serif" }}
+              onMouseOver={e=>{e.currentTarget.style.borderColor=C.red;e.currentTarget.style.color=C.red;e.currentTarget.style.background=C.redDim}}
+              onMouseOut={e=>{e.currentTarget.style.borderColor=C.border2;e.currentTarget.style.color=C.text2;e.currentTarget.style.background=C.white}}>
+              Ready to go deeper? Try the live demo →
+            </a>
+          </R>
         </div>
       </section>
 
@@ -570,7 +707,7 @@ export default function LandingPage() {
       <section id="features" style={{ padding:sp, borderTop:`1px solid ${C.border}` }}>
         <div style={{ maxWidth:mw, margin:'0 auto' }}>
           <R style={{ textAlign:'center', marginBottom: isMobile ? '32px' : '56px' }}>
-            <span style={s.chip}>Six modules</span>
+            <span style={s.chip}>What's inside</span>
             <h2 style={{ ...s.h2, textAlign:'center' }}>Everything. <em style={{ color:C.red }}>Nothing extra.</em></h2>
           </R>
           {/* auto-fill with minmax handles all screen sizes naturally */}
@@ -720,7 +857,7 @@ export default function LandingPage() {
           <R style={{ textAlign:'center', marginBottom:'44px' }}>
             <div style={{ fontSize:'40px', marginBottom:'20px', animation:'float 3s ease-in-out infinite', display:'inline-block' }}>🎪</div>
             <h2 style={{ ...s.h2, textAlign:'center', marginBottom:'16px' }}>Join the first cohort.</h2>
-            <p style={{ ...s.body, textAlign:'center' }}>We're personally onboarding our early adopters. You'll get hands-on setup, direct access to the team, and a real say in what gets built next. Completely free during beta.</p>
+            <p style={{ ...s.body, textAlign:'center' }}>We run this on real events, right now. Join us — we onboard every agency personally.</p>
           </R>
           {submitted ? (
             <R>
@@ -788,7 +925,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'8px' }}>
-            <span style={{ fontSize:'11px', color:C.text3 }}>© 2025 Myoozz Consulting Pvt. Ltd. · Born in India · Built for the world</span>
+            <span style={{ fontSize:'11px', color:C.text3 }}>© 2026 Myoozz Consulting Pvt. Ltd. · Born in India · Built for the world</span>
             <div style={{ display:'flex', gap:'16px' }}>
               <span style={{ fontSize:'11px', color:C.text3, fontFamily:"'DM Mono',monospace" }}>v0.50.0-beta</span>
               <span style={{ fontSize:'11px', color:C.text3, fontFamily:"'DM Mono',monospace" }}>www.myoozz.events</span>
