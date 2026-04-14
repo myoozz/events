@@ -7,6 +7,7 @@ import EventPage from './EventPage'
 import AssignEvent from './AssignEvent'
 
 import { logEventCreated, logEventArchived, logEventRestored, logEventAssigned } from '../utils/activityLogger'
+import { notifyApprovalRequired, notifyEventCreated } from '../utils/notificationService'
 const statusColor = {
   pitch: { bg: 'var(--blue-light)', color: 'var(--blue)' },
   submitted: { bg: 'var(--amber-light)', color: 'var(--amber)' },
@@ -266,10 +267,46 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
     setLoading(false)
   }
 
-  function handleCreated(newEvent) {
+  async function handleCreated(newEvent) {
     setEvents(prev => [newEvent, ...prev])
     setModeSelectorEvent(newEvent)
     logEventCreated(newEvent, session)
+
+    // Phase C — notify relevant users based on who created the event
+    try {
+      const { data: { user: actor } } = await supabase.auth.getUser()
+      const actorId = actor?.id
+
+      // Fetch all admin + manager IDs (excluding the actor)
+      const { data: staffUsers } = await supabase
+        .from('users')
+        .select('id, role')
+        .in('role', ['admin', 'manager'])
+
+      const adminIds   = (staffUsers || []).filter(u => u.role === 'admin'   && u.id !== actorId).map(u => u.id)
+      const managerIds = (staffUsers || []).filter(u => u.role === 'manager' && u.id !== actorId).map(u => u.id)
+
+      if (userRole === 'manager') {
+        // Manager created → admins need to approve it
+        await notifyApprovalRequired({
+          adminIds,
+          actorId,
+          eventName: newEvent.event_name,
+          eventId:   newEvent.id,
+        })
+      } else if (userRole === 'admin') {
+        // Admin created → notify managers so they know a new job is in the system
+        await notifyEventCreated({
+          adminIds:  managerIds,   // reusing adminIds param to notify managers
+          actorId,
+          eventName: newEvent.event_name,
+          eventId:   newEvent.id,
+        })
+      }
+    } catch (err) {
+      // Notification failure should never break event creation
+      console.error('[Dashboard] handleCreated notification error:', err)
+    }
   }
 
   async function handleDuplicate(ev) {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { notifyEventAssigned } from '../utils/notificationService'
 
 const SCOPE_OPTIONS = [
   { value: 'full',  label: 'Full Access',      desc: 'All tabs' },
@@ -51,13 +52,40 @@ export default function AssignEvent({ event, onClose, onUpdated }) {
 
   async function handleSave() {
     setSaving(true)
+
+    // Phase C — capture who is newly assigned before saving
+    const previouslyAssigned = event.assigned_to || []
+    const newlyAssigned = selected.filter(email => !previouslyAssigned.includes(email))
+
     const { data } = await supabase
       .from('events')
       .update({ assigned_to: selected, delegation_scope: delegationScope })
       .eq('id', event.id)
       .select('*, clients(group_name, brand_name)')
       .single()
-    if (data) onUpdated(data)
+
+    if (data) {
+      // Phase C — notify each newly assigned user (skip re-saves of existing members)
+      if (newlyAssigned.length > 0) {
+        const { data: { user: actor } } = await supabase.auth.getUser()
+        const actorId = actor?.id
+
+        await Promise.all(
+          newlyAssigned.map(email => {
+            const recipient = users.find(u => u.email === email)
+            if (!recipient) return Promise.resolve()
+            return notifyEventAssigned({
+              recipientId: recipient.id,
+              actorId,
+              eventName:   event.event_name,
+              eventId:     event.id,
+            })
+          })
+        )
+      }
+      onUpdated(data)
+    }
+
     setSaving(false)
     onClose()
   }

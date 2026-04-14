@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../supabase';
 import { logActivity } from '../utils/activityLogger';
+import { notifyTaskAssigned, notifyTaskStatusChanged } from '../utils/notificationService';
 
 /* ─── helpers ──────────────────────────────────────────────── */
 const SCHEMA = import.meta.env.VITE_SUPABASE_SCHEMA || 'public';
@@ -121,6 +122,19 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
         details:     { assigned_to: user?.full_name || 'Unassigned' },
         session,
       });
+
+      // Phase C — notify the person being assigned (skip if unassigning)
+      if (assignTo) {
+        await notifyTaskAssigned({
+          recipientId: assignTo,
+          actorId:     session.user.id,
+          taskTitle:   modal.taskTitle,
+          eventName:   event?.name,
+          eventId,
+          taskId:      modal.taskId,
+        });
+      }
+
       await fetchTasks();
       setModal(null);
     }
@@ -128,7 +142,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
   }
 
   /* ── status ── */
-  async function updateStatus(taskId, taskTitle, status) {
+  async function updateStatus(taskId, taskTitle, status, assignedTo) {
     const { error } = await db('tasks').update({ status }).eq('id', taskId);
     if (!error) {
       await logActivity({
@@ -139,6 +153,43 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
         details:     { status },
         session,
       });
+
+      // Phase C — smart notification routing
+      const actorId = session.user.id;
+
+      // Case 1: Someone else changed the status → notify the assignee
+      if (assignedTo && assignedTo !== actorId) {
+        await notifyTaskStatusChanged({
+          recipientId: assignedTo,
+          actorId,
+          taskTitle,
+          newStatus:   status,
+          eventName:   event?.name,
+          eventId,
+          taskId,
+        });
+      }
+
+      // Case 2: Assignee completed their own task → notify all admins + managers
+      if (assignedTo === actorId && (status === 'done' || status === 'completed')) {
+        const managers = users.filter(
+          (u) => (u.role === 'admin' || u.role === 'manager') && u.id !== actorId
+        );
+        await Promise.all(
+          managers.map((mgr) =>
+            notifyTaskStatusChanged({
+              recipientId: mgr.id,
+              actorId,
+              taskTitle,
+              newStatus:   status,
+              eventName:   event?.name,
+              eventId,
+              taskId,
+            })
+          )
+        );
+      }
+
       await fetchTasks();
     }
     setStatusMenu(null);
@@ -292,7 +343,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                                   <button
                                     key={s}
                                     style={{ ...styles.statusOption, color: m.color }}
-                                    onClick={() => updateStatus(task.id, task.title, s)}
+                                    onClick={() => updateStatus(task.id, task.title, s, task.assigned_to)}
                                   >
                                     {m.label}
                                   </button>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { version } from '../../package.json'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
@@ -10,6 +10,8 @@ import FeedbackButton from './FeedbackButton'
 import FeedbackAdmin from './FeedbackAdmin'
 import ActivityLog from './ActivityLog'
 import ProfilePage from './ProfilePage'
+import NotificationBell from './NotificationBell'
+import { fetchUnreadCount, subscribeToNotifications } from '../utils/notificationService'
 
 const NAV_ITEMS = [
   {
@@ -98,13 +100,17 @@ export default function AppShell({ session }) {
   const navigate = useNavigate()
   const [userRole,    setUserRole]    = useState(null)
   const [userName,    setUserName]    = useState('')
-  const [userId,      setUserId]      = useState(null)   // ← NEW: own DB UUID
+  const [userId,      setUserId]      = useState(null)   // ← own DB UUID
   const [userLoading, setUserLoading] = useState(true)
   const [activeTab,   setActiveTab]   = useState('events')
-  const [profileUserId, setProfileUserId] = useState(null)  // ← NEW: whose profile is open
-  const [prevTab,     setPrevTab]     = useState('events')  // ← NEW: to go back from profile
+  const [profileUserId, setProfileUserId] = useState(null)  // whose profile is open
+  const [prevTab,     setPrevTab]     = useState('events')  // to go back from profile
   const [collapsed,   setCollapsed]   = useState(false)
   const [isMobile,    setIsMobile]    = useState(typeof window !== 'undefined' && window.innerWidth < 768)
+
+  // Phase C — Notifications
+  const [unreadCount,  setUnreadCount]  = useState(0)
+  const unsubNotifRef = useRef(null)  // holds realtime unsubscribe fn
 
   // Bug 10 — increment this to tell Dashboard to go back to events list
   const [dashboardResetKey, setDashboardResetKey] = useState(0)
@@ -152,9 +158,37 @@ export default function AppShell({ session }) {
     fetchUser()
   }, [session])
 
+  // Phase C — fetch initial unread count + subscribe to realtime once userId is known
+  useEffect(() => {
+    if (!userId) return
+
+    // Initial badge count
+    fetchUnreadCount(userId).then(setUnreadCount)
+
+    // Realtime — new notification → increment badge instantly
+    unsubNotifRef.current = subscribeToNotifications(userId, () => {
+      setUnreadCount(c => c + 1)
+    })
+
+    // Cleanup on unmount or userId change
+    return () => {
+      if (unsubNotifRef.current) unsubNotifRef.current()
+    }
+  }, [userId])
+
   async function handleSignOut() {
     await supabase.auth.signOut()
     navigate('/')
+  }
+
+  // Phase C — called by NotificationBell when user marks read
+  function handleMarkAllRead(type) {
+    if (type === 'all') {
+      setUnreadCount(0)
+    } else {
+      // single mark-read — decrement, floor at 0
+      setUnreadCount(c => Math.max(0, c - 1))
+    }
   }
 
   // Bug 10 — clicking 'Events' while already on events goes back to the list
@@ -489,7 +523,7 @@ export default function AppShell({ session }) {
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
               background: 'none', border: 'none', cursor: 'pointer',
-              padding: '6px 12px',
+              padding: '6px 12px', position: 'relative',
             }}
           >
             <div style={{
@@ -497,8 +531,17 @@ export default function AppShell({ session }) {
               background: activeTab === 'profile' ? '#bc1723' : 'var(--text-tertiary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '9px', fontWeight: 700, color: '#fff',
+              position: 'relative',
             }}>
               {ini || userName.charAt(0).toUpperCase()}
+              {/* Unread dot on mobile Me button */}
+              {unreadCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: '-3px', right: '-3px',
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  background: '#bc1723', border: '1.5px solid var(--bg)',
+                }} />
+              )}
             </div>
             <span style={{ fontSize: '10px', fontFamily: 'var(--font-body)', color: activeTab === 'profile' ? 'var(--text)' : 'var(--text-tertiary)', fontWeight: activeTab === 'profile' ? 500 : 400 }}>
               Me
@@ -528,7 +571,28 @@ export default function AppShell({ session }) {
         display: 'flex',
         flexDirection: 'column',
       }}>
-        <main style={{
+      {/* ── Notification top bar ── */}
+        <div style={{
+          height:          '48px',
+          display:         'flex',
+          alignItems:      'center',
+          justifyContent:  'flex-end',
+          padding:         '0 32px',
+          borderBottom:    '0.5px solid var(--border)',
+          background:      'var(--bg)',
+          position:        'sticky',
+          top:             0,
+          zIndex:          40,
+          flexShrink:      0,
+        }}>
+          <NotificationBell
+            userId={userId}
+            unreadCount={unreadCount}
+            onMarkAllRead={handleMarkAllRead}
+          />
+        </div>
+
+      <main style={{
           flex: 1,
           maxWidth: '960px', margin: '0 auto', width: '100%',
           padding: isMobile ? '16px' : '40px 32px',
