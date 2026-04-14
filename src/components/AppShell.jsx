@@ -9,6 +9,7 @@ import RateCard from './RateCard'
 import FeedbackButton from './FeedbackButton'
 import FeedbackAdmin from './FeedbackAdmin'
 import ActivityLog from './ActivityLog'
+import ProfilePage from './ProfilePage'
 
 const NAV_ITEMS = [
   {
@@ -84,20 +85,26 @@ const NAV_ITEMS = [
 
 const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team' }
 const ROLE_COLORS = {
-  admin:       { bg: 'var(--green-light)', color: 'var(--green)' },
-  manager:     { bg: '#EFF6FF',            color: '#1D4ED8'       },
-  event_lead:  { bg: '#FEF3C7',            color: '#92400E'       },
-  team:        { bg: 'var(--bg)',          color: 'var(--text-secondary)' },
+  admin:      { bg: 'var(--green-light)', color: 'var(--green)' },
+  manager:    { bg: '#EFF6FF',            color: '#1D4ED8'      },
+  event_lead: { bg: '#FEF3C7',            color: '#92400E'      },
+  team:       { bg: 'var(--bg)',          color: 'var(--text-secondary)' },
 }
+
+const userInitials = (name = '') =>
+  name.trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').slice(0, 2).join('')
 
 export default function AppShell({ session }) {
   const navigate = useNavigate()
-  const [userRole, setUserRole] = useState(null)
-  const [userName, setUserName] = useState('')
+  const [userRole,    setUserRole]    = useState(null)
+  const [userName,    setUserName]    = useState('')
+  const [userId,      setUserId]      = useState(null)   // ← NEW: own DB UUID
   const [userLoading, setUserLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('events')
-  const [collapsed, setCollapsed] = useState(false)
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768)
+  const [activeTab,   setActiveTab]   = useState('events')
+  const [profileUserId, setProfileUserId] = useState(null)  // ← NEW: whose profile is open
+  const [prevTab,     setPrevTab]     = useState('events')  // ← NEW: to go back from profile
+  const [collapsed,   setCollapsed]   = useState(false)
+  const [isMobile,    setIsMobile]    = useState(typeof window !== 'undefined' && window.innerWidth < 768)
 
   // Bug 10 — increment this to tell Dashboard to go back to events list
   const [dashboardResetKey, setDashboardResetKey] = useState(0)
@@ -113,27 +120,31 @@ export default function AppShell({ session }) {
       const timeout = setTimeout(() => {
         setUserRole('admin')
         setUserName(session.user.email)
+        setUserId(session.user.id)
         setUserLoading(false)
       }, 4000)
       try {
         const { data } = await supabase
           .from('users')
-          .select('role, full_name')
+          .select('id, role, full_name')   // ← added id
           .eq('email', session.user.email)
           .single()
         clearTimeout(timeout)
         if (data) {
           setUserRole(data.role)
           setUserName(data.full_name || session.user.email)
+          setUserId(data.id)               // ← store id
         } else {
           setUserRole('admin')
           setUserName(session.user.email)
+          setUserId(session.user.id)
         }
       } catch (err) {
         clearTimeout(timeout)
         console.error('fetchUser error:', err)
         setUserRole('admin')
         setUserName(session.user.email)
+        setUserId(session.user.id)
       } finally {
         setUserLoading(false)
       }
@@ -151,11 +162,29 @@ export default function AppShell({ session }) {
     if (key === 'events' && activeTab === 'events') {
       setDashboardResetKey(k => k + 1)
     }
+    // leaving profile — clear profileUserId
+    if (activeTab === 'profile' && key !== 'profile') {
+      setProfileUserId(null)
+    }
     setActiveTab(key)
   }
 
-  const sidebarWidth = collapsed ? '60px' : '220px'
-  const visibleItems = NAV_ITEMS.filter(item => item.roles.includes(userRole))
+  // ← NEW: open any user's profile (own or another)
+  function openProfile(targetUserId) {
+    setPrevTab(activeTab === 'profile' ? prevTab : activeTab)
+    setProfileUserId(targetUserId)
+    setActiveTab('profile')
+  }
+
+  // ← NEW: back from profile → return to where they came from
+  function closeProfile() {
+    setProfileUserId(null)
+    setActiveTab(prevTab)
+  }
+
+  const sidebarWidth  = collapsed ? '60px' : '220px'
+  const visibleItems  = NAV_ITEMS.filter(item => item.roles.includes(userRole))
+  const ini           = userInitials(userName)
 
   if (userLoading) return (
     <div style={{
@@ -192,7 +221,7 @@ export default function AppShell({ session }) {
           overflow: 'hidden',
         }}>
 
-          {/* Bug 9 — Logo area: actual logo image with text fallback */}
+          {/* Logo area */}
           <div style={{
             height: '56px',
             display: 'flex',
@@ -207,7 +236,6 @@ export default function AppShell({ session }) {
                 onClick={() => handleNavClick('events')}
                 style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
-                {/* Try logo image first, fall back to text */}
                 <img
                   src="/myoozz-logo-light.png"
                   alt="Myoozz Events"
@@ -290,23 +318,37 @@ export default function AppShell({ session }) {
 
           {/* Bottom section */}
           <div style={{ padding: '12px 8px', borderTop: '0.5px solid var(--border)', flexShrink: 0 }}>
-            {/* User info */}
+
+            {/* ── User pill — clickable → own profile ── */}
             {!collapsed && (
-              <div style={{
-                padding: '10px 12px', marginBottom: '4px',
-                borderRadius: 'var(--radius-sm)', background: 'var(--bg-secondary)',
-              }}>
+              <button
+                onClick={() => openProfile(userId)}
+                title="View your profile"
+                style={{
+                  width: '100%', padding: '10px 12px', marginBottom: '4px',
+                  borderRadius: 'var(--radius-sm)', background: activeTab === 'profile' && profileUserId === userId
+                    ? 'var(--bg-secondary)' : 'var(--bg-secondary)',
+                  border: activeTab === 'profile' && profileUserId === userId
+                    ? '1px solid #bc1723' : '1px solid transparent',
+                  cursor: 'pointer', textAlign: 'left',
+                  transition: 'border-color 0.15s',
+                }}
+                onMouseOver={e => { e.currentTarget.style.borderColor = '#bc1723' }}
+                onMouseOut={e => {
+                  e.currentTarget.style.borderColor =
+                    (activeTab === 'profile' && profileUserId === userId) ? '#bc1723' : 'transparent'
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {/* initials circle */}
                   <div style={{
                     width: '28px', height: '28px', borderRadius: '50%',
-                    background: (ROLE_COLORS[userRole] || ROLE_COLORS.team).bg,
-                    border: '0.5px solid var(--border)',
+                    background: '#bc1723',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '11px', fontWeight: 500,
-                    color: (ROLE_COLORS[userRole] || ROLE_COLORS.team).color,
+                    fontSize: '11px', fontWeight: 700, color: '#fff',
                     flexShrink: 0,
                   }}>
-                    {userName.charAt(0).toUpperCase()}
+                    {ini || userName.charAt(0).toUpperCase()}
                   </div>
                   <div style={{ overflow: 'hidden' }}>
                     <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -317,7 +359,31 @@ export default function AppShell({ session }) {
                     </div>
                   </div>
                 </div>
-              </div>
+              </button>
+            )}
+
+            {/* collapsed state — initials circle only, clickable */}
+            {collapsed && (
+              <button
+                onClick={() => openProfile(userId)}
+                title="Your profile"
+                style={{
+                  width: '100%', padding: '8px 0', marginBottom: '4px',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  display: 'flex', justifyContent: 'center',
+                }}
+              >
+                <div style={{
+                  width: '28px', height: '28px', borderRadius: '50%',
+                  background: '#bc1723',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '11px', fontWeight: 700, color: '#fff',
+                  outline: (activeTab === 'profile' && profileUserId === userId) ? '2px solid #bc1723' : 'none',
+                  outlineOffset: '2px',
+                }}>
+                  {ini || userName.charAt(0).toUpperCase()}
+                </div>
+              </button>
             )}
 
             {/* Collapse toggle */}
@@ -406,7 +472,7 @@ export default function AppShell({ session }) {
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
                 background: 'none', border: 'none', cursor: 'pointer',
-                padding: '6px 16px',
+                padding: '6px 12px',
                 color: activeTab === item.key ? 'var(--text)' : 'var(--text-tertiary)',
               }}
             >
@@ -416,13 +482,35 @@ export default function AppShell({ session }) {
               </span>
             </button>
           ))}
-          {/* Fixed: was calling undefined onSignOut — now correctly calls handleSignOut */}
+
+          {/* Profile button — mobile */}
+          <button
+            onClick={() => openProfile(userId)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '6px 12px',
+            }}
+          >
+            <div style={{
+              width: '22px', height: '22px', borderRadius: '50%',
+              background: activeTab === 'profile' ? '#bc1723' : 'var(--text-tertiary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '9px', fontWeight: 700, color: '#fff',
+            }}>
+              {ini || userName.charAt(0).toUpperCase()}
+            </div>
+            <span style={{ fontSize: '10px', fontFamily: 'var(--font-body)', color: activeTab === 'profile' ? 'var(--text)' : 'var(--text-tertiary)', fontWeight: activeTab === 'profile' ? 500 : 400 }}>
+              Me
+            </span>
+          </button>
+
           <button
             onClick={handleSignOut}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
               background: 'none', border: 'none', cursor: 'pointer',
-              padding: '6px 16px', color: 'var(--text-tertiary)',
+              padding: '6px 12px', color: 'var(--text-tertiary)',
             }}
           >
             <span style={{ fontSize: '18px' }}>↩</span>
@@ -454,7 +542,11 @@ export default function AppShell({ session }) {
             />
           )}
           {activeTab === 'team' && (userRole === 'admin' || userRole === 'manager') && (
-            <UserManagement session={session} userRole={userRole} />
+            <UserManagement
+              session={session}
+              userRole={userRole}
+              onViewProfile={openProfile}
+            />
           )}
           {activeTab === 'activitylog' && userRole === 'admin' && (
             <ActivityLog />
@@ -468,9 +560,19 @@ export default function AppShell({ session }) {
           {activeTab === 'feedback' && userRole === 'admin' && (
             <FeedbackAdmin />
           )}
+
+          {/* ── Profile screen ── */}
+          {activeTab === 'profile' && profileUserId && (
+            <ProfilePage
+              profileUserId={profileUserId}
+              session={session}
+              userRole={userRole}
+              onBack={closeProfile}
+            />
+          )}
         </main>
 
-        {/* Bug 9 — App footer on all pages after login */}
+        {/* App footer */}
         {!isMobile && (
           <footer style={{
             maxWidth: '960px', margin: '0 auto', width: '100%',
