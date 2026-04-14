@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Dashboard from './Dashboard'
 import UserManagement from './UserManagement'
+import TeamView from './TeamView'
 import EarlyAccess from './EarlyAccess'
 import RateCard from './RateCard'
 import FeedbackButton from './FeedbackButton'
@@ -606,11 +607,18 @@ export default function AppShell({ session }) {
             />
           )}
           {activeTab === 'team' && (userRole === 'admin' || userRole === 'manager') && (
-            <UserManagement
-              session={session}
-              userRole={userRole}
-              onViewProfile={openProfile}
-            />
+            <div>
+              <TeamView
+                userId={session?.user?.id}
+                userRole={userRole}
+                onViewProfile={openProfile}
+              />
+              <UserManagement
+                session={session}
+                userRole={userRole}
+                onViewProfile={openProfile}
+              />
+            </div>
           )}
           {activeTab === 'activitylog' && userRole === 'admin' && (
             <ActivityLog />

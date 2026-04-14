@@ -8,6 +8,7 @@ import AssignEvent from './AssignEvent'
 
 import { logEventCreated, logEventArchived, logEventRestored, logEventAssigned } from '../utils/activityLogger'
 import { notifyApprovalRequired, notifyEventCreated } from '../utils/notificationService'
+import DashboardWidgets from './DashboardWidgets'
 const statusColor = {
   pitch: { bg: 'var(--blue-light)', color: 'var(--blue)' },
   submitted: { bg: 'var(--amber-light)', color: 'var(--amber)' },
@@ -469,20 +470,11 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
         />
       )}
 
-      {/* Greeting */}
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{
-          fontFamily: 'var(--font-display)', fontSize: '32px',
-          fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.5px', marginBottom: '6px',
-        }}>
-          {greeting}
-        </h1>
-        {message && (
-          <p style={{ fontSize: '14px', color: urgent ? '#bc1723' : 'var(--text-tertiary)' }}>
-            {message}
-          </p>
-        )}
-      </div>
+      <DashboardWidgets
+        userId={session?.user?.id}
+        userRole={userRole}
+        userName={userName}
+      />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
