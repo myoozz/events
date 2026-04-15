@@ -1,4 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useInView } from 'react-intersection-observer'
+import * as Dialog from '@radix-ui/react-dialog'
 import { supabase } from '../supabase'
 
 // ─── TOKENS ──────────────────────────────────────────────
@@ -11,6 +14,15 @@ const C = {
 }
 
 const FONTS = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400&family=Poppins:wght@600;700&display=swap'
+
+// Tag accent colours — feature card badges
+const TAG_COLORS = {
+  'Core':       { bg:'rgba(188,23,35,0.08)',  text:'#bc1723' },
+  'Operations': { bg:'rgba(37,99,235,0.08)',  text:'#2563EB' },
+  'Production': { bg:'rgba(245,158,11,0.08)', text:'#D97706' },
+  'AI':         { bg:'rgba(124,58,237,0.08)', text:'#7C3AED' },
+  'Team':       { bg:'rgba(22,163,74,0.08)',  text:'#16A34A' },
+}
 
 // ─── HOOKS ───────────────────────────────────────────────
 
@@ -25,32 +37,24 @@ function useWindowSize() {
   return w
 }
 
-function useReveal(opts={}) {
-  const { threshold=0.12 } = opts
-  const ref = useRef(null)
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const el = ref.current; if (!el) return
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect() } }, { threshold })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [threshold])
-  return [ref, visible]
-}
+// useReveal replaced by react-intersection-observer's useInView — used directly in R and Counter below
 
 // ─── ANIMATION WRAPPERS ───────────────────────────────────
 
 function WordReveal({ text, delay=0, color, italic }) {
   const words = text.split(' ')
-  const [show, setShow] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setShow(true), delay); return () => clearTimeout(t) }, [delay])
   return (
     <span style={{ display:'inline', fontStyle: italic ? 'italic' : 'normal', color: color || 'inherit' }}>
       {words.map((w, i) => (
         <span key={i} style={{ display:'inline-block', overflow:'hidden', verticalAlign:'bottom', marginRight:'0.22em' }}>
-          <span style={{ display:'inline-block', transform: show ? 'translateY(0)' : 'translateY(105%)', opacity: show ? 1 : 0, transition:`transform 0.7s cubic-bezier(0.16,1,0.3,1) ${delay+i*60}ms, opacity 0.5s ease ${delay+i*60}ms` }}>
+          <motion.span
+            style={{ display:'inline-block' }}
+            initial={{ y: '105%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: (delay + i * 60) / 1000 }}
+          >
             {w}
-          </span>
+          </motion.span>
         </span>
       ))}
     </span>
@@ -58,24 +62,35 @@ function WordReveal({ text, delay=0, color, italic }) {
 }
 
 function R({ children, delay=0, from='bottom', style={} }) {
-  const [ref, visible] = useReveal()
-  const t = { bottom:'translateY(32px)', left:'translateX(-24px)', right:'translateX(24px)', none:'none' }
+  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 })
+  const hidden = {
+    opacity: 0,
+    y: from === 'bottom' ? 32 : 0,
+    x: from === 'left' ? -24 : from === 'right' ? 24 : 0,
+  }
   return (
-    <div ref={ref} style={{ opacity: visible?1:0, transform: visible?'none':t[from], transition:`opacity 0.8s cubic-bezier(0.16,1,0.3,1) ${delay}s, transform 0.8s cubic-bezier(0.16,1,0.3,1) ${delay}s`, ...style }}>
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={inView ? 'visible' : 'hidden'}
+      variants={{ hidden, visible: { opacity: 1, y: 0, x: 0 } }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay }}
+      style={style}
+    >
       {children}
-    </div>
+    </motion.div>
   )
 }
 
 function Counter({ target, suffix='' }) {
   const [n, setN] = useState(0)
-  const [ref, visible] = useReveal({ threshold:0.5 })
+  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.5 })
   useEffect(() => {
-    if (!visible) return
+    if (!inView) return
     let i=0; const step=target/60
     const t = setInterval(() => { i+=step; if (i>=target){setN(target);clearInterval(t)}else setN(Math.floor(i)) }, 16)
     return () => clearInterval(t)
-  }, [visible, target])
+  }, [inView, target])
   return <span ref={ref}>{n}{suffix}</span>
 }
 
@@ -161,6 +176,156 @@ function Nav() {
         </div>
       )}
     </>
+  )
+}
+
+// ─── STICKY CTA BAR ──────────────────────────────────────
+// Appears after user scrolls past the hero. Dismissible. Uses AnimatePresence.
+function StickyCTA() {
+  const [visible,   setVisible]   = useState(false)
+  const [dismissed, setDismissed] = useState(false)
+  const w        = useWindowSize()
+  const isMobile = w < 640
+
+  useEffect(() => {
+    const threshold = window.innerHeight * 0.85
+    const fn = () => setVisible(window.scrollY > threshold)
+    window.addEventListener('scroll', fn, { passive: true })
+    return () => window.removeEventListener('scroll', fn)
+  }, [])
+
+  const show = visible && !dismissed
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          key="sticky-cta"
+          initial={{ y: -72, opacity: 0 }}
+          animate={{ y: 0,   opacity: 1 }}
+          exit={{    y: -72, opacity: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            position: 'fixed', top: '60px', left: 0, right: 0, zIndex: 190,
+            background: 'rgba(250,250,248,0.97)', backdropFilter: 'blur(16px)',
+            borderBottom: `1px solid rgba(188,23,35,0.18)`,
+            borderTop: `2px solid ${C.red}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: isMobile ? '10px 16px' : '10px 32px',
+            gap: '12px',
+            boxShadow: '0 4px 24px rgba(26,25,21,0.08)',
+          }}
+        >
+          {/* Left — label + copy */}
+          {!isMobile && (
+            <div style={{ display:'flex', alignItems:'center', gap:'12px', flex:1, minWidth:0 }}>
+              <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 8px', background:C.redDim, color:C.red, borderRadius:'4px', letterSpacing:'0.8px', whiteSpace:'nowrap' }}>
+                FREE BETA
+              </span>
+              <span style={{ fontSize:'13px', color:C.text2, fontWeight:300, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                Early adopters get personal onboarding. No billing. No commitment.
+              </span>
+            </div>
+          )}
+
+          {/* Centre on mobile — just the tagline */}
+          {isMobile && (
+            <span style={{ fontSize:'12px', color:C.text2, fontWeight:300, flex:1 }}>
+              Free during beta · Personal onboarding
+            </span>
+          )}
+
+          {/* Right — CTA + dismiss */}
+          <div style={{ display:'flex', alignItems:'center', gap:'10px', flexShrink:0 }}>
+            <a
+              href="#earlyaccess"
+              style={{
+                padding: isMobile ? '7px 14px' : '8px 20px',
+                background: C.red, color: '#fff', borderRadius: '7px',
+                fontSize: isMobile ? '12px' : '13px', fontWeight: 600,
+                textDecoration: 'none', transition: 'background 0.15s',
+                whiteSpace: 'nowrap', fontFamily: "'DM Sans',sans-serif",
+              }}
+              onMouseOver={e => e.currentTarget.style.background = C.redBr}
+              onMouseOut={e  => e.currentTarget.style.background = C.red}
+            >
+              {isMobile ? 'Get access →' : 'Request early access →'}
+            </a>
+            <button
+              onClick={() => setDismissed(true)}
+              aria-label="Dismiss"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: '4px', color: C.text3, fontSize: '16px', lineHeight: 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'color 0.15s',
+              }}
+              onMouseOver={e => e.currentTarget.style.color = C.text}
+              onMouseOut={e  => e.currentTarget.style.color = C.text3}
+            >
+              ✕
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+// ─── FLOATING DOCS ────────────────────────────────────────
+// 4 branded document cards floating at different speeds — represents the
+// 8-document output of the platform. Built with framer-motion, brand colours,
+// no external dependency. Desktop hero right panel.
+function FloatingDocs() {
+  const docs = [
+    {
+      title:'Proposal', sub:'City-wise · Branded',
+      bar:C.red, lines:[85,60,90,45,35],
+      pos:{ left:'0%', top:'8%' }, rot:-5, floatY:[0,-14,0], dur:4.2, delay:0
+    },
+    {
+      title:'Element master', sub:'All scope · City-wise',
+      bar:'#16A34A', lines:[70,85,55,75,40,30],
+      pos:{ right:'0%', top:'0%' }, rot:4, floatY:[0,-18,0], dur:3.8, delay:0.5
+    },
+    {
+      title:'Cue sheet', sub:'Named screens · Multi-city',
+      bar:'#2563EB', lines:[65,80,45,70],
+      pos:{ left:'18%', bottom:'2%' }, rot:-2, floatY:[0,-10,0], dur:4.8, delay:1.0
+    },
+    {
+      title:'Task sheet', sub:'Who · What · Deadline',
+      bar:'#D97706', lines:[75,55,85,40],
+      pos:{ right:'2%', bottom:'8%' }, rot:3, floatY:[0,-12,0], dur:4.0, delay:0.8
+    },
+  ]
+  return (
+    <div style={{ position:'relative', width:'100%', height:'420px', pointerEvents:'none' }}>
+      {docs.map((doc,i) => (
+        <motion.div
+          key={i}
+          style={{
+            position:'absolute', width:'164px',
+            background:C.white, border:`1px solid ${C.border2}`,
+            borderRadius:'12px', boxShadow:'0 8px 32px rgba(26,25,21,0.1)',
+            overflow:'hidden', rotate:doc.rot,
+            ...doc.pos,
+          }}
+          animate={{ y: doc.floatY }}
+          transition={{ duration:doc.dur, repeat:Infinity, ease:'easeInOut', delay:doc.delay }}
+        >
+          {/* Colour bar */}
+          <div style={{ height:'5px', background:doc.bar }}/>
+          <div style={{ padding:'12px 14px 14px' }}>
+            <div style={{ fontSize:'9px', fontWeight:700, color:C.text, textTransform:'uppercase', letterSpacing:'0.7px', marginBottom:'2px' }}>{doc.title}</div>
+            <div style={{ fontSize:'8px', color:C.text3, marginBottom:'10px', fontWeight:300 }}>{doc.sub}</div>
+            {doc.lines.map((w,j) => (
+              <div key={j} style={{ height:'4px', background: j===0 ? doc.bar : j%2===0 ? C.bg3 : C.border, borderRadius:'2px', width:`${w}%`, marginBottom:'6px', opacity: j===0 ? 0.65 : 1 }}/>
+            ))}
+          </div>
+        </motion.div>
+      ))}
+    </div>
   )
 }
 
@@ -439,6 +604,94 @@ function SimContent({ step, DOCS }) {
   )
 }
 
+// ─── ACCESS MODAL ─────────────────────────────────────────
+// Self-contained form in a Radix Dialog. Triggered from any CTA on the page.
+function AccessModal({ open, onClose }) {
+  const [name,      setName]      = useState('')
+  const [email,     setEmail]     = useState('')
+  const [company,   setCompany]   = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const [submitting,setSubmitting]= useState(false)
+  const canSubmit = email.trim() && name.trim() && !submitting
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!canSubmit) return
+    setSubmitting(true)
+    try {
+      await supabase.from('access_requests').insert({ email:email.trim(), full_name:name.trim(), company:company.trim(), status:'pending' })
+      setSubmitted(true)
+    } catch(err) { console.error(err) }
+    setSubmitting(false)
+  }
+
+  // Reset form when closed
+  function handleClose() {
+    onClose()
+    setTimeout(() => { setName(''); setEmail(''); setCompany(''); setSubmitted(false); setSubmitting(false) }, 300)
+  }
+
+  return (
+    <Dialog.Root open={open} onOpenChange={v => { if (!v) handleClose() }}>
+      <Dialog.Portal>
+        {/* Overlay */}
+        <Dialog.Overlay style={{ position:'fixed', inset:0, background:'rgba(26,25,21,0.55)', zIndex:400, backdropFilter:'blur(6px)', animation:'modalOverlayIn 0.25s ease' }}/>
+        {/* Panel */}
+        <Dialog.Content
+          style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', zIndex:401, background:C.white, borderRadius:'18px', padding:'40px 36px', width:'calc(100vw - 32px)', maxWidth:'460px', maxHeight:'90vh', overflowY:'auto', boxShadow:'0 24px 80px rgba(26,25,21,0.2)', animation:'modalContentIn 0.3s cubic-bezier(0.16,1,0.3,1)', outline:'none' }}
+          onOpenAutoFocus={e => e.preventDefault()}
+        >
+          {/* Close button */}
+          <Dialog.Close asChild>
+            <button onClick={handleClose} aria-label="Close" style={{ position:'absolute', top:'16px', right:'16px', background:'none', border:`1px solid ${C.border}`, borderRadius:'6px', width:'28px', height:'28px', cursor:'pointer', color:C.text3, fontSize:'14px', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}
+              onMouseOver={e=>{e.currentTarget.style.borderColor=C.border2;e.currentTarget.style.color=C.text}}
+              onMouseOut={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.text3}}>
+              ✕
+            </button>
+          </Dialog.Close>
+
+          {submitted ? (
+            <div style={{ textAlign:'center', padding:'12px 0 8px' }}>
+              <div style={{ fontSize:'44px', marginBottom:'16px' }}>🎉</div>
+              <Dialog.Title style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'28px', fontWeight:600, color:C.text, marginBottom:'10px', display:'block' }}>
+                You're on the list.
+              </Dialog.Title>
+              <p style={{ fontSize:'14px', color:C.text2, lineHeight:1.7, marginBottom:'24px' }}>We'll reach out within 48 hours. If you already have access, sign in directly.</p>
+              <a href="/login" style={{ display:'inline-flex', padding:'12px 24px', background:C.red, color:'#fff', borderRadius:'8px', fontSize:'14px', fontWeight:600, textDecoration:'none' }}>Sign in →</a>
+            </div>
+          ) : (
+            <>
+              <Dialog.Title style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'26px', fontWeight:600, color:C.text, marginBottom:'6px', display:'block' }}>
+                Request early access.
+              </Dialog.Title>
+              <p style={{ fontSize:'14px', color:C.text2, marginBottom:'28px', fontWeight:300 }}>Free during beta. Personal onboarding. No commitment.</p>
+              <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
+                {[
+                  { label:'Your name',       value:name,    set:setName,    placeholder:'How should we address you?', req:true },
+                  { label:'Work email',      value:email,   set:setEmail,   placeholder:'you@company.com', req:true, type:'email' },
+                  { label:'Company / agency',value:company, set:setCompany, placeholder:'Your company name' },
+                ].map(f => (
+                  <div key={f.label}>
+                    <label style={{ display:'block', fontSize:'12px', fontWeight:600, color:C.text2, marginBottom:'6px' }}>{f.label}{f.req && <span style={{ color:C.red }}> *</span>}</label>
+                    <input type={f.type||'text'} value={f.value} onChange={e=>f.set(e.target.value)} placeholder={f.placeholder} required={f.req}
+                      style={{ width:'100%', padding:'13px 16px', background:C.bg, border:`1px solid ${C.border2}`, borderRadius:'8px', fontSize:'14px', color:C.text, fontFamily:"'DM Sans',sans-serif", outline:'none', transition:'border-color 0.15s', boxSizing:'border-box' }}
+                      onFocus={e=>e.target.style.borderColor=C.red} onBlur={e=>e.target.style.borderColor=C.border2}/>
+                  </div>
+                ))}
+                <button type="submit" disabled={!canSubmit}
+                  style={{ marginTop:'4px', padding:'15px', background:canSubmit?C.red:C.bg3, color:canSubmit?'#fff':C.text3, border:'none', borderRadius:'8px', fontSize:'14px', fontWeight:600, cursor:canSubmit?'pointer':'not-allowed', fontFamily:"'DM Sans',sans-serif", transition:'all 0.2s' }}>
+                  {submitting ? 'Submitting...' : 'Request early access →'}
+                </button>
+                <p style={{ fontSize:'11px', color:C.text3, textAlign:'center' }}>No spam. A real person will reach out.</p>
+              </form>
+            </>
+          )}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  )
+}
+
 // ─── MAIN COMPONENT ───────────────────────────────────────
 export default function LandingPage() {
   const [email, setEmail]       = useState('')
@@ -447,6 +700,7 @@ export default function LandingPage() {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [heroIn, setHeroIn]     = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
 
   const w        = useWindowSize()
   const isMobile = w < 768   // single column
@@ -515,57 +769,83 @@ export default function LandingPage() {
         @keyframes notifSlide{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
         @keyframes taskPop{0%{border-color:rgba(188,23,35,0.15);background:rgba(188,23,35,0.03)}50%{border-color:rgba(188,23,35,0.45);background:rgba(188,23,35,0.09)}100%{border-color:rgba(188,23,35,0.15);background:rgba(188,23,35,0.03)}}
         @keyframes dlPulse{0%,100%{box-shadow:0 0 0 0 rgba(188,23,35,0)}60%{box-shadow:0 0 0 5px rgba(188,23,35,0.12)}}
+        @keyframes modalOverlayIn{from{opacity:0}to{opacity:1}}
+        @keyframes modalContentIn{from{opacity:0;transform:translate(-50%,-48%) scale(0.97)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
         @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
       `}</style>
 
+      <AccessModal open={modalOpen} onClose={() => setModalOpen(false)} />
       <Nav />
+      <StickyCTA />
 
       {/* ── HERO ──────────────────────────────────────── */}
-      <section style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding: isMobile ? '120px 20px 72px' : '140px 24px 80px', textAlign:'center', position:'relative', overflow:'hidden' }}>
+      <section style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding: isMobile ? '120px 20px 72px' : '140px 48px 80px', position:'relative', overflow:'hidden' }}>
+        {/* Grid background */}
         <div style={{ position:'absolute', inset:0, backgroundImage:`linear-gradient(${C.border} 1px,transparent 1px),linear-gradient(90deg,${C.border} 1px,transparent 1px)`, backgroundSize:'48px 48px', opacity:0.6, pointerEvents:'none' }}/>
-        <div style={{ position:'absolute', top:'30%', left:'50%', transform:'translateX(-50%)', width:'500px', height:'200px', background:'radial-gradient(ellipse,rgba(188,23,35,0.05) 0%,transparent 70%)', pointerEvents:'none' }}/>
+        {/* Red glow — left-biased on desktop */}
+        <div style={{ position:'absolute', top:'35%', left: isMobile ? '50%' : '28%', transform:'translateX(-50%)', width:'480px', height:'180px', background:'radial-gradient(ellipse,rgba(188,23,35,0.06) 0%,transparent 70%)', pointerEvents:'none' }}/>
 
-        {/* Pill */}
-        <div style={{ opacity:heroIn?1:0, transform:heroIn?'none':'translateY(12px)', transition:'all 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s', display:'inline-flex', alignItems:'center', gap:'7px', padding:'5px 14px', background:C.white, border:`1px solid ${C.border2}`, borderRadius:'100px', marginBottom:'32px', boxShadow:'0 2px 8px rgba(26,25,21,0.06)' }}>
-          <div style={{ width:'6px', height:'6px', borderRadius:'50%', background:C.red, animation:'pulse 2s infinite' }}/>
-          <span style={{ fontSize:'12px', color:C.text2, fontWeight:500 }}>Born in India · Built for the world</span>
-        </div>
+        <div style={{ maxWidth:mw, width:'100%', margin:'0 auto', display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '40px' : '72px', alignItems:'center' }}>
 
-        {/* Heading */}
-        <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(48px,8.5vw,108px)', lineHeight:1.0, letterSpacing:'-2px', fontWeight:600, marginBottom:'24px', maxWidth:'900px' }}>
-          <WordReveal text="Your events." delay={300}/>
-          <br/><WordReveal text="Your team." delay={500}/>
-          <br/><WordReveal text="Your reputation." delay={700} color={C.red} italic/>
-        </h1>
+          {/* ── LEFT: Text ── */}
+          <div style={{ textAlign: isMobile ? 'center' : 'left' }}>
 
-        {/* Sub */}
-        <div style={{ opacity:heroIn?1:0, transform:heroIn?'none':'translateY(16px)', transition:'all 0.8s cubic-bezier(0.16,1,0.3,1) 1.1s', maxWidth:'540px', marginBottom:'36px' }}>
-          <p style={{ fontSize:'clamp(15px,2vw,19px)', color:C.text2, lineHeight:1.75, fontWeight:300 }}>
-            From first quote to final applause — one system that thinks like a senior event professional and works like a machine.
-          </p>
-        </div>
-
-        {/* CTAs */}
-        <div style={{ opacity:heroIn?1:0, transform:heroIn?'none':'translateY(12px)', transition:'all 0.8s cubic-bezier(0.16,1,0.3,1) 1.3s', display:'flex', gap:'12px', flexWrap:'wrap', justifyContent:'center', marginBottom:'48px' }}>
-          <a href="#earlyaccess" style={{ padding:'14px 28px', background:C.red, color:'#fff', borderRadius:'8px', fontSize:'14px', fontWeight:600, textDecoration:'none', transition:'background 0.15s', boxShadow:'0 4px 16px rgba(188,23,35,0.3)' }}
-            onMouseOver={e=>e.currentTarget.style.background=C.redBr} onMouseOut={e=>e.currentTarget.style.background=C.red}>
-            Get early access — free →
-          </a>
-          <a href="#demo" style={{ padding:'14px 24px', border:`1px solid ${C.border2}`, color:C.text2, borderRadius:'8px', fontSize:'14px', fontWeight:500, textDecoration:'none', background:C.white, transition:'all 0.15s' }}
-            onMouseOver={e=>{e.currentTarget.style.borderColor=C.text2;e.currentTarget.style.color=C.text}}
-            onMouseOut={e=>{e.currentTarget.style.borderColor=C.border2;e.currentTarget.style.color=C.text2}}>
-            See it in action
-          </a>
-        </div>
-
-        {/* Quick stat pills */}
-        <div style={{ opacity:heroIn?1:0, transition:'opacity 0.8s 1.5s', display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'center' }}>
-          {[['100+','years of collective expertise'],['21','categories pre-loaded'],['8','documents, one click'],['0','logins for ground staff']].map(([n,l]) => (
-            <div key={n} style={{ display:'flex', alignItems:'center', gap:'8px', padding:'7px 14px', background:C.white, border:`1px solid ${C.border}`, borderRadius:'100px', boxShadow:'0 1px 4px rgba(26,25,21,0.04)' }}>
-              <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'17px', fontWeight:700, color:C.red }}>{n}</span>
-              <span style={{ fontSize:'11px', color:C.text2 }}>{l}</span>
+            {/* Pill */}
+            <div style={{ opacity:heroIn?1:0, transform:heroIn?'none':'translateY(12px)', transition:'all 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s', display:'inline-flex', alignItems:'center', gap:'7px', padding:'5px 14px', background:C.white, border:`1px solid ${C.border2}`, borderRadius:'100px', marginBottom:'28px', boxShadow:'0 2px 8px rgba(26,25,21,0.06)' }}>
+              <div style={{ width:'6px', height:'6px', borderRadius:'50%', background:C.red, animation:'pulse 2s infinite' }}/>
+              <span style={{ fontSize:'12px', color:C.text2, fontWeight:500 }}>Born in India · Built for the world</span>
             </div>
-          ))}
+
+            {/* Heading */}
+            <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 'clamp(48px,12vw,84px)' : 'clamp(40px,5vw,80px)', lineHeight:1.0, letterSpacing:'-2px', fontWeight:600, marginBottom:'24px' }}>
+              <WordReveal text="Your events." delay={300}/>
+              <br/><WordReveal text="Your team." delay={500}/>
+              <br/><WordReveal text="Your reputation." delay={700} color={C.red} italic/>
+            </h1>
+
+            {/* Sub */}
+            <div style={{ opacity:heroIn?1:0, transform:heroIn?'none':'translateY(16px)', transition:'all 0.8s cubic-bezier(0.16,1,0.3,1) 1.1s', marginBottom:'32px', maxWidth: isMobile ? '540px' : 'none', margin: isMobile ? '0 auto 32px' : '0 0 32px' }}>
+              <p style={{ fontSize:'clamp(15px,1.6vw,18px)', color:C.text2, lineHeight:1.75, fontWeight:300 }}>
+                From first quote to final applause — one system that thinks like a senior event professional and works like a machine.
+              </p>
+            </div>
+
+            {/* CTAs */}
+            <div style={{ opacity:heroIn?1:0, transform:heroIn?'none':'translateY(12px)', transition:'all 0.8s cubic-bezier(0.16,1,0.3,1) 1.3s', display:'flex', gap:'12px', flexWrap:'wrap', justifyContent: isMobile ? 'center' : 'flex-start', marginBottom:'36px' }}>
+              <a href="#earlyaccess" onClick={e=>{e.preventDefault();setModalOpen(true)}} style={{ padding:'14px 28px', background:C.red, color:'#fff', borderRadius:'8px', fontSize:'14px', fontWeight:600, textDecoration:'none', transition:'background 0.15s', boxShadow:'0 4px 16px rgba(188,23,35,0.3)', cursor:'pointer' }}
+                onMouseOver={e=>e.currentTarget.style.background=C.redBr} onMouseOut={e=>e.currentTarget.style.background=C.red}>
+                Get early access — free →
+              </a>
+              <a href="#demo" style={{ padding:'14px 24px', border:`1px solid ${C.border2}`, color:C.text2, borderRadius:'8px', fontSize:'14px', fontWeight:500, textDecoration:'none', background:C.white, transition:'all 0.15s' }}
+                onMouseOver={e=>{e.currentTarget.style.borderColor=C.text2;e.currentTarget.style.color=C.text}}
+                onMouseOut={e=>{e.currentTarget.style.borderColor=C.border2;e.currentTarget.style.color=C.text2}}>
+                See it in action
+              </a>
+            </div>
+
+            {/* Stat pills */}
+            <div style={{ opacity:heroIn?1:0, transition:'opacity 0.8s 1.5s', display:'flex', gap:'8px', flexWrap:'wrap', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+              {[['100+','years expertise'],['21','categories'],['8','documents'],['0','logins for staff']].map(([n,l]) => (
+                <div key={n} style={{ display:'flex', alignItems:'center', gap:'7px', padding:'6px 12px', background:C.white, border:`1px solid ${C.border}`, borderRadius:'100px', boxShadow:'0 1px 4px rgba(26,25,21,0.04)' }}>
+                  <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'16px', fontWeight:700, color:C.red }}>{n}</span>
+                  <span style={{ fontSize:'11px', color:C.text2 }}>{l}</span>
+                </div>
+              ))}
+            </div>
+
+          </div>{/* END LEFT */}
+
+          {/* ── RIGHT: Floating documents — desktop only ── */}
+          {!isMobile && (
+            <motion.div
+              initial={{ opacity:0, x:40 }}
+              animate={{ opacity:heroIn?1:0, x:heroIn?0:40 }}
+              transition={{ duration:1.1, ease:[0.16,1,0.3,1], delay:0.6 }}
+            >
+              <FloatingDocs />
+            </motion.div>
+          )}
+
         </div>
       </section>
 
@@ -714,16 +994,18 @@ export default function LandingPage() {
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:'14px' }}>
             {FEATURES.map((f,i) => (
               <R key={f.title} delay={i*0.06}>
-                <div style={{ padding: isMobile ? '24px 20px' : '28px', background:C.white, border:`1px solid ${C.border}`, borderRadius:'14px', height:'100%', transition:'all 0.25s cubic-bezier(0.16,1,0.3,1)', cursor:'default' }}
-                  onMouseOver={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 32px rgba(26,25,21,0.09)';e.currentTarget.style.borderColor=C.border2}}
-                  onMouseOut={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='none';e.currentTarget.style.borderColor=C.border}}>
+                <motion.div
+                  style={{ padding: isMobile ? '24px 20px' : '28px', background:C.white, border:`1px solid ${C.border}`, borderRadius:'14px', height:'100%', cursor:'default' }}
+                  whileHover={{ y:-4, boxShadow:'0 12px 32px rgba(26,25,21,0.1)', borderColor:C.border2 }}
+                  transition={{ duration:0.25, ease:[0.16,1,0.3,1] }}
+                >
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px' }}>
                     <span style={{ fontSize:'28px' }}>{f.icon}</span>
-                    <span style={{ fontSize:'9px', fontWeight:700, padding:'3px 8px', background:C.redDim, color:C.red, borderRadius:'4px', letterSpacing:'0.5px', textTransform:'uppercase' }}>{f.tag}</span>
+                    <span style={{ fontSize:'9px', fontWeight:700, padding:'3px 8px', background: TAG_COLORS[f.tag]?.bg ?? C.redDim, color: TAG_COLORS[f.tag]?.text ?? C.red, borderRadius:'4px', letterSpacing:'0.5px', textTransform:'uppercase' }}>{f.tag}</span>
                   </div>
                   <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'20px', fontWeight:600, color:C.text, marginBottom:'10px', lineHeight:1.3 }}>{f.title}</h3>
                   <p style={{ fontSize:'13px', color:C.text2, lineHeight:1.75, fontWeight:300 }}>{f.body}</p>
-                </div>
+                </motion.div>
               </R>
             ))}
           </div>
@@ -774,7 +1056,7 @@ export default function LandingPage() {
               <span style={s.chip}>Eight documents</span>
               <h2 style={{ ...s.h2, marginBottom:'20px' }}>Every person covered.<br/><em style={{ color:C.red }}>From one event.</em></h2>
               <p style={{ ...s.body, marginBottom:'28px' }}>All eight documents built from data you've already entered. No reformatting. No copy-paste. Fully branded. Download one or take everything at once.</p>
-              <a href="#earlyaccess" style={{ display:'inline-flex', alignItems:'center', gap:'8px', padding:'13px 24px', background:C.red, color:'#fff', borderRadius:'8px', fontSize:'14px', fontWeight:600, textDecoration:'none', transition:'background 0.15s' }}
+              <a href="#earlyaccess" onClick={e=>{e.preventDefault();setModalOpen(true)}} style={{ display:'inline-flex', alignItems:'center', gap:'8px', padding:'13px 24px', background:C.red, color:'#fff', borderRadius:'8px', fontSize:'14px', fontWeight:600, textDecoration:'none', transition:'background 0.15s', cursor:'pointer' }}
                 onMouseOver={e=>e.currentTarget.style.background=C.redBr} onMouseOut={e=>e.currentTarget.style.background=C.red}>
                 Start free →
               </a>
@@ -855,9 +1137,12 @@ export default function LandingPage() {
       <section id="earlyaccess" style={{ padding: isMobile ? '64px 20px' : '100px 24px', background:C.white, borderTop:`1px solid ${C.border}` }}>
         <div style={{ maxWidth:'480px', margin:'0 auto' }}>
           <R style={{ textAlign:'center', marginBottom:'44px' }}>
-            <div style={{ fontSize:'40px', marginBottom:'20px', animation:'float 3s ease-in-out infinite', display:'inline-block' }}>🎪</div>
-            <h2 style={{ ...s.h2, textAlign:'center', marginBottom:'16px' }}>Join the first cohort.</h2>
-            <p style={{ ...s.body, textAlign:'center' }}>We run this on real events, right now. Join us — we onboard every agency personally.</p>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:'7px', padding:'5px 14px', background:C.redDim, border:`1px solid rgba(188,23,35,0.18)`, borderRadius:'100px', marginBottom:'24px' }}>
+              <div style={{ width:'6px', height:'6px', borderRadius:'50%', background:C.red, animation:'pulse 2s infinite' }}/>
+              <span style={{ fontSize:'11px', fontWeight:600, color:C.red, letterSpacing:'0.5px' }}>Early access · Free during beta</span>
+            </div>
+            <h2 style={{ ...s.h2, textAlign:'center', marginBottom:'16px' }}>Your invitation.</h2>
+            <p style={{ ...s.body, textAlign:'center' }}>We're live on real events right now. Every early adopter gets personal onboarding — no handbooks, no tutorials. Just us, walking you through it.</p>
           </R>
           {submitted ? (
             <R>
