@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import LandingPage from './components/LandingPage'
-import PublicTask from './components/PublicTask'
-import LoginPage from './components/LoginPage'
-import AppShell from './components/AppShell'
+import LandingPage    from './components/LandingPage'
+import PublicTask     from './components/PublicTask'
+import LoginPage      from './components/LoginPage'
+import AppShell       from './components/AppShell'
+import PrivacyPolicy  from './components/PrivacyPolicy'
+import TermsOfUse     from './components/TermsOfUse'
 
 // ─── Splash screen (hardcoded colors — no CSS vars) ──────
 function Splash({ message = 'Loading...' }) {
@@ -114,11 +116,19 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={
+
+          {/* ── Public pages ── */}
+          <Route path="/"            element={<LandingPage />} />
+          <Route path="/login"       element={
             (session && !isPasswordSetupFlow) ? <Navigate to="/app" replace /> : <LoginPage />
           } />
           <Route path="/task/:token" element={<PublicTask />} />
+
+          {/* ── Legal pages — public, no auth required ── */}
+          <Route path="/privacy"     element={<PrivacyPolicy />} />
+          <Route path="/terms"       element={<TermsOfUse />} />
+
+          {/* ── Protected app ── */}
           <Route path="/app" element={
             <ProtectedRoute session={session} loading={loading}>
               <AppShell session={session} />
@@ -129,6 +139,7 @@ export default function App() {
               <AppShell session={session} />
             </ProtectedRoute>
           } />
+
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>
