@@ -33,7 +33,7 @@ function Initials({ name, size = 36 }) {
     : parts[0].slice(0, 2);
   return (
     <div style={{
-      width: size, height: size, borderRadius: '50%',
+      width: size, height: size, borderRadius: '8px',
       background: '#bc1723', color: '#fff',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'DM Sans', sans-serif",

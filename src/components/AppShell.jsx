@@ -378,7 +378,7 @@ export default function AppShell({ session }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {/* initials circle */}
                   <div style={{
-                    width: '28px', height: '28px', borderRadius: '50%',
+                    width: '28px', height: '28px', borderRadius: '7px',
                     background: '#bc1723',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '11px', fontWeight: 700, color: '#fff',
@@ -410,7 +410,7 @@ export default function AppShell({ session }) {
                 }}
               >
                 <div style={{
-                  width: '28px', height: '28px', borderRadius: '50%',
+                  width: '28px', height: '28px', borderRadius: '7px',
                   background: '#bc1723',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '11px', fontWeight: 700, color: '#fff',
@@ -529,7 +529,7 @@ export default function AppShell({ session }) {
             }}
           >
             <div style={{
-              width: '22px', height: '22px', borderRadius: '50%',
+              width: '22px', height: '22px', borderRadius: '6px',
               background: activeTab === 'profile' ? '#bc1723' : 'var(--text-tertiary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '9px', fontWeight: 700, color: '#fff',

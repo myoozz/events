@@ -636,7 +636,7 @@ const styles = {
   initialsCircle: {
     width: 22,
     height: 22,
-    borderRadius: '50%',
+    borderRadius: '6px',
     background: '#bc1723',
     color: '#fff',
     display: 'flex',

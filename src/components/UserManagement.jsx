@@ -372,7 +372,7 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
                   onClick={() => onViewProfile && onViewProfile(u.id)}
                   title="View profile"
                   style={{
-                    width: '36px', height: '36px', borderRadius: '50%',
+                    width: '36px', height: '36px', borderRadius: '8px',
                     background: '#bc1723',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '13px', fontWeight: 700, color: '#fff',
@@ -383,7 +383,7 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
                   onMouseOver={e => { if (onViewProfile) e.currentTarget.style.opacity = '0.8' }}
                   onMouseOut={e => e.currentTarget.style.opacity = '1'}
                 >
-                  {(u.full_name || u.email).charAt(0).toUpperCase()}
+                  {(u.full_name || u.email).trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').slice(0,2).join('')}
                 </div>
                 <div>
                   <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>

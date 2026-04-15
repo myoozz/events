@@ -538,18 +538,18 @@ const S = {
   },
   photoWrap: {
     position: 'relative', width: 72, height: 72,
-    borderRadius: '50%', overflow: 'hidden',
+    borderRadius: '14px', overflow: 'hidden',
     cursor: 'default', flexShrink: 0,
   },
   avatarCircle: {
-    width: 72, height: 72, borderRadius: '50%',
+    width: 72, height: 72, borderRadius: '14px',
     background: '#bc1723', color: '#fff',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px',
     fontFamily: "'DM Sans', sans-serif",
   },
   cameraOverlay: {
-    position: 'absolute', inset: 0, borderRadius: '50%',
+    position: 'absolute', inset: 0, borderRadius: '14px',
     background: 'rgba(0,0,0,0.52)',
     display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center', gap: 3,
