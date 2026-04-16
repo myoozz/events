@@ -786,3 +786,130 @@ export async function exportCueSheetExcel(event, sheets) {
   const buf = await wb.xlsx.writeBuffer()
   saveAs(new Blob([buf]), `${event.event_name} — Cue Sheet.xlsx`)
 }
+
+// ─── Rate Card Import Template ────────────────────────────
+// Generates a formatted .xlsx template for a given category.
+// Called from RateCard.jsx → Download template dropdown.
+
+const RC_BASE_COLS = [
+  { header: 'Element Name',       width: 30 },
+  { header: 'Specification',      width: 30 },
+  { header: 'Unit',               width: 14 },
+  { header: 'City',               width: 14 },
+  { header: 'Country',            width: 12 },
+  { header: 'Location Scope',     width: 18 },
+  { header: 'Venue Type',         width: 14 },
+  { header: 'Rate Min',           width: 14 },
+  { header: 'Rate Max',           width: 14 },
+  { header: 'Rate Confirmed',     width: 16 },
+  { header: 'Per Unit Type',      width: 20 },
+  { header: 'Vendor / Company',   width: 24 },
+  { header: 'Source',             width: 18 },
+  { header: 'Source URL',         width: 28 },
+  { header: 'GST (Y/N)',          width: 10 },
+  { header: 'Notes',              width: 32 },
+]
+
+const RC_EXTRA_COLS = {
+  'Permissions & Legal':      [{ header: 'Pax Slab Min', width: 13 }, { header: 'Pax Slab Max', width: 13 }, { header: 'Mandatory / Conditional', width: 24 }],
+  'Sound':                    [{ header: 'Per (Day/Event)', width: 16 }, { header: 'Pax Slab', width: 12 }, { header: 'Area (sqft)', width: 12 }],
+  'Lighting':                 [{ header: 'Per (Day/Event)', width: 16 }, { header: 'Area (sqft)', width: 12 }],
+  'Video & LED':              [{ header: 'Per (Day/Sqft/Event)', width: 20 }, { header: 'Area (sqft)', width: 12 }],
+  'Stage':                    [{ header: 'Area (sqft)', width: 12 }, { header: 'Per (Sqft/Day)', width: 14 }],
+  'Production & Fabrication': [{ header: 'Area (sqft)', width: 12 }, { header: 'Per Sqft', width: 12 }],
+  'Branding & Signage':       [{ header: 'Area (sqft)', width: 12 }, { header: 'Per (Sqft/Mtr)', width: 14 }],
+  'Manpower':                 [{ header: 'Per (Day/Shift)', width: 16 }, { header: 'Pax Slab', width: 12 }],
+  'Furniture':                [{ header: 'Per (Day/Event)', width: 16 }, { header: 'Nos', width: 8 }],
+  'Venue & Infrastructure':   [{ header: 'Area (sqft)', width: 12 }, { header: 'Per (Day/Event)', width: 16 }, { header: 'Pax Slab', width: 12 }],
+  'Power & Electrical':       [{ header: 'Per (Day/KVA)', width: 14 }, { header: 'KVA Rating', width: 12 }],
+  'Food & Beverage':          [{ header: 'Per Pax', width: 10 }, { header: 'Pax Slab', width: 12 }],
+  'Travel Booking':           [{ header: 'Per Pax', width: 10 }, { header: 'Class (Economy/Business)', width: 24 }],
+  'Logistics':                [{ header: 'Per (Trip/Day/Load)', width: 20 }, { header: 'Vehicle Type', width: 16 }],
+  'Insurance':                [{ header: 'Per Event / Per Pax / % Budget', width: 30 }, { header: 'Coverage Type', width: 18 }],
+}
+
+export const RC_CATEGORIES = Object.keys(RC_EXTRA_COLS)
+
+export async function generateRateCardTemplate(categoryName) {
+  const ExcelJS = (await import('exceljs')).default
+  const { saveAs } = await import('file-saver')
+
+  const extra = RC_EXTRA_COLS[categoryName] || []
+  const allCols = [...RC_BASE_COLS, ...extra]
+  const nCols = allCols.length
+
+  const wb = new ExcelJS.Workbook()
+  wb.creator = 'Myoozz Consulting Pvt. Ltd.'
+  wb.created = new Date()
+
+  const ws = wb.addWorksheet(categoryName)
+  ws.columns = allCols.map(c => ({ width: c.width }))
+
+  const hx = c => ({ argb: 'FF' + c })
+
+  // Row 1 — title bar (matches C.headerBg style)
+  ws.mergeCells(1, 1, 1, nCols)
+  const r1 = ws.getRow(1)
+  r1.height = 26
+  const t1 = r1.getCell(1)
+  t1.value = `Myoozz Rate Card Template  ·  ${categoryName}`
+  t1.font = { bold: true, size: 13, color: hx(C.headerText), name: 'Calibri' }
+  t1.fill = { type: 'pattern', pattern: 'solid', fgColor: hx(C.headerBg) }
+  t1.alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+
+  // Row 2 — scope tip bar
+  ws.mergeCells(2, 1, 2, nCols)
+  const r2 = ws.getRow(2)
+  r2.height = 24
+  const t2 = r2.getCell(1)
+  t2.value = 'Location Scope:  city = one city  |  state = state-wide  |  national = Pan-India (City = "Pan-India")  |  international = outside India'
+  t2.font = { italic: true, size: 9, color: hx('1D4ED8'), name: 'Calibri' }
+  t2.fill = { type: 'pattern', pattern: 'solid', fgColor: hx('EFF6FF') }
+  t2.alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+
+  // Row 3 — per unit type tip
+  ws.mergeCells(3, 1, 3, nCols)
+  const r3 = ws.getRow(3)
+  r3.height = 20
+  const t3 = r3.getCell(1)
+  t3.value = 'Per Unit Type allowed:  per day · per event · per pax · per sqft · per sqmtr · per ft · per mtr · per running ft · per running mtr · per KVA · per trip · per load · per shift · % of budget'
+  t3.font = { italic: true, size: 8, color: hx('6B6560'), name: 'Calibri' }
+  t3.fill = { type: 'pattern', pattern: 'solid', fgColor: hx('F5F2EE') }
+  t3.alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+
+  // Row 4 — column headers
+  const hRow = ws.getRow(4)
+  hRow.height = 26
+  allCols.forEach((col, i) => {
+    const cell = hRow.getCell(i + 1)
+    const isExtra = i >= RC_BASE_COLS.length
+    cell.value = col.header
+    cell.font = { bold: true, size: 9, color: hx('FFFFFF'), name: 'Calibri' }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hx(isExtra ? 'D97706' : C.catBg) }
+    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+    const b = { style: 'thin', color: hx(C.borderStrong) }
+    cell.border = { top: b, left: b, bottom: b, right: b }
+  })
+
+  // Rows 5–54 — 50 empty data rows, zebra
+  for (let row = 5; row <= 54; row++) {
+    const r = ws.getRow(row)
+    r.height = 18
+    for (let col = 1; col <= nCols; col++) {
+      const cell = r.getCell(col)
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hx(row % 2 === 0 ? C.rowAlt : C.rowBg) }
+      cell.font = { size: 10, color: hx(C.rowText), name: 'Calibri' }
+      const b = { style: 'thin', color: hx(C.border) }
+      cell.border = { top: b, left: b, bottom: b, right: b }
+      cell.alignment = { vertical: 'middle', wrapText: false }
+    }
+  }
+
+  // Freeze below header row
+  ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 4, activeCell: 'A5' }]
+
+  const buf = await wb.xlsx.writeBuffer()
+  const safe = categoryName.replace(/[^a-zA-Z0-9 &]/g, '').trim().replace(/ +/g, '_')
+  saveAs(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+    `Myoozz_RateCard_${safe}.xlsx`)
+}

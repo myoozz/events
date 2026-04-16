@@ -25,6 +25,42 @@ function fmt(n){ return (!n||n===0)?null:'₹'+Math.round(n).toLocaleString('en-
 function calcClient(el){ return el.lump_sum?(+(el.amount)||0):(+(el.rate)||0)*(+(el.qty)||1)*(+(el.days)||1) }
 function calcInternal(el){ return el.internal_lump?(+(el.internal_amount)||0):(+(el.internal_rate)||0)*(+(el.qty)||1)*(+(el.days)||1) }
 
+// ─── Rate suggestion pill ──────────────────────────────────────────────────
+// Looks up rate_cards for the closest matching entry.
+// Priority: city match → Pan-India fallback.
+// Returns { min, max, source, rate_type } or null.
+function getRateSuggestion(rateCards, category, elementName, city){
+  if(!rateCards?.length||!elementName) return null
+  const name=elementName.toLowerCase()
+  const cat=(category||'').toLowerCase()
+
+  function score(r){
+    const rName=(r.element_name||'').toLowerCase()
+    const rCat=(r.category||'').toLowerCase()
+    let s=0
+    if(rCat===cat) s+=10
+    if(rName===name) s+=20
+    else if(rName.includes(name)||name.includes(rName)) s+=8
+    else {
+      const words=name.split(/\s+/).filter(w=>w.length>2)
+      words.forEach(w=>{ if(rName.includes(w)) s+=2 })
+    }
+    return s
+  }
+
+  const cityMatches=rateCards.filter(r=>(r.city||'').toLowerCase()===(city||'').toLowerCase())
+  const globalMatches=rateCards.filter(r=>r.location_scope==='national'||r.city==='Pan-India'||!r.city)
+  const pool=cityMatches.length?cityMatches:globalMatches
+  if(!pool.length) return null
+
+  const scored=pool.map(r=>({r,s:score(r)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s)
+  if(!scored.length) return null
+
+  const best=scored[0].r
+  if(!best.rate_min&&!best.rate_max) return null
+  return { min:best.rate_min, max:best.rate_max, source:best.vendor_name||best.source||'Rate Card', rate_type:best.rate_type, city:best.city }
+}
+
 function useWindowSize(){
   const [w,setW]=useState(()=>typeof window!=='undefined'?window.innerWidth:1200)
   useEffect(()=>{
@@ -209,7 +245,7 @@ const ginp=(isInternal)=>({
 // ─────────────────────────────────────────────
 // ELEMENT ROW — supports card + grid mode via viewMode prop
 // ─────────────────────────────────────────────
-function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleStatus, otherCategories, onMove, fieldVis, viewMode, onMarkAsOption, rowIndex }){
+function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleStatus, otherCategories, onMove, fieldVis, viewMode, onMarkAsOption, rowIndex, rateCards, city }){
   const fv=fieldVis||{days:true,source:true,status:true,size:true,finish:true}
   const w=useWindowSize()
   const isMobile=w<768
@@ -314,6 +350,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
               onLump={()=>{onUpdate('internal_lump',true);onSave()}}
               muted={true}
             />
+            {(()=>{const sg=!el.internal_lump?getRateSuggestion(rateCards,el.category,el.element_name,city):null;return sg&&(<div title={`Source: ${sg.source}`} style={{fontSize:'9px',marginTop:'2px',padding:'1px 5px',borderRadius:'3px',background:sg.rate_type==='vendor_quoted'?'#D1FAE5':'#EFF6FF',color:sg.rate_type==='vendor_quoted'?'#065F46':'#1D4ED8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',cursor:'default'}}>~{sg.min&&sg.max&&sg.min!==sg.max?`₹${Number(sg.min).toLocaleString('en-IN')}–₹${Number(sg.max).toLocaleString('en-IN')}`:sg.min?`₹${Number(sg.min).toLocaleString('en-IN')}`:``}{sg.city&&sg.city!=='Pan-India'?` · ${sg.city}`:''}</div>)})()}
             {!el.internal_lump&&internalAmt>0&&(
               <div style={{fontSize:'10px',color:'#6B7280',fontWeight:500}}>{fmt(internalAmt)}</div>
             )}
@@ -455,6 +492,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             onLump={()=>{onUpdate('internal_lump',true);onSave()}}
             muted={true}
           />
+          {(()=>{const sg=!el.internal_lump?getRateSuggestion(rateCards,el.category,el.element_name,city):null;return sg&&(<div title={`Source: ${sg.source}`} style={{fontSize:'9px',marginTop:'2px',padding:'2px 6px',borderRadius:'3px',background:sg.rate_type==='vendor_quoted'?'#D1FAE5':'#EFF6FF',color:sg.rate_type==='vendor_quoted'?'#065F46':'#1D4ED8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',cursor:'default'}}>~{sg.min&&sg.max&&sg.min!==sg.max?`₹${Number(sg.min).toLocaleString('en-IN')}–₹${Number(sg.max).toLocaleString('en-IN')}`:sg.min?`₹${Number(sg.min).toLocaleString('en-IN')}`:``} · {sg.source}{sg.city&&sg.city!=='Pan-India'?` · ${sg.city}`:''}</div>)})()}
           {!el.internal_lump&&internalAmt>0&&(
             <div style={{fontSize:'11px',color:'#92400E',marginTop:'2px',fontWeight:500}}>{fmt(internalAmt)}</div>
           )}
@@ -802,6 +840,8 @@ function CategoryBlock({
               fieldVis={fv}
               viewMode={viewMode}
               rowIndex={idx}
+              rateCards={rateCards}
+              city={city}
               onUpdate={(field,val)=>onUpdateEl(el.id,field,val)}
               onSave={()=>onSaveEl(el)}
               onDelete={()=>onDeleteEl(el.id,el.element_name)}
@@ -853,6 +893,7 @@ function CityElements({ event, city, userRole, teamUsers }){
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
   const [catDefaults,setCatDefaults]=useState({})   // { catName: { size_unit, qty, days } }
+  const [rateCards,setRateCards]=useState([])       // for internal rate suggestion pill
   const fileRef=useRef(null)
   const [showPaste,setShowPaste]=useState(false)
   const [pasteText,setPasteText]=useState('')
@@ -882,6 +923,9 @@ function CityElements({ event, city, userRole, teamUsers }){
   }
 
   useEffect(()=>{ loadElements() },[event.id,city])
+  useEffect(()=>{
+    supabase.from('rate_cards').select('element_name,category,city,rate_min,rate_max,vendor_name,source,rate_type,location_scope').then(({data})=>{ if(data) setRateCards(data) })
+  },[])
 
   // ── LOAD — reads bundle_config + category_config + applies saved order ──
   async function loadElements(){
