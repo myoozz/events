@@ -262,12 +262,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
                   placeholder="Size" value={el.size} disabled={locked}
                   onChange={e=>onUpdate('size',e.target.value)} onBlur={onSave}
                 />
-                <select style={{...ginp(false),width:'38px',fontSize:'11px',flex:'0 0 auto',cursor:'pointer'}}
-                  value={el.size_unit} disabled={locked}
-                  onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
-                >
-                  {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
-                </select>
+
               </>
             )}
             <input style={{...ginp(false),width:'34px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
@@ -409,12 +404,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             placeholder="Size" value={el.size} disabled={locked}
             onChange={e=>onUpdate('size',e.target.value)} onBlur={onSave}
           />
-          <select style={{...inp(false,locked),width:'42px',fontSize:'11px',padding:'6px 2px',cursor:'pointer'}}
-            value={el.size_unit} disabled={locked}
-            onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
-          >
-            {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
-          </select>
+
           <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px',textAlign:'center'}}
             type="number" min="1" value={el.qty} disabled={locked}
             onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}
