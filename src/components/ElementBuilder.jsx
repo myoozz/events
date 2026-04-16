@@ -4,7 +4,11 @@ import { CATEGORY_SUGGESTIONS } from './CategoryLibrary'
 import CategoryPicker from './CategoryPicker'
 import { supabase } from '../supabase'
 import * as XLSX from 'xlsx'
+import { logElementCreated, logElementDeleted, logCategoryAdded, logCategoryDeleted } from '../utils/activityLogger'
 
+// ─────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────
 const SIZE_UNITS = ['ft','mtr','sq ft','cm','inch','nos','—']
 const STATUS_OPTIONS = ['Estimated','Confirmed','Actuals','Client scope']
 const STATUS_STYLES = {
@@ -14,9 +18,47 @@ const STATUS_STYLES = {
   'Client scope': { bg:'#DBEAFE', color:'#1E40AF' },
 }
 
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
 function fmt(n){ return (!n||n===0)?null:'₹'+Math.round(n).toLocaleString('en-IN') }
 function calcClient(el){ return el.lump_sum?(+(el.amount)||0):(+(el.rate)||0)*(+(el.qty)||1)*(+(el.days)||1) }
 function calcInternal(el){ return el.internal_lump?(+(el.internal_amount)||0):(+(el.internal_rate)||0)*(+(el.qty)||1)*(+(el.days)||1) }
+
+function useWindowSize(){
+  const [w,setW]=useState(()=>typeof window!=='undefined'?window.innerWidth:1200)
+  useEffect(()=>{
+    const fn=()=>setW(window.innerWidth)
+    window.addEventListener('resize',fn)
+    return ()=>window.removeEventListener('resize',fn)
+  },[])
+  return w
+}
+
+// Build grid-template-columns string, consistent between headers and rows
+function getColTemplate(isAdmin,fv,viewMode){
+  const delCol=viewMode==='grid'?'44px':'44px'
+  if(isAdmin){
+    return [
+      '2fr',
+      fv.finish?'1.6fr':null,
+      (fv.size||fv.days)?'1.2fr':null,
+      '1.2fr',
+      '1.2fr',
+      fv.source?'1.2fr':null,
+      fv.status?'72px':null,
+      delCol,
+    ].filter(Boolean).join(' ')
+  }
+  return [
+    '2fr',
+    fv.finish?'1.6fr':null,
+    (fv.size||fv.days)?'1.2fr':null,
+    '1.6fr',
+    fv.status?'72px':null,
+    delCol,
+  ].filter(Boolean).join(' ')
+}
 
 function downloadTemplate(){
   const wb=XLSX.utils.book_new()
@@ -73,7 +115,7 @@ function parseExcel(file,cb){
         internal_rate:col.internal!==undefined?(parseFloat(String(v[col.internal]).replace(/[^0-9.]/g,''))||0):0,
         source:col.source!==undefined?v[col.source]:'',
         lump_sum:false,internal_lump:false,amount:0,internal_amount:0,
-        cost_status:'Estimated',bundled:false,
+        cost_status:'Estimated',bundled:false,is_option:false,option_group:null,
       })
     })
     cb(Object.entries(cats).filter(([,i])=>i.length>0)
@@ -94,12 +136,10 @@ function parsePaste(text){
     const nums=cols.slice(1).map(c=>parseFloat(c.replace(/[^0-9.]/g,''))).filter(n=>!isNaN(n)&&n>0)
     const textCols=cols.slice(1).filter(c=>c&&isNaN(parseFloat(c.replace(/[^0-9.]/g,''))))
     cats[cat].push({
-      element_name:name,
-      size:textCols[0]||'',
-      size_unit:'ft',finish:textCols[1]||'',qty:1,days:1,
+      element_name:name,size:textCols[0]||'',size_unit:'ft',finish:textCols[1]||'',qty:1,days:1,
       rate:nums.find(n=>n>=1000)||0,internal_rate:0,source:'',
       lump_sum:false,internal_lump:false,amount:0,internal_amount:0,
-      cost_status:'Estimated',bundled:false,
+      cost_status:'Estimated',bundled:false,is_option:false,option_group:null,
     })
   })
   return Object.entries(cats).filter(([,i])=>i.length>0)
@@ -107,19 +147,46 @@ function parsePaste(text){
       items:items.map((el,i)=>({...el,id:'new-'+Date.now()+'-'+i}))}))
 }
 
-// Bug fix: central responsive hook used by ElementRow and CityElements
-function useWindowSize() {
-  const [w, setW] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1200)
-  useEffect(() => {
-    const fn = () => setW(window.innerWidth)
-    window.addEventListener('resize', fn)
-    return () => window.removeEventListener('resize', fn)
-  }, [])
-  return w
+// ─────────────────────────────────────────────
+// LUMP TOGGLE — Phase F refactor (replaces modeToggle fn)
+// Props: isLump, onUnit, onLump, muted
+// muted=true → gray active state (used for internal cost)
+// ─────────────────────────────────────────────
+function LumpToggle({ isLump, onUnit, onLump, muted }){
+  const activeBg   = muted ? '#D1D5DB' : 'white'
+  const activeClr  = muted ? '#374151' : 'var(--text)'
+  const inactiveClr= muted ? '#9CA3AF' : '#9CA3AF'
+  return(
+    <div style={{display:'flex',gap:'0',marginTop:'2px',background:'#F3F4F6',borderRadius:'4px',padding:'2px',width:'fit-content'}}>
+      <button onClick={onUnit} style={{
+        padding:'1px 7px',fontSize:'10px',fontFamily:'var(--font-body)',
+        background:!isLump?activeBg:'none',
+        color:!isLump?activeClr:inactiveClr,
+        border:'none',borderRadius:'3px',cursor:'pointer',
+        boxShadow:!isLump?'0 1px 2px rgba(0,0,0,0.08)':'none',
+        fontWeight:!isLump?500:400,transition:'all 0.1s',
+      }}>Unit</button>
+      <button onClick={onLump} style={{
+        padding:'1px 7px',fontSize:'10px',fontFamily:'var(--font-body)',
+        background:isLump?activeBg:'none',
+        color:isLump?activeClr:inactiveClr,
+        border:'none',borderRadius:'3px',cursor:'pointer',
+        boxShadow:isLump?'0 1px 2px rgba(0,0,0,0.08)':'none',
+        fontWeight:isLump?500:400,transition:'all 0.1s',
+      }}>Lump</button>
+    </div>
+  )
 }
 
-// Shared input style
-const inp = (amber,locked) => ({
+// ─────────────────────────────────────────────
+// CARD MODE SUB-LABEL
+// ─────────────────────────────────────────────
+const subLabel=(text)=>(
+  <div style={{fontSize:'10px',color:'var(--text-tertiary)',marginBottom:'2px',letterSpacing:'0.3px'}}>{text}</div>
+)
+
+// Card mode input style (unchanged from before)
+const inp=(amber,locked)=>({
   width:'100%',fontSize:'13px',padding:'6px 8px',
   border:'0.5px solid '+(amber?'#F59E0B':'var(--border)'),
   borderRadius:'4px',
@@ -129,45 +196,181 @@ const inp = (amber,locked) => ({
   boxSizing:'border-box',minWidth:0,
 })
 
-const subLabel = (text) => (
-  <div style={{fontSize:'10px',color:'var(--text-tertiary)',marginBottom:'2px',letterSpacing:'0.3px'}}>{text}</div>
-)
+// Grid mode input style
+const ginp=(isInternal)=>({
+  width:'100%',fontSize:'13px',padding:'5px 8px',
+  border:'none',borderRadius:0,
+  background:'transparent',
+  color:isInternal?'#6B7280':'var(--text)',
+  fontFamily:'var(--font-body)',outline:'none',
+  boxSizing:'border-box',minWidth:0,height:'100%',
+})
 
-const modeToggle = (isLump, onUnit, onLump, amber) => (
-  <div style={{display:'flex',gap:'2px',marginTop:'3px'}}>
-    <button onClick={onUnit} style={{
-      padding:'1px 6px',fontSize:'10px',fontFamily:'var(--font-body)',
-      background:!isLump?(amber?'#92400E':'var(--text)'):'none',
-      color:!isLump?'white':(amber?'#92400E':'var(--text-tertiary)'),
-      border:'0.5px solid '+(amber?'#F59E0B':'var(--border)'),
-      borderRadius:'3px',cursor:'pointer',
-    }}>Unit</button>
-    <button onClick={onLump} style={{
-      padding:'1px 6px',fontSize:'10px',fontFamily:'var(--font-body)',
-      background:isLump?(amber?'#92400E':'var(--text)'):'none',
-      color:isLump?'white':(amber?'#92400E':'var(--text-tertiary)'),
-      border:'0.5px solid '+(amber?'#F59E0B':'var(--border)'),
-      borderRadius:'3px',cursor:'pointer',
-    }}>Lump</button>
-  </div>
-)
-
-function ElementRow({el,isAdmin,locked,onUpdate,onSave,onDelete,onCycleStatus,elementName,otherCategories,onMove,fieldVis,teamUsers}){
-  const fv = fieldVis||{days:true,source:true,status:true,size:true,finish:true}
-  // Bug fix: replaced local state+effect with shared hook
-  const w = useWindowSize()
-  const isMobile = w < 768
+// ─────────────────────────────────────────────
+// ELEMENT ROW — supports card + grid mode via viewMode prop
+// ─────────────────────────────────────────────
+function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleStatus, otherCategories, onMove, fieldVis, viewMode, onMarkAsOption, rowIndex }){
+  const fv=fieldVis||{days:true,source:true,status:true,size:true,finish:true}
+  const w=useWindowSize()
+  const isMobile=w<768
   const sc=STATUS_STYLES[el.cost_status]||STATUS_STYLES['Estimated']
   const clientAmt=calcClient(el)
   const internalAmt=calcInternal(el)
   const margin=clientAmt-internalAmt
+  const isSaved=el.id&&!el.id.startsWith('new-')
+  const isGrid=viewMode==='grid'
 
-  // Bug fix: responsive grid — on mobile use 2 cols, on desktop use full grid
-  const cols = isMobile
-    ? '1fr 1fr'
-    : isAdmin
-      ? '2fr 1.6fr 1.2fr 1.2fr 1.2fr 1.2fr 72px 24px'
-      : '2fr 1.6fr 1.2fr 1.6fr 72px 24px'
+  // ── GRID MODE ──
+  if(isGrid&&!isMobile){
+    const cols=getColTemplate(isAdmin,fv,'grid')
+    const zebra=rowIndex%2===0?'white':'#FAFAFA'
+    // Cell style: borderRight between cells
+    const cell=(hasLeftBorder,isLast,extraStyle={})=>({
+      borderRight:isLast?'none':'0.5px solid var(--border)',
+      borderLeft:hasLeftBorder?'2px solid #E5E7EB':'none',
+      display:'flex',alignItems:'center',
+      padding:'0',overflow:'hidden',
+      ...extraStyle,
+    })
+    return(
+      <div style={{display:'grid',gridTemplateColumns:cols,alignItems:'stretch',borderBottom:'1px solid var(--border)',background:zebra,minHeight:'38px'}}>
+        {/* Element name */}
+        <div style={cell(false,false)}>
+          <input style={{...ginp(false),fontWeight:500}}
+            placeholder="Element name" value={el.element_name}
+            disabled={locked}
+            onChange={e=>onUpdate('element_name',e.target.value)} onBlur={onSave}
+          />
+        </div>
+
+        {/* Finish */}
+        {fv.finish&&(
+          <div style={cell(false,false)}>
+            <input style={ginp(false)} placeholder="Specs…" value={el.finish}
+              disabled={locked}
+              onChange={e=>onUpdate('finish',e.target.value)} onBlur={onSave}
+            />
+          </div>
+        )}
+
+        {/* Size · Qty · Days */}
+        {(fv.size||fv.days)&&(
+          <div style={{...cell(false,false),padding:'0 4px',gap:'3px'}}>
+            {fv.size&&(
+              <>
+                <input style={{...ginp(false),width:'48px',fontSize:'12px',flex:'0 0 auto'}}
+                  placeholder="Size" value={el.size} disabled={locked}
+                  onChange={e=>onUpdate('size',e.target.value)} onBlur={onSave}
+                />
+                <select style={{...ginp(false),width:'38px',fontSize:'11px',flex:'0 0 auto',cursor:'pointer'}}
+                  value={el.size_unit} disabled={locked}
+                  onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
+                >
+                  {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
+                </select>
+              </>
+            )}
+            <input style={{...ginp(false),width:'34px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
+              type="number" min="1" value={el.qty} disabled={locked}
+              onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}
+            />
+            {fv.days&&(
+              <input style={{...ginp(false),width:'34px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
+                type="number" min="1" value={el.days} disabled={locked}
+                onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Client cost */}
+        <div style={{...cell(false,false),flexDirection:'column',alignItems:'stretch',padding:'2px 6px',gap:'1px',justifyContent:'center'}}>
+          <input style={{...ginp(false),fontWeight:500,fontSize:'13px'}}
+            type="number" min="0"
+            placeholder={locked?'Actuals':el.lump_sum?'Total':'Rate'}
+            value={locked?'':(el.lump_sum?(el.amount||''):(el.rate||''))}
+            disabled={locked}
+            onChange={e=>onUpdate(el.lump_sum?'amount':'rate',+e.target.value)} onBlur={onSave}
+          />
+          {!locked&&(
+            <LumpToggle isLump={el.lump_sum}
+              onUnit={()=>{onUpdate('lump_sum',false);onSave()}}
+              onLump={()=>{onUpdate('lump_sum',true);onSave()}}
+              muted={false}
+            />
+          )}
+          {!locked&&!el.lump_sum&&clientAmt>0&&(
+            <div style={{fontSize:'10px',color:'var(--text-secondary)',fontWeight:500}}>{fmt(clientAmt)}</div>
+          )}
+          {locked&&<div style={{fontSize:'10px',color:'#1E40AF'}}>On actuals</div>}
+        </div>
+
+        {/* Internal cost — admin only */}
+        {isAdmin&&(
+          <div style={{...cell(true,!fv.source&&!fv.status,{flexDirection:'column',alignItems:'stretch',padding:'2px 6px',gap:'1px',justifyContent:'center'})}}>
+            <input style={ginp(true)}
+              type="number" min="0"
+              placeholder={el.internal_lump?'Total':'Rate'}
+              value={el.internal_lump?(el.internal_amount||''):(el.internal_rate||'')}
+              onChange={e=>onUpdate(el.internal_lump?'internal_amount':'internal_rate',+e.target.value)} onBlur={onSave}
+            />
+            <LumpToggle isLump={el.internal_lump}
+              onUnit={()=>{onUpdate('internal_lump',false);onSave()}}
+              onLump={()=>{onUpdate('internal_lump',true);onSave()}}
+              muted={true}
+            />
+            {!el.internal_lump&&internalAmt>0&&(
+              <div style={{fontSize:'10px',color:'#6B7280',fontWeight:500}}>{fmt(internalAmt)}</div>
+            )}
+          </div>
+        )}
+
+        {/* Source — admin only */}
+        {isAdmin&&fv.source&&(
+          <div style={cell(true,!fv.status,{flexDirection:'column',alignItems:'stretch',padding:'2px 6px',justifyContent:'center'})}>
+            <input style={ginp(true)} placeholder="Vendor" value={el.source||''}
+              onChange={e=>onUpdate('source',e.target.value)} onBlur={onSave}
+            />
+            {isAdmin&&clientAmt>0&&(+(el.internal_rate)||+(el.internal_amount))>0&&(
+              <div style={{fontSize:'10px',marginTop:'1px',fontWeight:500,color:margin>0?'#065F46':margin===0?'#92400E':'#A32D2D'}}>
+                {Math.round((margin/clientAmt)*100)}%
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Status */}
+        {fv.status&&(
+          <div style={{...cell(false,false),padding:'4px',justifyContent:'center'}}>
+            <button onClick={onCycleStatus}
+              style={{width:'100%',padding:'5px 3px',fontSize:'10px',fontWeight:500,background:sc.bg,color:sc.color,border:'none',borderRadius:'4px',cursor:'pointer',fontFamily:'var(--font-body)',textAlign:'center'}}
+            >{el.cost_status}</button>
+          </div>
+        )}
+
+        {/* Delete + alt */}
+        <div style={{...cell(false,true,{flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',padding:'4px 0'})}}>
+          <button onClick={onDelete}
+            style={{background:'none',border:'none',cursor:'pointer',fontSize:'13px',color:'var(--text-tertiary)',padding:'2px',lineHeight:1}}
+            onMouseOver={e=>e.currentTarget.style.color='#A32D2D'}
+            onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
+          >✕</button>
+          {isSaved&&(
+            <button onClick={onMarkAsOption} title="Move to alternates — not in budget"
+              style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
+              onMouseOver={e=>e.currentTarget.style.color='#bc1723'}
+              onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
+            >alt</button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── CARD MODE (original layout) ──
+  const cols=isMobile?'1fr 1fr':isAdmin
+    ?'2fr 1.6fr 1.2fr 1.2fr 1.2fr 1.2fr 72px 44px'
+    :'2fr 1.6fr 1.2fr 1.6fr 72px 44px'
 
   return(
     <div style={{
@@ -188,12 +391,12 @@ function ElementRow({el,isAdmin,locked,onUpdate,onSave,onDelete,onCycleStatus,el
         />
       </div>
 
-      {/* Finish / specs */}
+      {/* Finish */}
       <div>
         {subLabel('Finish / specs')}
         <input style={inp(false,locked)}
-          placeholder="Material, specs, details..." value={el.finish}
-          title="Material type, finish, or specifications" disabled={locked}
+          placeholder="Material, specs, details…" value={el.finish}
+          disabled={locked}
           onChange={e=>onUpdate('finish',e.target.value)} onBlur={onSave}
         />
       </div>
@@ -203,22 +406,22 @@ function ElementRow({el,isAdmin,locked,onUpdate,onSave,onDelete,onCycleStatus,el
         {subLabel('Size · Qty · Days')}
         <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
           <input style={{...inp(false,locked),width:'54px',fontSize:'12px',padding:'6px 5px'}}
-            placeholder="Size" value={el.size} title="Dimensions"
-            disabled={locked} onChange={e=>onUpdate('size',e.target.value)} onBlur={onSave}
+            placeholder="Size" value={el.size} disabled={locked}
+            onChange={e=>onUpdate('size',e.target.value)} onBlur={onSave}
           />
           <select style={{...inp(false,locked),width:'42px',fontSize:'11px',padding:'6px 2px',cursor:'pointer'}}
-            value={el.size_unit} disabled={locked} title="Unit"
+            value={el.size_unit} disabled={locked}
             onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
           >
             {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
           </select>
           <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px',textAlign:'center'}}
-            type="number" min="1" value={el.qty} title="Quantity"
-            disabled={locked} onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}
+            type="number" min="1" value={el.qty} disabled={locked}
+            onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}
           />
           <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px',textAlign:'center'}}
-            type="number" min="1" value={el.days} title="Days"
-            disabled={locked} onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}
+            type="number" min="1" value={el.days} disabled={locked}
+            onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}
           />
         </div>
       </div>
@@ -230,14 +433,15 @@ function ElementRow({el,isAdmin,locked,onUpdate,onSave,onDelete,onCycleStatus,el
           type="number" min="0"
           placeholder={locked?'On actuals':el.lump_sum?'Total (₹)':'Rate (₹)'}
           value={locked?'':(el.lump_sum?(el.amount||''):(el.rate||''))}
-          title="What you charge the client" disabled={locked}
-          onChange={e=>onUpdate(el.lump_sum?'amount':'rate',+e.target.value)}
-          onBlur={onSave}
+          disabled={locked}
+          onChange={e=>onUpdate(el.lump_sum?'amount':'rate',+e.target.value)} onBlur={onSave}
         />
-        {!locked && modeToggle(el.lump_sum,
-          ()=>{onUpdate('lump_sum',false);onSave()},
-          ()=>{onUpdate('lump_sum',true);onSave()},
-          false
+        {!locked&&(
+          <LumpToggle isLump={el.lump_sum}
+            onUnit={()=>{onUpdate('lump_sum',false);onSave()}}
+            onLump={()=>{onUpdate('lump_sum',true);onSave()}}
+            muted={false}
+          />
         )}
         {!locked&&!el.lump_sum&&clientAmt>0&&(
           <div style={{fontSize:'11px',color:'var(--text-secondary)',marginTop:'2px',fontWeight:500}}>{fmt(clientAmt)}</div>
@@ -254,14 +458,13 @@ function ElementRow({el,isAdmin,locked,onUpdate,onSave,onDelete,onCycleStatus,el
             placeholder={el.internal_lump?'Total (₹)':'Rate (₹)'}
             value={el.internal_lump?(el.internal_amount||''):(el.internal_rate||'')}
             title="What you pay the vendor — never shown to client"
-            onChange={e=>onUpdate(el.internal_lump?'internal_amount':'internal_rate',+e.target.value)}
-            onBlur={onSave}
+            onChange={e=>onUpdate(el.internal_lump?'internal_amount':'internal_rate',+e.target.value)} onBlur={onSave}
           />
-          {modeToggle(el.internal_lump,
-            ()=>{onUpdate('internal_lump',false);onSave()},
-            ()=>{onUpdate('internal_lump',true);onSave()},
-            true
-          )}
+          <LumpToggle isLump={el.internal_lump}
+            onUnit={()=>{onUpdate('internal_lump',false);onSave()}}
+            onLump={()=>{onUpdate('internal_lump',true);onSave()}}
+            muted={true}
+          />
           {!el.internal_lump&&internalAmt>0&&(
             <div style={{fontSize:'11px',color:'#92400E',marginTop:'2px',fontWeight:500}}>{fmt(internalAmt)}</div>
           )}
@@ -274,52 +477,89 @@ function ElementRow({el,isAdmin,locked,onUpdate,onSave,onDelete,onCycleStatus,el
           {subLabel('Source / vendor')}
           <input style={inp(true,false)}
             placeholder="Vendor name" value={el.source||''}
-            title="Who is supplying this"
             onChange={e=>onUpdate('source',e.target.value)} onBlur={onSave}
           />
           {isAdmin&&clientAmt>0&&(+(el.internal_rate)||+(el.internal_amount))>0&&(
-            <div style={{fontSize:'11px',marginTop:'2px',fontWeight:500,
-              color:margin>0?'#065F46':margin===0?'#92400E':'#A32D2D'}}>
+            <div style={{fontSize:'11px',marginTop:'2px',fontWeight:500,color:margin>0?'#065F46':margin===0?'#92400E':'#A32D2D'}}>
               Margin: {fmt(margin)} ({Math.round((margin/clientAmt)*100)}%)
             </div>
           )}
           {isAdmin&&clientAmt>0&&!((+(el.internal_rate)||+(el.internal_amount))>0)&&(
-            <div style={{fontSize:'11px',marginTop:'2px',color:'#92400E',fontWeight:500}}>
-              Margin: ₹0 — add internal cost
-            </div>
+            <div style={{fontSize:'11px',marginTop:'2px',color:'#92400E',fontWeight:500}}>Margin: ₹0 — add internal cost</div>
           )}
         </div>
       )}
 
       {/* Status */}
-      {fv.status && <div>
-        {subLabel('Status')}
-        <button onClick={onCycleStatus} title="Click to change status"
-          style={{
-            width:'100%',padding:'6px 4px',fontSize:'11px',fontWeight:500,
-            background:sc.bg,color:sc.color,border:'none',
-            borderRadius:'4px',cursor:'pointer',fontFamily:'var(--font-body)',
-            textAlign:'center',
-          }}
-        >{el.cost_status}</button>
-        {otherCategories&&otherCategories.length>0&&(
-          <select
-            value=""
-            onChange={e=>{if(e.target.value&&onMove)onMove(e.target.value)}}
-            title="Move to another category"
-            style={{width:'100%',fontSize:'10px',padding:'2px 4px',marginTop:'3px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'none',color:'var(--text-tertiary)',fontFamily:'var(--font-body)',cursor:'pointer'}}
-          >
-            <option value="">Move to →</option>
-            {otherCategories.map(oc=><option key={oc.name} value={oc.name}>{oc.name}</option>)}
-          </select>
-        )}
-      </div>}
+      {fv.status&&(
+        <div>
+          {subLabel('Status')}
+          <button onClick={onCycleStatus}
+            style={{width:'100%',padding:'6px 4px',fontSize:'11px',fontWeight:500,background:sc.bg,color:sc.color,border:'none',borderRadius:'4px',cursor:'pointer',fontFamily:'var(--font-body)',textAlign:'center'}}
+          >{el.cost_status}</button>
+          {otherCategories&&otherCategories.length>0&&(
+            <select value="" onChange={e=>{if(e.target.value&&onMove)onMove(e.target.value)}}
+              title="Move to another category"
+              style={{width:'100%',fontSize:'10px',padding:'2px 4px',marginTop:'3px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'none',color:'var(--text-tertiary)',fontFamily:'var(--font-body)',cursor:'pointer'}}
+            >
+              <option value="">Move to →</option>
+              {otherCategories.map(oc=><option key={oc.name} value={oc.name}>{oc.name}</option>)}
+            </select>
+          )}
+        </div>
+      )}
 
-      {/* Delete */}
-      <div style={{paddingTop:'18px'}}>
-        <button onClick={onDelete} title="Remove element"
-          style={{background:'none',border:'none',cursor:'pointer',
-            fontSize:'14px',color:'var(--text-tertiary)',padding:'4px',lineHeight:1}}
+      {/* Delete + alt */}
+      <div style={{paddingTop:'18px',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
+        <button onClick={onDelete}
+          style={{background:'none',border:'none',cursor:'pointer',fontSize:'14px',color:'var(--text-tertiary)',padding:'4px',lineHeight:1}}
+          onMouseOver={e=>e.currentTarget.style.color='#A32D2D'}
+          onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
+        >✕</button>
+        {isSaved&&(
+          <button onClick={onMarkAsOption} title="Move to alternates — not in budget"
+            style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
+            onMouseOver={e=>e.currentTarget.style.color='#bc1723'}
+            onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
+          >alt</button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// OPTION ROW — read-only row in Alternates section
+// ─────────────────────────────────────────────
+function OptionRow({ el, onBack, onConfirm, onDelete }){
+  const clientAmt=calcClient(el)
+  return(
+    <div style={{
+      display:'flex',alignItems:'center',gap:'10px',
+      padding:'7px 14px',
+      background:'#FAFAFA',
+      borderBottom:'0.5px solid var(--border)',
+      flexWrap:'wrap',
+    }}>
+      <span style={{flex:'2',fontSize:'12px',color:'var(--text-secondary)',fontStyle:'italic',minWidth:'120px'}}>
+        {el.element_name||'—'}
+      </span>
+      <span style={{flex:'1.4',fontSize:'12px',color:'var(--text-tertiary)',minWidth:'80px'}}>{el.finish||''}</span>
+      <span style={{fontSize:'12px',color:'var(--text-tertiary)',flexShrink:0,whiteSpace:'nowrap'}}>
+        {el.qty&&el.qty>1?`${el.qty}×`:''}{el.days&&el.days>1?` ${el.days}d`:''}
+      </span>
+      <span style={{fontSize:'12px',color:'var(--text-secondary)',flexShrink:0,fontWeight:500}}>
+        {clientAmt>0?fmt(clientAmt):'—'}
+      </span>
+      <div style={{display:'flex',gap:'6px',flexShrink:0,marginLeft:'auto'}}>
+        <button onClick={()=>onBack(el.id)}
+          style={{fontSize:'11px',padding:'3px 10px',background:'none',border:'0.5px solid var(--border-strong)',borderRadius:'3px',cursor:'pointer',color:'var(--text)',fontFamily:'var(--font-body)'}}
+        >← Back</button>
+        <button onClick={()=>onConfirm(el.id,el.option_group)}
+          style={{fontSize:'11px',padding:'3px 10px',background:'var(--text)',color:'var(--bg)',border:'none',borderRadius:'3px',cursor:'pointer',fontFamily:'var(--font-body)',fontWeight:500}}
+        >✓ Confirm</button>
+        <button onClick={()=>onDelete(el.id,el.element_name)}
+          style={{background:'none',border:'none',cursor:'pointer',fontSize:'13px',color:'var(--text-tertiary)',padding:'2px 4px'}}
           onMouseOver={e=>e.currentTarget.style.color='#A32D2D'}
           onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
         >✕</button>
@@ -328,69 +568,141 @@ function ElementRow({el,isAdmin,locked,onUpdate,onSave,onDelete,onCycleStatus,el
   )
 }
 
-function CategoryBlock({cat,isAdmin,onUpdateCat,onAddElement,onUpdateEl,onSaveEl,onDeleteEl,onCycleStatus,onDelete,onMerge,onRename,otherCategories,onMoveElement,fieldVis,teamUsers}){
+// ─────────────────────────────────────────────
+// CATEGORY DEFAULTS BAND — Phase F
+// Appears between header and column headers when expanded
+// ─────────────────────────────────────────────
+function CategoryDefaultsBand({ catName, defaults, onChangeDefault }){
+  const d=defaults||{}
+  return(
+    <div style={{background:'var(--bg-secondary)',borderBottom:'0.5px solid var(--border)',padding:'6px 14px',display:'flex',alignItems:'center',gap:'16px',flexWrap:'wrap'}}>
+      <span style={{fontSize:'10px',color:'var(--text-tertiary)',textTransform:'uppercase',letterSpacing:'0.4px',fontWeight:500,flexShrink:0}}>
+        Defaults for new rows
+      </span>
+      <div style={{display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
+        <span style={{fontSize:'11px',color:'var(--text-tertiary)'}}>Unit</span>
+        <select
+          value={d.size_unit||'ft'}
+          onChange={e=>onChangeDefault(catName,'size_unit',e.target.value)}
+          style={{fontSize:'12px',padding:'2px 6px',border:'0.5px solid var(--border)',borderRadius:'4px',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',cursor:'pointer',outline:'none'}}
+        >
+          {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
+        </select>
+        <span style={{fontSize:'11px',color:'var(--text-tertiary)'}}>Qty</span>
+        <input type="number" min="1" value={d.qty||1}
+          onChange={e=>onChangeDefault(catName,'qty',Math.max(1,+e.target.value))}
+          style={{width:'44px',fontSize:'12px',padding:'2px 6px',border:'0.5px solid var(--border)',borderRadius:'4px',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',textAlign:'center',outline:'none'}}
+        />
+        <span style={{fontSize:'11px',color:'var(--text-tertiary)'}}>Days</span>
+        <input type="number" min="1" value={d.days||1}
+          onChange={e=>onChangeDefault(catName,'days',Math.max(1,+e.target.value))}
+          style={{width:'44px',fontSize:'12px',padding:'2px 6px',border:'0.5px solid var(--border)',borderRadius:'4px',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',textAlign:'center',outline:'none'}}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// CATEGORY BLOCK — Phase F: reorder buttons, defaults band, alternates section
+// ─────────────────────────────────────────────
+function CategoryBlock({
+  cat, isAdmin, onUpdateCat, onAddElement, onUpdateEl, onSaveEl, onDeleteEl,
+  onCycleStatus, onDelete, onMerge, onRename, otherCategories, onMoveElement,
+  fieldVis, teamUsers, viewMode,
+  isFirst, isLast, onMoveUp, onMoveDown,
+  catDefaults, onCatDefaultChange,
+  onMarkAsOption, onOptionBack, onOptionConfirm,
+}){
   const [open,setOpen]=useState(false)
   const [showMerge,setShowMerge]=useState(false)
-  const [mergeTarget,setMergeTarget]=useState('')
   const [editingName,setEditingName]=useState(false)
   const [nameVal,setNameVal]=useState(cat.name)
   const nameRef=useRef(null)
 
   useEffect(()=>{ setNameVal(cat.name) },[cat.name])
 
+  const fv=fieldVis||{days:true,source:true,status:true,size:true,finish:true}
+  const isGrid=viewMode==='grid'
+
+  // Split items: main list vs alternates
+  const mainItems=cat.items.filter(el=>!el.is_option)
+  const optionItems=cat.items.filter(el=>el.is_option)
+
   const catClientTotal=cat.bundled
     ?(cat.bundle_amt||0)
-    :cat.items.reduce((s,el)=>s+calcClient(el),0)
+    :mainItems.reduce((s,el)=>s+calcClient(el),0)
+  const autoSum=mainItems.reduce((s,el)=>s+calcClient(el),0)
 
-  const autoSum=cat.items.reduce((s,el)=>s+calcClient(el),0)
+  // Column header labels (shared between card and grid, styled differently)
+  const headerLabels=[
+    'Element',
+    fv.finish?'Finish / specs':null,
+    (fv.size||fv.days)?'Size · Qty · Days':null,
+    'Client cost',
+    isAdmin?'Internal cost':null,
+    isAdmin&&fv.source?'Source / vendor':null,
+    fv.status?'Status':null,
+    '',
+  ].filter(Boolean)
+
+  const colsForHeaders=getColTemplate(isAdmin,fv,viewMode)
 
   return(
-    <div style={{border:'0.5px solid var(--border)',borderRadius:'var(--radius-sm)',marginBottom:'8px',overflow:'hidden'}}>
+    <div style={{
+      border:isGrid?'1px solid var(--border)':'0.5px solid var(--border)',
+      borderRadius:isGrid?'4px':'var(--radius-sm)',
+      marginBottom:'8px',overflow:'hidden',
+    }}>
 
-      {/* Category header */}
+      {/* ── CATEGORY HEADER ── */}
       <div style={{
-        display:'flex',alignItems:'center',gap:'10px',
+        display:'flex',alignItems:'center',gap:'8px',
         padding:'10px 14px',
         background:open?'var(--bg-secondary)':'var(--bg)',
         cursor:'pointer',
         borderBottom:open?'0.5px solid var(--border)':'none',
       }}>
         {/* Collapse toggle */}
-        <button onClick={()=>setOpen(!open)} style={{
-          background:'none',border:'none',cursor:'pointer',
-          fontSize:'12px',color:'var(--text-tertiary)',padding:'0 4px',lineHeight:1,flexShrink:0,
-        }}>
-          {open?'▼':'▶'}
-        </button>
+        <button onClick={()=>setOpen(!open)}
+          style={{background:'none',border:'none',cursor:'pointer',fontSize:'12px',color:'var(--text-tertiary)',padding:'0 4px',lineHeight:1,flexShrink:0}}
+        >{open?'▼':'▶'}</button>
+
+        {/* Reorder — Phase F */}
+        <div style={{display:'flex',gap:'2px',flexShrink:0}} onClick={e=>e.stopPropagation()}>
+          <button onClick={onMoveUp} disabled={isFirst} title="Move category up"
+            style={{width:'22px',height:'22px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',background:'none',border:'0.5px solid '+(isFirst?'var(--border)':'var(--border-strong)'),borderRadius:'3px',cursor:isFirst?'default':'pointer',color:isFirst?'var(--text-tertiary)':'var(--text)',padding:0,opacity:isFirst?0.4:1}}
+          >↑</button>
+          <button onClick={onMoveDown} disabled={isLast} title="Move category down"
+            style={{width:'22px',height:'22px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',background:'none',border:'0.5px solid '+(isLast?'var(--border)':'var(--border-strong)'),borderRadius:'3px',cursor:isLast?'default':'pointer',color:isLast?'var(--text-tertiary)':'var(--text)',padding:0,opacity:isLast?0.4:1}}
+          >↓</button>
+        </div>
 
         {/* Editable category name */}
-        {editingName ? (
+        {editingName?(
           <input
-            ref={nameRef}
-            value={nameVal}
-            placeholder="Category name"
-            autoFocus
+            ref={nameRef} value={nameVal} placeholder="Category name" autoFocus
             onClick={e=>e.stopPropagation()}
             onChange={e=>setNameVal(e.target.value)}
             onBlur={e=>{e.stopPropagation();onRename&&onRename(cat.name,nameVal);setEditingName(false)}}
-            onKeyDown={e=>{ if(e.key==='Enter'){onRename&&onRename(cat.name,nameVal);setEditingName(false)} if(e.key==='Escape')setEditingName(false) }}
-            style={{flex:1,fontSize:'14px',fontWeight:500,background:'none',border:'none',
-              outline:'none',color:'var(--text)',fontFamily:'var(--font-body)',borderBottom:'1px solid var(--text)'}}
+            onKeyDown={e=>{
+              if(e.key==='Enter'){onRename&&onRename(cat.name,nameVal);setEditingName(false)}
+              if(e.key==='Escape') setEditingName(false)
+            }}
+            style={{flex:1,fontSize:'14px',fontWeight:500,background:'none',border:'none',outline:'none',color:'var(--text)',fontFamily:'var(--font-body)',borderBottom:'1px solid var(--text)'}}
           />
-        ) : (
+        ):(
           <span
             onClick={e=>{e.stopPropagation();setEditingName(true)}}
             title="Click to rename"
-            style={{flex:1,fontSize:'14px',fontWeight:500,color:'var(--text)',cursor:'text',
-              padding:'0 2px',borderBottom:'1px solid transparent'}}
-          >
-            {cat.name}
-          </span>
+            style={{flex:1,fontSize:'14px',fontWeight:500,color:'var(--text)',cursor:'text',padding:'0 2px',borderBottom:'1px solid transparent'}}
+          >{cat.name}</span>
         )}
 
-        {/* Element count */}
+        {/* Item count */}
         <span style={{fontSize:'12px',color:'var(--text-tertiary)',flexShrink:0}}>
-          {cat.items.length} {cat.items.length===1?'item':'items'}
+          {mainItems.length} {mainItems.length===1?'item':'items'}
+          {optionItems.length>0&&<span style={{color:'#bc1723',marginLeft:'4px'}}>+{optionItems.length} alt</span>}
         </span>
 
         {/* Category total */}
@@ -400,16 +712,12 @@ function CategoryBlock({cat,isAdmin,onUpdateCat,onAddElement,onUpdateEl,onSaveEl
           </span>
         )}
 
-        {/* Merge button */}
+        {/* Merge */}
         {otherCategories&&otherCategories.length>0&&(
           <div style={{position:'relative',flexShrink:0}} onClick={e=>e.stopPropagation()}>
-            <button
-              onClick={()=>setShowMerge(!showMerge)}
-              title="Merge this category into another"
+            <button onClick={()=>setShowMerge(!showMerge)}
               style={{fontSize:'11px',padding:'2px 8px',background:'none',border:'0.5px solid var(--border)',borderRadius:'3px',cursor:'pointer',color:'var(--text-tertiary)',fontFamily:'var(--font-body)'}}
-            >
-              Merge →
-            </button>
+            >Merge →</button>
             {showMerge&&(
               <div style={{position:'absolute',right:0,top:'100%',marginTop:'4px',background:'var(--bg)',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',padding:'8px',zIndex:50,minWidth:'180px',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
                 <p style={{fontSize:'11px',color:'var(--text-tertiary)',marginBottom:'6px',fontWeight:500}}>Merge into:</p>
@@ -418,9 +726,7 @@ function CategoryBlock({cat,isAdmin,onUpdateCat,onAddElement,onUpdateEl,onSaveEl
                     style={{display:'block',width:'100%',textAlign:'left',padding:'6px 8px',fontSize:'12px',background:'none',border:'none',cursor:'pointer',color:'var(--text)',fontFamily:'var(--font-body)',borderRadius:'3px'}}
                     onMouseOver={e=>e.currentTarget.style.background='var(--bg-secondary)'}
                     onMouseOut={e=>e.currentTarget.style.background='none'}
-                  >
-                    {oc.name}
-                  </button>
+                  >{oc.name}</button>
                 ))}
                 <button onClick={()=>setShowMerge(false)} style={{display:'block',width:'100%',textAlign:'left',padding:'4px 8px',fontSize:'11px',background:'none',border:'none',cursor:'pointer',color:'var(--text-tertiary)',fontFamily:'var(--font-body)',marginTop:'4px',borderTop:'0.5px solid var(--border)'}}>Cancel</button>
               </div>
@@ -436,8 +742,7 @@ function CategoryBlock({cat,isAdmin,onUpdateCat,onAddElement,onUpdateEl,onSaveEl
               onUpdateCat('bundled',bundling)
               if(bundling) onUpdateCat('bundle_amt',autoSum)
             }}
-          />
-          Bundle
+          />Bundle
         </label>
 
         {/* Delete category */}
@@ -448,68 +753,71 @@ function CategoryBlock({cat,isAdmin,onUpdateCat,onAddElement,onUpdateEl,onSaveEl
         >✕</button>
       </div>
 
-      {/* Expanded content */}
+      {/* ── EXPANDED CONTENT ── */}
       {open&&(
         <>
           {/* Bundle override */}
           {cat.bundled&&(
             <div style={{padding:'8px 14px',background:'#FFFBEB',borderBottom:'0.5px solid var(--border)',display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap'}}>
               <span style={{fontSize:'12px',fontWeight:500,color:'#92400E'}}>Client sees one total:</span>
-              <input
-                type="number"
+              <input type="number"
                 style={{width:'160px',fontSize:'13px',padding:'5px 10px',border:'0.5px solid #F59E0B',borderRadius:'4px',background:'white',color:'#92400E',fontFamily:'var(--font-body)',outline:'none'}}
                 value={cat.bundle_amt||''}
                 placeholder={`Auto: ${fmt(autoSum)||'₹0'}`}
-                title="Edit to override the bundled total shown to client"
                 onChange={e=>onUpdateCat('bundle_amt',+e.target.value)}
               />
               <span style={{fontSize:'11px',color:'#92400E',opacity:0.7}}>Auto-sum: {fmt(autoSum)||'₹0'} · Edit to override</span>
             </div>
           )}
 
-          {/* Column headers */}
-          {(() => {
-            const fv = fieldVis||{days:true,source:true,status:true,size:true,finish:true}
-            const adminHeaders = [
-              'Element',
-              fv.finish ? 'Finish / specs' : null,
-              (fv.size||fv.days) ? 'Size · Qty · Days' : null,
-              'Client cost',
-              isAdmin ? 'Internal cost' : null,
-              isAdmin && fv.source ? 'Source / vendor' : null,
-              fv.status ? 'Status' : null,
-              '',
-            ].filter(Boolean)
-            const cols = isAdmin
-              ? `2fr ${fv.finish?'1.6fr':''} ${(fv.size||fv.days)?'1.2fr':''} 1.2fr 1.2fr ${fv.source?'1.2fr':''} ${fv.status?'72px':''} 24px`.replace(/\s+/g,' ').trim()
-              : `2fr ${fv.finish?'1.6fr':''} ${(fv.size||fv.days)?'1.2fr':''} 1.6fr ${fv.status?'72px':''} 24px`.replace(/\s+/g,' ').trim()
-            return (
-              <div style={{display:'grid',gridTemplateColumns:cols,gap:'6px',padding:'4px 14px',background:'var(--bg-secondary)',borderBottom:'0.5px solid var(--border)'}}>
-                {adminHeaders.map((h,i)=>(
-                  <div key={i} style={{fontSize:'10px',color:'var(--text-tertiary)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.4px',padding:'3px 0'}}>{h}</div>
-                ))}
-              </div>
-            )
-          })()}
+          {/* Category Defaults Band — Phase F */}
+          <CategoryDefaultsBand
+            catName={cat.name}
+            defaults={catDefaults}
+            onChangeDefault={onCatDefaultChange}
+          />
 
-          {/* Element rows */}
-          {cat.items.length===0&&(
+          {/* Column headers */}
+          <div style={{
+            display:'grid',gridTemplateColumns:colsForHeaders,gap:'6px',
+            padding:'4px 14px',
+            background:isGrid?'#F3F4F6':'var(--bg-secondary)',
+            borderBottom:'0.5px solid var(--border)',
+          }}>
+            {headerLabels.map((h,i)=>(
+              <div key={i} style={{
+                fontSize:'10px',
+                color:isGrid?'#6B7280':'var(--text-tertiary)',
+                fontWeight:isGrid?600:500,
+                textTransform:'uppercase',letterSpacing:'0.4px',
+                padding:'3px 0',
+              }}>{h}</div>
+            ))}
+          </div>
+
+          {/* Empty state */}
+          {mainItems.length===0&&(
             <div style={{padding:'20px 14px',textAlign:'center',color:'var(--text-tertiary)',fontSize:'13px'}}>
               No elements yet — click "+ Add element" below.
             </div>
           )}
-          {cat.items.map(el=>(
-            <ElementRow key={el.id} el={el} isAdmin={isAdmin}
+
+          {/* Main element rows */}
+          {mainItems.map((el,idx)=>(
+            <ElementRow
+              key={el.id} el={el} isAdmin={isAdmin}
               locked={el.cost_status==='Client scope'}
-              elementName={el.element_name}
               otherCategories={otherCategories}
               teamUsers={teamUsers}
-              fieldVis={fieldVis||{days:true,source:true,status:true,size:true,finish:true}}
+              fieldVis={fv}
+              viewMode={viewMode}
+              rowIndex={idx}
               onUpdate={(field,val)=>onUpdateEl(el.id,field,val)}
               onSave={()=>onSaveEl(el)}
               onDelete={()=>onDeleteEl(el.id,el.element_name)}
               onCycleStatus={()=>onCycleStatus(el.id)}
               onMove={toCat=>onMoveElement&&onMoveElement(el.id,toCat)}
+              onMarkAsOption={()=>onMarkAsOption(el.id)}
             />
           ))}
 
@@ -519,20 +827,42 @@ function CategoryBlock({cat,isAdmin,onUpdateCat,onAddElement,onUpdateEl,onSaveEl
               style={{fontSize:'13px',color:'var(--text-tertiary)',background:'none',border:'none',cursor:'pointer',fontFamily:'var(--font-body)',padding:0}}
               onMouseOver={e=>e.currentTarget.style.color='var(--text)'}
               onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
-            >
-              + Add element
-            </button>
+            >+ Add element</button>
           </div>
+
+          {/* ── ALTERNATES SECTION — Phase F ── */}
+          {optionItems.length>0&&(
+            <div style={{borderTop:'1px dashed var(--border)'}}>
+              <div style={{padding:'6px 14px 4px',display:'flex',alignItems:'center',gap:'8px'}}>
+                <span style={{fontSize:'11px',color:'var(--text-tertiary)',fontStyle:'italic'}}>
+                  Alternates — {optionItems.length} option{optionItems.length!==1?'s':''} · not in budget
+                </span>
+              </div>
+              {optionItems.map(el=>(
+                <OptionRow
+                  key={el.id} el={el}
+                  onBack={()=>onOptionBack(el.id)}
+                  onConfirm={()=>onOptionConfirm(el.id,el.option_group)}
+                  onDelete={()=>onDeleteEl(el.id,el.element_name)}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>
   )
 }
 
-function CityElements({event,city,userRole,teamUsers}){
+// ─────────────────────────────────────────────
+// CITY ELEMENTS — main per-city component
+// Phase F: viewMode state, category_config, all new handlers
+// ─────────────────────────────────────────────
+function CityElements({ event, city, userRole, teamUsers }){
   const [categories,setCategories]=useState([])
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
+  const [catDefaults,setCatDefaults]=useState({})   // { catName: { size_unit, qty, days } }
   const fileRef=useRef(null)
   const [showPaste,setShowPaste]=useState(false)
   const [pasteText,setPasteText]=useState('')
@@ -542,44 +872,47 @@ function CityElements({event,city,userRole,teamUsers}){
   const [showImport,setShowImport]=useState(false)
   const [showCategoryPicker,setShowCategoryPicker]=useState(false)
   const [showSheetSettings,setShowSheetSettings]=useState(false)
-  // Bug fix: add responsive hook
-  const w = useWindowSize()
-
-  async function handleDownloadElementMaster() {
-    const { exportElementMaster } = await import('../utils/excelExport')
-    const { data: allElements } = await supabase.from('elements').select('*').eq('event_id', event.id).order('category')
-    const { data: client } = await supabase.from('clients').select('*').eq('id', event.client_id).single()
-    await exportElementMaster(event, allElements || [], client)
-  }
   const [fieldVis,setFieldVis]=useState(
-    event?.field_visibility || { days:true, source:true, status:true, size:true, finish:true }
+    event?.field_visibility||{days:true,source:true,status:true,size:true,finish:true}
   )
+  // Phase F: view mode — grid (default) or cards
+  const [viewMode,setViewMode]=useState(()=>{
+    try{ return localStorage.getItem('myoozz_element_view')||'grid' }catch{ return 'grid' }
+  })
 
-  async function saveFieldVis(updated) {
-    setFieldVis(updated)
-    await supabase.from('events').update({ field_visibility: updated }).eq('id', event.id)
-  }
+  const w=useWindowSize()
   const isAdmin=userRole==='admin'
   const eventCities=event.cities?.length>0?event.cities:['General']
   const isMultiCity=eventCities.length>1
 
-  useEffect(()=>{loadElements()},[event.id,city])
+  function toggleViewMode(){
+    const next=viewMode==='grid'?'cards':'grid'
+    setViewMode(next)
+    try{ localStorage.setItem('myoozz_element_view',next) }catch{}
+  }
 
-  // ── Bug 4: read bundle config from events table alongside elements ──
+  useEffect(()=>{ loadElements() },[event.id,city])
+
+  // ── LOAD — reads bundle_config + category_config + applies saved order ──
   async function loadElements(){
     setLoading(true)
-    const [{ data }, { data: evData }] = await Promise.all([
+    const [{ data },{ data:evData }]=await Promise.all([
       supabase.from('elements').select('*').eq('event_id',event.id).eq('city',city).order('sort_order'),
-      supabase.from('events').select('bundle_config').eq('id',event.id).single(),
+      supabase.from('events').select('bundle_config,category_config').eq('id',event.id).single(),
     ])
-    const bundleConfig = evData?.bundle_config || {}
-    const cityBundle   = bundleConfig[city] || {}
+    const bundleConfig=evData?.bundle_config||{}
+    const cityBundle=bundleConfig[city]||{}
+    const categoryConfig=evData?.category_config||{}
+    const cityConfig=categoryConfig[city]||{}
+    const savedOrder=cityConfig.order||[]
+    const savedDefaults=cityConfig.defaults||{}
+    setCatDefaults(savedDefaults)
 
     if(data&&data.length>0){
       const cats={}
       data.forEach(el=>{
         if(!cats[el.category]){
-          const cb = cityBundle[el.category] || {}
+          const cb=cityBundle[el.category]||{}
           cats[el.category]={
             id:'cat-'+el.category,
             name:el.category,
@@ -591,11 +924,49 @@ function CityElements({event,city,userRole,teamUsers}){
         }
         cats[el.category].items.push(el)
       })
-      setCategories(Object.values(cats))
-    } else setCategories([])
+      let catArray=Object.values(cats)
+      // Apply saved category order
+      if(savedOrder.length>0){
+        const ordered=[]
+        savedOrder.forEach(n=>{ const f=catArray.find(c=>c.name===n); if(f) ordered.push(f) })
+        catArray.forEach(c=>{ if(!savedOrder.includes(c.name)) ordered.push(c) })
+        catArray=ordered
+      }
+      setCategories(catArray)
+    } else {
+      setCategories([])
+    }
     setLoading(false)
   }
 
+  // ── SAVE category_config (order + defaults) ──
+  async function saveCategoryConfig(updater){
+    const {data:ev}=await supabase.from('events').select('category_config').eq('id',event.id).single()
+    const cc=ev?.category_config||{}
+    if(!cc[city]) cc[city]={}
+    updater(cc[city])
+    await supabase.from('events').update({category_config:cc}).eq('id',event.id)
+  }
+
+  async function saveCategoryOrder(orderedNames){
+    await saveCategoryConfig(cfg=>{ cfg.order=orderedNames })
+  }
+
+  async function saveCatDefault(catName,field,val){
+    await saveCategoryConfig(cfg=>{
+      if(!cfg.defaults) cfg.defaults={}
+      if(!cfg.defaults[catName]) cfg.defaults[catName]={}
+      cfg.defaults[catName][field]=val
+    })
+    setCatDefaults(prev=>({...prev,[catName]:{...(prev[catName]||{}),[field]:val}}))
+  }
+
+  function getCatDefaults(catName){
+    const d=catDefaults[catName]||{}
+    return{ size_unit:d.size_unit||'ft', qty:d.qty||1, days:d.days||1 }
+  }
+
+  // ── SAVE ELEMENT ──
   async function saveEl(el){
     setSaving(true)
     const ca=calcClient(el),ia=calcInternal(el)
@@ -608,14 +979,18 @@ function CityElements({event,city,userRole,teamUsers}){
       internal_amount:el.internal_lump?(el.internal_amount||0):ia,
       source:el.source||'',cost_status:el.cost_status||'Estimated',
       bundled:el.bundled||false,sort_order:el.sort_order||0,
+      is_option:el.is_option||false,option_group:el.option_group||null,
     }
     if(el.id&&!el.id.startsWith('new-')){
       await supabase.from('elements').update(payload).eq('id',el.id)
     } else {
       const {data}=await supabase.from('elements').insert(payload).select().single()
-      if(data) setCategories(prev=>prev.map(cat=>cat.name!==el.category?cat:{
-        ...cat,items:cat.items.map(e=>e.id===el.id?{...e,id:data.id}:e)
-      }))
+      if(data){
+        setCategories(prev=>prev.map(cat=>cat.name!==el.category?cat:{
+          ...cat,items:cat.items.map(e=>e.id===el.id?{...e,id:data.id}:e)
+        }))
+        try{ await logElementCreated(event.id,data.id,data.element_name) }catch{}
+      }
     }
     setSaving(false)
   }
@@ -650,9 +1025,8 @@ function CityElements({event,city,userRole,teamUsers}){
 
   async function doDelete(catName,elId,elementName,allCities){
     if(allCities){
-      const {data:allMatches}=await supabase.from('elements')
-        .select('id').eq('event_id',event.id)
-        .eq('category',catName).eq('element_name',elementName)
+      const {data:allMatches}=await supabase.from('elements').select('id')
+        .eq('event_id',event.id).eq('category',catName).eq('element_name',elementName)
       if(allMatches){
         for(const match of allMatches){
           await supabase.from('elements').delete().eq('id',match.id)
@@ -661,6 +1035,7 @@ function CityElements({event,city,userRole,teamUsers}){
     } else {
       await supabase.from('elements').delete().eq('id',elId)
     }
+    try{ await logElementDeleted(event.id,elId,elementName) }catch{}
     setCategories(prev=>prev.map(cat=>cat.name!==catName?cat:{
       ...cat,items:cat.items.filter(el=>el.id!==elId)
     }))
@@ -673,34 +1048,33 @@ function CityElements({event,city,userRole,teamUsers}){
     setCategories([])
   }
 
-  // ── Bug 4: save bundle config to events table ──
-  async function saveBundleConfig(catName, updates) {
-    const { data: ev } = await supabase.from('events').select('bundle_config').eq('id',event.id).single()
-    const bc = ev?.bundle_config || {}
-    if (!bc[city]) bc[city] = {}
-    if (!bc[city][catName]) bc[city][catName] = {}
-    Object.assign(bc[city][catName], updates)
-    await supabase.from('events').update({ bundle_config: bc }).eq('id', event.id)
+  // ── BUNDLE CONFIG (persisted to events.bundle_config) ──
+  async function saveBundleConfig(catName,updates){
+    const {data:ev}=await supabase.from('events').select('bundle_config').eq('id',event.id).single()
+    const bc=ev?.bundle_config||{}
+    if(!bc[city]) bc[city]={}
+    if(!bc[city][catName]) bc[city][catName]={}
+    Object.assign(bc[city][catName],updates)
+    await supabase.from('events').update({bundle_config:bc}).eq('id',event.id)
   }
 
-  // ── Bug 3: addCategory now immediately saves suggestion items to Supabase ──
+  // ── ADD CATEGORY — reads suggestion items + logs ──
   async function addCategory(name){
     const id='cat-'+Date.now()
+    const defaults=getCatDefaults(name)
     const suggestions=(CATEGORY_SUGGESTIONS[name]||[]).map((el,i)=>({
       id:'new-'+Date.now()+'-'+i,
       event_id:event.id,city,category:name,
       element_name:el.element_name,finish:el.finish||'',
-      size:'',size_unit:'ft',qty:1,days:1,
+      size:'',size_unit:defaults.size_unit,
+      qty:defaults.qty,days:defaults.days,
       rate:0,lump_sum:false,amount:0,
       internal_rate:0,internal_lump:false,internal_amount:0,
       source:'',cost_status:'Estimated',bundled:false,sort_order:i,
+      is_option:false,option_group:null,
     }))
-
-    // Add to local state immediately so UI is responsive
     setCategories(prev=>[...prev,{id,name,bundled:false,bundle_amt:0,original_amt:0,items:suggestions}])
     setShowCategoryPicker(false)
-
-    // Save all suggestion elements to Supabase straight away
     if(suggestions.length>0){
       setSaving(true)
       const savedItems=[]
@@ -709,34 +1083,106 @@ function CityElements({event,city,userRole,teamUsers}){
         const {data}=await supabase.from('elements').insert({
           event_id:event.id,city,category:name,
           element_name:s.element_name,finish:s.finish||'',
-          size:'',size_unit:'ft',qty:1,days:1,
+          size:'',size_unit:s.size_unit,qty:s.qty,days:s.days,
           rate:0,lump_sum:false,amount:0,
           internal_rate:0,internal_lump:false,internal_amount:0,
           source:'',cost_status:'Estimated',bundled:false,sort_order:i,
+          is_option:false,option_group:null,
         }).select().single()
         savedItems.push(data?{...s,id:data.id}:s)
       }
-      // Replace temp IDs with real Supabase IDs
       setCategories(prev=>prev.map(cat=>cat.name!==name?cat:{...cat,items:savedItems}))
       setSaving(false)
     }
-    // Empty custom categories persist on first element save (unchanged behaviour)
+    // Update order in category_config
+    const newOrder=[...categories.map(c=>c.name),name]
+    await saveCategoryOrder(newOrder)
+    try{ await logCategoryAdded(event.id,name) }catch{}
   }
 
-  async function moveElement(elId, fromCat, toCat){
-    await supabase.from('elements').update({category: toCat}).eq('id', elId)
-    setCategories(prev => {
-      const el = prev.find(c => c.name === fromCat)?.items.find(e => e.id === elId)
-      if (!el) return prev
-      return prev.map(c => {
-        if (c.name === fromCat) return { ...c, items: c.items.filter(e => e.id !== elId) }
-        if (c.name === toCat) return { ...c, items: [...c.items, { ...el, category: toCat }] }
-        return c
-      }).filter(c => c.items.length > 0 || c.name === fromCat)
+  // ── ADD ELEMENT — pre-fills from category defaults ──
+  function addElement(catName){
+    const defaults=getCatDefaults(catName)
+    const newEl={
+      id:'new-'+Date.now(),event_id:event.id,city,category:catName,
+      element_name:'',size:'',size_unit:defaults.size_unit,finish:'',
+      qty:defaults.qty,days:defaults.days,rate:0,lump_sum:false,amount:0,
+      internal_rate:0,internal_lump:false,internal_amount:0,
+      source:'',cost_status:'Estimated',bundled:false,sort_order:0,
+      is_option:false,option_group:null,
+    }
+    setCategories(prev=>prev.map(cat=>cat.name!==catName?cat:{...cat,items:[...cat.items,newEl]}))
+  }
+
+  // ── REORDER CATEGORIES — Phase F ──
+  function moveCategoryUp(catName){
+    setCategories(prev=>{
+      const idx=prev.findIndex(c=>c.name===catName)
+      if(idx<=0) return prev
+      const next=[...prev];[next[idx-1],next[idx]]=[next[idx],next[idx-1]]
+      saveCategoryOrder(next.map(c=>c.name))
+      return next
     })
   }
 
-  async function mergeCategory(fromName, toName){
+  function moveCategoryDown(catName){
+    setCategories(prev=>{
+      const idx=prev.findIndex(c=>c.name===catName)
+      if(idx>=prev.length-1) return prev
+      const next=[...prev];[next[idx],next[idx+1]]=[next[idx+1],next[idx]]
+      saveCategoryOrder(next.map(c=>c.name))
+      return next
+    })
+  }
+
+  // ── OPTIONS / ALTERNATES — Phase F ──
+  async function markAsOption(catName,elId){
+    await supabase.from('elements').update({is_option:true,option_group:catName}).eq('id',elId)
+    setCategories(prev=>prev.map(cat=>cat.name!==catName?cat:{
+      ...cat,items:cat.items.map(el=>el.id!==elId?el:{...el,is_option:true,option_group:catName})
+    }))
+  }
+
+  async function optionBack(catName,elId){
+    await supabase.from('elements').update({is_option:false,option_group:null}).eq('id',elId)
+    setCategories(prev=>prev.map(cat=>cat.name!==catName?cat:{
+      ...cat,items:cat.items.map(el=>el.id!==elId?el:{...el,is_option:false,option_group:null})
+    }))
+  }
+
+  async function optionConfirm(catName,elId,optionGroup){
+    setCategories(prev=>prev.map(cat=>{
+      if(cat.name!==catName) return cat
+      const siblings=cat.items.filter(el=>el.is_option&&el.option_group===optionGroup&&el.id!==elId)
+      // Delete siblings from DB
+      siblings.forEach(sib=>{
+        if(!sib.id.startsWith('new-')) supabase.from('elements').delete().eq('id',sib.id).then(()=>{})
+      })
+      // Confirm winner
+      supabase.from('elements').update({is_option:false,option_group:null}).eq('id',elId).then(()=>{})
+      return{
+        ...cat,
+        items:cat.items
+          .filter(el=>!(el.is_option&&el.option_group===optionGroup&&el.id!==elId))
+          .map(el=>el.id!==elId?el:{...el,is_option:false,option_group:null})
+      }
+    }))
+  }
+
+  function moveElement(elId,fromCat,toCat){
+    supabase.from('elements').update({category:toCat}).eq('id',elId).then(()=>{})
+    setCategories(prev=>{
+      const el=prev.find(c=>c.name===fromCat)?.items.find(e=>e.id===elId)
+      if(!el) return prev
+      return prev.map(c=>{
+        if(c.name===fromCat) return{...c,items:c.items.filter(e=>e.id!==elId)}
+        if(c.name===toCat) return{...c,items:[...c.items,{...el,category:toCat}]}
+        return c
+      }).filter(c=>c.items.length>0||c.name===fromCat)
+    })
+  }
+
+  async function mergeCategory(fromName,toName){
     const {data:els}=await supabase.from('elements').select('id')
       .eq('event_id',event.id).eq('city',city).eq('category',fromName)
     if(els&&els.length>0){
@@ -746,48 +1192,39 @@ function CityElements({event,city,userRole,teamUsers}){
     setCategories(prev=>{
       const from=prev.find(c=>c.name===fromName)
       if(!from) return prev
-      return prev
-        .filter(c=>c.name!==fromName)
-        .map(c=>c.name!==toName?c:{
-          ...c,
-          items:[...c.items,...from.items.map(el=>({...el,category:toName}))]
-        })
+      return prev.filter(c=>c.name!==fromName)
+        .map(c=>c.name!==toName?c:{...c,items:[...c.items,...from.items.map(el=>({...el,category:toName}))]})
     })
   }
 
-  async function renameCategory(oldName, newName){
+  async function renameCategory(oldName,newName){
     if(!newName.trim()||newName===oldName) return
     await supabase.from('elements').update({category:newName})
       .eq('event_id',event.id).eq('city',city).eq('category',oldName)
     setCategories(prev=>prev.map(c=>c.name!==oldName?c:{...c,name:newName}))
   }
 
-  function addElement(catName){
-    const newEl={
-      id:'new-'+Date.now(),event_id:event.id,city,category:catName,
-      element_name:'',size:'',size_unit:'ft',finish:'',
-      qty:1,days:1,rate:0,lump_sum:false,amount:0,
-      internal_rate:0,internal_lump:false,internal_amount:0,
-      source:'',cost_status:'Estimated',bundled:false,sort_order:0,
-    }
-    setCategories(prev=>prev.map(cat=>cat.name!==catName?cat:{...cat,items:[...cat.items,newEl]}))
-  }
-
-  // ── Bug 4: updateCat persists bundle changes ──
   function updateCat(catName,field,val){
     setCategories(prev=>prev.map(cat=>{
       if(cat.name!==catName) return cat
       if(field==='bundled'&&!val){
         saveBundleConfig(catName,{bundled:false,bundle_amt:0})
-        return {...cat,bundled:false,bundle_amt:0}
+        return{...cat,bundled:false,bundle_amt:0}
       }
       if(field==='bundled'||field==='bundle_amt'){
         saveBundleConfig(catName,{[field]:val})
       }
-      return {...cat,[field]:val}
+      return{...cat,[field]:val}
     }))
   }
 
+  // ── FIELD VISIBILITY ──
+  async function saveFieldVis(updated){
+    setFieldVis(updated)
+    await supabase.from('events').update({field_visibility:updated}).eq('id',event.id)
+  }
+
+  // ── BATCH SAVE (import / paste) ──
   async function saveAllParsed(parsedCats){
     setSaving(true)
     const result=[]
@@ -804,6 +1241,7 @@ function CityElements({event,city,userRole,teamUsers}){
           internal_rate:el.internal_rate||0,internal_lump:false,
           internal_amount:calcInternal(el),source:el.source||'',
           cost_status:'Estimated',bundled:false,sort_order:i,
+          is_option:false,option_group:null,
         }).select().single()
         newItems.push(data?{...el,id:data.id}:el)
       }
@@ -821,11 +1259,8 @@ function CityElements({event,city,userRole,teamUsers}){
       setCategories(prev=>{
         const existing={...Object.fromEntries(prev.map(c=>[c.name,c]))}
         saved.forEach(cat=>{
-          if(existing[cat.name]){
-            existing[cat.name]={...existing[cat.name],items:[...existing[cat.name].items,...cat.items]}
-          } else {
-            existing[cat.name]=cat
-          }
+          if(existing[cat.name]) existing[cat.name]={...existing[cat.name],items:[...existing[cat.name].items,...cat.items]}
+          else existing[cat.name]=cat
         })
         return Object.values(existing)
       })
@@ -838,26 +1273,31 @@ function CityElements({event,city,userRole,teamUsers}){
     setCategories(prev=>{
       const existing={...Object.fromEntries(prev.map(c=>[c.name,c]))}
       saved.forEach(cat=>{
-        if(existing[cat.name]){
-          existing[cat.name]={...existing[cat.name],items:[...existing[cat.name].items,...cat.items]}
-        } else {
-          existing[cat.name]=cat
-        }
+        if(existing[cat.name]) existing[cat.name]={...existing[cat.name],items:[...existing[cat.name].items,...cat.items]}
+        else existing[cat.name]=cat
       })
       return Object.values(existing)
     })
     setShowPaste(false);setPasteText('');setPastePreview([])
   }
 
-  // Totals for bottom summary
+  async function handleDownloadElementMaster(){
+    const {exportElementMaster}=await import('../utils/excelExport')
+    const {data:allElements}=await supabase.from('elements').select('*').eq('event_id',event.id).order('category')
+    const {data:client}=await supabase.from('clients').select('*').eq('id',event.client_id).single()
+    await exportElementMaster(event,allElements||[],client)
+  }
+
+  // ── BOTTOM TOTALS — exclude is_option items ──
   let totalClient=0,totalInternal=0
   categories.forEach(cat=>{
+    const mainItems=cat.items.filter(el=>!el.is_option)
     if(cat.bundled){ totalClient+=cat.bundle_amt||0 }
-    else{ cat.items.forEach(el=>{ totalClient+=calcClient(el); totalInternal+=calcInternal(el) }) }
+    else{ mainItems.forEach(el=>{ totalClient+=calcClient(el); totalInternal+=calcInternal(el) }) }
   })
   const margin=totalClient-totalInternal
 
-  if(loading) return <p style={{fontSize:'14px',color:'var(--text-tertiary)',padding:'20px 0'}}>Loading...</p>
+  if(loading) return <p style={{fontSize:'14px',color:'var(--text-tertiary)',padding:'20px 0'}}>Loading…</p>
 
   return(
     <div>
@@ -892,7 +1332,11 @@ function CityElements({event,city,userRole,teamUsers}){
             + Add category
           </button>
           <div style={{display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap'}}>
-            {saving&&<span style={{fontSize:'12px',color:'var(--text-tertiary)',fontStyle:'italic'}}>Saving...</span>}
+            {saving&&<span style={{fontSize:'12px',color:'var(--text-tertiary)',fontStyle:'italic'}}>Saving…</span>}
+            {/* Phase F: Grid / Cards toggle */}
+            <button onClick={toggleViewMode} title={viewMode==='grid'?'Switch to card view':'Switch to grid view'} style={{fontSize:'12px',color:'var(--text-secondary)',background:viewMode==='grid'?'var(--bg-secondary)':'none',border:'0.5px solid var(--border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)',fontWeight:viewMode==='grid'?500:400}}>
+              {viewMode==='grid'?'⊞ Grid':'☰ Cards'}
+            </button>
             <button onClick={()=>setShowImport(true)} style={{fontSize:'12px',fontWeight:500,color:'var(--text)',background:'none',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↑ Import more</button>
             <button onClick={()=>setShowSheetSettings(true)} style={{fontSize:'12px',color:'var(--text-secondary)',background:'none',border:'0.5px solid var(--border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>⚙ Sheet</button>
             <button onClick={handleDownloadElementMaster} style={{fontSize:'12px',fontWeight:500,color:'var(--bg)',background:'var(--text)',border:'none',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↓ Download list</button>
@@ -903,7 +1347,7 @@ function CityElements({event,city,userRole,teamUsers}){
       )}
 
       {/* Category blocks */}
-      {categories.map(cat=>(
+      {categories.map((cat,idx)=>(
         <CategoryBlock
           key={cat.id||cat.name} cat={cat} isAdmin={isAdmin}
           onUpdateCat={(field,val)=>updateCat(cat.name,field,val)}
@@ -919,15 +1363,23 @@ function CityElements({event,city,userRole,teamUsers}){
           onMoveElement={(elId,toCat)=>moveElement(elId,cat.name,toCat)}
           fieldVis={fieldVis}
           teamUsers={teamUsers}
+          viewMode={viewMode}
+          isFirst={idx===0}
+          isLast={idx===categories.length-1}
+          onMoveUp={()=>moveCategoryUp(cat.name)}
+          onMoveDown={()=>moveCategoryDown(cat.name)}
+          catDefaults={catDefaults[cat.name]||{}}
+          onCatDefaultChange={saveCatDefault}
+          onMarkAsOption={elId=>markAsOption(cat.name,elId)}
+          onOptionBack={elId=>optionBack(cat.name,elId)}
+          onOptionConfirm={(elId,og)=>optionConfirm(cat.name,elId,og)}
         />
       ))}
 
       {/* Bottom summary */}
       {categories.length>0&&(
         <div style={{
-          marginTop:'24px',
-          borderTop:'0.5px solid var(--border)',
-          paddingTop:'16px',
+          marginTop:'24px',borderTop:'0.5px solid var(--border)',paddingTop:'16px',
           display:'grid',
           gridTemplateColumns:isAdmin?(w<768?'1fr 1fr':'repeat(4,1fr)'):'1fr',
           gap:'8px',
@@ -955,7 +1407,7 @@ function CityElements({event,city,userRole,teamUsers}){
             <div style={{background:'var(--bg-secondary)',borderRadius:'var(--radius-sm)',padding:'14px 18px',border:'0.5px solid var(--border)'}}>
               <div style={{fontSize:'11px',color:'var(--text-tertiary)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'6px'}}>Items on actuals</div>
               <div style={{fontSize:'24px',fontWeight:500,color:'var(--text)',fontFamily:'var(--font-display)'}}>
-                {categories.reduce((s,cat)=>s+cat.items.filter(el=>el.cost_status==='Client scope'||el.cost_status==='Actuals').length,0)}
+                {categories.reduce((s,cat)=>s+cat.items.filter(el=>!el.is_option&&(el.cost_status==='Client scope'||el.cost_status==='Actuals')).length,0)}
               </div>
               <div style={{fontSize:'11px',color:'var(--text-tertiary)',marginTop:'2px'}}>Billed post-event</div>
             </div>
@@ -972,15 +1424,15 @@ function CityElements({event,city,userRole,teamUsers}){
               <button onClick={()=>setShowSheetSettings(false)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'18px',color:'var(--text-tertiary)'}}>✕</button>
             </div>
             <p style={{fontSize:'13px',color:'var(--text-tertiary)',marginBottom:'20px',lineHeight:1.6}}>
-              Toggle off columns you don't need for this event. Default settings work for most events.
+              Toggle off columns you don't need for this event.
             </p>
             <div style={{display:'flex',flexDirection:'column',gap:'0',border:'0.5px solid var(--border)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
               {[
-                {key:'size', label:'Size / dimensions', desc:'e.g. 20x12ft, 8x8ft'},
-                {key:'finish', label:'Finish / specs', desc:'Material, finish type, details'},
-                {key:'days', label:'Days', desc:'Turn off for single-day events'},
-                {key:'source', label:'Source / vendor', desc:'Who supplies this element'},
-                {key:'status', label:'Status labels', desc:'Estimated, confirmed, actuals'},
+                {key:'size',label:'Size / dimensions',desc:'e.g. 20x12ft, 8x8ft'},
+                {key:'finish',label:'Finish / specs',desc:'Material, finish type, details'},
+                {key:'days',label:'Days',desc:'Turn off for single-day events'},
+                {key:'source',label:'Source / vendor',desc:'Who supplies this element'},
+                {key:'status',label:'Status labels',desc:'Estimated, confirmed, actuals'},
               ].map((f,i,arr)=>(
                 <div key={f.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:i<arr.length-1?'0.5px solid var(--border)':'none',background:fieldVis[f.key]?'var(--bg)':'var(--bg-secondary)'}}>
                   <div>
@@ -1019,48 +1471,35 @@ function CityElements({event,city,userRole,teamUsers}){
         />
       )}
 
-      {/* Delete confirm dialog */}
+      {/* Delete element confirm */}
       {deleteConfirm&&(
         <div style={{position:'fixed',inset:0,background:'rgba(26,25,21,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:300,padding:'24px'}}>
           <div style={{background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius)',padding:'28px 32px',maxWidth:'400px',width:'100%'}}>
-            <h3 style={{fontFamily:'var(--font-display)',fontSize:'20px',fontWeight:500,color:'var(--text)',marginBottom:'8px'}}>
-              Delete element
-            </h3>
+            <h3 style={{fontFamily:'var(--font-display)',fontSize:'20px',fontWeight:500,color:'var(--text)',marginBottom:'8px'}}>Delete element</h3>
             <p style={{fontSize:'13px',color:'var(--text-secondary)',lineHeight:1.6,marginBottom:'24px'}}>
               <strong>"{deleteConfirm.elementName}"</strong> exists in multiple cities.<br/>
               Where do you want to delete it from?
             </p>
             <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-              <button
-                onClick={()=>doDelete(deleteConfirm.catName,deleteConfirm.elId,deleteConfirm.elementName,true)}
+              <button onClick={()=>doDelete(deleteConfirm.catName,deleteConfirm.elId,deleteConfirm.elementName,true)}
                 style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#A32D2D',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
-              >
-                Delete from all cities
-              </button>
-              <button
-                onClick={()=>doDelete(deleteConfirm.catName,deleteConfirm.elId,deleteConfirm.elementName,false)}
+              >Delete from all cities</button>
+              <button onClick={()=>doDelete(deleteConfirm.catName,deleteConfirm.elId,deleteConfirm.elementName,false)}
                 style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'none',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'var(--text)',textAlign:'left'}}
-              >
-                Delete from {city} only
-              </button>
-              <button
-                onClick={()=>setDeleteConfirm(null)}
+              >Delete from {city} only</button>
+              <button onClick={()=>setDeleteConfirm(null)}
                 style={{padding:'8px 16px',fontSize:'12px',fontFamily:'var(--font-body)',background:'none',border:'none',cursor:'pointer',color:'var(--text-tertiary)'}}
-              >
-                Cancel
-              </button>
+              >Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Category delete confirm dialog */}
+      {/* Category delete confirm */}
       {categoryDeleteConfirm&&(
         <div style={{position:'fixed',inset:0,background:'rgba(26,25,21,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:300,padding:'24px'}}>
           <div style={{background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius)',padding:'28px 32px',maxWidth:'400px',width:'100%'}}>
-            <h3 style={{fontFamily:'var(--font-display)',fontSize:'20px',fontWeight:500,color:'var(--text)',marginBottom:'8px'}}>
-              Remove category
-            </h3>
+            <h3 style={{fontFamily:'var(--font-display)',fontSize:'20px',fontWeight:500,color:'var(--text)',marginBottom:'8px'}}>Remove category</h3>
             <p style={{fontSize:'13px',color:'var(--text-secondary)',lineHeight:1.6,marginBottom:'8px'}}>
               Remove <strong>"{categoryDeleteConfirm}"</strong> and all its elements?
             </p>
@@ -1073,18 +1512,14 @@ function CityElements({event,city,userRole,teamUsers}){
                   await supabase.from('elements').delete()
                     .eq('event_id',event.id).eq('city',city).eq('category',categoryDeleteConfirm)
                   setCategories(prev=>prev.filter(c=>c.name!==categoryDeleteConfirm))
+                  try{ await logCategoryDeleted(event.id,categoryDeleteConfirm) }catch{}
                   setCategoryDeleteConfirm(null)
                 }}
                 style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#A32D2D',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
-              >
-                Yes, remove category and all elements
-              </button>
-              <button
-                onClick={()=>setCategoryDeleteConfirm(null)}
+              >Yes, remove category and all elements</button>
+              <button onClick={()=>setCategoryDeleteConfirm(null)}
                 style={{padding:'8px 16px',fontSize:'12px',fontFamily:'var(--font-body)',background:'none',border:'none',cursor:'pointer',color:'var(--text-tertiary)'}}
-              >
-                Cancel
-              </button>
+              >Cancel</button>
             </div>
           </div>
         </div>
@@ -1100,7 +1535,7 @@ function CityElements({event,city,userRole,teamUsers}){
             </p>
             {pastePreview.length===0?(
               <>
-                <textarea placeholder="Paste Excel data here..." value={pasteText}
+                <textarea placeholder="Paste Excel data here…" value={pasteText}
                   onChange={e=>setPasteText(e.target.value)} rows={10}
                   style={{width:'100%',padding:'10px 12px',fontSize:'13px',fontFamily:'monospace',background:'var(--bg-secondary)',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',color:'var(--text)',outline:'none',resize:'vertical',boxSizing:'border-box',lineHeight:1.6}}
                 />
@@ -1120,7 +1555,7 @@ function CityElements({event,city,userRole,teamUsers}){
                       <p style={{fontSize:'13px',fontWeight:500,color:'var(--text)',marginBottom:'4px'}}>{cat.name}</p>
                       {cat.items.map((el,j)=>(
                         <p key={j} style={{fontSize:'12px',color:'var(--text-secondary)',paddingLeft:'12px',marginBottom:'2px'}}>
-                          — {el.element_name} {el.qty>1?`· ${el.qty} nos`:''} {el.rate>0?`· ₹${el.rate.toLocaleString('en-IN')}` :''}
+                          — {el.element_name} {el.qty>1?`· ${el.qty} nos`:''} {el.rate>0?`· ₹${el.rate.toLocaleString('en-IN')}`:''}
                         </p>
                       ))}
                     </div>
@@ -1139,7 +1574,10 @@ function CityElements({event,city,userRole,teamUsers}){
   )
 }
 
-export default function ElementBuilder({event,userRole,teamUsers}){
+// ─────────────────────────────────────────────
+// ELEMENT BUILDER — outer wrapper with city tabs
+// ─────────────────────────────────────────────
+export default function ElementBuilder({ event, userRole, teamUsers }){
   const cities=event.cities?.length>0?event.cities:['General']
   const [activeCity,setActiveCity]=useState(cities[0])
 
@@ -1161,6 +1599,7 @@ export default function ElementBuilder({event,userRole,teamUsers}){
         internal_lump:el.internal_lump,internal_amount:el.internal_amount,
         source:el.source,cost_status:el.cost_status,
         bundled:el.bundled,sort_order:el.sort_order,
+        is_option:el.is_option||false,option_group:el.option_group||null,
       })))
     }
     alert(`Copied from ${fromCity} to all other cities.`)
@@ -1196,3 +1635,13 @@ export default function ElementBuilder({event,userRole,teamUsers}){
     </div>
   )
 }
+
+/*
+ * ─────────────────────────────────────────────
+ * PHASE F MIGRATION — run in Supabase SQL Editor before testing
+ * ─────────────────────────────────────────────
+ * ALTER TABLE elements ADD COLUMN IF NOT EXISTS is_option boolean DEFAULT false;
+ * ALTER TABLE elements ADD COLUMN IF NOT EXISTS option_group text;
+ * ALTER TABLE events   ADD COLUMN IF NOT EXISTS category_config jsonb DEFAULT '{}';
+ * ─────────────────────────────────────────────
+ */
