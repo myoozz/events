@@ -3,6 +3,7 @@ import ImportModal from './ImportModal'
 import { CATEGORY_SUGGESTIONS } from './CategoryLibrary'
 import CategoryPicker from './CategoryPicker'
 import { supabase } from '../supabase'
+import { createRateCardRequestNotification } from '../utils/notificationService'
 import * as XLSX from 'xlsx'
 import { logElementCreated, logElementDeleted, logCategoryAdded, logCategoryDeleted } from '../utils/activityLogger'
 
@@ -350,7 +351,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
               onLump={()=>{onUpdate('internal_lump',true);onSave()}}
               muted={true}
             />
-            {(()=>{const sg=!el.internal_lump?getRateSuggestion(rateCards,el.category,el.element_name,city):null;return sg&&(<div title={`Source: ${sg.source}`} style={{fontSize:'9px',marginTop:'2px',padding:'1px 5px',borderRadius:'3px',background:sg.rate_type==='vendor_quoted'?'#D1FAE5':'#EFF6FF',color:sg.rate_type==='vendor_quoted'?'#065F46':'#1D4ED8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',cursor:'default'}}>~{sg.min&&sg.max&&sg.min!==sg.max?`₹${Number(sg.min).toLocaleString('en-IN')}–₹${Number(sg.max).toLocaleString('en-IN')}`:sg.min?`₹${Number(sg.min).toLocaleString('en-IN')}`:``}{sg.city&&sg.city!=='Pan-India'?` · ${sg.city}`:''}</div>)})()}
+            {(()=>{const sg=!el.internal_lump?getRateSuggestion(rateCards,el.category,el.element_name,city):null;return sg?(<div title={`Source: ${sg.source}`} style={{fontSize:'9px',marginTop:'2px',padding:'1px 5px',borderRadius:'3px',background:sg.rate_type==='vendor_quoted'?'#D1FAE5':'#EFF6FF',color:sg.rate_type==='vendor_quoted'?'#065F46':'#1D4ED8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',cursor:'default'}}>~{sg.min&&sg.max&&sg.min!==sg.max?`₹${Number(sg.min).toLocaleString('en-IN')}–₹${Number(sg.max).toLocaleString('en-IN')}`:sg.min?`₹${Number(sg.min).toLocaleString('en-IN')}`:``}{sg.city&&sg.city!=='Pan-India'?` · ${sg.city}`:''}</div>):(!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>)})()}
             {!el.internal_lump&&internalAmt>0&&(
               <div style={{fontSize:'10px',color:'#6B7280',fontWeight:500}}>{fmt(internalAmt)}</div>
             )}
@@ -492,7 +493,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             onLump={()=>{onUpdate('internal_lump',true);onSave()}}
             muted={true}
           />
-          {(()=>{const sg=!el.internal_lump?getRateSuggestion(rateCards,el.category,el.element_name,city):null;return sg&&(<div title={`Source: ${sg.source}`} style={{fontSize:'9px',marginTop:'2px',padding:'2px 6px',borderRadius:'3px',background:sg.rate_type==='vendor_quoted'?'#D1FAE5':'#EFF6FF',color:sg.rate_type==='vendor_quoted'?'#065F46':'#1D4ED8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',cursor:'default'}}>~{sg.min&&sg.max&&sg.min!==sg.max?`₹${Number(sg.min).toLocaleString('en-IN')}–₹${Number(sg.max).toLocaleString('en-IN')}`:sg.min?`₹${Number(sg.min).toLocaleString('en-IN')}`:``} · {sg.source}{sg.city&&sg.city!=='Pan-India'?` · ${sg.city}`:''}</div>)})()}
+          {(()=>{const sg=!el.internal_lump?getRateSuggestion(rateCards,el.category,el.element_name,city):null;return sg?(<div title={`Source: ${sg.source}`} style={{fontSize:'9px',marginTop:'2px',padding:'2px 6px',borderRadius:'3px',background:sg.rate_type==='vendor_quoted'?'#D1FAE5':'#EFF6FF',color:sg.rate_type==='vendor_quoted'?'#065F46':'#1D4ED8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',cursor:'default'}}>~{sg.min&&sg.max&&sg.min!==sg.max?`₹${Number(sg.min).toLocaleString('en-IN')}–₹${Number(sg.max).toLocaleString('en-IN')}`:sg.min?`₹${Number(sg.min).toLocaleString('en-IN')}`:``} · {sg.source}{sg.city&&sg.city!=='Pan-India'?` · ${sg.city}`:''}</div>):(!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>)})()}
           {!el.internal_lump&&internalAmt>0&&(
             <div style={{fontSize:'11px',color:'#92400E',marginTop:'2px',fontWeight:500}}>{fmt(internalAmt)}</div>
           )}

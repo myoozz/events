@@ -20,6 +20,7 @@ export const NOTIF_TYPES = {
   TASK_COMPLETED:       'task_completed',
   APPROVAL_REQUIRED:    'approval_required',
   EVENT_CREATED:        'event_created',
+  RATE_CARD_REQUESTED:  'rate_card_requested',
 };
 
 // ─────────────────────────────────────────────
@@ -32,6 +33,7 @@ export const NOTIF_META = {
   task_completed:      { icon: '✅', colour: '#16a34a', label: 'Task Completed' },
   approval_required:   { icon: '⏳', colour: '#bc1723', label: 'Needs Approval' },
   event_created:       { icon: '🎉', colour: '#7c3aed', label: 'New Event' },
+  rate_card_requested: { icon: '💰', colour: '#d97706', label: 'Rate Requested' },
 };
 
 // ─────────────────────────────────────────────
@@ -160,8 +162,31 @@ export async function notifyEventCreated({ adminIds = [], actorId, eventName, ev
   return createNotification(notifications);
 }
 
-// ─────────────────────────────────────────────
-// FETCH NOTIFICATIONS FOR CURRENT USER
+/** Notify all admins that a user asked for rates on an element */
+export async function createRateCardRequestNotification({ requestingUser, elementName, category, eventId }) {
+  const { data: admins } = await supabase
+    .from('users')
+    .select('id')
+    .eq('role', 'admin');
+
+  if (!admins?.length) return;
+
+  const notifications = admins.map((admin) => ({
+    user_id:      admin.id,
+    triggered_by: requestingUser.id,
+    type:         NOTIF_TYPES.RATE_CARD_REQUESTED,
+    title:        'Rate card requested',
+    body:         `${requestingUser.full_name} asked for rates · ${elementName} · ${category}`,
+    entity_type:  'rate_card',
+    entity_id:    category,
+    event_id:     eventId,
+    action_url:   '/app/rate-card',
+  }));
+
+  return createNotification(notifications);
+}
+
+
 // ─────────────────────────────────────────────
 
 /** Fetch last N notifications for a user (default 30) */
