@@ -1619,16 +1619,20 @@ function CityElements({ event, city, userRole, teamUsers }){
 export default function ElementBuilder({ event, userRole, teamUsers }){
   const cities=event.cities?.length>0?event.cities:['General']
   const [activeCity,setActiveCity]=useState(cities[0])
-  const [copyFrom,setCopyFrom]=useState('')
+  const [copyFrom,setCopyFrom]=useState(cities[0]||'')
+  const [copyTo,setCopyTo]=useState('__all__')
+  const [copying,setCopying]=useState(false)
 
-  async function copyToOtherCities(fromCity, toCity=null){
-    const {data:elements}=await supabase.from('elements').select('*').eq('event_id',event.id).eq('city',fromCity)
-    if(!elements||!elements.length){alert('No elements in '+fromCity+' to copy.');return}
-    const targets=toCity?[toCity]:cities.filter(c=>c!==fromCity)
+  async function executeCopy(){
+    if(!copyFrom) return
+    setCopying(true)
+    const {data:elements}=await supabase.from('elements').select('*').eq('event_id',event.id).eq('city',copyFrom)
+    if(!elements||!elements.length){ alert('No elements in '+copyFrom+' to copy.'); setCopying(false); return }
+    const targets=copyTo==='__all__'?cities.filter(c=>c!==copyFrom):[copyTo]
     for(const tgt of targets){
       const {data:existing}=await supabase.from('elements').select('id').eq('event_id',event.id).eq('city',tgt)
       if(existing&&existing.length>0){
-        if(!window.confirm(`${tgt} already has elements. Replace with ${fromCity}'s?`)) continue
+        if(!window.confirm(`${tgt} already has elements. Replace with ${copyFrom}'s?`)) continue
         await supabase.from('elements').delete().eq('event_id',event.id).eq('city',tgt)
       }
       await supabase.from('elements').insert(elements.map(el=>({
@@ -1642,8 +1646,9 @@ export default function ElementBuilder({ event, userRole, teamUsers }){
         is_option:el.is_option||false,option_group:el.option_group||null,
       })))
     }
-    alert(toCity?`Copied from ${fromCity} to ${toCity}.`:`Copied from ${fromCity} to all other cities.`)
-    setCopyFrom('')
+    const toLabel=copyTo==='__all__'?'all other cities':copyTo
+    alert(`Copied from ${copyFrom} to ${toLabel}.`)
+    setCopying(false)
   }
 
   return(
@@ -1662,36 +1667,36 @@ export default function ElementBuilder({ event, userRole, teamUsers }){
               }}>{city}</button>
             ))}
           </div>
-          <button onClick={()=>copyToOtherCities(activeCity)} style={{
-            padding:'7px 14px',fontSize:'12px',fontWeight:500,
-            fontFamily:'var(--font-body)',background:'none',
-            border:'0.5px solid var(--border-strong)',
-            borderRadius:'var(--radius-sm)',cursor:'pointer',color:'var(--text)',
-          }}>
-            Copy {activeCity} → all cities
-          </button>
-          {cities.filter(c=>c!==activeCity).length>0&&(
-            <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
-              <span style={{fontSize:'12px',color:'var(--text-tertiary)'}}>or copy from</span>
-              <select
-                value={copyFrom}
-                onChange={e=>setCopyFrom(e.target.value)}
-                style={{fontSize:'12px',padding:'6px 10px',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',cursor:'pointer'}}
-              >
-                <option value="">Select city…</option>
-                {cities.filter(c=>c!==activeCity).map(c=><option key={c} value={c}>{c}</option>)}
-              </select>
-              {copyFrom&&(
-                <button onClick={()=>copyToOtherCities(copyFrom,activeCity)} style={{
-                  padding:'7px 14px',fontSize:'12px',fontWeight:500,
-                  fontFamily:'var(--font-body)',background:'#bc1723',color:'#fff',
-                  border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',
-                }}>
-                  Copy → {activeCity}
-                </button>
-              )}
-            </div>
-          )}
+          <div style={{display:'flex',alignItems:'center',gap:'6px',flexWrap:'wrap'}}>
+            <span style={{fontSize:'12px',color:'var(--text-tertiary)',fontFamily:'var(--font-body)'}}>Copy elements</span>
+            <span style={{fontSize:'12px',color:'var(--text-tertiary)'}}>from</span>
+            <select
+              value={copyFrom}
+              onChange={e=>setCopyFrom(e.target.value)}
+              style={{fontSize:'12px',padding:'6px 10px',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',cursor:'pointer'}}
+            >
+              {cities.map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+            <span style={{fontSize:'12px',color:'var(--text-tertiary)'}}>→ to</span>
+            <select
+              value={copyTo}
+              onChange={e=>setCopyTo(e.target.value)}
+              style={{fontSize:'12px',padding:'6px 10px',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',cursor:'pointer'}}
+            >
+              <option value="__all__">All other cities</option>
+              {cities.filter(c=>c!==copyFrom).map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+            <button
+              onClick={executeCopy}
+              disabled={copying||!copyFrom||(copyTo!=='__all__'&&copyTo===copyFrom)}
+              style={{
+                padding:'7px 14px',fontSize:'12px',fontWeight:500,
+                fontFamily:'var(--font-body)',background:'#bc1723',color:'#fff',
+                border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',
+                opacity:(copying||!copyFrom||(copyTo!=='__all__'&&copyTo===copyFrom))?0.45:1,
+              }}
+            >{copying?'Copying…':'Copy'}</button>
+          </div>
         </div>
       )}
       <CityElements key={activeCity} event={event} city={activeCity} userRole={userRole} teamUsers={teamUsers}/>
