@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase'
+import { generateAgentTemplate, exportTravelPlan, exportMICEItinerary } from '../utils/excelExport'
 import {
   Plane, Building2, Car, Plus, Trash2, ChevronDown, ChevronRight,
   Download, Upload, Sparkles, CheckCircle2, Clock, Users,
@@ -510,6 +511,10 @@ function EventTravel({ event, userRole }) {
 
   useEffect(() => { load() }, [load])
 
+  function handleExportTravelPlan() {
+    exportTravelPlan(event, rows, null)
+  }
+
   const cityRows = rows.filter(r => r.city_block === activeCity)
   const flights = cityRows.filter(r => r.entry_type === 'flight')
   const stays = cityRows.filter(r => r.entry_type === 'stay')
@@ -541,14 +546,7 @@ function EventTravel({ event, userRole }) {
   }
 
   function downloadAgentTemplate() {
-    const headers = ['City', 'Date', 'Type (flight/stay/ground)', 'From', 'To', 'Time', 'Flight No', 'Airline', 'PNR', 'Seat Class', 'Hotel Name', 'Check-in', 'Check-out', 'Rooms', 'Room Type', 'Budget/Night (INR)', 'Vehicle Type', 'Vehicle Count', 'Pax Count', 'Notes']
-    const prefill = (event.cities || []).map(c => [c, '', '', '', '', '', '', '', '', 'economy', '', '', '', '', '', '', '', '', '', ''])
-    const rows_csv = [headers, ...prefill].map(r => r.join('\t')).join('\n')
-    const blob = new Blob([rows_csv], { type: 'text/tab-separated-values' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `${event.name || 'Event'}_Agent_Template.tsv`
-    a.click()
+    generateAgentTemplate(event)
   }
 
   return (
@@ -583,6 +581,16 @@ function EventTravel({ event, userRole }) {
           }}>
             <Sparkles size={13} /> Paste Agent Reply
           </button>
+          {isAdmin && (
+            <button onClick={handleExportTravelPlan} style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
+              border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+              background: 'var(--bg)', color: 'var(--text-secondary)', cursor: 'pointer',
+              fontSize: 12, fontFamily: 'var(--font-body)'
+            }}>
+              <Download size={13} /> Export Travel Plan
+            </button>
+          )}
         </div>
       </div>
 
@@ -1116,6 +1124,7 @@ function RoomingList({ itineraryId, userRole }) {
 // ─── MICE Itinerary Panel ─────────────────────────────────────────────────────
 
 function MICEItinerary({ event, userRole }) {
+  const isAdmin = userRole === 'admin'
   const [itinerary, setItinerary] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('header') // header | program | rooming
@@ -1144,12 +1153,31 @@ function MICEItinerary({ event, userRole }) {
     setSaving(false)
   }
 
+  async function handleExportMICE() {
+    if (!itinerary) return
+    const { data: days } = await supabase
+      .from('itinerary_days').select('*')
+      .eq('itinerary_id', itinerary.id).order('day_number')
+    const dayIds = (days || []).map(d => d.id)
+    const { data: sections } = dayIds.length
+      ? await supabase.from('itinerary_sections').select('*').in('day_id', dayIds).order('section_number')
+      : { data: [] }
+    const sectionIds = (sections || []).map(s => s.id)
+    const { data: items } = sectionIds.length
+      ? await supabase.from('itinerary_items').select('*').in('section_id', sectionIds).order('time_start')
+      : { data: [] }
+    const { data: rooming } = await supabase
+      .from('rooming_list').select('*').eq('itinerary_id', itinerary.id)
+    exportMICEItinerary(event, itinerary, days || [], sections || [], items || [], rooming || [], null, userRole)
+  }
+
   if (loading) return <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: 24, textAlign: 'center' }}>Loading…</p>
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Sub-tabs */}
-      <div style={{ display: 'flex', borderBottom: '0.5px solid var(--border)', gap: 0 }}>
+    <div style={{ display: 'flex', borderBottom: '0.5px solid var(--border)', gap: 0, alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex' }}>
         {[
           { id: 'header', label: 'Trip Header', icon: FileText },
           { id: 'program', label: 'Day Program', icon: CalendarDays, locked: !itinerary },
@@ -1170,6 +1198,17 @@ function MICEItinerary({ event, userRole }) {
             {tab.locked && <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>—</span>}
           </button>
         ))}
+        </div>
+        {isAdmin && itinerary && (
+          <button onClick={handleExportMICE} style={{
+            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px',
+            border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+            background: 'var(--bg)', color: 'var(--text-secondary)', cursor: 'pointer',
+            fontSize: 12, fontFamily: 'var(--font-body)', marginBottom: 4
+          }}>
+            <Download size={13} /> Export MICE Itinerary
+          </button>
+        )}
       </div>
 
       {!itinerary && activeTab === 'header' && (

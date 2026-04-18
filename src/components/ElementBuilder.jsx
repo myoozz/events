@@ -10,7 +10,7 @@ import { logElementCreated, logElementDeleted, logCategoryAdded, logCategoryDele
 // ─────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────
-const SIZE_UNITS = ['ft','sqft','mtr','sqmtr','nos']
+const SIZE_UNITS = ['ft','sqft','mtr','sqmtr','nos','per pax']
 const STATUS_OPTIONS = ['Estimated','Confirmed','Actuals','Client scope']
 const STATUS_STYLES = {
   'Estimated':    { bg:'#FEF3C7', color:'#92400E' },
@@ -1011,7 +1011,15 @@ function CityElements({ event, city, userRole, teamUsers }){
   }
 
   function getCatDefaults(catName){
+    const PAX_CATS = ['Group Travel', 'Team Travel']
     const d=catDefaults[catName]||{}
+    if(PAX_CATS.includes(catName)){
+      return{
+        size_unit: d.size_unit || 'per pax',
+        qty: d.qty !== undefined ? d.qty : '',
+        days: d.days !== undefined ? d.days : 1
+      }
+    }
     return{ size_unit:d.size_unit||'ft', qty:d.qty||1, days:d.days||1 }
   }
 
@@ -1132,7 +1140,7 @@ function CityElements({ event, city, userRole, teamUsers }){
         const {data}=await supabase.from('elements').insert({
           event_id:event.id,city,category:name,
           element_name:s.element_name,finish:s.finish||'',
-          size:'',size_unit:s.size_unit,qty:s.qty,days:s.days,
+          size:'',size_unit:s.size_unit,qty:s.qty!==''?s.qty:null,days:s.days,
           rate:0,lump_sum:false,amount:0,
           internal_rate:0,internal_lump:false,internal_amount:0,
           source:'',cost_status:'Estimated',bundled:false,sort_order:i,
