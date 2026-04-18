@@ -1619,19 +1619,20 @@ function CityElements({ event, city, userRole, teamUsers }){
 export default function ElementBuilder({ event, userRole, teamUsers }){
   const cities=event.cities?.length>0?event.cities:['General']
   const [activeCity,setActiveCity]=useState(cities[0])
+  const [copyFrom,setCopyFrom]=useState('')
 
-  async function copyToOtherCities(fromCity){
+  async function copyToOtherCities(fromCity, toCity=null){
     const {data:elements}=await supabase.from('elements').select('*').eq('event_id',event.id).eq('city',fromCity)
     if(!elements||!elements.length){alert('No elements in '+fromCity+' to copy.');return}
-    for(const toCity of cities){
-      if(toCity===fromCity) continue
-      const {data:existing}=await supabase.from('elements').select('id').eq('event_id',event.id).eq('city',toCity)
+    const targets=toCity?[toCity]:cities.filter(c=>c!==fromCity)
+    for(const tgt of targets){
+      const {data:existing}=await supabase.from('elements').select('id').eq('event_id',event.id).eq('city',tgt)
       if(existing&&existing.length>0){
-        if(!window.confirm(`${toCity} already has elements. Replace with ${fromCity}'s?`)) continue
-        await supabase.from('elements').delete().eq('event_id',event.id).eq('city',toCity)
+        if(!window.confirm(`${tgt} already has elements. Replace with ${fromCity}'s?`)) continue
+        await supabase.from('elements').delete().eq('event_id',event.id).eq('city',tgt)
       }
       await supabase.from('elements').insert(elements.map(el=>({
-        event_id:event.id,city:toCity,category:el.category,
+        event_id:event.id,city:tgt,category:el.category,
         element_name:el.element_name,size:el.size,size_unit:el.size_unit,
         finish:el.finish,qty:el.qty,days:el.days,rate:el.rate,
         lump_sum:el.lump_sum,amount:el.amount,internal_rate:el.internal_rate,
@@ -1641,7 +1642,8 @@ export default function ElementBuilder({ event, userRole, teamUsers }){
         is_option:el.is_option||false,option_group:el.option_group||null,
       })))
     }
-    alert(`Copied from ${fromCity} to all other cities.`)
+    alert(toCity?`Copied from ${fromCity} to ${toCity}.`:`Copied from ${fromCity} to all other cities.`)
+    setCopyFrom('')
   }
 
   return(
@@ -1668,6 +1670,28 @@ export default function ElementBuilder({ event, userRole, teamUsers }){
           }}>
             Copy {activeCity} → all cities
           </button>
+          {cities.filter(c=>c!==activeCity).length>0&&(
+            <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+              <span style={{fontSize:'12px',color:'var(--text-tertiary)'}}>or copy from</span>
+              <select
+                value={copyFrom}
+                onChange={e=>setCopyFrom(e.target.value)}
+                style={{fontSize:'12px',padding:'6px 10px',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',cursor:'pointer'}}
+              >
+                <option value="">Select city…</option>
+                {cities.filter(c=>c!==activeCity).map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+              {copyFrom&&(
+                <button onClick={()=>copyToOtherCities(copyFrom,activeCity)} style={{
+                  padding:'7px 14px',fontSize:'12px',fontWeight:500,
+                  fontFamily:'var(--font-body)',background:'#bc1723',color:'#fff',
+                  border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',
+                }}>
+                  Copy → {activeCity}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
       <CityElements key={activeCity} event={event} city={activeCity} userRole={userRole} teamUsers={teamUsers}/>

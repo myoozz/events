@@ -44,6 +44,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
   const [importSel,   setImportSel]   = useState({});
   const [importing,   setImporting]   = useState(false);
   const [importLoading, setImportLoading] = useState(false);
+  const [importSourceCity, setImportSourceCity] = useState('');
   const [applyAllCities, setApplyAllCities] = useState(false);
   const modalRef  = useRef(null);
   const statusRef = useRef(null);
@@ -93,15 +94,22 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
   }
 
   async function openImport() {
+    const src = activeCity || (cities[0] || '');
     setImportOpen(true);
     setImportSel({});
+    setImportSourceCity(src);
+    await fetchImportEls(src);
+  }
+
+  async function fetchImportEls(sourceCity) {
     setImportLoading(true);
-    const { data } = await db('elements')
+    const query = db('elements')
       .select('id, element_name, category, city')
       .eq('event_id', eventId)
-      .eq('city', activeCity)
       .eq('is_option', false)
       .order('sort_order', { ascending: true });
+    if (sourceCity) query.eq('city', sourceCity);
+    const { data } = await query;
     setImportEls(data || []);
     setImportLoading(false);
   }
@@ -525,8 +533,35 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
               <button style={styles.modalClose} onClick={() => setImportOpen(false)}>✕</button>
             </div>
             <p style={styles.modalSub}>
-              Showing elements for {activeCity}. Tasks already imported are excluded.
+              Showing elements for {importSourceCity || 'all cities'}. Tasks already imported are excluded.
             </p>
+
+            {/* Source city selector — only when event has multiple cities */}
+            {cities.length > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 500 }}>Source city</span>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {cities.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => { setImportSourceCity(c); setImportSel({}); fetchImportEls(c); }}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: 14,
+                        border: '1.5px solid',
+                        borderColor: importSourceCity === c ? '#bc1723' : '#E5E1DC',
+                        background: importSourceCity === c ? '#bc1723' : 'transparent',
+                        color: importSourceCity === c ? '#fff' : '#6B7280',
+                        fontSize: 12,
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                      }}
+                    >{c}</button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {importLoading ? (
               <p style={{ color: '#9CA3AF', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>Loading elements…</p>
