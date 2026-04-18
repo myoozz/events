@@ -643,6 +643,7 @@ function CategoryBlock({
   catDefaults, onCatDefaultChange,
   onMarkAsOption, onOptionBack, onOptionConfirm,
   rateCards,
+  city,
 }){
   const [open,setOpen]=useState(false)
   const [showMerge,setShowMerge]=useState(false)
@@ -843,6 +844,7 @@ function CategoryBlock({
               viewMode={viewMode}
               rowIndex={idx}
               rateCards={rateCards}
+          city={city}
               city={city}
               onUpdate={(field,val)=>onUpdateEl(el.id,field,val)}
               onSave={()=>onSaveEl(el)}
@@ -1410,6 +1412,7 @@ function CityElements({ event, city, userRole, teamUsers }){
           onOptionBack={elId=>optionBack(cat.name,elId)}
           onOptionConfirm={(elId,og)=>optionConfirm(cat.name,elId,og)}
           rateCards={rateCards}
+          city={city}
         />
       ))}
 
