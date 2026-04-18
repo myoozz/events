@@ -463,8 +463,7 @@ export default function LandingPage() {
       <header className="lp-header">
         <div className="lp-header-inner">
           <a href="https://myoozz.events" className="lp-logo">
-            <MeLogo size={32} />
-            <span className="lp-logo-events">Events</span>
+            <img src="/logo-me-events.svg" alt="Me Events" height="36" />
           </a>
           <nav className="lp-nav">
             <div className="lp-nav-links">
@@ -698,8 +697,7 @@ export default function LandingPage() {
           <div className="footer-top">
             <div className="footer-brand">
               <a href="https://myoozz.events" className="lp-logo">
-                <MeLogo size={28} />
-                <span className="lp-logo-events">Events</span>
+                <img src="/logo-me-events.svg" alt="Me Events" height="28" />
               </a>
               <div className="footer-tagline">My Events. My System.<br />Born in India · Built for the world</div>
             </div>
