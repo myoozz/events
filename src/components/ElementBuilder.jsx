@@ -932,7 +932,7 @@ function CityElements({ event, city, userRole, teamUsers }){
   async function loadElements(){
     setLoading(true)
     const [{ data },{ data:evData }]=await Promise.all([
-      supabase.from('elements').select('*').eq('event_id',event.id).eq('city',city).order('sort_order'),
+      supabase.from(isAdmin?'elements':'v_elements_safe').select('*').eq('event_id',event.id).eq('city',city).order('sort_order'),
       supabase.from('events').select('bundle_config,category_config').eq('id',event.id).single(),
     ])
     const bundleConfig=evData?.bundle_config||{}
@@ -1318,7 +1318,7 @@ function CityElements({ event, city, userRole, teamUsers }){
 
   async function handleDownloadElementMaster(){
     const {exportElementMaster}=await import('../utils/excelExport')
-    const {data:allElements}=await supabase.from('elements').select('*').eq('event_id',event.id).order('category')
+    const {data:allElements}=await supabase.from(isAdmin?'elements':'v_elements_safe').select('*').eq('event_id',event.id).order('category')
     const {data:client}=await supabase.from('clients').select('*').eq('id',event.client_id).single()
     await exportElementMaster(event,allElements||[],client)
   }
