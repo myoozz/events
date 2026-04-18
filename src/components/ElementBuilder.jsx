@@ -844,7 +844,6 @@ function CategoryBlock({
               viewMode={viewMode}
               rowIndex={idx}
               rateCards={rateCards}
-          city={city}
               city={city}
               onUpdate={(field,val)=>onUpdateEl(el.id,field,val)}
               onSave={()=>onSaveEl(el)}
