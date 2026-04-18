@@ -87,7 +87,7 @@ const NAV_ITEMS = [
   },
 ]
 
-const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team' }
+const ROLE_LABELS = { admin: 'Admin', manager: 'Project Head', event_lead: 'Manager', team: 'Project Team' }
 const ROLE_COLORS = {
   admin:      { bg: 'var(--green-light)', color: 'var(--green)' },
   manager:    { bg: '#EFF6FF',            color: '#1D4ED8'      },

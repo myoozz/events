@@ -10,9 +10,9 @@ const SCOPE_OPTIONS = [
 
 const ROLE_BADGE = {
   admin:       { bg: 'var(--green-light)',  color: 'var(--green)',          label: 'Admin' },
-  manager:     { bg: '#EAF0FD',            color: '#3B6FE0',               label: 'Manager' },
-  event_lead:  { bg: '#FFF4E5',            color: '#C87800',               label: 'Event Lead' },
-  team:        { bg: 'var(--bg-secondary)', color: 'var(--text-tertiary)', label: 'Team' },
+  manager:     { bg: '#EAF0FD',            color: '#3B6FE0',               label: 'Project Head' },
+  event_lead:  { bg: '#FFF4E5',            color: '#C87800',               label: 'Manager' },
+  team:        { bg: 'var(--bg-secondary)', color: 'var(--text-tertiary)', label: 'Project Team' },
 }
 
 export default function AssignEvent({ event, onClose, onUpdated }) {

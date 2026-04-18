@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
 const ROLES = ['admin', 'manager', 'event_lead', 'team']
-const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team' }
+const ROLE_LABELS = { admin: 'Admin', manager: 'Project Head', event_lead: 'Manager', team: 'Project Team' }
 const ROLE_DESC = {
   admin: 'Full access — all events, costs, margins, team management',
-  manager: 'Creates & manages events — elements, proposals, assigns Event Leads and Team',
-  event_lead: 'Delegated authority per event — scope set by Manager on assignment',
+  manager: 'Creates & manages events — elements, proposals, assigns Managers and Project Team',
+  event_lead: 'Delegated authority per event — scope set by Project Head on assignment',
   team: 'Task execution only — assigned tasks, notes, no event-level access',
 }
 
