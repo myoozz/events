@@ -4,9 +4,8 @@ import { logActivity } from '../utils/activityLogger';
 import { notifyTaskAssigned, notifyTaskStatusChanged } from '../utils/notificationService';
 
 /* ─── helpers ──────────────────────────────────────────────── */
-const SCHEMA = import.meta.env.VITE_SUPABASE_SCHEMA || 'public';
 
-const db = (table) => supabase.schema(SCHEMA).from(table);
+const db = (table) => supabase.from(table);
 
 const STATUS_OPTIONS = ['pending', 'in_progress', 'done', 'blocked'];
 
