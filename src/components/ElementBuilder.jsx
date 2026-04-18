@@ -10,7 +10,7 @@ import { logElementCreated, logElementDeleted, logCategoryAdded, logCategoryDele
 // ─────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────
-const SIZE_UNITS = ['ft','mtr','sq ft','cm','inch','nos','—']
+const SIZE_UNITS = ['ft','sqft','mtr','sqmtr','nos']
 const STATUS_OPTIONS = ['Estimated','Confirmed','Actuals','Client scope']
 const STATUS_STYLES = {
   'Estimated':    { bg:'#FEF3C7', color:'#92400E' },
@@ -271,47 +271,58 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
     })
     return(
       <div style={{display:'grid',gridTemplateColumns:cols,alignItems:'stretch',borderBottom:'1px solid var(--border)',background:zebra,minHeight:'38px'}}>
-        {/* Element name */}
-        <div style={cell(false,false)}>
-          <input style={{...ginp(false),fontWeight:500}}
+        {/* Element name — wraps naturally */}
+        <div style={{...cell(false,false),alignItems:'flex-start',padding:'4px 0'}}>
+          <input style={{...ginp(false),fontWeight:500,whiteSpace:'normal',wordBreak:'break-word',height:'auto',minHeight:'30px'}}
             placeholder="Element name" value={el.element_name}
             disabled={locked}
             onChange={e=>onUpdate('element_name',e.target.value)} onBlur={onSave}
           />
         </div>
 
-        {/* Finish */}
+        {/* Finish — wraps naturally */}
         {fv.finish&&(
-          <div style={cell(false,false)}>
-            <input style={ginp(false)} placeholder="Specs…" value={el.finish}
+          <div style={{...cell(false,false),alignItems:'flex-start',padding:'4px 0'}}>
+            <input style={{...ginp(false),whiteSpace:'normal',wordBreak:'break-word',height:'auto',minHeight:'30px'}} placeholder="Specs…" value={el.finish}
               disabled={locked}
               onChange={e=>onUpdate('finish',e.target.value)} onBlur={onSave}
             />
           </div>
         )}
 
-        {/* Size · Qty · Days */}
+        {/* Size · Qty · Days — with unit dropdown */}
         {(fv.size||fv.days)&&(
-          <div style={{...cell(false,false),padding:'0 4px',gap:'3px'}}>
+          <div style={{...cell(false,false),padding:'4px',gap:'3px',flexDirection:'column',alignItems:'stretch',justifyContent:'center'}}>
             {fv.size&&(
-              <>
-                <input style={{...ginp(false),width:'48px',fontSize:'12px',flex:'0 0 auto'}}
+              <div style={{display:'flex',gap:'3px',alignItems:'center'}}>
+                <input style={{...ginp(false),width:'44px',fontSize:'12px',flex:'0 0 auto'}}
                   placeholder="Size" value={el.size} disabled={locked}
                   onChange={e=>onUpdate('size',e.target.value)} onBlur={onSave}
                 />
-
-              </>
+                <select value={el.size_unit||'ft'} disabled={locked}
+                  onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
+                  style={{fontSize:'11px',padding:'2px 2px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:'var(--text-secondary)',fontFamily:'var(--font-body)',flex:'1 1 auto',minWidth:0,cursor:'pointer'}}
+                >
+                  {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
+                </select>
+              </div>
             )}
-            <input style={{...ginp(false),width:'34px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
-              type="number" min="1" value={el.qty} disabled={locked}
-              onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}
-            />
-            {fv.days&&(
+            <div style={{display:'flex',gap:'3px',alignItems:'center'}}>
+              <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'20px',flexShrink:0}}>Qty</span>
               <input style={{...ginp(false),width:'34px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
-                type="number" min="1" value={el.days} disabled={locked}
-                onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}
+                type="number" min="1" value={el.qty} disabled={locked}
+                onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}
               />
-            )}
+              {fv.days&&(
+                <>
+                  <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'24px',flexShrink:0}}>Days</span>
+                  <input style={{...ginp(false),width:'34px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
+                    type="number" min="1" value={el.days} disabled={locked}
+                    onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}
+                  />
+                </>
+              )}
+            </div>
           </div>
         )}
 
@@ -747,11 +758,12 @@ function CategoryBlock({
         {otherCategories&&otherCategories.length>0&&(
           <div style={{position:'relative',flexShrink:0}} onClick={e=>e.stopPropagation()}>
             <button onClick={()=>setShowMerge(!showMerge)}
+              title="Move all elements from this category into another. This category will be removed."
               style={{fontSize:'11px',padding:'2px 8px',background:'none',border:'0.5px solid var(--border)',borderRadius:'3px',cursor:'pointer',color:'var(--text-tertiary)',fontFamily:'var(--font-body)'}}
-            >Merge →</button>
+            >Merge into →</button>
             {showMerge&&(
-              <div style={{position:'absolute',right:0,top:'100%',marginTop:'4px',background:'var(--bg)',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',padding:'8px',zIndex:50,minWidth:'180px',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
-                <p style={{fontSize:'11px',color:'var(--text-tertiary)',marginBottom:'6px',fontWeight:500}}>Merge into:</p>
+              <div style={{position:'absolute',right:0,top:'100%',marginTop:'4px',background:'var(--bg)',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',padding:'8px',zIndex:50,minWidth:'200px',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
+                <p style={{fontSize:'11px',color:'var(--text-tertiary)',marginBottom:'6px',fontWeight:500,lineHeight:1.4}}>Move all elements from <em>{cat.name}</em> into:</p>
                 {otherCategories.map(oc=>(
                   <button key={oc.name} onClick={()=>{onMerge&&onMerge(cat.name,oc.name);setShowMerge(false)}}
                     style={{display:'block',width:'100%',textAlign:'left',padding:'6px 8px',fontSize:'12px',background:'none',border:'none',cursor:'pointer',color:'var(--text)',fontFamily:'var(--font-body)',borderRadius:'3px'}}
@@ -766,7 +778,7 @@ function CategoryBlock({
         )}
 
         {/* Bundle checkbox */}
-        <label onClick={e=>e.stopPropagation()} style={{display:'flex',alignItems:'center',gap:'4px',fontSize:'12px',color:'var(--text-tertiary)',cursor:'pointer',flexShrink:0}}>
+        <label onClick={e=>e.stopPropagation()} title="Replaces individual line items with a single total in client documents. Set a custom amount to override the auto-sum." style={{display:'flex',alignItems:'center',gap:'4px',fontSize:'12px',color:'var(--text-tertiary)',cursor:'pointer',flexShrink:0}}>
           <input type="checkbox" checked={cat.bundled}
             onChange={e=>{
               const bundling=e.target.checked
