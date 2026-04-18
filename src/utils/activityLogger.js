@@ -27,7 +27,6 @@ export async function logActivity({ action, entity_type, entity_name, event_id, 
       entity_name:  entity_name || null,
       event_id:     event_id    || null,
       details:      details     || {},
-      user_id:      session.user.id,
       user_email:   session.user.email,
       user_name:    session.user.user_metadata?.full_name
                     || session.user.email?.split('@')[0]
