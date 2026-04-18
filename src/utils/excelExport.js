@@ -913,3 +913,688 @@ export async function generateRateCardTemplate(categoryName) {
   saveAs(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
     `Myoozz_RateCard_${safe}.xlsx`)
 }
+
+// ─── 8. Travel Plan ───────────────────────────────────────
+// One sheet: "Team Travel"
+// City-block group headers (dark). Rows colour-coded by type:
+//   flight = blue  |  stay = grey  |  ground = amber
+// agent_confirmed rows get a ✓ suffix on the type cell.
+// Called from TravelItinerary.jsx → Export button.
+//
+// Signature: exportTravelPlan(event, travelRows, clients)
+//   event       — full event object
+//   travelRows  — rows from travel_plan table (not archived)
+//   clients     — event.clients join (for client name in header)
+
+export async function exportTravelPlan(event, travelRows, clients) {
+  const ExcelJS = (await import('exceljs')).default
+  const { saveAs } = await import('file-saver')
+  const wb = new ExcelJS.Workbook()
+  wb.creator = 'Myoozz Consulting Pvt. Ltd.'
+  wb.created = new Date()
+
+  const ws = wb.addWorksheet('Team Travel')
+  const totalCols = 9
+  const clientName = clients?.group_name || ''
+
+  ws.columns = [
+    { width: 5  }, // #
+    { width: 12 }, // Date
+    { width: 14 }, // Type badge
+    { width: 22 }, // From / Hotel name
+    { width: 22 }, // To / Check-out date
+    { width: 12 }, // Dep time / Check-in date
+    { width: 28 }, // Details (airline+flight+PNR / rooms+room type / vehicle+purpose)
+    { width: 7  }, // Pax
+    { width: 28 }, // Notes
+  ]
+
+  const startRow = sheetHeader(
+    ws,
+    `${event.event_name} — Team Travel Plan`,
+    `${clientName} · Generated ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+    totalCols
+  )
+
+  const TYPE_STYLE = {
+    flight: { bg: 'DBEAFE', text: '1D4ED8', hdrBg: '1D4ED8', label: '✈  Flight'   },
+    stay:   { bg: 'F3F4F6', text: '374151', hdrBg: '4B5563', label: '⌂  Stay'     },
+    ground: { bg: 'FEF3C7', text: '92400E', hdrBg: '92400E', label: '⬡  Ground'   },
+  }
+  const SEAT_CLASS = {
+    economy: 'Economy', premium_economy: 'Prem. Economy',
+    business: 'Business', first: 'First',
+  }
+
+  const cities = event.cities?.length > 0
+    ? event.cities
+    : [...new Set((travelRows || []).map(r => r.city_block))]
+
+  cities.forEach(city => {
+    const cityRows = (travelRows || []).filter(r => r.city_block === city && !r.archived_at)
+    if (!cityRows.length) return
+
+    // ── City group header ──
+    const ch = ws.addRow([city.toUpperCase()])
+    ws.mergeCells(ch.number, 1, ch.number, totalCols)
+    ch.height = 22
+    const chc = ch.getCell(1)
+    chc.fill = { type: 'pattern', pattern: 'solid', fgColor: hex(C.headerBg) }
+    chc.font = { bold: true, color: hex(C.headerText), size: 11, name: 'Calibri' }
+    chc.alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+
+    // ── Column labels under this city ──
+    const hRow = ws.addRow(['#', 'DATE', 'TYPE', 'FROM / HOTEL', 'TO / CHK-OUT', 'TIME / CHK-IN', 'DETAILS', 'PAX', 'NOTES'])
+    hRow.height = 18
+    hRow.eachCell((cell, ci) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex(C.colBg) }
+      cell.font = { bold: true, color: hex(C.colText), size: 9, name: 'Calibri' }
+      cell.alignment = { vertical: 'middle', horizontal: ci === 1 || ci === 8 ? 'center' : 'left', indent: ci > 1 && ci < 8 ? 1 : 0 }
+      applyBorder(cell, C.borderStrong)
+    })
+
+    // Write rows in type order: flights → stays → ground
+    const flights = cityRows.filter(r => r.entry_type === 'flight')
+    const stays   = cityRows.filter(r => r.entry_type === 'stay')
+    const ground  = cityRows.filter(r => r.entry_type === 'ground')
+
+    ;[...flights, ...stays, ...ground].forEach((row, idx) => {
+      const ts = TYPE_STYLE[row.entry_type] || TYPE_STYLE.flight
+
+      let from = '', to = '', timecheckin = '', details = ''
+
+      if (row.entry_type === 'flight') {
+        from        = row.from_location || ''
+        to          = row.to_location   || ''
+        timecheckin = row.time_start    || ''
+        details     = [
+          row.airline,
+          row.flight_no,
+          row.pnr ? `PNR: ${row.pnr}` : '',
+          row.seat_class ? SEAT_CLASS[row.seat_class] : '',
+        ].filter(Boolean).join('  ·  ')
+      } else if (row.entry_type === 'stay') {
+        from        = row.hotel_name || ''
+        to          = row.check_out
+          ? new Date(row.check_out).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''
+        timecheckin = row.check_in
+          ? new Date(row.check_in).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''
+        details     = [
+          row.rooms     ? `${row.rooms} room${row.rooms > 1 ? 's' : ''}` : '',
+          row.room_type || '',
+        ].filter(Boolean).join('  ·  ')
+      } else {
+        from        = row.from_location  || ''
+        to          = row.to_location    || ''
+        timecheckin = row.time_start     || ''
+        details     = [
+          row.vehicle_type,
+          row.vehicle_count ? `×${row.vehicle_count}` : '',
+          row.purpose,
+        ].filter(Boolean).join('  ·  ')
+      }
+
+      const dateStr = row.travel_date
+        ? new Date(row.travel_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+        : ''
+
+      const typeLabel = row.source === 'agent_confirmed'
+        ? ts.label + '  ✓'
+        : ts.label
+
+      const r = ws.addRow([
+        idx + 1, dateStr, typeLabel, from, to,
+        timecheckin, details, row.pax_count || '', row.notes || '',
+      ])
+      r.height = 18
+
+      r.eachCell((cell, ci) => {
+        const isAlt = idx % 2 === 1
+        cell.fill = {
+          type: 'pattern', pattern: 'solid',
+          fgColor: hex(ci === 3 ? ts.bg : isAlt ? C.rowAlt : C.rowBg),
+        }
+        cell.font = {
+          color: { argb: 'FF' + (ci === 3 ? ts.text : C.rowText) },
+          bold: ci === 3 || ci === 4,
+          size: 10, name: 'Calibri',
+        }
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: ci === 1 || ci === 8 ? 'center' : 'left',
+          indent: ci > 1 && ci < 8 ? 1 : 0,
+        }
+        applyBorder(cell)
+      })
+
+      // Confirmed source: make type cell text green
+      if (row.source === 'agent_confirmed') {
+        const tc = r.getCell(3)
+        tc.font = { ...tc.font, color: { argb: 'FF15803D' }, bold: true }
+        tc.fill = { type: 'pattern', pattern: 'solid', fgColor: hex('D1FAE5') }
+      }
+    })
+
+    ws.addRow([]).height = 6
+  })
+
+  ws.views = [{ state: 'frozen', ySplit: startRow }]
+
+  const safe = (event.event_name || 'Event').replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ +/g, '_')
+  const buf = await wb.xlsx.writeBuffer()
+  saveAs(
+    new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+    `${safe} — Travel Plan.xlsx`
+  )
+}
+
+// ─── 9. MICE Itinerary ────────────────────────────────────
+// Three sheets:
+//   Sheet 1 — Day Program   (section → items, time · venue · responsibility)
+//   Sheet 2 — Rooming List  (per-pax hotel + meal + status)
+//   Sheet 3 — Cost Summary  (admin only: per-pax + total, client vs internal)
+//
+// Signature: exportMICEItinerary(event, itinerary, days, sections, items, roomingList, clients, userRole)
+//   days        — rows from itinerary_days
+//   sections    — rows from itinerary_sections
+//   items       — rows from itinerary_items
+//   roomingList — rows from rooming_list (not archived)
+//   userRole    — 'admin' | other (controls internal cost cols + ID col)
+
+export async function exportMICEItinerary(event, itinerary, days, sections, items, roomingList, clients, userRole) {
+  const ExcelJS = (await import('exceljs')).default
+  const { saveAs } = await import('file-saver')
+  const wb = new ExcelJS.Workbook()
+  wb.creator = 'Myoozz Consulting Pvt. Ltd.'
+  wb.created = new Date()
+
+  const isAdmin   = userRole === 'admin'
+  const clientName = clients?.group_name || ''
+  const tripTitle  = itinerary?.title || event.event_name
+  const pax        = itinerary?.pax_confirmed || 1
+
+  const RESP_LABEL = { internal: 'Internal', local: 'Local DMC', client: 'Client' }
+  const MEAL_LABELS = { CP: 'CP', MAP: 'MAP', AP: 'AP', EP: 'EP', AI: 'All Inclusive' }
+
+  // ── Sheet 1: Day Program ─────────────────────────────────
+
+  const ws1     = wb.addWorksheet('Day Program')
+  const dp_cols = isAdmin ? 8 : 7
+
+  ws1.columns = [
+    { width: 7  }, // Day
+    { width: 7  }, // Section
+    { width: 14 }, // Time
+    { width: 34 }, // Activity
+    { width: 24 }, // Venue
+    { width: 14 }, // Responsibility
+    { width: 16 }, // Cost / pax or lump (client)
+    ...(isAdmin ? [{ width: 16 }] : []), // Internal cost (admin only)
+  ]
+
+  const dateRange = [itinerary?.start_date, itinerary?.end_date]
+    .filter(Boolean)
+    .map(d => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))
+    .join(' – ')
+
+  const hdr1 = sheetHeader(
+    ws1,
+    `${tripTitle} — Day Program`,
+    `${clientName}${dateRange ? '  ·  ' + dateRange : ''}  ·  ${pax} pax confirmed`,
+    dp_cols
+  )
+
+  const dpHeaders = ['DAY', 'SEC', 'TIME', 'ACTIVITY', 'VENUE', 'BY', 'COST / PAX (₹)']
+  if (isAdmin) dpHeaders.push('INTERNAL (₹)')
+  colHeader(ws1, hdr1, dpHeaders)
+
+  let row1 = hdr1 + 1
+
+  ;(days || []).forEach(day => {
+    // ── Day header ──
+    const dayLabel = `Day ${day.day_number}${day.title ? '  —  ' + day.title : ''}${day.date ? '  ·  ' + new Date(day.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' }) : ''}`
+    const dr = ws1.getRow(row1)
+    ws1.mergeCells(row1, 1, row1, dp_cols)
+    dr.getCell(1).value = dayLabel
+    dr.getCell(1).font = { bold: true, color: hex(C.headerText), size: 10, name: 'Calibri' }
+    dr.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: hex('BC1723') }
+    dr.getCell(1).alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+    dr.height = 20
+    row1++
+
+    const daySects = (sections || []).filter(s => s.day_id === day.id)
+
+    daySects.forEach(sect => {
+      const sectItems = (items || [])
+        .filter(i => i.section_id === sect.id)
+        .sort((a, b) => a.sort_order - b.sort_order)
+
+      if (!sectItems.length) {
+        // Section row with no items
+        const sr = ws1.getRow(row1)
+        sr.getCell(2).value = `§${sect.section_number}`
+        sr.getCell(3).value = ''
+        sr.getCell(4).value = sect.title || ''
+        sr.getCell(5).value = sect.venue || ''
+        sr.getCell(6).value = RESP_LABEL[sect.responsibility] || 'Internal'
+        sr.height = 16
+        sr.eachCell((cell, ci) => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex(C.colBg) }
+          cell.font = { size: 9, color: hex(C.colText), italic: true, name: 'Calibri' }
+          cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
+          applyBorder(cell)
+        })
+        row1++
+        return
+      }
+
+      sectItems.forEach((item, ii) => {
+        const r = ws1.getRow(row1)
+        r.getCell(1).value = ii === 0 ? `D${day.day_number}` : ''
+        r.getCell(2).value = ii === 0 ? `§${sect.section_number}` : ''
+        r.getCell(3).value = [item.time_start, item.time_end].filter(Boolean).join(' – ')
+        r.getCell(4).value = item.activity || ''
+        r.getCell(5).value = item.venue || sect.venue || ''
+        r.getCell(6).value = RESP_LABEL[item.responsibility || sect.responsibility] || 'Internal'
+        r.getCell(7).value = item.cost_per_pax || item.cost_lump || ''
+        if (isAdmin) r.getCell(8).value = item.internal_cost || ''
+        r.height = 16
+
+        const isAlt = ii % 2 === 1
+        r.eachCell((cell, ci) => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex(isAlt ? C.rowAlt : C.rowBg) }
+          cell.font = { size: 10, color: hex(C.rowText), name: 'Calibri' }
+          cell.alignment = {
+            vertical: 'middle',
+            horizontal: ci >= 7 ? 'right' : ci === 1 ? 'center' : 'left',
+            indent: ci > 1 && ci < 7 ? 1 : 0,
+          }
+          applyBorder(cell)
+          if (ci === 7 && typeof cell.value === 'number') cell.numFmt = '₹#,##0'
+          if (ci === 8 && typeof cell.value === 'number') {
+            cell.numFmt = '₹#,##0'
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex('FFFBEB') }
+          }
+        })
+
+        // Responsibility pill colour
+        const resp = item.responsibility || sect.responsibility
+        if (resp === 'local')   r.getCell(6).fill = { type: 'pattern', pattern: 'solid', fgColor: hex('FEF3C7') }
+        if (resp === 'client')  r.getCell(6).fill = { type: 'pattern', pattern: 'solid', fgColor: hex('F3F4F6') }
+
+        row1++
+      })
+    })
+
+    ws1.addRow([]).height = 4
+    row1++
+  })
+
+  ws1.views = [{ state: 'frozen', ySplit: hdr1 }]
+
+  // ── Sheet 2: Rooming List ────────────────────────────────
+
+  const rl_cols = isAdmin ? 9 : 7
+  const ws2     = wb.addWorksheet('Rooming List')
+
+  ws2.columns = [
+    { width: 5  }, // #
+    { width: 26 }, // Name
+    { width: 18 }, // Room type
+    { width: 14 }, // Check-in
+    { width: 14 }, // Check-out
+    { width: 12 }, // Meal plan
+    { width: 14 }, // Status
+    ...(isAdmin ? [{ width: 16 }, { width: 22 }] : []), // Mobile, ID (admin only)
+  ]
+
+  const hdr2 = sheetHeader(
+    ws2,
+    `${tripTitle} — Rooming List`,
+    `${clientName}  ·  ${(roomingList || []).length} guests`,
+    rl_cols
+  )
+
+  const rlHeaders = ['#', 'GUEST NAME', 'ROOM TYPE', 'CHECK IN', 'CHECK OUT', 'MEAL', 'STATUS']
+  if (isAdmin) { rlHeaders.push('MOBILE'); rlHeaders.push('ID (ADMIN ONLY)') }
+  colHeader(ws2, hdr2, rlHeaders)
+
+  let row2 = hdr2 + 1
+
+  ;(roomingList || []).forEach((guest, idx) => {
+    const r = ws2.getRow(row2)
+    r.getCell(1).value = idx + 1
+    r.getCell(2).value = guest.name || ''
+    r.getCell(3).value = guest.room_type || ''
+    r.getCell(4).value = guest.check_in
+      ? new Date(guest.check_in).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
+    r.getCell(5).value = guest.check_out
+      ? new Date(guest.check_out).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
+    r.getCell(6).value = MEAL_LABELS[guest.meal_plan] || guest.meal_plan || ''
+    r.getCell(7).value = guest.status
+      ? guest.status.charAt(0).toUpperCase() + guest.status.slice(1) : ''
+    if (isAdmin) {
+      r.getCell(8).value = guest.mobile   || ''
+      r.getCell(9).value = guest.id_type
+        ? `${guest.id_type.replace(/_/g, ' ')}: ${guest.id_number || '—'}` : ''
+    }
+    r.height = 16
+
+    r.eachCell((cell, ci) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex(idx % 2 === 1 ? C.rowAlt : C.rowBg) }
+      cell.font = { size: 10, color: hex(C.rowText), name: 'Calibri' }
+      cell.alignment = { vertical: 'middle', horizontal: ci === 1 ? 'center' : 'left', indent: ci > 1 ? 1 : 0 }
+      applyBorder(cell)
+    })
+
+    // Status colour
+    const sc = r.getCell(7)
+    if (guest.status === 'confirmed') sc.fill = { type: 'pattern', pattern: 'solid', fgColor: hex('D1FAE5') }
+    if (guest.status === 'tentative') sc.fill = { type: 'pattern', pattern: 'solid', fgColor: hex('FEF3C7') }
+    if (guest.status === 'cancelled') sc.fill = { type: 'pattern', pattern: 'solid', fgColor: hex('FEE2E2') }
+
+    row2++
+  })
+
+  // Summary bar below the list
+  ws2.addRow([]).height = 8
+  const confirmed = (roomingList || []).filter(g => g.status === 'confirmed').length
+  const tentative  = (roomingList || []).filter(g => g.status === 'tentative').length
+  const sumRow = ws2.addRow([
+    '', `Confirmed: ${confirmed}`, `Tentative: ${tentative}`,
+    `Total: ${(roomingList || []).length}`,
+  ])
+  ws2.mergeCells(sumRow.number, 4, sumRow.number, rl_cols)
+  sumRow.height = 18
+  sumRow.eachCell(cell => {
+    cell.font = { bold: true, size: 10, name: 'Calibri', color: hex('3D3A36') }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex(C.catTotalBg) }
+    cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+    applyBorder(cell, C.borderStrong)
+  })
+
+  ws2.views = [{ state: 'frozen', ySplit: hdr2 }]
+
+  // ── Sheet 3: Cost Summary (admin only) ───────────────────
+
+  if (isAdmin) {
+    const ws3 = wb.addWorksheet('Cost Summary')
+    ws3.columns = [{ width: 36 }, { width: 18 }, { width: 18 }, { width: 18 }]
+
+    const hdr3 = sheetHeader(
+      ws3,
+      `${tripTitle} — Cost Summary`,
+      `${clientName}  ·  ${pax} pax confirmed  ·  Admin view`,
+      4
+    )
+    colHeader(ws3, hdr3, ['ACTIVITY', 'CLIENT COST (₹)', 'INTERNAL COST (₹)', 'PER PAX (₹)'])
+
+    let row3 = hdr3 + 1
+    let totalClient = 0, totalInternal = 0
+
+    ;(items || []).forEach((item, idx) => {
+      const clientCost   = item.cost_per_pax ? item.cost_per_pax * pax : (item.cost_lump || 0)
+      const internalCost = item.internal_cost || 0
+      totalClient   += clientCost
+      totalInternal += internalCost
+
+      const r = ws3.getRow(row3)
+      r.getCell(1).value = item.activity || ''
+      r.getCell(2).value = clientCost   || ''
+      r.getCell(3).value = internalCost || ''
+      r.getCell(4).value = item.cost_per_pax || (pax > 0 ? Math.round(clientCost / pax) : 0) || ''
+      r.height = 16
+
+      r.eachCell((cell, ci) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex(idx % 2 === 1 ? C.rowAlt : C.rowBg) }
+        cell.font = { size: 10, color: hex(C.rowText), name: 'Calibri' }
+        cell.alignment = { vertical: 'middle', horizontal: ci > 1 ? 'right' : 'left', indent: ci === 1 ? 1 : 0 }
+        applyBorder(cell)
+        if (ci > 1 && typeof cell.value === 'number') cell.numFmt = '₹#,##0'
+        if (ci === 3) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex('FFFBEB') }
+      })
+      row3++
+    })
+
+    // Grand total row
+    ws3.addRow([]).height = 6
+    const totRow = ws3.getRow(row3 + 1)
+    totRow.getCell(1).value = 'TOTAL'
+    totRow.getCell(2).value = totalClient
+    totRow.getCell(3).value = totalInternal
+    totRow.getCell(4).value = pax > 0 ? Math.round(totalClient / pax) : 0
+    totRow.height = 28
+    totRow.eachCell((cell, ci) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex(C.grandBg) }
+      cell.font = { bold: true, color: hex(C.grandText), size: 13, name: 'Calibri' }
+      cell.alignment = { vertical: 'middle', horizontal: ci > 1 ? 'right' : 'left', indent: ci === 1 ? 2 : 0 }
+      applyBorder(cell, C.grandBg)
+      if (ci > 1 && typeof cell.value === 'number') cell.numFmt = '₹#,##0'
+    })
+
+    // Margin row (admin insight)
+    const margin    = totalClient - totalInternal
+    const marginPct = totalClient > 0 ? ((margin / totalClient) * 100).toFixed(1) : 0
+    const mRow = ws3.getRow(row3 + 2)
+    mRow.getCell(1).value = `Margin: ${marginPct}%`
+    mRow.getCell(2).value = margin
+    mRow.height = 20
+    ws3.mergeCells(mRow.number, 3, mRow.number, 4)
+    mRow.eachCell((cell, ci) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex('FFFBEB') }
+      cell.font = { bold: true, size: 10, name: 'Calibri', color: hex('92400E') }
+      cell.alignment = { vertical: 'middle', horizontal: ci > 1 ? 'right' : 'left', indent: ci === 1 ? 2 : 0 }
+      if (ci === 2 && typeof cell.value === 'number') cell.numFmt = '₹#,##0'
+    })
+
+    ws3.views = [{ state: 'frozen', ySplit: hdr3 }]
+  }
+
+  const safe = (event.event_name || 'Event').replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ +/g, '_')
+  const buf = await wb.xlsx.writeBuffer()
+  saveAs(
+    new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+    `${safe} — MICE Itinerary.xlsx`
+  )
+}
+
+// ─── 10. Agent Template ───────────────────────────────────
+// Pre-filled Excel the ops team sends to the travel agent.
+// One row per city × type (flight / stay / ground), pre-populated
+// with event name, city names, and event dates from city_dates.
+// Agent fills it and returns → parsed by "Import from Agent" in TravelItinerary.jsx.
+//
+// Column colour-coding matches TravelItinerary.jsx card accents:
+//   City/Date cols  = dark header
+//   Flight cols     = blue
+//   Stay cols       = grey
+//   Ground cols     = amber
+//
+// Signature: generateAgentTemplate(event)
+
+export async function generateAgentTemplate(event) {
+  const ExcelJS = (await import('exceljs')).default
+  const { saveAs } = await import('file-saver')
+  const wb = new ExcelJS.Workbook()
+  wb.creator = 'Myoozz Consulting Pvt. Ltd.'
+  wb.created = new Date()
+
+  const ws         = wb.addWorksheet('Agent Template')
+  const totalCols  = 17
+
+  ws.columns = [
+    { width: 16 }, // A  City
+    { width: 12 }, // B  Date
+    { width: 13 }, // C  Type
+    { width: 18 }, // D  From
+    { width: 18 }, // E  To
+    { width: 10 }, // F  Time
+    { width: 12 }, // G  Flight No
+    { width: 14 }, // H  Airline
+    { width: 12 }, // I  PNR
+    { width: 20 }, // J  Seat Class
+    { width: 26 }, // K  Hotel Name
+    { width: 12 }, // L  Check-in
+    { width: 12 }, // M  Check-out
+    { width: 8  }, // N  Rooms
+    { width: 16 }, // O  Room Type
+    { width: 18 }, // P  Budget/Night (₹)
+    { width: 32 }, // Q  Notes
+  ]
+
+  // ── Row 1: Title bar ──
+  ws.mergeCells(1, 1, 1, totalCols)
+  const r1c = ws.getCell('A1')
+  r1c.value     = `${event.event_name || 'Event'}  —  Travel Agent Template`
+  r1c.font      = { bold: true, size: 13, color: hex(C.headerText), name: 'Calibri' }
+  r1c.fill      = { type: 'pattern', pattern: 'solid', fgColor: hex(C.headerBg) }
+  r1c.alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+  ws.getRow(1).height = 28
+
+  // ── Row 2: Subtitle ──
+  ws.mergeCells(2, 1, 2, totalCols)
+  const r2c = ws.getCell('A2')
+  r2c.value     = `Prepared by Myoozz Consulting Pvt. Ltd.  ·  Fill all applicable fields and return. Leave blank if not applicable.`
+  r2c.font      = { size: 9, italic: true, color: hex(C.headerSub), name: 'Calibri' }
+  r2c.fill      = { type: 'pattern', pattern: 'solid', fgColor: hex(C.headerBg) }
+  r2c.alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+  ws.getRow(2).height = 18
+
+  // ── Row 3: Type instruction ──
+  ws.mergeCells(3, 1, 3, totalCols)
+  const r3c = ws.getCell('A3')
+  r3c.value     = 'TYPE: "flight" | "stay" | "ground"   ·   Seat Class: economy / premium_economy / business / first   ·   One row per flight leg / hotel stay / transfer.'
+  r3c.font      = { size: 9, italic: true, color: { argb: 'FF1D4ED8' }, name: 'Calibri' }
+  r3c.fill      = { type: 'pattern', pattern: 'solid', fgColor: hex('EFF6FF') }
+  r3c.alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }
+  ws.getRow(3).height = 18
+
+  // ── Row 4: Column headers (colour-banded by section) ──
+  const colDefs = [
+    { label: 'CITY',             bg: C.headerBg },
+    { label: 'DATE',             bg: C.headerBg },
+    { label: 'TYPE',             bg: '1D4ED8'   },
+    { label: 'FROM',             bg: '1D4ED8'   },
+    { label: 'TO',               bg: '1D4ED8'   },
+    { label: 'TIME',             bg: '1D4ED8'   },
+    { label: 'FLIGHT NO',        bg: '1D4ED8'   },
+    { label: 'AIRLINE',          bg: '1D4ED8'   },
+    { label: 'PNR',              bg: '1D4ED8'   },
+    { label: 'SEAT CLASS',       bg: '1D4ED8'   },
+    { label: 'HOTEL NAME',       bg: '4B5563'   },
+    { label: 'CHECK-IN',         bg: '4B5563'   },
+    { label: 'CHECK-OUT',        bg: '4B5563'   },
+    { label: 'ROOMS',            bg: '4B5563'   },
+    { label: 'ROOM TYPE',        bg: '92400E'   },
+    { label: 'BUDGET/NIGHT (₹)', bg: '92400E'   },
+    { label: 'NOTES',            bg: C.catBg    },
+  ]
+
+  const hRow = ws.getRow(4)
+  hRow.height = 36
+  colDefs.forEach(({ label, bg }, i) => {
+    const cell = hRow.getCell(i + 1)
+    cell.value     = label
+    cell.font      = { bold: true, size: 9, color: { argb: 'FFFFFFFF' }, name: 'Calibri' }
+    cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: hex(bg) }
+    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+    const b = { style: 'thin', color: hex(C.borderStrong) }
+    cell.border = { top: b, left: b, bottom: b, right: b }
+  })
+
+  // ── Row 5: Section legend ──
+  // Merge and label each colour band
+  ws.mergeCells(5, 1, 5, 2)
+  ws.mergeCells(5, 3, 5, 10)
+  ws.mergeCells(5, 11, 5, 14)
+  ws.mergeCells(5, 15, 5, 16)
+  ws.mergeCells(5, 17, 5, 17)
+  const legDefs = [
+    { col: 1,  text: 'City & Date',      bg: C.headerBg },
+    { col: 3,  text: '← Flight fields',  bg: '1D4ED8'   },
+    { col: 11, text: '← Stay fields',    bg: '4B5563'   },
+    { col: 15, text: '← Ground',         bg: '92400E'   },
+    { col: 17, text: 'Notes',            bg: C.catBg    },
+  ]
+  const legRow = ws.getRow(5)
+  legRow.height = 14
+  legDefs.forEach(({ col, text, bg }) => {
+    const cell = legRow.getCell(col)
+    cell.value     = text
+    cell.font      = { size: 8, italic: true, color: { argb: 'FFFFFFFF' }, name: 'Calibri' }
+    cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: hex(bg) }
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+  })
+
+  // ── Rows 6+: Pre-filled city rows ──
+  const DATA_STYLE = {
+    flight: { bg: 'DBEAFE', text: '1E3A5F' },
+    stay:   { bg: 'F3F4F6', text: '1F2937' },
+    ground: { bg: 'FEF3C7', text: '78350F' },
+  }
+
+  const cities   = event.cities || []
+  let dataRow    = 6
+
+  const bThin = { style: 'thin', color: hex(C.border) }
+  const bStg  = { style: 'thin', color: hex(C.borderStrong) }
+
+  if (cities.length > 0) {
+    cities.forEach(city => {
+      const cd = event.city_dates?.[city]
+      const dateStr = cd?.start
+        ? new Date(cd.start).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : ''
+
+      ;['flight', 'stay', 'ground'].forEach(type => {
+        const ds  = DATA_STYLE[type]
+        const row = ws.getRow(dataRow)
+        row.getCell(1).value = city
+        row.getCell(2).value = dateStr
+        row.getCell(3).value = type
+        row.height = 20
+
+        for (let col = 1; col <= totalCols; col++) {
+          const cell = row.getCell(col)
+          const isPreFill = col <= 3
+          cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: hex(ds.bg) }
+          cell.font      = {
+            size: 10, name: 'Calibri',
+            color: { argb: 'FF' + ds.text },
+            italic: isPreFill, bold: isPreFill && col === 1,
+          }
+          cell.alignment = { vertical: 'middle', horizontal: 'left', indent: col > 1 ? 1 : 0 }
+          cell.border    = { top: bThin, left: bThin, bottom: bThin, right: bThin }
+        }
+        // stronger left border on first data cell
+        row.getCell(1).border = { top: bStg, left: bStg, bottom: bStg, right: bThin }
+        dataRow++
+      })
+
+      // Spacer between cities
+      ws.getRow(dataRow).height = 5
+      dataRow++
+    })
+  } else {
+    // No cities — 15 blank data rows
+    for (let i = 0; i < 15; i++) {
+      const r = ws.getRow(dataRow + i)
+      r.height = 20
+      for (let col = 1; col <= totalCols; col++) {
+        const cell = r.getCell(col)
+        cell.fill   = { type: 'pattern', pattern: 'solid', fgColor: hex(i % 2 === 0 ? C.rowBg : C.rowAlt) }
+        cell.border = { top: bThin, left: bThin, bottom: bThin, right: bThin }
+      }
+    }
+  }
+
+  // Freeze header block (rows 1–5)
+  ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 5, activeCell: 'A6' }]
+
+  const safe = (event.event_name || 'Event').replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ +/g, '_')
+  const buf  = await wb.xlsx.writeBuffer()
+  saveAs(
+    new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+    `${safe}_Agent_Template.xlsx`
+  )
+}

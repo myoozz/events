@@ -11,6 +11,7 @@ import EventMilestone from './EventMilestone'
 import PageDescription from './PageDescription'
 import { supabase } from '../supabase'
 import AssignEvent from './AssignEvent'
+import TravelItinerary from './TravelItinerary'
 
 // ── Tab definitions — single source of truth for bar + bottom nav ──
 const TABS = [
@@ -19,6 +20,7 @@ const TABS = [
   { key: 'export',     label: 'Preview & Export' },
   { key: 'tasks',      label: 'Execution' },
   { key: 'production', label: 'Production' },
+  { key: 'travel',     label: 'Travel & Itinerary' },
   { key: 'delivered',  label: 'Delivered' },
   { key: 'cuesheet',   label: 'Show Flow' },
 ]
@@ -103,10 +105,15 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   const isManager = userRole === 'manager'
   const canAssign = isAdmin || isManager
 
+  // Proposal lifecycle gate (separate from pitch status)
+  const [proposalStatus,     setProposalStatus]     = useState(event.proposal_status || 'draft')
+  const [savingProposal,     setSavingProposal]      = useState(false)
+  const [showItineraryPrompt, setShowItineraryPrompt] = useState(false)
+
   const [delegationScope, setDelegationScope] = useState(event.delegation_scope || {})
   const SCOPE_TABS = {
-    full: ['elements','costs','export','tasks','production','delivered','cuesheet'],
-    ops:  ['elements','tasks','production','cuesheet'],
+    full: ['elements','costs','export','tasks','production','travel','delivered','cuesheet'],
+    ops:  ['elements','tasks','production','travel','cuesheet'],
     view: ['elements','costs'],
   }
   const myScope    = canAssign ? 'full' : (delegationScope[session?.user?.email] || 'full')
@@ -127,6 +134,34 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     setSavingStatus(true)
     await supabase.from('events').update({ status: 'lost', loss_reason: reason }).eq('id', event.id)
     setSavingStatus(false)
+  }
+
+  async function handleSubmitProposal() {
+    setSavingProposal(true)
+    await supabase.from('events').update({ proposal_status: 'submitted' }).eq('id', event.id)
+    setProposalStatus('submitted')
+    setSavingProposal(false)
+  }
+
+  async function handleIWon() {
+    setSavingProposal(true)
+    await supabase.from('events').update({ proposal_status: 'won', status: 'won' }).eq('id', event.id)
+    setProposalStatus('won')
+    setStatus('won')
+    setSavingProposal(false)
+    // Check if an itinerary exists for this event
+    const { data: itin } = await supabase
+      .from('itinerary').select('id').eq('event_id', event.id).maybeSingle()
+    if (itin) setShowItineraryPrompt(true)
+    else { setShowWonModal(true) }
+  }
+
+  async function handleMarkLostProposal() {
+    setSavingProposal(true)
+    await supabase.from('events').update({ proposal_status: 'lost', status: 'lost' }).eq('id', event.id)
+    setProposalStatus('lost')
+    setStatus('lost')
+    setSavingProposal(false)
   }
 
   // Revoke a person's access to this event
@@ -424,6 +459,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
             onClick={() => handleTabChange(tab.key)}>
             {tab.key === 'tasks'      ? '⚡ ' + tab.label :
              tab.key === 'production' ? '🎨 ' + tab.label :
+             tab.key === 'travel'     ? '✈️ ' + tab.label :
              tab.key === 'delivered'  ? '✅ ' + tab.label :
              tab.key === 'cuesheet'   ? '🎬 ' + tab.label :
              tab.label}
@@ -432,6 +468,76 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
       </div>
 
       <ScreenGuide screen={activeTab === 'elements' ? 'elements' : activeTab === 'costs' ? 'costs' : activeTab === 'tasks' ? 'tasks' : 'export'} />
+
+      {/* ── Proposal lifecycle banner (admin only) ── */}
+      {isAdmin && proposalStatus === 'draft' && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap',
+          gap: 12, padding: '12px 16px', marginBottom: 24,
+          background: 'var(--bg-secondary)', border: '0.5px solid var(--border)',
+          borderRadius: 'var(--radius)',
+        }}>
+          <div>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>Proposal not yet submitted</p>
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-tertiary)' }}>
+              Download buttons are locked until you submit the proposal.
+            </p>
+          </div>
+          <button onClick={handleSubmitProposal} disabled={savingProposal} style={{
+            padding: '8px 18px', fontSize: 13, fontWeight: 500,
+            fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)',
+            border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+            opacity: savingProposal ? 0.7 : 1, flexShrink: 0,
+          }}>{savingProposal ? 'Saving…' : 'Submit Proposal'}</button>
+        </div>
+      )}
+
+      {isAdmin && proposalStatus === 'submitted' && (
+        <div style={{
+          padding: '14px 18px', marginBottom: 24,
+          background: '#fef3c7', border: '0.5px solid #fcd34d',
+          borderRadius: 'var(--radius)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#92400e' }}>
+                Proposal submitted — let us know when you win this project.
+              </p>
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: '#a16207' }}>
+                We'll activate the full execution system the moment you do.
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <button onClick={handleIWon} disabled={savingProposal} style={{
+                padding: '8px 16px', fontSize: 13, fontWeight: 600,
+                fontFamily: 'var(--font-body)', background: '#16a34a', color: '#fff',
+                border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                opacity: savingProposal ? 0.7 : 1,
+              }}>🏆 I Won This Project</button>
+              <button onClick={handleMarkLostProposal} disabled={savingProposal} style={{
+                padding: '8px 14px', fontSize: 13,
+                fontFamily: 'var(--font-body)', background: 'transparent',
+                border: '0.5px solid #92400e', color: '#92400e',
+                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                opacity: savingProposal ? 0.7 : 1,
+              }}>Mark as Lost</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isAdmin && proposalStatus === 'won' && (
+        <div style={{
+          padding: '10px 16px', marginBottom: 24,
+          background: '#dcfce7', border: '0.5px solid #86efac',
+          borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span style={{ fontSize: 14 }}>🏆</span>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: '#15803d' }}>
+            Project won — execution mode active. Full system unlocked.
+          </p>
+        </div>
+      )}
 
       {/* Page descriptions */}
       {activeTab === 'elements' && (
@@ -490,6 +596,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
       )}
       {activeTab === 'production' && (
         <Production key={'production-'+refreshKey} event={event} teamUsers={teamUsers} />
+      )}
+      {activeTab === 'travel' && (
+        <TravelItinerary key={'travel-'+refreshKey} event={event} userRole={userRole} session={session} />
       )}
       {activeTab === 'delivered' && (
         <PageDescription
@@ -607,6 +716,40 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
             if (onUpdated) onUpdated(updated)
           }}
         />
+      )}
+
+      {/* ── Itinerary → Tasks import prompt (fires after "I Won" if itinerary exists) ── */}
+      {showItineraryPrompt && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(26,25,21,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:600, padding:'24px' }}>
+          <div style={{ background:'var(--bg)', border:'0.5px solid var(--border)', borderRadius:'var(--radius)', padding:'36px', maxWidth:'420px', width:'100%' }}>
+            <div style={{ fontSize: 40, marginBottom: 16, textAlign: 'center' }}>🏆</div>
+            <h2 style={{ fontFamily:'var(--font-display)', fontSize:'22px', fontWeight:500, color:'var(--text)', marginBottom:'8px', textAlign:'center' }}>
+              Project won. Congratulations.
+            </h2>
+            <p style={{ fontSize:'13px', color:'var(--text-secondary)', lineHeight:1.7, marginBottom:'8px', textAlign:'center' }}>
+              You have a MICE itinerary built for this event.
+            </p>
+            <p style={{ fontSize:'13px', color:'var(--text-secondary)', lineHeight:1.7, marginBottom:'24px', textAlign:'center' }}>
+              Import the day program into your task board now, or do it later from the Travel & Itinerary tab.
+            </p>
+            <div style={{ display:'flex', gap:'10px' }}>
+              <button
+                onClick={() => {
+                  setShowItineraryPrompt(false)
+                  setActiveTab('travel')
+                  setRefreshKey(k => k + 1)
+                }}
+                style={{ flex:2, padding:'11px', fontSize:'13px', fontWeight:500, fontFamily:'var(--font-body)', background:'var(--text)', color:'var(--bg)', border:'none', borderRadius:'var(--radius-sm)', cursor:'pointer' }}>
+                Go to Travel & Itinerary
+              </button>
+              <button
+                onClick={() => { setShowItineraryPrompt(false); setActiveTab('tasks'); setRefreshKey(k=>k+1) }}
+                style={{ flex:1, padding:'11px', fontSize:'13px', fontFamily:'var(--font-body)', background:'none', border:'0.5px solid var(--border-strong)', borderRadius:'var(--radius-sm)', cursor:'pointer', color:'var(--text)' }}>
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Won celebration modal ── */}
