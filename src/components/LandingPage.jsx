@@ -75,8 +75,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .lp-nav a { font-size: 13.5px; font-weight: 400; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
 .lp-nav a:hover { color: var(--text); }
 .lp-nav-links { display: flex; gap: 28px; }
-.btn-demo { font-size: 13px; font-weight: 400; color: var(--text-muted); text-decoration: none; border: 0.5px solid var(--border-strong); padding: 8px 16px; border-radius: 4px; transition: all 0.2s; }
-.btn-demo:hover { border-color: var(--text); color: var(--text); }
+.btn-login { font-size: 13.5px; font-weight: 400; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+.btn-login:hover { color: var(--text); }
+.lp-header-right { display: flex; align-items: center; gap: 20px; }
+.invite-only-hint { font-size: 10.5px; color: var(--text-light); letter-spacing: 0.04em; text-align: right; margin-top: 4px; }
+.lp-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; color: var(--text); }
+.lp-mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99; background: var(--bg); flex-direction: column; padding: 80px 5% 40px; gap: 0; }
+.lp-mobile-menu.open { display: flex; }
+.lp-mobile-menu a, .lp-mobile-menu button { font-size: 22px; font-weight: 300; color: var(--text); text-decoration: none; background: none; border: none; cursor: pointer; text-align: left; padding: 16px 0; border-bottom: 0.5px solid var(--border); font-family: var(--font-body); }
+.lp-mobile-menu .mobile-login { font-size: 14px; color: var(--text-muted); margin-top: 24px; border-bottom: none; padding: 8px 0; }
+.lp-mobile-menu .mobile-invite-hint { font-size: 11px; color: var(--text-light); margin-top: 4px; border-bottom: none; padding: 0; }
+.lp-mobile-close { position: absolute; top: 20px; right: 5%; background: none; border: none; font-size: 26px; color: var(--text-muted); cursor: pointer; }
 .btn-primary { background: var(--red); color: #fff; border: none; padding: 9px 20px; border-radius: 4px; font-family: var(--font-body); font-size: 13.5px; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s, transform 0.15s; }
 .btn-primary:hover { background: var(--red-dark); transform: translateY(-1px); }
 .btn-ghost { background: transparent; color: var(--text); border: 0.5px solid var(--border-strong); padding: 9px 20px; border-radius: 4px; font-family: var(--font-body); font-size: 13.5px; font-weight: 400; cursor: pointer; text-decoration: none; display: inline-block; transition: border-color 0.2s, background 0.2s; }
@@ -266,6 +275,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 
 @media (max-width: 900px) {
   .lp-nav-links { display: none !important; }
+  .lp-hamburger { display: block; }
+  .lp-header-right { gap: 12px; }
+  .btn-login { display: none; }
+  .btn-primary { display: none; }
+  .invite-only-hint { display: none; }
   .hero-grid { grid-template-columns: 1fr; }
   .hero-right { display: none; }
   .lp-shift-inner { grid-template-columns: 1fr; gap: 40px; }
@@ -306,6 +320,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 export default function LandingPage() {
   const [barVisible, setBarVisible] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", city: "" });
@@ -402,9 +417,9 @@ export default function LandingPage() {
               </div>
             ) : (
               <>
-                <div className="modal-label">Early Adopter Program</div>
-                <div className="modal-title">Request early access</div>
-                <div className="modal-sub">We're live on real events right now. Every early adopter gets personal onboarding — no handbooks, no tutorials. Just us, walking you through it.</div>
+                <div className="modal-label">By Invite Only</div>
+                <div className="modal-title">Request your invite</div>
+                <div className="modal-sub">ME is not open for self-registration. We onboard every user personally — no handbooks, no tutorials. Submit your details and we'll reach out within 24 hours.</div>
                 <form onSubmit={handleSubmit}>
                   <div className="modal-fields">
                     <div className="modal-row">
@@ -433,7 +448,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <button type="submit" className="modal-submit" disabled={submitting}>
-                    {submitting ? "Sending..." : "Request Early Access →"}
+                    {submitting ? "Sending..." : "Request Invite →"}
                   </button>
                   <p className="modal-fine">No billing. No commitment. We'll reach out personally within 24 hours.</p>
                 </form>
@@ -452,7 +467,7 @@ export default function LandingPage() {
               <span className="lp-bar-text">Early adopters get personal onboarding. No billing. No commitment.</span>
             </div>
             <div className="lp-bar-right">
-              <button className="lp-bar-cta" style={{ border: "none", cursor: "pointer" }} onClick={() => setModalOpen(true)}>Request early access →</button>
+              <button className="lp-bar-cta" style={{ border: "none", cursor: "pointer" }} onClick={() => setModalOpen(true)}>Request invite →</button>
               <button className="lp-bar-close" onClick={() => setBarVisible(false)} aria-label="Dismiss">×</button>
             </div>
           </div>
@@ -470,12 +485,33 @@ export default function LandingPage() {
               <a href="#capabilities">Features</a>
               <a href="#credibility">Why ME</a>
               <a href="#pricing">Pricing</a>
+              <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer">Try demo</a>
             </div>
-            <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer" className="btn-demo">Try demo</a>
-            <button className="btn-primary" onClick={() => setModalOpen(true)}>Get Early Access →</button>
+            <div className="lp-header-right">
+              <a href="/app" className="btn-login">Login</a>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                <button className="btn-primary" onClick={() => setModalOpen(true)}>Get Invite →</button>
+                <span className="invite-only-hint">Registration by invite only</span>
+              </div>
+              <button className="lp-hamburger" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
+                <svg width="22" height="16" viewBox="0 0 22 16" fill="none"><rect y="0" width="22" height="1.5" rx="1" fill="currentColor"/><rect y="7" width="22" height="1.5" rx="1" fill="currentColor"/><rect y="14" width="22" height="1.5" rx="1" fill="currentColor"/></svg>
+              </button>
+            </div>
           </nav>
         </div>
       </header>
+
+      {/* MOBILE MENU */}
+      <div className={`lp-mobile-menu${mobileMenuOpen ? " open" : ""}`}>
+        <button className="lp-mobile-close" onClick={() => setMobileMenuOpen(false)}>×</button>
+        <a href="#capabilities" onClick={() => setMobileMenuOpen(false)}>Features</a>
+        <a href="#credibility" onClick={() => setMobileMenuOpen(false)}>Why ME</a>
+        <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+        <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)}>Try demo ↗</a>
+        <button onClick={() => { setMobileMenuOpen(false); setModalOpen(true); }}>Get Invite →</button>
+        <a href="/app" className="mobile-login">Already have access? Login →</a>
+        <span className="mobile-invite-hint">Registration is by invite only</span>
+      </div>
 
       {/* HERO */}
       <section className="lp-hero-section">
@@ -491,7 +527,7 @@ export default function LandingPage() {
               </h1>
               <p className="hero-sub">ME is your events operating system — your process, structured. Your team, accountable. Your business, visible.</p>
               <div className="hero-ctas">
-                <button className="btn-primary" onClick={() => setModalOpen(true)}>Get Early Access →</button>
+                <button className="btn-primary" onClick={() => setModalOpen(true)}>Get Invite →</button>
                 <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer" className="btn-ghost">Try demo ↗</a>
               </div>
             </div>
@@ -685,7 +721,7 @@ export default function LandingPage() {
             <span className="pricing-cta-eyebrow lp-reveal">Early Adopter Program</span>
             <h3 className="lp-reveal">Lock your rate.<br />Forever.</h3>
             <p className="lp-reveal">Early adopters get real pricing with a meaningful discount — locked in for life. As ME grows, your rate doesn't. Be among the first agencies to run on ME.</p>
-            <button className="btn-red-outline lp-reveal" onClick={() => setModalOpen(true)}>Request Early Access →</button>
+            <button className="btn-red-outline lp-reveal" onClick={() => setModalOpen(true)}>Request Invite →</button>
             <p style={{ fontSize: "12px", color: "rgba(250,250,248,0.3)", lineHeight: "1.5" }} className="lp-reveal">No commitment. We'll reach out personally within 24 hours.</p>
           </div>
         </div>
@@ -715,7 +751,7 @@ export default function LandingPage() {
                 <a href="https://myoozzevents.com" target="_blank" rel="noopener noreferrer">myoozzevents.com</a>
               </div>
               <div className="footer-col">
-                <h4>Early Access</h4>
+                <h4>Get Invite</h4>
                 <a href="#" onClick={(e) => { e.preventDefault(); setModalOpen(true); }}>Request Access</a>
                 <a href="mailto:hello@myoozz.events">hello@myoozz.events</a>
               </div>

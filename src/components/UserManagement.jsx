@@ -84,6 +84,8 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
         }
       } else {
         setSuccess(`✓ Invite sent to ${form.email}. They'll be guided to complete their profile when they first log in.`)
+        await logActivity({ action: 'user_invited', entity_type: 'user', entity_name: form.email, details: { role: form.role } })
+        await logActivity({ action: 'user_invited', entity_type: 'user', entity_name: form.email, details: { role: form.role } })
       }
 
       setForm({ fullName: '', email: '', role: 'team', base_city: '', phone: '' })

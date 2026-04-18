@@ -120,7 +120,6 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
         entity_name: modal.taskTitle,
         event_id:    eventId,
         details:     { assigned_to: user?.full_name || 'Unassigned' },
-        session,
       });
 
       // Phase C — notify the person being assigned (skip if unassigning)
@@ -151,7 +150,6 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
         entity_name: taskTitle,
         event_id:    eventId,
         details:     { status },
-        session,
       });
 
       // Phase C — smart notification routing
