@@ -366,14 +366,14 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
     await supabase.from('events').update({ archived: true }).eq('id', ev.id)
     setEvents(prev => prev.filter(e => e.id !== ev.id))
     setArchivedEvents(prev => [ev, ...prev])
-    await logEventArchived(ev.event_name, ev.id)
+    await logEventArchived(ev)
   }
 
   async function handleRestore(ev) {
     await supabase.from('events').update({ archived: false }).eq('id', ev.id)
     setArchivedEvents(prev => prev.filter(e => e.id !== ev.id))
     setEvents(prev => [{ ...ev, archived: false }, ...prev])
-    await logEventRestored(ev.event_name, ev.id)
+    await logEventRestored(ev)
   }
 
   if (openEvent) {
