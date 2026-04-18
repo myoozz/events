@@ -642,6 +642,7 @@ function CategoryBlock({
   isFirst, isLast, onMoveUp, onMoveDown,
   catDefaults, onCatDefaultChange,
   onMarkAsOption, onOptionBack, onOptionConfirm,
+  rateCards,
 }){
   const [open,setOpen]=useState(false)
   const [showMerge,setShowMerge]=useState(false)
@@ -1408,6 +1409,7 @@ function CityElements({ event, city, userRole, teamUsers }){
           onMarkAsOption={elId=>markAsOption(cat.name,elId)}
           onOptionBack={elId=>optionBack(cat.name,elId)}
           onOptionConfirm={(elId,og)=>optionConfirm(cat.name,elId,og)}
+          rateCards={rateCards}
         />
       ))}
 
