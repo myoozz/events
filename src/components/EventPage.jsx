@@ -486,7 +486,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
         <ExportPreview key={'export-'+refreshKey} event={event} userRole={userRole} session={session} />
       )}
       {activeTab === 'tasks' && (
-        <TaskBoard key={'tasks-'+refreshKey} event={event} userRole={userRole} session={session} />
+        <TaskBoard key={'tasks-'+refreshKey} event={event} eventId={event.id} delegationScope={delegationScope} eventCities={event.cities || []} userRole={userRole} session={session} />
       )}
       {activeTab === 'production' && (
         <Production key={'production-'+refreshKey} event={event} teamUsers={teamUsers} />

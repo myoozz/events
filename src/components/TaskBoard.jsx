@@ -39,8 +39,15 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
   const [addOpen,     setAddOpen]     = useState(false);
   const [newTask,     setNewTask]     = useState({ title: '', category: '', city: '', due_date: '', notes: '' });
   const [adding,      setAdding]      = useState(false);
+  const [importOpen,  setImportOpen]  = useState(false);
+  const [importEls,   setImportEls]   = useState([]);
+  const [importSel,   setImportSel]   = useState({});
+  const [importing,   setImporting]   = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [applyAllCities, setApplyAllCities] = useState(false);
   const modalRef  = useRef(null);
   const statusRef = useRef(null);
+  const importRef = useRef(null);
 
   const canAssign = ROLE_CAN_ASSIGN(userRole, delegationScope);
   const canAdd    = userRole === 'admin' || userRole === 'manager' || userRole === 'event_lead';
@@ -67,10 +74,11 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
     const handler = (e) => {
       if (modal      && modalRef.current  && !modalRef.current.contains(e.target))  setModal(null);
       if (statusMenu && statusRef.current && !statusRef.current.contains(e.target)) setStatusMenu(null);
+      if (importOpen && importRef.current && !importRef.current.contains(e.target)) setImportOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [modal, statusMenu]);
+  }, [modal, statusMenu, importOpen]);
 
   async function fetchTasks() {
     setLoading(true);
@@ -82,6 +90,57 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
   async function fetchUsers() {
     const { data } = await db('users').select('id, full_name, role').order('full_name');
     setUsers(data || []);
+  }
+
+  async function openImport() {
+    setImportOpen(true);
+    setImportSel({});
+    setImportLoading(true);
+    const { data } = await db('elements')
+      .select('id, element_name, category, city')
+      .eq('event_id', eventId)
+      .eq('city', activeCity)
+      .eq('is_option', false)
+      .order('sort_order', { ascending: true });
+    setImportEls(data || []);
+    setImportLoading(false);
+  }
+
+  async function handleImport() {
+    const selected = Object.entries(importSel).filter(([, v]) => v).map(([id]) => id);
+    if (!selected.length) return;
+    setImporting(true);
+
+    // fetch existing tasks for dupe guard
+    const { data: existing } = await db('tasks')
+      .select('element_id')
+      .eq('event_id', eventId)
+      .eq('city', activeCity)
+      .not('element_id', 'is', null);
+    const existingIds = new Set((existing || []).map((t) => t.element_id));
+
+    const toInsert = selected
+      .map((elId) => importEls.find((e) => e.id === elId))
+      .filter(Boolean)
+      .filter((el) => !existingIds.has(el.id))
+      .map((el, i) => ({
+        event_id:   eventId,
+        element_id: el.id,
+        title:      el.element_name,
+        category:   el.category || 'General',
+        city:       activeCity || null,
+        status:     'pending',
+        sort_order: tasks.length + i,
+      }));
+
+    if (toInsert.length > 0) {
+      await db('tasks').insert(toInsert);
+    }
+
+    await fetchTasks();
+    setImportOpen(false);
+    setImportSel({});
+    setImporting(false);
   }
 
   /* ── derived: city-filtered tasks grouped by category ── */
@@ -100,7 +159,8 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
   /* ── assign ── */
   function openAssign(task) {
     setAssignTo(task.assigned_to || '');
-    setModal({ taskId: task.id, taskTitle: task.title });
+    setApplyAllCities(false);
+    setModal({ taskId: task.id, taskTitle: task.title, taskCity: task.city, taskElementId: task.element_id || null });
   }
 
   async function saveAssign() {
@@ -113,6 +173,22 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
     }).eq('id', modal.taskId);
 
     if (!error) {
+      // Apply to matching tasks in other cities
+      if (applyAllCities && cities.length > 1) {
+        const otherCityTasks = tasks.filter((t) =>
+          t.id !== modal.taskId &&
+          (modal.taskElementId ? t.element_id === modal.taskElementId : t.title === modal.taskTitle) &&
+          t.city !== modal.taskCity
+        );
+        if (otherCityTasks.length > 0) {
+          await Promise.all(
+            otherCityTasks.map((t) =>
+              db('tasks').update({ assigned_to: assignTo || null, assigned_to_name: user?.full_name || null }).eq('id', t.id)
+            )
+          );
+        }
+      }
+
       await logActivity({
         action:      'task_assigned',
         entity_type: 'task',
@@ -121,7 +197,6 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
         details:     { assigned_to: user?.full_name || 'Unassigned' },
       });
 
-      // Phase C — notify the person being assigned (skip if unassigning)
       if (assignTo) {
         await notifyTaskAssigned({
           recipientId: assignTo,
@@ -237,13 +312,18 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
         </div>
       )}
 
-      {/* ── add task ── */}
+      {/* ── add task + import ── */}
       {canAdd && (
         <div style={styles.addWrap}>
           {!addOpen ? (
-            <button style={styles.addBtn} onClick={() => setAddOpen(true)}>
-              <span style={styles.addIcon}>+</span> Add Task
-            </button>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button style={styles.addBtn} onClick={() => setAddOpen(true)}>
+                <span style={styles.addIcon}>+</span> Add Task
+              </button>
+              <button style={styles.importBtn} onClick={openImport}>
+                Import from Elements
+              </button>
+            </div>
           ) : (
             <form onSubmit={handleAddTask} style={styles.addForm}>
               <div style={styles.addRow}>
@@ -411,11 +491,83 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
               ))}
             </select>
 
+            {/* Apply to all cities — only show when event has multiple cities */}
+            {cities.length > 1 && (
+              <label style={styles.allCitiesRow}>
+                <input
+                  type="checkbox"
+                  checked={applyAllCities}
+                  onChange={(e) => setApplyAllCities(e.target.checked)}
+                  style={{ marginRight: 8, accentColor: '#bc1723' }}
+                />
+                <span>Apply to all cities</span>
+                <span style={styles.allCitiesHint}>
+                  Assigns the same person to this task in {cities.filter((c) => c !== modal.taskCity).join(', ')} too
+                </span>
+              </label>
+            )}
+
             <div style={styles.modalActions}>
               <button style={styles.cancelBtn} onClick={() => setModal(null)}>Cancel</button>
               <button style={styles.saveBtn} onClick={saveAssign} disabled={saving}>
                 {saving ? 'Saving…' : 'Save'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── import modal ── */}
+      {importOpen && (
+        <div style={styles.overlay}>
+          <div ref={importRef} style={{ ...styles.modal, maxWidth: 520 }}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>Import from Elements</h3>
+              <button style={styles.modalClose} onClick={() => setImportOpen(false)}>✕</button>
+            </div>
+            <p style={styles.modalSub}>
+              Showing elements for {activeCity}. Tasks already imported are excluded.
+            </p>
+
+            {importLoading ? (
+              <p style={{ color: '#9CA3AF', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>Loading elements…</p>
+            ) : importEls.length === 0 ? (
+              <p style={{ color: '#9CA3AF', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>No elements found for {activeCity}.</p>
+            ) : (
+              <div style={{ maxHeight: 340, overflowY: 'auto', marginBottom: 20 }}>
+                {/* group by category */}
+                {[...new Set(importEls.map((e) => e.category || 'General'))].map((cat) => (
+                  <div key={cat} style={{ marginBottom: 12 }}>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{cat}</p>
+                    {importEls.filter((e) => (e.category || 'General') === cat).map((el) => (
+                      <label key={el.id} style={styles.importRow}>
+                        <input
+                          type="checkbox"
+                          checked={!!importSel[el.id]}
+                          onChange={(e) => setImportSel((p) => ({ ...p, [el.id]: e.target.checked }))}
+                          style={{ marginRight: 10, accentColor: '#bc1723', flexShrink: 0 }}
+                        />
+                        <span style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.4 }}>{el.element_name}</span>
+                      </label>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+                {Object.values(importSel).filter(Boolean).length} selected
+              </span>
+              <div style={styles.modalActions}>
+                <button style={styles.cancelBtn} onClick={() => setImportOpen(false)}>Cancel</button>
+                <button
+                  style={{ ...styles.saveBtn, opacity: Object.values(importSel).filter(Boolean).length === 0 ? 0.5 : 1 }}
+                  onClick={handleImport}
+                  disabled={importing || Object.values(importSel).filter(Boolean).length === 0}
+                >
+                  {importing ? 'Importing…' : 'Import Selected'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -469,6 +621,54 @@ const styles = {
     fontSize: 13,
     fontFamily: "'DM Sans', sans-serif",
     transition: 'border-color 0.15s, color 0.15s',
+  },
+  importBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    background: 'transparent',
+    border: '1.5px solid #E5E1DC',
+    borderRadius: 8,
+    padding: '8px 16px',
+    cursor: 'pointer',
+    color: '#6B7280',
+    fontSize: 13,
+    fontFamily: "'DM Sans', sans-serif",
+    transition: 'border-color 0.15s, color 0.15s',
+  },
+  allCitiesRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    gap: 4,
+    background: '#F5F0EB',
+    border: '1px solid #E5E1DC',
+    borderRadius: 8,
+    padding: '10px 12px',
+    marginBottom: 20,
+    cursor: 'pointer',
+    fontSize: 13,
+    fontWeight: 500,
+    color: '#374151',
+    fontFamily: "'DM Sans', sans-serif",
+  },
+  allCitiesHint: {
+    display: 'block',
+    width: '100%',
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontWeight: 400,
+    marginTop: 2,
+    paddingLeft: 24,
+  },
+  importRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    padding: '7px 10px',
+    borderRadius: 6,
+    cursor: 'pointer',
+    transition: 'background 0.1s',
+    fontFamily: "'DM Sans', sans-serif",
   },
   addIcon: { fontSize: 18, lineHeight: 1 },
   addForm: {
