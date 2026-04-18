@@ -2,8 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../supabase'
 import { logActivity } from '../utils/activityLogger'
 
-const SCHEMA = import.meta.env.VITE_SUPABASE_SCHEMA || 'public'
-const db = (table) => supabase.schema(SCHEMA).from(table)
+const db = (table) => supabase.from(table);
 
 const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team' }
 const ROLE_COLORS = {
