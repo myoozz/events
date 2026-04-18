@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { logUserInvited } from '../utils/activityLogger'
 
 const ROLES = ['admin', 'manager', 'event_lead', 'team']
 const ROLE_LABELS = { admin: 'Admin', manager: 'Project Head', event_lead: 'Manager', team: 'Project Team' }
@@ -84,8 +85,7 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
         }
       } else {
         setSuccess(`✓ Invite sent to ${form.email}. They'll be guided to complete their profile when they first log in.`)
-        await logActivity({ action: 'user_invited', entity_type: 'user', entity_name: form.email, details: { role: form.role } })
-        await logActivity({ action: 'user_invited', entity_type: 'user', entity_name: form.email, details: { role: form.role } })
+        await logUserInvited(form.email, form.role)
       }
 
       setForm({ fullName: '', email: '', role: 'team', base_city: '', phone: '' })
