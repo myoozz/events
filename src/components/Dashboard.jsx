@@ -238,7 +238,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
       .eq('archived', false)
       .order('created_at', { ascending: false })
 
-    if (userRole === 'team' || userRole === 'event_lead') {
+    if (userRole !== 'admin') {
       activeQuery = activeQuery.or(`assigned_to.cs.{"${session.user.email}"},created_by.eq.${session.user.email}`)
     }
 
