@@ -77,22 +77,20 @@ function getColTemplate(isAdmin,fv,viewMode){
   const delCol=viewMode==='grid'?'44px':'44px'
   if(isAdmin){
     return [
-      '2fr',
-      fv.finish?'1.6fr':null,
-      (fv.size||fv.days)?'1.2fr':null,
-      '1.2fr',
-      '1.2fr',
-      fv.source?'1.2fr':null,
-      fv.status?'72px':null,
+      '2.6fr',
+      (fv.size||fv.days)?'108px':null,
+      '1.3fr',
+      '1.3fr',
+      fv.source?'1.1fr':null,
+      fv.status?'88px':null,
       delCol,
     ].filter(Boolean).join(' ')
   }
   return [
-    '2fr',
-    fv.finish?'1.6fr':null,
-    (fv.size||fv.days)?'1.2fr':null,
+    '2.6fr',
+    (fv.size||fv.days)?'108px':null,
     '1.6fr',
-    fv.status?'72px':null,
+    fv.status?'88px':null,
     delCol,
   ].filter(Boolean).join(' ')
 }
@@ -270,64 +268,59 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
       ...extraStyle,
     })
     return(
-      <div style={{display:'grid',gridTemplateColumns:cols,alignItems:'stretch',borderBottom:'1px solid var(--border)',background:zebra,minHeight:'38px'}}>
-        {/* Element name — wraps naturally */}
-        <div style={{...cell(false,false),alignItems:'flex-start',padding:'4px 0'}}>
-          <input style={{...ginp(false),fontWeight:500,whiteSpace:'normal',wordBreak:'break-word',height:'auto',minHeight:'30px'}}
+      <div style={{display:'grid',gridTemplateColumns:cols,alignItems:'stretch',borderBottom:'1px solid var(--border)',background:zebra,minHeight:'44px'}}>
+        {/* Element name + Finish/Specs — merged, wraps naturally */}
+        <div style={{...cell(false,false),flexDirection:'column',alignItems:'stretch',padding:'5px 0',gap:'2px'}}>
+          <input style={{...ginp(false),fontWeight:500,whiteSpace:'normal',wordBreak:'break-word',height:'auto',minHeight:'22px',lineHeight:'1.3'}}
             placeholder="Element name" value={el.element_name}
             disabled={locked}
             onChange={e=>onUpdate('element_name',e.target.value)} onBlur={onSave}
           />
+          <input style={{...ginp(false),whiteSpace:'normal',wordBreak:'break-word',height:'auto',minHeight:'18px',fontSize:'11px',color:'var(--text-secondary)',lineHeight:'1.3'}} placeholder="Finish / specs…" value={el.finish}
+            disabled={locked}
+            onChange={e=>onUpdate('finish',e.target.value)} onBlur={onSave}
+          />
         </div>
 
-        {/* Finish — wraps naturally */}
-        {fv.finish&&(
-          <div style={{...cell(false,false),alignItems:'flex-start',padding:'4px 0'}}>
-            <input style={{...ginp(false),whiteSpace:'normal',wordBreak:'break-word',height:'auto',minHeight:'30px'}} placeholder="Specs…" value={el.finish}
-              disabled={locked}
-              onChange={e=>onUpdate('finish',e.target.value)} onBlur={onSave}
-            />
-          </div>
-        )}
-
-        {/* Size · Qty · Days — with unit dropdown */}
+        {/* Size · Qty · Days — stacked with labels */}
         {(fv.size||fv.days)&&(
-          <div style={{...cell(false,false),padding:'4px',gap:'3px',flexDirection:'column',alignItems:'stretch',justifyContent:'center'}}>
+          <div style={{...cell(false,false),padding:'5px 6px',gap:'4px',flexDirection:'column',alignItems:'stretch',justifyContent:'center'}}>
             {fv.size&&(
-              <div style={{display:'flex',gap:'3px',alignItems:'center'}}>
-                <input style={{...ginp(false),width:'44px',fontSize:'12px',flex:'0 0 auto'}}
-                  placeholder="Size" value={el.size} disabled={locked}
+              <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
+                <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'28px',flexShrink:0,fontWeight:500,letterSpacing:'0.2px'}}>SIZE</span>
+                <input style={{...ginp(false),width:'36px',fontSize:'12px',flex:'0 0 auto'}}
+                  placeholder="—" value={el.size} disabled={locked}
                   onChange={e=>onUpdate('size',e.target.value)} onBlur={onSave}
                 />
                 <select value={el.size_unit||'ft'} disabled={locked}
                   onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
-                  style={{fontSize:'11px',padding:'2px 2px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:'var(--text-secondary)',fontFamily:'var(--font-body)',flex:'1 1 auto',minWidth:0,cursor:'pointer'}}
+                  style={{fontSize:'10px',padding:'2px 2px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:'var(--text-secondary)',fontFamily:'var(--font-body)',flex:'1 1 auto',minWidth:0,cursor:'pointer'}}
                 >
                   {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
                 </select>
               </div>
             )}
-            <div style={{display:'flex',gap:'3px',alignItems:'center'}}>
-              <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'20px',flexShrink:0}}>Qty</span>
-              <input style={{...ginp(false),width:'34px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
+            <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
+              <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'28px',flexShrink:0,fontWeight:500,letterSpacing:'0.2px'}}>QTY</span>
+              <input style={{...ginp(false),width:'40px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
                 type="number" min="1" value={el.qty} disabled={locked}
                 onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}
               />
-              {fv.days&&(
-                <>
-                  <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'24px',flexShrink:0}}>Days</span>
-                  <input style={{...ginp(false),width:'34px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
-                    type="number" min="1" value={el.days} disabled={locked}
-                    onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}
-                  />
-                </>
-              )}
             </div>
+            {fv.days&&(
+              <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
+                <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'28px',flexShrink:0,fontWeight:500,letterSpacing:'0.2px'}}>DAYS</span>
+                <input style={{...ginp(false),width:'40px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
+                  type="number" min="1" value={el.days} disabled={locked}
+                  onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}
+                />
+              </div>
+            )}
           </div>
         )}
 
         {/* Client cost */}
-        <div style={{...cell(false,false),flexDirection:'column',alignItems:'stretch',padding:'2px 6px',gap:'1px',justifyContent:'center'}}>
+        <div style={{...cell(false,false),flexDirection:'column',alignItems:'stretch',padding:'5px 8px',gap:'2px',justifyContent:'center'}}>
           <input style={{...ginp(false),fontWeight:500,fontSize:'13px'}}
             type="number" min="0"
             placeholder={locked?'Actuals':el.lump_sum?'Total':'Rate'}
@@ -342,15 +335,15 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
               muted={false}
             />
           )}
-          {!locked&&!el.lump_sum&&clientAmt>0&&(
-            <div style={{fontSize:'10px',color:'var(--text-secondary)',fontWeight:500}}>{fmt(clientAmt)}</div>
+          {!locked&&clientAmt>0&&(
+            <div style={{fontSize:'11px',color:'var(--text-secondary)',fontWeight:500,marginTop:'1px'}}>= {fmt(clientAmt)}</div>
           )}
           {locked&&<div style={{fontSize:'10px',color:'#1E40AF'}}>On actuals</div>}
         </div>
 
         {/* Internal cost — admin only */}
         {isAdmin&&(
-          <div style={{...cell(true,!fv.source&&!fv.status,{flexDirection:'column',alignItems:'stretch',padding:'2px 6px',gap:'1px',justifyContent:'center'})}}>
+          <div style={{...cell(true,!fv.source&&!fv.status,{flexDirection:'column',alignItems:'stretch',padding:'5px 8px',gap:'2px',justifyContent:'center'})}}>
             <input style={ginp(true)}
               type="number" min="0"
               placeholder={el.internal_lump?'Total':'Rate'}
@@ -363,23 +356,28 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
               muted={true}
             />
             {(()=>{const sg=!el.internal_lump?getRateSuggestion(rateCards,el.category,el.element_name,city):null;return sg?(<div title={`Source: ${sg.source}`} style={{fontSize:'9px',marginTop:'2px',padding:'1px 5px',borderRadius:'3px',background:sg.rate_type==='vendor_quoted'?'#D1FAE5':'#EFF6FF',color:sg.rate_type==='vendor_quoted'?'#065F46':'#1D4ED8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',cursor:'default'}}>~{sg.min&&sg.max&&sg.min!==sg.max?`₹${Number(sg.min).toLocaleString('en-IN')}–₹${Number(sg.max).toLocaleString('en-IN')}`:sg.min?`₹${Number(sg.min).toLocaleString('en-IN')}`:``}{sg.city&&sg.city!=='Pan-India'?` · ${sg.city}`:''}</div>):(!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>)})()}
-            {!el.internal_lump&&internalAmt>0&&(
-              <div style={{fontSize:'10px',color:'#6B7280',fontWeight:500}}>{fmt(internalAmt)}</div>
+            {internalAmt>0&&(
+              <div style={{fontSize:'11px',color:'#6B7280',fontWeight:500,marginTop:'1px'}}>= {fmt(internalAmt)}</div>
+            )}
+            {clientAmt>0&&internalAmt>0&&(
+              <div style={{
+                display:'inline-flex',alignItems:'center',marginTop:'3px',
+                fontSize:'10px',fontWeight:600,padding:'2px 7px',borderRadius:'20px',width:'fit-content',
+                background:margin>0?'#D1FAE5':margin===0?'#FEF3C7':'#FECACA',
+                color:margin>0?'#065F46':margin===0?'#92400E':'#A32D2D',
+              }}>
+                {Math.round((margin/clientAmt)*100)}% margin
+              </div>
             )}
           </div>
         )}
 
         {/* Source — admin only */}
         {isAdmin&&fv.source&&(
-          <div style={cell(true,!fv.status,{flexDirection:'column',alignItems:'stretch',padding:'2px 6px',justifyContent:'center'})}>
+          <div style={cell(true,!fv.status,{flexDirection:'column',alignItems:'stretch',padding:'5px 8px',justifyContent:'center'})}>
             <input style={ginp(true)} placeholder="Vendor" value={el.source||''}
               onChange={e=>onUpdate('source',e.target.value)} onBlur={onSave}
             />
-            {isAdmin&&clientAmt>0&&(+(el.internal_rate)||+(el.internal_amount))>0&&(
-              <div style={{fontSize:'10px',marginTop:'1px',fontWeight:500,color:margin>0?'#065F46':margin===0?'#92400E':'#A32D2D'}}>
-                {Math.round((margin/clientAmt)*100)}%
-              </div>
-            )}
           </div>
         )}
 
@@ -678,8 +676,7 @@ function CategoryBlock({
 
   // Column header labels (shared between card and grid, styled differently)
   const headerLabels=[
-    'Element',
-    fv.finish?'Finish / specs':null,
+    'Element · Finish / Specs',
     (fv.size||fv.days)?'Size · Qty · Days':null,
     'Client cost',
     isAdmin?'Internal cost':null,
