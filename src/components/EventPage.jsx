@@ -1,23 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import ElementBuilder from './ElementBuilder'
 import CostSummary from './CostSummary'
 import ExportPreview from './ExportPreview'
-import ScreenGuide from './ScreenGuide'
 import TaskBoard from './TaskBoard'
 import Production from './Production'
 import DeliveredCenter from './DeliveredCenter'
 import CueSheet from './CueSheet'
 import EventMilestone from './EventMilestone'
-import PageDescription from './PageDescription'
 import { supabase } from '../supabase'
 import AssignEvent from './AssignEvent'
 import TravelItinerary from './TravelItinerary'
 
 // ── Tab definitions — single source of truth for bar + bottom nav ──
 const TABS = [
-  { key: 'elements',   label: 'Elements & Costs' },
-  { key: 'costs',      label: 'Cost Summary' },
-  { key: 'export',     label: 'Preview & Export' },
+  { key: 'elements',   label: 'Elements' },
+  { key: 'costs',      label: 'Costs' },
+  { key: 'export',     label: 'Export' },
   { key: 'tasks',      label: 'Execution' },
   { key: 'production', label: 'Production' },
   { key: 'travel',     label: 'Travel & Itinerary' },
@@ -25,18 +23,252 @@ const TABS = [
   { key: 'cuesheet',   label: 'Show Flow' },
 ]
 
+// ── Help content — one entry per tab ──
+const HELP_CONTENT = {
+  elements: {
+    icon: '📋',
+    title: 'Build your cost sheet',
+    description: 'Add every element by category. Fill client cost and internal cost to see your margin. Use Import to bring in existing Excel sheets.',
+    tip: 'Start with categories — each comes with suggested elements so you never start from zero.',
+  },
+  costs: {
+    icon: '₹',
+    title: 'Your complete cost summary',
+    description: 'All categories totalled by city, with agency fee and GST calculated automatically. This is what your client pays.',
+    tip: 'Select Terms & Conditions before exporting. They appear at the bottom of every proposal.',
+  },
+  export: {
+    icon: '📤',
+    title: 'Preview and export your proposal',
+    description: 'See exactly what your client will see. Toggle sections on or off, then download as a formatted Excel.',
+    tip: 'Switch between Estimate and Invoice before downloading. Multi-city events get one sheet per city.',
+  },
+  tasks: {
+    icon: '⚡',
+    title: 'Project won — now execute',
+    description: 'Generate a task for every element. Assign your team, set deadlines, and track to completion. Share a public link with any freelancer — no login needed.',
+    tip: 'Set the Category Owner first — they are accountable for everything in that category. Then assign individual elements.',
+  },
+  production: {
+    icon: '🎨',
+    title: 'Track creative, fabrication and print',
+    description: 'Every branded element needs creative approval before it goes to print. Track each stream independently and catch gaps before they become problems.',
+    tip: 'Nothing moves to print without client-approved artwork. The system will flag it if someone tries.',
+  },
+  travel: {
+    icon: '✈️',
+    title: 'Travel & Itinerary',
+    description: 'Build your full MICE itinerary. Add flights, hotels, transfers and day programs city by city.',
+    tip: 'Import your day program into the task board once the project is won — no re-entry needed.',
+  },
+  delivered: {
+    icon: '✅',
+    title: 'Event delivered. Well done.',
+    description: 'All your documents are ready. Download individually or take everything at once.',
+    tip: 'Share the proposal with your client, brief sheets with vendors, and keep the timeline for your records.',
+  },
+  cuesheet: {
+    icon: '🎬',
+    title: 'Build your show flow',
+    description: 'Build your minute-by-minute show flow with named screens for each technical department. Add Sound, Light, LED Wall, Main Screen — whatever your setup needs.',
+    tip: "Set start time + duration on first row — end fills automatically. Each row inherits the previous row's end time.",
+  },
+}
+
+// ── Tab icons — 14×14 SVG, stroke-based, matches mock design system ──
+function TabIcon({ tabKey, active }) {
+  const s = {
+    width: 14, height: 14,
+    opacity: active ? 1 : 0.65,
+    flexShrink: 0,
+    display: 'block',
+  }
+  switch (tabKey) {
+    case 'elements':
+      return (
+        <svg style={s} viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2"/>
+          <line x1="4" y1="5" x2="10" y2="5" stroke="currentColor" strokeWidth="1.1"/>
+          <line x1="4" y1="7.5" x2="10" y2="7.5" stroke="currentColor" strokeWidth="1.1"/>
+          <line x1="4" y1="10" x2="7" y2="10" stroke="currentColor" strokeWidth="1.1"/>
+        </svg>
+      )
+    case 'costs':
+      return (
+        <svg style={s} viewBox="0 0 14 14" fill="none">
+          <ellipse cx="7" cy="4.5" rx="4.5" ry="2" stroke="currentColor" strokeWidth="1.2"/>
+          <path d="M2.5 4.5v5c0 1.1 2 2 4.5 2s4.5-.9 4.5-2v-5" stroke="currentColor" strokeWidth="1.2"/>
+          <path d="M2.5 7c0 1.1 2 2 4.5 2s4.5-.9 4.5-2" stroke="currentColor" strokeWidth="1.1"/>
+        </svg>
+      )
+    case 'export':
+      return (
+        <svg style={s} viewBox="0 0 14 14" fill="none">
+          <path d="M7 8.5V2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+          <path d="M4.5 4.5L7 2l2.5 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 10v1.5c0 .3.2.5.5.5h9c.3 0 .5-.2.5-.5V10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+        </svg>
+      )
+    case 'tasks':
+      return (
+        <svg style={s} viewBox="0 0 14 14" fill="none">
+          <path d="M8.5 1.5L3.5 7.5H7l-1.5 5 6-7H8L8.5 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+        </svg>
+      )
+    case 'production':
+      return (
+        <svg style={s} viewBox="0 0 14 14" fill="none">
+          <path d="M2 5.5l5-3 5 3-5 3-5-3z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+          <path d="M2 8.5l5 3 5-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+        </svg>
+      )
+    case 'travel':
+      return (
+        <svg style={s} viewBox="0 0 14 14" fill="none">
+          <path d="M7 1C4.8 1 3 2.8 3 5.5c0 3.5 4 7.5 4 7.5s4-4 4-7.5C11 2.8 9.2 1 7 1z" stroke="currentColor" strokeWidth="1.2"/>
+          <circle cx="7" cy="5.5" r="1.5" stroke="currentColor" strokeWidth="1.1"/>
+        </svg>
+      )
+    case 'delivered':
+      return (
+        <svg style={s} viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2"/>
+          <path d="M4.5 7l2 2 3-3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )
+    case 'cuesheet':
+      return (
+        <svg style={s} viewBox="0 0 14 14" fill="none">
+          <rect x="1.5" y="3.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
+          <line x1="1.5" y1="6" x2="12.5" y2="6" stroke="currentColor" strokeWidth="1.1"/>
+          <line x1="4.5" y1="3.5" x2="3.5" y2="6" stroke="currentColor" strokeWidth="1.1"/>
+          <line x1="8" y1="3.5" x2="7" y2="6" stroke="currentColor" strokeWidth="1.1"/>
+        </svg>
+      )
+    default:
+      return null
+  }
+}
+
+// ── Floating help button — collapsed by default, context-aware per tab ──
+function FloatingHelp({ activeTab }) {
+  const [open, setOpen] = useState(false)
+  const panelRef = useRef(null)
+  const help = HELP_CONTENT[activeTab]
+
+  // Collapse when tab changes
+  useEffect(() => { setOpen(false) }, [activeTab])
+
+  // Click-outside to close
+  useEffect(() => {
+    if (!open) return
+    function handler(e) {
+      if (panelRef.current && !panelRef.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  if (!help) return null
+
+  return (
+    <div ref={panelRef} style={{ position: 'fixed', bottom: 28, right: 28, zIndex: 400 }}>
+      {open && (
+        <div style={{
+          position: 'absolute', bottom: 46, right: 0,
+          width: 284,
+          background: 'var(--bg)',
+          border: '0.5px solid var(--border-strong)',
+          borderRadius: 'var(--radius)',
+          padding: '18px 20px',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.09)',
+        }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10, gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 15 }}>{help.icon}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', fontFamily: 'var(--font-body)', lineHeight: 1.4 }}>
+                {help.title}
+              </span>
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--text-tertiary)', fontSize: 13, padding: 0,
+                lineHeight: 1, flexShrink: 0, marginTop: 1,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Description */}
+          <p style={{
+            margin: 0, fontSize: 12, color: 'var(--text-secondary)',
+            lineHeight: 1.65, fontFamily: 'var(--font-body)', marginBottom: 12,
+          }}>
+            {help.description}
+          </p>
+
+          {/* Tip */}
+          <div style={{
+            borderTop: '0.5px solid var(--border)',
+            paddingTop: 10,
+            display: 'flex', alignItems: 'flex-start', gap: 6,
+          }}>
+            <span style={{ fontSize: 11, flexShrink: 0, marginTop: 1 }}>💡</span>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.6, fontFamily: 'var(--font-body)' }}>
+              {help.tip}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Trigger button */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        title="Help for this section"
+        style={{
+          width: 34, height: 34,
+          borderRadius: '50%',
+          background: open ? '#bc1723' : 'var(--bg)',
+          border: '0.5px solid ' + (open ? '#bc1723' : 'var(--border-strong)'),
+          color: open ? '#fff' : 'var(--text-tertiary)',
+          fontSize: 14, fontWeight: 600,
+          cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'var(--font-body)',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          transition: 'all 0.15s',
+        }}
+        onMouseOver={e => { if (!open) { e.currentTarget.style.borderColor = '#bc1723'; e.currentTarget.style.color = '#bc1723' } }}
+        onMouseOut={e => { if (!open) { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-tertiary)' } }}
+      >
+        ?
+      </button>
+    </div>
+  )
+}
+
+// ── Tab button style ──
 const tabStyle = (active) => ({
-  padding: '10px 20px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '5px',
+  padding: '8px 14px',
   fontSize: '13px',
   fontWeight: active ? 500 : 400,
   fontFamily: 'var(--font-body)',
-  color: active ? 'var(--text)' : 'var(--text-tertiary)',
+  color: active ? '#bc1723' : 'var(--text-tertiary)',
   background: 'none',
   border: 'none',
   borderBottom: active ? '2px solid #bc1723' : '2px solid transparent',
   cursor: 'pointer',
   letterSpacing: '0.2px',
-  transition: 'all 0.15s',
+  transition: 'color 0.15s',
+  whiteSpace: 'nowrap',
+  marginBottom: '-0.5px',
 })
 
 const STATUS_OPTIONS = ['pitch', 'submitted', 'won', 'lost', 'on hold']
@@ -80,7 +312,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   const [currentEvent, setCurrentEvent] = useState(event)
   const [teamUsers,    setTeamUsers]    = useState([])
   const [assignedTo,   setAssignedTo]   = useState(event.assigned_to || [])
-  const [revokeConfirm, setRevokeConfirm] = useState(null) // email to revoke
+  const [revokeConfirm, setRevokeConfirm] = useState(null)
   const [showAssignModal, setShowAssignModal] = useState(false)
 
   useEffect(() => {
@@ -105,7 +337,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   const isManager = userRole === 'manager'
   const canAssign = isAdmin || isManager
 
-  // Proposal lifecycle gate (separate from pitch status)
   const [proposalStatus,     setProposalStatus]     = useState(event.proposal_status || 'draft')
   const [savingProposal,     setSavingProposal]      = useState(false)
   const [showItineraryPrompt, setShowItineraryPrompt] = useState(false)
@@ -149,7 +380,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     setProposalStatus('won')
     setStatus('won')
     setSavingProposal(false)
-    // Check if an itinerary exists for this event
     const { data: itin } = await supabase
       .from('itinerary').select('id').eq('event_id', event.id).maybeSingle()
     if (itin) setShowItineraryPrompt(true)
@@ -164,7 +394,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     setSavingProposal(false)
   }
 
-  // Revoke a person's access to this event
   async function handleRevoke(email) {
     const updated = assignedTo.filter(e => e !== email)
     await supabase.from('events').update({ assigned_to: updated }).eq('id', event.id)
@@ -173,7 +402,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     if (onUpdated) onUpdated({ ...event, assigned_to: updated })
   }
 
-  // Name lookup helper
   function getName(email) {
     const u = teamUsers.find(u => u.email === email)
     return u?.full_name || email.split('@')[0]
@@ -245,7 +473,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
               </select>
               {savingStatus && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px' }}>Saving...</div>}
 
-              {/* Loss reason */}
               {status === 'lost' && (
                 <div style={{ marginTop: '10px' }}>
                   <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
@@ -311,7 +538,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
         {/* Meta row */}
         <div style={{ display: 'flex', gap: isMobile ? '16px' : '24px', marginTop: '16px', flexWrap: 'wrap', overflowX: isMobile ? 'auto' : 'visible' }}>
-          {/* City dates — per-city if available */}
           {event.cities?.length > 0 && event.city_dates && Object.keys(event.city_dates).length > 0 ? (
             event.cities.map(city => {
               const cd = event.city_dates[city]
@@ -331,7 +557,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
             })
           ) : (
             <>
-              {/* Bug 11 fix — city bubbles instead of plain text */}
               {event.cities?.length > 0 && (
                 <div>
                   <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Cities</div>
@@ -377,7 +602,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
             <div style={{ fontSize: '13px', color: 'var(--text)' }}>{event.gst_percent}%</div>
           </div>
 
-          {/* Assigned team — admin sees pills with ✕ revoke */}
+          {/* Assigned team */}
           {assignedTo.length > 0 && (
             <div>
               <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Assigned to</div>
@@ -427,7 +652,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
               </div>
             </div>
           )}
-          {/* Admin can assign if nobody assigned yet */}
           {assignedTo.length === 0 && canAssign && (
             <div>
               <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Assigned to</div>
@@ -453,21 +677,26 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
       <EventMilestone event={event} />
 
       {/* ── Tab bar ── */}
-      <div style={{ display: 'flex', borderBottom: '0.5px solid var(--border)', marginBottom: isMobile ? '20px' : '32px', gap: '4px', overflowX: 'auto' }}>
+      <div style={{
+        display: 'flex',
+        borderBottom: '0.5px solid var(--border)',
+        marginBottom: isMobile ? '20px' : '32px',
+        gap: '2px',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+      }}>
         {visibleTabs.map(tab => (
-          <button key={tab.key} style={tabStyle(activeTab === tab.key)}
-            onClick={() => handleTabChange(tab.key)}>
-            {tab.key === 'tasks'      ? '⚡ ' + tab.label :
-             tab.key === 'production' ? '🎨 ' + tab.label :
-             tab.key === 'travel'     ? '✈️ ' + tab.label :
-             tab.key === 'delivered'  ? '✅ ' + tab.label :
-             tab.key === 'cuesheet'   ? '🎬 ' + tab.label :
-             tab.label}
+          <button
+            key={tab.key}
+            style={tabStyle(activeTab === tab.key)}
+            onClick={() => handleTabChange(tab.key)}
+          >
+            <TabIcon tabKey={tab.key} active={activeTab === tab.key} />
+            {tab.label}
           </button>
         ))}
       </div>
-
-      <ScreenGuide screen={activeTab === 'elements' ? 'elements' : activeTab === 'costs' ? 'costs' : activeTab === 'tasks' ? 'tasks' : 'export'} />
 
       {/* ── Proposal lifecycle banner (admin only) ── */}
       {isAdmin && proposalStatus === 'draft' && (
@@ -539,48 +768,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
         </div>
       )}
 
-      {/* Page descriptions */}
-      {activeTab === 'elements' && (
-        <PageDescription
-          icon="📋"
-          title="Build your cost sheet"
-          description="Add every element by category. Fill client cost and internal cost to see your margin. Use Import to bring in existing Excel sheets."
-          tip="Start with categories — each comes with suggested elements so you never start from zero."
-        />
-      )}
-      {activeTab === 'costs' && (
-        <PageDescription
-          icon="₹"
-          title="Your complete cost summary"
-          description="All categories totalled by city, with agency fee and GST calculated automatically. This is what your client pays."
-          tip="Select Terms & Conditions before exporting. They appear at the bottom of every proposal."
-        />
-      )}
-      {activeTab === 'export' && (
-        <PageDescription
-          icon="📤"
-          title="Preview and export your proposal"
-          description="See exactly what your client will see. Toggle sections on or off, then download as a formatted Excel."
-          tip="Switch between Estimate and Invoice before downloading. Multi-city events get one sheet per city."
-        />
-      )}
-      {activeTab === 'tasks' && (
-        <PageDescription
-          icon="⚡"
-          title="Project won — now execute"
-          description="Generate a task for every element. Assign your team, set deadlines, and track to completion. Share a public link with any freelancer — no login needed."
-          tip="Set the Category Owner first — they are accountable for everything in that category. Then assign individual elements."
-        />
-      )}
-      {activeTab === 'production' && (
-        <PageDescription
-          icon="🎨"
-          title="Track creative, fabrication and print"
-          description="Every branded element needs creative approval before it goes to print. Track each stream independently and catch gaps before they become problems."
-          tip="Nothing moves to print without client-approved artwork. The system will flag it if someone tries."
-        />
-      )}
-
       {/* ── Tab content ── */}
       {activeTab === 'elements' && (
         <ElementBuilder key={'elements-'+refreshKey} event={event} userRole={userRole} session={session} teamUsers={teamUsers} />
@@ -600,22 +787,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
       {activeTab === 'travel' && (
         <TravelItinerary key={'travel-'+refreshKey} event={event} userRole={userRole} session={session} />
       )}
-      {activeTab === 'delivered' && (
-        <PageDescription
-          icon="✅"
-          title="Event delivered. Well done."
-          description="All your documents are ready. Download individually or take everything at once."
-          tip="Share the proposal with your client, brief sheets with vendors, and keep the timeline for your records."
-        />
-      )}
-      {activeTab === 'cuesheet' && (
-        <PageDescription
-          icon="🎬"
-          title="Cue sheet / Show flow"
-          description="Build your minute-by-minute show flow with named screens for each technical department. Add Sound, Light, LED Wall, Main Screen — whatever your setup needs."
-          tip="Set start time + duration on first row — end fills automatically. Each row inherits the previous row's end time."
-        />
-      )}
       {activeTab === 'cuesheet' && (
         <CueSheet key={'cuesheet-'+refreshKey} event={event} />
       )}
@@ -623,7 +794,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
         <DeliveredCenter key={'delivered-'+refreshKey} event={event} session={session} />
       )}
 
-      {/* ── Bug 5: Section navigation — clean secondary buttons ── */}
+      {/* ── Section navigation — prev / next ── */}
       {(() => {
         const currentIdx = visibleTabs.findIndex(t => t.key === activeTab)
         const prev = currentIdx > 0 ? visibleTabs[currentIdx - 1] : null
@@ -661,7 +832,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
         )
       })()}
 
-      {/* ── Bug 12: Footer disclaimer — all tabs ── */}
+      {/* ── Footer disclaimer ── */}
       <div style={{
         marginTop: '24px',
         paddingTop: '14px',
@@ -704,7 +875,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
         </div>
       )}
 
-      {/* ── Assign modal (Option B — from header + Manage button) ── */}
+      {/* ── Assign modal ── */}
       {showAssignModal && (
         <AssignEvent
           event={{ ...event, assigned_to: assignedTo }}
@@ -718,7 +889,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
         />
       )}
 
-      {/* ── Itinerary → Tasks import prompt (fires after "I Won" if itinerary exists) ── */}
+      {/* ── Itinerary → Tasks import prompt ── */}
       {showItineraryPrompt && (
         <div style={{ position:'fixed', inset:0, background:'rgba(26,25,21,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:600, padding:'24px' }}>
           <div style={{ background:'var(--bg)', border:'0.5px solid var(--border)', borderRadius:'var(--radius)', padding:'36px', maxWidth:'420px', width:'100%' }}>
@@ -779,6 +950,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
           </div>
         </div>
       )}
+
+      {/* ── Floating help button — always available, never in the way ── */}
+      <FloatingHelp activeTab={activeTab} />
     </div>
   )
 }
