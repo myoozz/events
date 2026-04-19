@@ -631,7 +631,7 @@ export default function AppShell({ session }) {
             <EarlyAccess />
           )}
           {activeTab === 'ratecard' && (userRole === 'admin' || userRole === 'manager' || userRole === 'event_lead') && (
-            <RateCard session={session} />
+            <RateCard session={session} userRole={userRole} />
           )}
           {activeTab === 'feedback' && userRole === 'admin' && (
             <FeedbackAdmin />
