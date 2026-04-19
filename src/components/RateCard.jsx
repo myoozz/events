@@ -184,14 +184,13 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
   const [jsonText, setJsonText] = useState('')
   const [jsonError, setJsonError] = useState('')
   const [copied, setCopied] = useState(false)
-  const [dlCategory, setDlCategory] = useState('')
   const [dlLoading, setDlLoading] = useState(false)
   const fileRef = useRef(null)
 
   async function handleDownload() {
-    if (!dlCategory) return
+    if (!category) return
     setDlLoading(true)
-    try { await generateRateCardTemplate(dlCategory) }
+    try { await generateRateCardTemplate(category) }
     finally { setDlLoading(false) }
   }
 
@@ -268,6 +267,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
     const rows = preview.map(r => ({
       ...r,
       vendor_name: vendorName || r.vendor_name || 'Unknown',
+      source: vendorName || r.source || r.vendor_name || 'Unknown',
       category: category || r.category || '',
       created_by: session?.user?.email,
       last_updated: new Date().toISOString().split('T')[0],
@@ -288,7 +288,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,21,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 400, padding: '24px' }}>
-      <div style={{ background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', maxWidth: '720px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ '--bg': '#141413', '--bg-secondary': '#1e1e1c', '--text': '#e8e6e0', '--text-secondary': '#a8a49e', '--text-tertiary': '#6b6760', '--border': '#2e2e2c', '--border-strong': '#3e3e3c', background: '#141413', border: '0.5px solid #2e2e2c', borderRadius: 'var(--radius)', maxWidth: '720px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px', borderBottom: '0.5px solid var(--border)', flexShrink: 0 }}>
           <div>
@@ -356,15 +356,10 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                 <>
                   <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', padding: '14px 16px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '0.5px solid var(--border)', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', flex: 1, minWidth: '160px' }}>
-                      Don't have a rate card? Download the blank template for this category.
+                      Don't have a rate card? Download blank template for the selected category.
                     </span>
-                    <select value={dlCategory} onChange={e => setDlCategory(e.target.value)}
-                      style={{ ...selectStyle, width: 'auto', minWidth: '180px' }}>
-                      <option value="">— Pick category —</option>
-                      {RC_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <button onClick={handleDownload} disabled={!dlCategory || dlLoading}
-                      style={{ padding: '8px 16px', fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-body)', background: dlCategory ? 'var(--text)' : 'var(--bg)', color: dlCategory ? 'var(--bg)' : 'var(--text-tertiary)', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: dlCategory ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>
+                    <button onClick={handleDownload} disabled={!category || dlLoading}
+                      style={{ padding: '8px 16px', fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-body)', background: category ? 'var(--text)' : 'var(--bg)', color: category ? 'var(--bg)' : 'var(--text-tertiary)', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: category ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>
                       {dlLoading ? 'Downloading...' : '↓ Download template'}
                     </button>
                   </div>
@@ -474,7 +469,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                 <div><div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Rows</div><div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)' }}>{preview.length}</div></div>
                 <div><div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>With min rate</div><div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)' }}>{preview.filter(r => r.rate_min > 0).length}</div></div>
                 <div><div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Category</div><div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)' }}>{category || '—'}</div></div>
-                <div><div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Source</div><div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)' }}>{preview[0]?.rate_type === 'ai_research' ? 'AI Research' : (vendorName || preview[0]?.vendor_name || '—')}</div></div>
+                <div style={{ flex: 1, minWidth: '160px' }}><div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: '4px' }}>Source</div><input value={vendorName || preview[0]?.source || preview[0]?.vendor_name || ''} onChange={e => setVendorName(e.target.value)} placeholder="e.g. Gemini, Vendor name..." style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', background: 'transparent', border: '0.5px solid var(--border-strong)', borderRadius: '4px', padding: '3px 7px', width: '100%', fontFamily: 'var(--font-body)', outline: 'none' }} /></div>
               </div>
               <div style={{ maxHeight: '280px', overflowY: 'auto', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1fr 1fr 1fr', padding: '7px 12px', background: 'var(--bg-secondary)', borderBottom: '0.5px solid var(--border)' }}>
@@ -898,7 +893,12 @@ export default function RateCard({ session, userRole }) {
                           <div style={{ fontSize: '17px', fontWeight: 600, color: D.text, lineHeight: 1.3, marginBottom: '4px' }}>
                             {selectedItem.element_name}
                           </div>
-                          <div style={{ fontSize: '12px', color: D.sub }}>{selectedItem.specification || '—'}</div>
+                          {selectedItem.specification
+                            ? <div style={{ marginTop: '8px', padding: '10px 12px', background: '#1e1e1c', borderRadius: '6px' }}>
+                                <div style={{ fontSize: '10px', color: D.dim, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>What it covers</div>
+                                <div style={{ fontSize: '12px', color: D.sub, lineHeight: 1.5 }}>{selectedItem.specification}</div>
+                              </div>
+                            : null}
                         </div>
                         {selectedItem.mandatory && <span style={badgeSt(true)}>mandatory</span>}
                       </div>
@@ -920,7 +920,7 @@ export default function RateCard({ session, userRole }) {
                           { label: 'Unit',        value: selectedItem.unit || '—' },
                           { label: 'GST',         value: selectedItem.gst_applicable ? 'Applicable' : 'Not applicable' },
                           { label: 'Source',      value: selectedItem.source || selectedItem.vendor_name || '—' },
-                          { label: 'Notes',       value: selectedItem.notes || '—' },
+                          { label: 'Things to know', value: selectedItem.notes || '—' },
                         ].map(({ label, value }) => (
                           <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: `0.5px solid ${D.border}` }}>
                             <span style={{ fontSize: '12px', color: D.sub }}>{label}</span>
@@ -929,6 +929,12 @@ export default function RateCard({ session, userRole }) {
                         ))}
                       </div>
 
+                      {selectedItem.source_url && (
+                        <a href={selectedItem.source_url} target="_blank" rel="noreferrer"
+                          style={{ display: 'block', fontSize: '11px', color: D.dim, textDecoration: 'none', padding: '8px 0', borderBottom: `0.5px solid ${D.border}`, marginBottom: '4px' }}>
+                          ↗ View source
+                        </a>
+                      )}
                       {/* Admin actions */}
                       {canEdit && (
                         <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
