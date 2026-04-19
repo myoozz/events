@@ -102,6 +102,11 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u))
   }
 
+  const handleRateCardToggle = async (userId, current) => {
+    await supabase.from('users').update({ can_manage_rate_cards: !current }).eq('id', userId)
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, can_manage_rate_cards: !current } : u))
+  }
+
   async function handleRemove(userId, email) {
     if (!window.confirm(`Deactivate ${email}? They will no longer be able to access the system. You can restore them anytime from Supabase.`)) return
     await supabase.from('users').update({ status: 'inactive' }).eq('id', userId)
@@ -455,6 +460,17 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
                 >
                   {inviteableRoles.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                 </select>
+                {userRole === 'admin' && (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', userSelect: 'none' }}>
+                    <input
+                      type='checkbox'
+                      checked={!!u.can_manage_rate_cards}
+                      onChange={() => handleRateCardToggle(u.id, !!u.can_manage_rate_cards)}
+                      style={{ accentColor: '#bc1723', width: '14px', height: '14px', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>Rate Cards Access</span>
+                  </label>
+                )}
                 <button
                   onClick={() => handleResend(u.id, u.email)}
                   disabled={resending === u.id}
