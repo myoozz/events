@@ -251,7 +251,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
       .eq('archived', true)
       .order('created_at', { ascending: false })
 
-    if (userRole === 'team' || userRole === 'event_lead') {
+    if (userRole !== 'admin') {
       archivedQuery = archivedQuery.or(`assigned_to.cs.{"${session.user.email}"},created_by.eq.${session.user.email}`)
     } else if (userRole === 'manager') {
       archivedQuery = archivedQuery.eq('created_by', session.user.email)
