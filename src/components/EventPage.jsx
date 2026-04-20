@@ -8,6 +8,7 @@ import DeliveredCenter from './DeliveredCenter'
 import CueSheet from './CueSheet'
 import EventMilestone from './EventMilestone'
 import { supabase } from '../supabase'
+import { createNotification } from '../utils/notificationService'
 import AssignEvent from './AssignEvent'
 import TravelItinerary from './TravelItinerary'
 
@@ -298,6 +299,17 @@ const statusColor = {
   'on hold':{ bg: 'var(--bg-secondary)',color: 'var(--text-tertiary)' },
 }
 
+const CONFETTI_COLORS = ['#bc1723', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']
+const CONFETTI_PIECES = Array.from({ length: 44 }, (_, i) => ({
+  left:     ((i * 13.7 + 5) % 100).toFixed(1) + '%',
+  color:    CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+  width:    i % 3 === 0 ? 8 : 6,
+  height:   i % 3 === 0 ? 8 : 14,
+  circle:   i % 4 === 0,
+  duration: (1.4 + (i % 5) * 0.18).toFixed(2),
+  delay:    ((i % 10) * 0.07).toFixed(2),
+}))
+
 export default function EventPage({ event, userRole, session, onBack, onUpdated, initialTab }) {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768)
   useEffect(() => {
@@ -317,7 +329,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
   useEffect(() => {
     async function fetchTeam() {
-      const { data } = await supabase.from('users').select('email, full_name').neq('status','inactive')
+      const { data } = await supabase.from('users').select('id, email, full_name').neq('status','inactive')
       setTeamUsers(data || [])
     }
     fetchTeam()
@@ -340,6 +352,19 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   const [proposalStatus,     setProposalStatus]     = useState(event.proposal_status || 'draft')
   const [savingProposal,     setSavingProposal]      = useState(false)
   const [showItineraryPrompt, setShowItineraryPrompt] = useState(false)
+  const [taskCount,    setTaskCount]    = useState(null)
+  const [doneCount,    setDoneCount]    = useState(0)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [showProdModal, setShowProdModal] = useState(false)
+
+  useEffect(() => {
+    if (proposalStatus !== 'won') return
+    supabase.from('tasks').select('id, status').eq('event_id', event.id).then(({ data }) => {
+      const all = data || []
+      setTaskCount(all.length)
+      setDoneCount(all.filter(t => t.status === 'done' || t.status === 'completed').length)
+    })
+  }, [proposalStatus])
 
   const [delegationScope, setDelegationScope] = useState(event.delegation_scope || {})
   const SCOPE_TABS = {
@@ -392,6 +417,37 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     setProposalStatus('lost')
     setStatus('lost')
     setSavingProposal(false)
+  }
+
+  async function handleMarkAsWon() {
+    setSavingProposal(true)
+    await supabase.from('events').update({ proposal_status: 'won', status: 'won' }).eq('id', event.id)
+    setProposalStatus('won')
+    setStatus('won')
+    setSavingProposal(false)
+    setShowConfetti(true)
+    setTimeout(() => setShowConfetti(false), 2500)
+    const { data: itin } = await supabase.from('itinerary').select('id').eq('event_id', event.id).maybeSingle()
+    if (itin) setTimeout(() => setShowItineraryPrompt(true), 2600)
+  }
+
+  async function handleSendReminder() {
+    const actorId = session?.user?.id
+    const assignedUsers = teamUsers.filter(u => assignedTo.includes(u.email) && u.id)
+    if (!assignedUsers.length) return
+    await createNotification(
+      assignedUsers.map(u => ({
+        user_id:      u.id,
+        triggered_by: actorId,
+        type:         'task_status_changed',
+        title:        `${event.event_name} — What's the update?`,
+        body:         'Share your progress with the team.',
+        entity_type:  'event',
+        entity_id:    event.id,
+        event_id:     event.id,
+        action_url:   '?tab=tasks',
+      }))
+    )
   }
 
   async function handleRevoke(email) {
@@ -536,140 +592,118 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
           )}
         </div>
 
-        {/* Meta row */}
-        <div style={{ display: 'flex', gap: isMobile ? '16px' : '24px', marginTop: '16px', flexWrap: 'wrap', overflowX: isMobile ? 'auto' : 'visible' }}>
-          {event.cities?.length > 0 && event.city_dates && Object.keys(event.city_dates).length > 0 ? (
-            event.cities.map(city => {
-              const cd = event.city_dates[city]
-              if (!cd?.start) return null
-              const start = new Date(cd.start).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
-              const end = cd.end && cd.end !== cd.start
-                ? new Date(cd.end).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-                : new Date(cd.start).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-              return (
-                <div key={city}>
-                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '3px' }}>{city}</div>
-                  <div style={{ fontSize: '13px', color: 'var(--text)' }}>
-                    {cd.end && cd.end !== cd.start ? `${start} – ${end}` : end}
+        <div style={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', marginTop: '20px', gap: '0' }}>
+
+          {event.cities?.length > 0 && (() => {
+            const hasDates = event.city_dates && Object.keys(event.city_dates).length > 0
+            return (
+              <>
+                <div style={{ paddingRight: 20 }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
+                    {hasDates ? 'Cities · Dates' : 'Cities'}
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {event.cities.map(city => {
+                      const cd = event.city_dates?.[city]
+                      const dateStr = cd?.start
+                        ? (cd.end && cd.end !== cd.start
+                            ? `${new Date(cd.start).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} – ${new Date(cd.end).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}`
+                            : new Date(cd.start).toLocaleDateString('en-IN',{day:'numeric',month:'short'}))
+                        : null
+                      return (
+                        <span key={city} style={{
+                          fontSize: '12px', color: 'var(--text)',
+                          padding: '3px 10px', borderRadius: '20px',
+                          background: 'var(--bg-secondary)', border: '0.5px solid var(--border)',
+                          fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
+                        }}>
+                          {city}{dateStr ? ` · ${dateStr}` : ''}
+                        </span>
+                      )
+                    })}
                   </div>
                 </div>
-              )
-            })
-          ) : (
+                <div style={{ width: 1, background: 'var(--border)', alignSelf: 'stretch', margin: '0 16px', flexShrink: 0 }} />
+              </>
+            )
+          })()}
+
+          {!event.cities?.length && event.event_date && (
             <>
-              {event.cities?.length > 0 && (
-                <div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Cities</div>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {event.cities.map(c => (
-                      <span key={c} style={{
-                        fontSize: '12px', color: 'var(--text)',
-                        padding: '3px 10px', borderRadius: '20px',
-                        background: 'var(--bg-secondary)',
-                        border: '0.5px solid var(--border)',
-                        fontFamily: 'var(--font-body)',
-                      }}>
-                        {c}
-                      </span>
-                    ))}
-                  </div>
+              <div style={{ paddingRight: 20 }}>
+                <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>Event date</div>
+                <div style={{ fontSize: '13px', color: 'var(--text)' }}>
+                  {new Date(event.event_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
                 </div>
-              )}
-              {event.event_date && (
-                <div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '3px' }}>Event date</div>
-                  <div style={{ fontSize: '13px', color: 'var(--text)' }}>
-                    {new Date(event.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </div>
-                </div>
-              )}
+              </div>
+              <div style={{ width: 1, background: 'var(--border)', alignSelf: 'stretch', margin: '0 16px', flexShrink: 0 }} />
             </>
           )}
+
           {event.proposal_due_date && (
-            <div>
-              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '3px' }}>Proposal due</div>
-              <div style={{ fontSize: '13px', color: 'var(--text)' }}>
-                {new Date(event.proposal_due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            <>
+              <div style={{ paddingRight: 20 }}>
+                <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>Proposal due</div>
+                <div style={{ fontSize: '13px', color: 'var(--text)' }}>
+                  {new Date(event.proposal_due_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
+                </div>
               </div>
-            </div>
+              <div style={{ width: 1, background: 'var(--border)', alignSelf: 'stretch', margin: '0 16px', flexShrink: 0 }} />
+            </>
           )}
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '3px' }}>Agency fee</div>
-            <div style={{ fontSize: '13px', color: 'var(--text)' }}>{event.agency_fee_percent}%</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '3px' }}>GST</div>
-            <div style={{ fontSize: '13px', color: 'var(--text)' }}>{event.gst_percent}%</div>
+
+          <div style={{ display: 'flex', gap: 20, paddingRight: 20 }}>
+            <div>
+              <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>Agency fee</div>
+              <div style={{ fontSize: '13px', color: 'var(--text)' }}>{event.agency_fee_percent}%</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>GST</div>
+              <div style={{ fontSize: '13px', color: 'var(--text)' }}>{event.gst_percent}%</div>
+            </div>
           </div>
 
-          {/* Assigned team */}
-          {assignedTo.length > 0 && (
-            <div>
-              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Assigned to</div>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                {assignedTo.map(email => (
-                  <span key={email} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '5px',
-                    fontSize: '12px', color: 'var(--text)',
-                    padding: '3px 8px 3px 10px', borderRadius: '20px',
-                    background: 'var(--bg-secondary)',
-                    border: '0.5px solid var(--border)',
-                    fontFamily: 'var(--font-body)',
-                  }}>
-                    {getName(email)}
-                    {canAssign && (
-                      <button
-                        onClick={() => setRevokeConfirm(email)}
-                        title={`Remove ${getName(email)} from this event`}
-                        style={{
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          color: 'var(--text-tertiary)', padding: '0', lineHeight: 1,
-                          fontSize: '11px', display: 'flex', alignItems: 'center',
-                        }}
-                        onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
-                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </span>
-                ))}
-                {canAssign && (
-                  <button
-                    onClick={() => setShowAssignModal(true)}
-                    style={{
-                      fontSize: '12px', color: 'var(--text-tertiary)',
-                      background: 'none', border: '0.5px dashed var(--border-strong)',
-                      borderRadius: '20px', padding: '3px 10px',
-                      cursor: 'pointer', fontFamily: 'var(--font-body)',
-                    }}
-                    onMouseOver={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--text)' }}
-                    onMouseOut={e => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-strong)' }}
-                  >
-                    + Manage
-                  </button>
-                )}
+          {(assignedTo.length > 0 || canAssign) && (
+            <>
+              <div style={{ width: 1, background: 'var(--border)', alignSelf: 'stretch', margin: '0 16px', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Assigned</div>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {assignedTo.map(email => (
+                    <span key={email} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      fontSize: '12px', color: 'var(--text)',
+                      padding: '3px 8px 3px 10px', borderRadius: '20px',
+                      background: 'var(--bg-secondary)', border: '0.5px solid var(--border)',
+                      fontFamily: 'var(--font-body)',
+                    }}>
+                      {getName(email)}
+                      {canAssign && (
+                        <button
+                          onClick={() => setRevokeConfirm(email)}
+                          title={`Remove ${getName(email)} from this event`}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 0, lineHeight: 1, fontSize: '11px', display: 'flex', alignItems: 'center' }}
+                          onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
+                          onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                        >✕</button>
+                      )}
+                    </span>
+                  ))}
+                  {canAssign && (
+                    <button
+                      onClick={() => setShowAssignModal(true)}
+                      style={{ fontSize: '12px', color: 'var(--text-tertiary)', background: 'none', border: '0.5px dashed var(--border-strong)', borderRadius: '20px', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                      onMouseOver={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--text)' }}
+                      onMouseOut={e => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-strong)' }}
+                    >
+                      {assignedTo.length === 0 ? '+ Assign team' : '+ Manage'}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            </>
           )}
-          {assignedTo.length === 0 && canAssign && (
-            <div>
-              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Assigned to</div>
-              <button
-                onClick={() => setShowAssignModal(true)}
-                style={{
-                  fontSize: '12px', color: 'var(--text-tertiary)',
-                  background: 'none', border: '0.5px dashed var(--border-strong)',
-                  borderRadius: '20px', padding: '4px 12px',
-                  cursor: 'pointer', fontFamily: 'var(--font-body)',
-                }}
-                onMouseOver={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--text)' }}
-                onMouseOut={e => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-strong)' }}
-              >
-                + Assign team
-              </button>
-            </div>
-          )}
+
         </div>
       </div>
 
@@ -686,87 +720,118 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
       }}>
-        {visibleTabs.map(tab => (
-          <button
-            key={tab.key}
-            style={tabStyle(activeTab === tab.key)}
-            onClick={() => handleTabChange(tab.key)}
-          >
-            <TabIcon tabKey={tab.key} active={activeTab === tab.key} />
-            {tab.label}
-          </button>
-        ))}
+        {visibleTabs.map(tab => {
+          const locked = ['tasks', 'production', 'delivered'].includes(tab.key) && proposalStatus !== 'won'
+          return (
+            <button
+              key={tab.key}
+              style={{
+                ...tabStyle(activeTab === tab.key),
+                ...(locked ? { opacity: 0.38, cursor: 'default' } : {}),
+              }}
+              onClick={() => !locked && handleTabChange(tab.key)}
+              title={locked ? 'Available after this event is Won' : undefined}
+            >
+              <TabIcon tabKey={tab.key} active={activeTab === tab.key} />
+              {tab.label}
+            </button>
+          )
+        })}
       </div>
 
-      {/* ── Proposal lifecycle banner (admin only) ── */}
-      {isAdmin && proposalStatus === 'draft' && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap',
-          gap: 12, padding: '12px 16px', marginBottom: 24,
-          background: 'var(--bg-secondary)', border: '0.5px solid var(--border)',
-          borderRadius: 'var(--radius)',
-        }}>
-          <div>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>Proposal not yet submitted</p>
-            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-tertiary)' }}>
-              Download buttons are locked until you submit the proposal.
-            </p>
-          </div>
-          <button onClick={handleSubmitProposal} disabled={savingProposal} style={{
-            padding: '8px 18px', fontSize: 13, fontWeight: 500,
-            fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)',
-            border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-            opacity: savingProposal ? 0.7 : 1, flexShrink: 0,
-          }}>{savingProposal ? 'Saving…' : 'Submit Proposal'}</button>
-        </div>
-      )}
+      {isAdmin && (() => {
+        const s =
+          status === 'delivered'       ? 'delivered'  :
+          status === 'production'      ? 'production' :
+          proposalStatus === 'won'     ? (taskCount === null || taskCount === 0 ? 'won' : 'execution') :
+          proposalStatus === 'submitted' ? 'submitted' :
+          'proposal'
 
-      {isAdmin && proposalStatus === 'submitted' && (
-        <div style={{
-          padding: '14px 18px', marginBottom: 24,
-          background: '#fef3c7', border: '0.5px solid #fcd34d',
-          borderRadius: 'var(--radius)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        const cfg = {
+          proposal: {
+            bc: '#b7e4c7', tc: '#2d6a4f',
+            h: 'Proposal stage.',
+            sub: 'Fill your elements and costs, then submit when ready. Every element you remember today can be billed to the client.',
+            btn: 'Submit Proposal',
+            fn: handleSubmitProposal,
+          },
+          submitted: {
+            bc: '#bdd7f5', tc: '#1d4ed8',
+            h: 'Proposal submitted.',
+            sub: 'Waiting for client confirmation. Mark as Won when they confirm.',
+            btn: 'Mark as Won',
+            fn: handleMarkAsWon,
+          },
+          won: {
+            bc: '#fde68a', tc: '#92400e',
+            h: 'You won this one.',
+            sub: 'Export your approved elements to Execution and assign your team. Real work begins now — let\'s plan it together and delegate.',
+            btn: 'Import to Execution →',
+            fn: () => { setActiveTab('tasks'); setRefreshKey(k => k + 1) },
+          },
+          execution: {
+            bc: '#fde68a', tc: '#92400e',
+            h: 'Execution in progress.',
+            sub: 'Track what\'s happening on your project, city by city. Production begins when all tasks are done.',
+            btn: 'Send Reminder',
+            fn: handleSendReminder,
+          },
+          production: {
+            bc: '#fbbcbd', tc: '#991b1b',
+            h: 'Production is live.',
+            sub: 'Your team is on ground. Things are getting done — keep a close eye on timelines.',
+            btn: 'Mark Production Complete',
+            fn: () => setShowProdModal(true),
+          },
+          delivered: {
+            bc: '#b7e4c7', tc: '#2d6a4f',
+            h: 'Delivered.',
+            sub: 'Download your complete document set for records and client handover. You were prepared — go deliver a great event.',
+            btn: 'Download All Documents',
+            fn: () => { setActiveTab('delivered'); setRefreshKey(k => k + 1) },
+          },
+        }[s]
+
+        if (!cfg) return null
+
+        return (
+          <div style={{
+            borderLeft: `3px solid ${cfg.bc}`,
+            background: 'var(--bg)',
+            padding: '14px 20px 14px 18px',
+            marginBottom: 24,
+            borderRadius: '0 8px 8px 0',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
+          }}>
             <div>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#92400e' }}>
-                Proposal submitted — let us know when you win this project.
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: cfg.tc }}>
+                {cfg.h}
               </p>
-              <p style={{ margin: '4px 0 0', fontSize: 12, color: '#a16207' }}>
-                We'll activate the full execution system the moment you do.
+              <p style={{ margin: '5px 0 0', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.65, maxWidth: 500 }}>
+                {cfg.sub}
               </p>
             </div>
-            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              <button onClick={handleIWon} disabled={savingProposal} style={{
-                padding: '8px 16px', fontSize: 13, fontWeight: 600,
-                fontFamily: 'var(--font-body)', background: '#16a34a', color: '#fff',
+            <button
+              onClick={cfg.fn}
+              disabled={savingProposal}
+              style={{
+                padding: '8px 18px', fontSize: 13, fontWeight: 500,
+                fontFamily: 'var(--font-body)',
+                background: cfg.tc, color: '#fff',
                 border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                opacity: savingProposal ? 0.7 : 1,
-              }}>🏆 I Won This Project</button>
-              <button onClick={handleMarkLostProposal} disabled={savingProposal} style={{
-                padding: '8px 14px', fontSize: 13,
-                fontFamily: 'var(--font-body)', background: 'transparent',
-                border: '0.5px solid #92400e', color: '#92400e',
-                borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                opacity: savingProposal ? 0.7 : 1,
-              }}>Mark as Lost</button>
-            </div>
+                opacity: savingProposal ? 0.6 : 1, flexShrink: 0, whiteSpace: 'nowrap',
+                marginTop: 2,
+              }}
+            >
+              {savingProposal ? 'Saving…' : cfg.btn}
+            </button>
           </div>
-        </div>
-      )}
-
-      {isAdmin && proposalStatus === 'won' && (
-        <div style={{
-          padding: '10px 16px', marginBottom: 24,
-          background: '#dcfce7', border: '0.5px solid #86efac',
-          borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          <span style={{ fontSize: 14 }}>🏆</span>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: '#15803d' }}>
-            Project won — execution mode active. Full system unlocked.
-          </p>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ── Tab content ── */}
       {activeTab === 'elements' && (
@@ -951,7 +1016,70 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
         </div>
       )}
 
-      {/* ── Floating help button — always available, never in the way ── */}
+      {showConfetti && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, pointerEvents: 'none' }}>
+          <style>{`@keyframes cfFall{0%{transform:translateY(-30px) rotate(0deg);opacity:1}100%{transform:translateY(105vh) rotate(720deg);opacity:0}}`}</style>
+          {CONFETTI_PIECES.map((p, i) => (
+            <div key={i} style={{
+              position: 'absolute', left: p.left, top: 0,
+              width: p.width, height: p.height,
+              borderRadius: p.circle ? '50%' : 2,
+              background: p.color,
+              animation: `cfFall ${p.duration}s ease-out ${p.delay}s forwards`,
+            }} />
+          ))}
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%,-50%)',
+            background: 'var(--bg)', border: '0.5px solid var(--border)',
+            borderRadius: 'var(--radius)', padding: '40px 44px',
+            textAlign: 'center', maxWidth: 360, width: '90%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
+            pointerEvents: 'auto',
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 14 }}>🏆</div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 500, color: 'var(--text)', marginBottom: 8 }}>
+              Congratulations.
+            </h2>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, margin: 0 }}>
+              You won this one. Real work begins now.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showProdModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,21,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 600, padding: 24 }}>
+          <div style={{ background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: '40px 36px', maxWidth: 400, width: '100%', textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 14 }}>👍</div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'var(--text)', marginBottom: 10 }}>
+              Great work.
+            </h2>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 28 }}>
+              Now get into action on ground. Do keep a copy for ready reference.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                onClick={async () => {
+                  await supabase.from('events').update({ status: 'delivered' }).eq('id', event.id)
+                  setStatus('delivered')
+                  setShowProdModal(false)
+                }}
+                style={{ padding: '11px 28px', fontSize: 14, fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => setShowProdModal(false)}
+                style={{ padding: '11px 20px', fontSize: 13, fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <FloatingHelp activeTab={activeTab} />
     </div>
   )
