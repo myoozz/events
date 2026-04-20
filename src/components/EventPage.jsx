@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import ElementBuilder from './ElementBuilder'
-import CostSummary from './CostSummary'
 import ExportPreview from './ExportPreview'
 import TaskBoard from './TaskBoard'
 import Production from './Production'
@@ -15,7 +14,6 @@ import TravelItinerary from './TravelItinerary'
 // ── Tab definitions — single source of truth for bar + bottom nav ──
 const TABS = [
   { key: 'elements',   label: 'Elements' },
-  { key: 'costs',      label: 'Costs' },
   { key: 'export',     label: 'Export' },
   { key: 'tasks',      label: 'Execution' },
   { key: 'production', label: 'Production' },
@@ -31,12 +29,6 @@ const HELP_CONTENT = {
     title: 'Build your cost sheet',
     description: 'Add every element by category. Fill client cost and internal cost to see your margin. Use Import to bring in existing Excel sheets.',
     tip: 'Start with categories — each comes with suggested elements so you never start from zero.',
-  },
-  costs: {
-    icon: '₹',
-    title: 'Your complete cost summary',
-    description: 'All categories totalled by city, with agency fee and GST calculated automatically. This is what your client pays.',
-    tip: 'Select Terms & Conditions before exporting. They appear at the bottom of every proposal.',
   },
   export: {
     icon: '📤',
@@ -92,14 +84,6 @@ function TabIcon({ tabKey, active }) {
           <line x1="4" y1="5" x2="10" y2="5" stroke="currentColor" strokeWidth="1.1"/>
           <line x1="4" y1="7.5" x2="10" y2="7.5" stroke="currentColor" strokeWidth="1.1"/>
           <line x1="4" y1="10" x2="7" y2="10" stroke="currentColor" strokeWidth="1.1"/>
-        </svg>
-      )
-    case 'costs':
-      return (
-        <svg style={s} viewBox="0 0 14 14" fill="none">
-          <ellipse cx="7" cy="4.5" rx="4.5" ry="2" stroke="currentColor" strokeWidth="1.2"/>
-          <path d="M2.5 4.5v5c0 1.1 2 2 4.5 2s4.5-.9 4.5-2v-5" stroke="currentColor" strokeWidth="1.2"/>
-          <path d="M2.5 7c0 1.1 2 2 4.5 2s4.5-.9 4.5-2" stroke="currentColor" strokeWidth="1.1"/>
         </svg>
       )
     case 'export':
@@ -368,9 +352,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
   const [delegationScope, setDelegationScope] = useState(event.delegation_scope || {})
   const SCOPE_TABS = {
-    full: ['elements','costs','export','tasks','production','travel','delivered','cuesheet'],
+    full: ['elements','export','tasks','production','travel','delivered','cuesheet'],
     ops:  ['elements','tasks','production','travel','cuesheet'],
-    view: ['elements','costs'],
+    view: ['elements','export'],
   }
   const myScope    = canAssign ? 'full' : (delegationScope[session?.user?.email] || 'full')
   const visibleTabs = TABS.filter(t => (SCOPE_TABS[myScope] || SCOPE_TABS.full).includes(t.key))
@@ -836,9 +820,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
       {/* ── Tab content ── */}
       {activeTab === 'elements' && (
         <ElementBuilder key={'elements-'+refreshKey} event={event} userRole={userRole} session={session} teamUsers={teamUsers} />
-      )}
-      {activeTab === 'costs' && (
-        <CostSummary key={'costs-'+refreshKey} event={event} userRole={userRole} />
       )}
       {activeTab === 'export' && (
         <ExportPreview key={'export-'+refreshKey} event={event} userRole={userRole} session={session} />
