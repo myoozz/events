@@ -274,14 +274,6 @@ export default function CostSummary({ event, userRole }) {
   return (
     <div style={{ maxWidth: '680px' }}>
 
-      {/* Download button */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-        <button onClick={handleDownload}
-          style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>
-          ↓ Download proposal
-        </button>
-      </div>
-
       {/* Combined category breakdown across all cities */}
       <CategoryBreakdown
         cities={cities}
