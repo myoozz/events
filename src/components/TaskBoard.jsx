@@ -120,19 +120,19 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
     setImportSel(all);
   }
 
+  async function buildDupeSet() {
+    const q = db('tasks').select('element_id').eq('event_id', eventId).not('element_id', 'is', null);
+    if (activeCity) q.eq('city', activeCity); else q.is('city', null);
+    const { data } = await q;
+    return new Set((data || []).map((t) => t.element_id));
+  }
+
   async function handleImport() {
     const selected = Object.entries(importSel).filter(([, v]) => v).map(([id]) => id);
     if (!selected.length) return;
     setImporting(true);
 
-    // fetch existing tasks for dupe guard
-    const { data: existing } = await db('tasks')
-      .select('element_id')
-      .eq('event_id', eventId)
-      .eq('city', activeCity)
-      .not('element_id', 'is', null);
-    const existingIds = new Set((existing || []).map((t) => t.element_id));
-
+    const existingIds = await buildDupeSet();
     const toInsert = selected
       .map((elId) => importEls.find((e) => e.id === elId))
       .filter(Boolean)
@@ -148,7 +148,44 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
       }));
 
     if (toInsert.length > 0) {
-      await db('tasks').insert(toInsert);
+      const { error } = await db('tasks').insert(toInsert);
+      if (error) {
+        console.error('[TaskBoard] import error:', error.message);
+        setImporting(false);
+        return;
+      }
+    }
+
+    await fetchTasks();
+    setImportOpen(false);
+    setImportSel({});
+    setImporting(false);
+  }
+
+  async function handleImportAll() {
+    if (!importEls.length) return;
+    setImporting(true);
+
+    const existingIds = await buildDupeSet();
+    const toInsert = importEls
+      .filter((el) => !existingIds.has(el.id))
+      .map((el, i) => ({
+        event_id:   eventId,
+        element_id: el.id,
+        title:      el.element_name,
+        category:   el.category || 'General',
+        city:       activeCity || null,
+        status:     'pending',
+        sort_order: tasks.length + i,
+      }));
+
+    if (toInsert.length > 0) {
+      const { error } = await db('tasks').insert(toInsert);
+      if (error) {
+        console.error('[TaskBoard] import all error:', error.message);
+        setImporting(false);
+        return;
+      }
     }
 
     await fetchTasks();
@@ -569,7 +606,16 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
               ) : importEls.length === 0 ? (
                 <p style={styles.importEmpty}>No elements found for {importSourceCity || 'this city'}.</p>
               ) : (
-                [... new Set(importEls.map((e) => e.category || 'General'))].map((cat) => (
+                <>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                  <button
+                    onClick={handleSelectAll}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#6b6760', fontFamily: "'DM Sans', sans-serif", padding: 0, textDecoration: 'underline', textUnderlineOffset: 3 }}
+                  >
+                    Select all
+                  </button>
+                </div>
+                {[... new Set(importEls.map((e) => e.category || 'General'))].map((cat) => (
                   <div key={cat} style={{ marginBottom: 14 }}>
                     <p style={styles.importCatLabel}>{cat}</p>
                     {importEls.filter((e) => (e.category || 'General') === cat).map((el) => (
@@ -586,6 +632,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                     ))}
                   </div>
                 ))
+                </>
               )}
             </div>
 
@@ -597,7 +644,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <button
                   style={styles.importAllLink}
-                  onClick={() => { handleSelectAll(); }}
+                  onClick={handleImportAll}
                   disabled={importing}
                 >
                   Import All
