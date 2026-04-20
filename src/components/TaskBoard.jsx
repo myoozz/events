@@ -114,6 +114,12 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
     setImportLoading(false);
   }
 
+  function handleSelectAll() {
+    const all = {};
+    importEls.forEach((el) => { all[el.id] = true; });
+    setImportSel(all);
+  }
+
   async function handleImport() {
     const selected = Object.entries(importSel).filter(([, v]) => v).map(([id]) => id);
     if (!selected.length) return;
@@ -527,76 +533,80 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
       {/* ── import modal ── */}
       {importOpen && (
         <div style={styles.overlay}>
-          <div ref={importRef} style={{ ...styles.modal, maxWidth: 520 }}>
-            <div style={styles.modalHeader}>
-              <h3 style={styles.modalTitle}>Import from Elements</h3>
-              <button style={styles.modalClose} onClick={() => setImportOpen(false)}>✕</button>
-            </div>
-            <p style={styles.modalSub}>
-              Showing elements for {importSourceCity || 'all cities'}. Tasks already imported are excluded.
-            </p>
+          <div ref={importRef} style={styles.importModal}>
 
-            {/* Source city selector — only when event has multiple cities */}
-            {cities.length > 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 500 }}>Source city</span>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  {cities.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => { setImportSourceCity(c); setImportSel({}); fetchImportEls(c); }}
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: 14,
-                        border: '1.5px solid',
-                        borderColor: importSourceCity === c ? '#bc1723' : '#E5E1DC',
-                        background: importSourceCity === c ? '#bc1723' : 'transparent',
-                        color: importSourceCity === c ? '#fff' : '#6B7280',
-                        fontSize: 12,
-                        fontFamily: "'DM Sans', sans-serif",
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                      }}
-                    >{c}</button>
-                  ))}
-                </div>
+            {/* header */}
+            <div style={styles.importHeader}>
+              <div>
+                <h3 style={styles.importTitle}>Import from Elements</h3>
+                <p style={styles.importSub}>
+                  {importSourceCity || 'All cities'} · Tasks already imported are excluded
+                </p>
               </div>
-            )}
+              <button style={styles.importClose} onClick={() => setImportOpen(false)}>✕</button>
+            </div>
 
-            {importLoading ? (
-              <p style={{ color: '#9CA3AF', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>Loading elements…</p>
-            ) : importEls.length === 0 ? (
-              <p style={{ color: '#9CA3AF', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>No elements found for {activeCity}.</p>
-            ) : (
-              <div style={{ maxHeight: 340, overflowY: 'auto', marginBottom: 20 }}>
-                {/* group by category */}
-                {[...new Set(importEls.map((e) => e.category || 'General'))].map((cat) => (
-                  <div key={cat} style={{ marginBottom: 12 }}>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{cat}</p>
-                    {importEls.filter((e) => (e.category || 'General') === cat).map((el) => (
-                      <label key={el.id} style={styles.importRow}>
-                        <input
-                          type="checkbox"
-                          checked={!!importSel[el.id]}
-                          onChange={(e) => setImportSel((p) => ({ ...p, [el.id]: e.target.checked }))}
-                          style={{ marginRight: 10, accentColor: '#bc1723', flexShrink: 0 }}
-                        />
-                        <span style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.4 }}>{el.element_name}</span>
-                      </label>
-                    ))}
-                  </div>
+            {/* city pill tabs */}
+            {cities.length > 1 && (
+              <div style={styles.importCityRow}>
+                {cities.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => { setImportSourceCity(c); setImportSel({}); fetchImportEls(c); }}
+                    style={{
+                      ...styles.importCityPill,
+                      ...(importSourceCity === c ? styles.importCityPillActive : {}),
+                    }}
+                  >{c}</button>
                 ))}
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+            {/* element list */}
+            <div style={styles.importBody}>
+              {importLoading ? (
+                <p style={styles.importEmpty}>Loading elements…</p>
+              ) : importEls.length === 0 ? (
+                <p style={styles.importEmpty}>No elements found for {importSourceCity || 'this city'}.</p>
+              ) : (
+                [... new Set(importEls.map((e) => e.category || 'General'))].map((cat) => (
+                  <div key={cat} style={{ marginBottom: 14 }}>
+                    <p style={styles.importCatLabel}>{cat}</p>
+                    {importEls.filter((e) => (e.category || 'General') === cat).map((el) => (
+                      <label key={el.id} style={styles.importCheckRow}>
+                        <input
+                          type="checkbox"
+                          checked={!!importSel[el.id]}
+                          onChange={(e) => setImportSel((p) => ({ ...p, [el.id]: e.target.checked }))}
+                          style={{ marginRight: 10, accentColor: '#bc1723', flexShrink: 0, marginTop: 1 }}
+                        />
+                        <span style={styles.importElName}>{el.element_name}</span>
+                        <span style={styles.importElCat}>{el.category || 'General'}</span>
+                      </label>
+                    ))}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* footer */}
+            <div style={styles.importFooter}>
+              <span style={styles.importCount}>
                 {Object.values(importSel).filter(Boolean).length} selected
               </span>
-              <div style={styles.modalActions}>
-                <button style={styles.cancelBtn} onClick={() => setImportOpen(false)}>Cancel</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <button
-                  style={{ ...styles.saveBtn, opacity: Object.values(importSel).filter(Boolean).length === 0 ? 0.5 : 1 }}
+                  style={styles.importAllLink}
+                  onClick={() => { handleSelectAll(); }}
+                  disabled={importing}
+                >
+                  Import All
+                </button>
+                <button
+                  style={{
+                    ...styles.importPrimaryBtn,
+                    opacity: Object.values(importSel).filter(Boolean).length === 0 ? 0.45 : 1,
+                  }}
                   onClick={handleImport}
                   disabled={importing || Object.values(importSel).filter(Boolean).length === 0}
                 >
@@ -604,6 +614,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                 </button>
               </div>
             </div>
+
           </div>
         </div>
       )}
@@ -914,6 +925,152 @@ const styles = {
     maxWidth: 400,
     padding: 24,
     boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
+  },
+
+  /* ── import modal dark theme ── */
+  importModal: {
+    background: '#141413',
+    border: '0.5px solid #2e2e2c',
+    borderRadius: 14,
+    width: '100%',
+    maxWidth: 520,
+    maxHeight: '88vh',
+    display: 'flex',
+    flexDirection: 'column',
+    boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
+    overflow: 'hidden',
+  },
+  importHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: '20px 24px',
+    borderBottom: '0.5px solid #2e2e2c',
+    flexShrink: 0,
+  },
+  importTitle: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: 20,
+    fontWeight: 500,
+    color: '#e8e4dc',
+    margin: '0 0 3px',
+  },
+  importSub: {
+    fontSize: 12,
+    color: '#6b6760',
+    margin: 0,
+  },
+  importClose: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 16,
+    color: '#6b6760',
+    padding: 4,
+    lineHeight: 1,
+    marginTop: 2,
+  },
+  importCityRow: {
+    display: 'flex',
+    gap: 6,
+    padding: '14px 24px',
+    borderBottom: '0.5px solid #2e2e2c',
+    flexShrink: 0,
+    flexWrap: 'wrap',
+  },
+  importCityPill: {
+    padding: '5px 14px',
+    borderRadius: 14,
+    border: '0.5px solid #3e3e3c',
+    background: 'transparent',
+    color: '#a8a49e',
+    fontSize: 12,
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 500,
+    cursor: 'pointer',
+  },
+  importCityPillActive: {
+    background: '#bc1723',
+    borderColor: '#bc1723',
+    color: '#fff',
+  },
+  importBody: {
+    padding: '18px 24px',
+    overflowY: 'auto',
+    flex: 1,
+  },
+  importEmpty: {
+    color: '#6b6760',
+    fontSize: 13,
+    textAlign: 'center',
+    padding: '28px 0',
+    margin: 0,
+  },
+  importCatLabel: {
+    fontSize: 10,
+    fontWeight: 600,
+    color: '#6b6760',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    marginBottom: 6,
+    margin: '0 0 6px',
+  },
+  importCheckRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    padding: '7px 10px',
+    borderRadius: 6,
+    cursor: 'pointer',
+    gap: 0,
+  },
+  importElName: {
+    fontSize: 13,
+    color: '#e8e4dc',
+    lineHeight: 1.4,
+    flex: 1,
+  },
+  importElCat: {
+    fontSize: 11,
+    color: '#6b6760',
+    marginLeft: 8,
+    whiteSpace: 'nowrap',
+    alignSelf: 'center',
+  },
+  importFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '14px 24px',
+    borderTop: '0.5px solid #2e2e2c',
+    flexShrink: 0,
+  },
+  importCount: {
+    fontSize: 12,
+    color: '#6b6760',
+  },
+  importAllLink: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 13,
+    color: '#a8a49e',
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 500,
+    padding: 0,
+    textDecoration: 'underline',
+    textUnderlineOffset: 3,
+  },
+  importPrimaryBtn: {
+    padding: '9px 22px',
+    border: 'none',
+    borderRadius: 8,
+    background: '#bc1723',
+    color: '#fff',
+    cursor: 'pointer',
+    fontSize: 13,
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 600,
+    transition: 'opacity 0.15s',
   },
   modalHeader: {
     display: 'flex',
