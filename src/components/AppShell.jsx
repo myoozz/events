@@ -100,10 +100,11 @@ const userInitials = (name = '') =>
 
 export default function AppShell({ session }) {
   const navigate = useNavigate()
-  const [userRole,    setUserRole]    = useState(null)
-  const [userName,    setUserName]    = useState('')
-  const [userId,      setUserId]      = useState(null)   // ← own DB UUID
-  const [userLoading, setUserLoading] = useState(true)
+  const [userRole,           setUserRole]           = useState(null)
+  const [userName,           setUserName]           = useState('')
+  const [userId,             setUserId]             = useState(null)
+  const [canManageRateCards, setCanManageRateCards] = useState(false)
+  const [userLoading,        setUserLoading]        = useState(true)
   const [activeTab,   setActiveTab]   = useState('events')
   const [profileUserId, setProfileUserId] = useState(null)  // whose profile is open
   const [prevTab,     setPrevTab]     = useState('events')  // to go back from profile
@@ -134,14 +135,15 @@ export default function AppShell({ session }) {
       try {
         const { data } = await supabase
           .from('users')
-          .select('id, role, full_name')   // ← added id
+          .select('id, role, full_name, can_manage_rate_cards')
           .eq('email', session.user.email)
           .single()
         clearTimeout(timeout)
         if (data) {
           setUserRole(data.role)
           setUserName(data.full_name || session.user.email)
-          setUserId(data.id)               // ← store id
+          setUserId(data.id)
+          setCanManageRateCards(data.can_manage_rate_cards === true)
         } else {
           setUserRole('admin')
           setUserName(session.user.email)
@@ -500,7 +502,7 @@ export default function AppShell({ session }) {
             { key: 'events', icon: '📋', label: 'Events' },
             ...((userRole === 'admin' || userRole === 'manager') ? [{ key: 'team', icon: '👥', label: 'Team' }] : []),
             ...(userRole === 'admin' ? [{ key: 'activitylog', icon: '📋', label: 'Log' }] : []),
-            ...(userRole === 'admin' ? [{ key: 'ratecard', icon: '₹', label: 'Rates' }] : []),
+            ...((userRole === 'admin' || canManageRateCards) ? [{ key: 'ratecard', icon: '₹', label: 'Rates' }] : []),
           ].map(item => (
             <button
               key={item.key}
@@ -630,8 +632,8 @@ export default function AppShell({ session }) {
           {activeTab === 'earlyaccess' && userRole === 'admin' && (
             <EarlyAccess />
           )}
-          {activeTab === 'ratecard' && userRole === 'admin' && (
-            <RateCard session={session} userRole={userRole} />
+          {activeTab === 'ratecard' && (userRole === 'admin' || canManageRateCards) && (
+            <RateCard session={session} userRole={userRole} canManageRateCards={canManageRateCards} />
           )}
           {activeTab === 'feedback' && userRole === 'admin' && (
             <FeedbackAdmin />
