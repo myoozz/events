@@ -5,6 +5,12 @@ import { generateRateCardTemplate, RC_CATEGORIES } from '../utils/excelExport'
 import * as XLSX from 'xlsx'
 
 function fmt(n) { return n > 0 ? '₹' + Number(n).toLocaleString('en-IN') : '—' }
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+function fmtDate(d) {
+  if (!d) return null
+  const [y, m, day] = d.split('-')
+  return `Updated: ${+day} ${MONTHS[+m - 1]} ${y}`
+}
 function fmtRange(min, max) {
   if (!min && !max) return '—'
   if (min && max && min !== max) return `₹${Number(min).toLocaleString('en-IN')} – ₹${Number(max).toLocaleString('en-IN')}`
@@ -124,6 +130,70 @@ const RESEARCH_PROMPTS = {
   'Insurance': 'Include event cancellation, liability, equipment insurance. Rate as % of budget and per event flat.',
 }
 
+const FOCUS_NOTES = {
+  'Permissions & Legal': 'Include PPL, IPRS, NOVEX, Police NOC, Fire NOC, Municipal NOC, Liquor/Excise license, Foreign Artist Permission, Noise Permit. Set mandatory=true for Police NOC, Fire NOC, Municipal NOC. Add pax slabs where relevant.',
+  'Sound': 'Include line array, column array, subwoofers, monitors, mixing console, playback system, DJ setup, mic types (handheld/lapel/headset/choir), intercom, IEM. Separate dry hire vs with operator. Add pax slabs where relevant.',
+  'Lighting': 'Include moving heads (beam/wash/hybrid), LED par, profile spots, follow spot, haze machine, strobe, truss per mtr, rigging per point, control desk. Separate dry hire vs with operator.',
+  'Video & LED': 'Include LED wall by pixel pitch (P2.6/P3.9/P4.8/P6), projectors by lumen (10k/15k/20k), screens (front/rear), video switcher, media server, confidence monitors. Per sqft, operator included/excluded separately.',
+  'Stage & Structure': 'Include stage per sqft by finish (basic/premium/glass), truss per mtr, riser, podium, green room, roof structure, gate arch. With and without labour.',
+  'Production & Fabrication': 'Include fabricated backdrop per sqft (basic/premium), custom props, acrylic work, carpentry, vinyl wrapping, installation labour per shift.',
+  'Branding & Signage': 'Include flex print (single/double side), fabric print (dye sublimation), vinyl wrap, backlit panel, acrylic lettering, standee, backdrop frame per sqft.',
+  'Manpower': 'Include event manager, coordinator, hostess, security guard, housekeeping, loader, rigger, electrician, F&B steward. Per shift and per day both.',
+  'Furniture': 'Include chairs (banquet/chiavari/lounge), tables (round 5ft/rectangle/cocktail), sofa sets, bar counter, registration desk, carpet per sqft.',
+  'Venue & Infrastructure': 'Include banquet hall per day by city tier, outdoor ground, rooftop, convention centre. Pax slabs: under 100 / 100–300 / 300–500 / 500+ for each.',
+  'Power & Electrical': 'Include DG sets by KVA (25/62.5/125/250/500), cabling per mtr, distribution boxes, cable protectors, earthing, electrician per shift.',
+  'Food & Beverage': 'Include veg/non-veg per pax (sit-down/buffet/cocktail), hi-tea, welcome drinks, beverage counter, live counters, service staff per 50 pax.',
+  'Travel Booking': 'Include flight booking fee, hotel per night (3-star/4-star/5-star) per city, cab per day (sedan/Innova/tempo traveller), bus per day, train ticket service fee.',
+  'Logistics': 'Include truck (14ft/20ft/32ft) per trip, loading/unloading labour per shift, warehouse per day, forklift, packing material.',
+  'Insurance': 'Include public liability (1Cr/5Cr/10Cr cover), equipment insurance per event, event cancellation insurance. Add pax slabs where relevant.',
+}
+
+const PROMPT_CITIES = ['Mumbai','Delhi','Bangalore','Hyderabad','Chennai','Kolkata','Pune','Ahmedabad','Pan-India']
+
+function buildPromptFromParams(category, cities, country, focusNotes) {
+  const cityList = cities.filter(c => c !== 'Pan-India').join(', ')
+  const hasPanIndia = cities.includes('Pan-India')
+  return `You are a professional event industry researcher for ${country}.
+I need you to build a rate card database for the event management category: ${category}
+
+Research realistic market rates across ${country} cities and return your findings ONLY as a JSON array. No explanation, no preamble, no markdown fences. Pure JSON only. Start your response with [ and end with ]
+
+Each object in the array must use EXACTLY these keys:
+
+{
+  "element_name": "",
+  "specification": "",
+  "unit": "",
+  "city": "",
+  "country": "${country}",
+  "location_scope": "",
+  "venue_type": "",
+  "rate_min": 0,
+  "rate_max": 0,
+  "per_unit_type": "",
+  "source": "Myoozz AI Research",
+  "source_url": "",
+  "gst_applicable": true,
+  "mandatory": false,
+  "pax_min": null,
+  "pax_max": null,
+  "notes": ""
+}
+
+location_scope MUST be one of: "city" / "state" / "national" / "international"
+venue_type MUST be one of: "Indoor" / "Outdoor" / "All"
+per_unit_type MUST be one of: "per day" / "per event" / "per pax" / "per sqft" / "per sqmtr" / "per ft" / "per mtr" / "per running ft" / "per running mtr" / "per KVA" / "per trip" / "per load" / "per shift" / "% of budget"
+
+Research guidelines:
+- Cover at minimum: ${cityList}${hasPanIndia ? ' + Pan-India fallback' : ''}
+${hasPanIndia ? '- Give Pan-India entry (city = "Pan-India", location_scope = "national") for items with low city variation\n' : ''}- Rates should reflect 2024-2025 market reality for professional event companies (not retail/consumer)
+- Where rates depend on scale (pax slab or area), give one row per slab
+- Be specific: "LED Video Wall (P3.9)" not "LED Wall"
+- rate_min and rate_max should reflect the real market spread
+
+${focusNotes}`.trim()
+}
+
 function buildResearchPrompt(category) {
   const notes = RESEARCH_PROMPTS[category] || ''
   return `You are a professional event industry researcher for India.
@@ -183,8 +253,12 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
   const [progress, setProgress] = useState('')
   const [jsonText, setJsonText] = useState('')
   const [jsonError, setJsonError] = useState('')
-  const [copied, setCopied] = useState(false)
   const [dlLoading, setDlLoading] = useState(false)
+  const [showPromptBuilder, setShowPromptBuilder] = useState(false)
+  const [pbCities, setPbCities] = useState([...PROMPT_CITIES])
+  const [pbCountry, setPbCountry] = useState('India')
+  const [pbFocusNotes, setPbFocusNotes] = useState('')
+  const [pbCopied, setPbCopied] = useState(false)
   const fileRef = useRef(null)
 
   async function handleDownload() {
@@ -232,11 +306,10 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
     }
   }
 
-  function copyPrompt() {
-    if (!category) return
-    navigator.clipboard.writeText(buildResearchPrompt(category))
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  function togglePromptBuilder() {
+    const opening = !showPromptBuilder
+    setShowPromptBuilder(opening)
+    if (opening) setPbFocusNotes(FOCUS_NOTES[category] || '')
   }
 
   async function checkAndImport() {
@@ -248,7 +321,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
       .select('category, element_name, city, vendor_name')
       .or(
         preview.slice(0, 20).map(r =>
-          `and(category.eq.${r.category || ''},element_name.eq.${r.element_name},vendor_name.eq.${r.vendor_name || ''})`
+          `and(category.eq.${r.category || ''},vendor_name.eq.${r.vendor_name || ''})`
         ).join(',')
       )
 
@@ -394,13 +467,84 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)', flex: 1, margin: 0 }}>
                       Research rates using any AI tool, paste the JSON output below.
                     </p>
-                    <button onClick={copyPrompt} disabled={!category}
-                      style={{ padding: '7px 14px', fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-body)', background: copied ? '#D1FAE5' : (category ? 'var(--bg-secondary)' : 'var(--bg)'), color: copied ? '#065F46' : (category ? 'var(--text)' : 'var(--text-tertiary)'), border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: category ? 'pointer' : 'default', whiteSpace: 'nowrap', transition: 'all 0.2s' }}>
-                      {copied ? '✓ Copied!' : '⌘ Copy research prompt'}
+                    <button onClick={togglePromptBuilder}
+                      style={{ padding: '7px 14px', fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-body)', background: showPromptBuilder ? 'var(--bg-secondary)' : 'var(--bg)', color: 'var(--text)', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s' }}>
+                      {showPromptBuilder ? '✕ Close prompt builder' : '⌘ Build research prompt'}
                     </button>
                   </div>
 
-                  {!category && (
+                  {showPromptBuilder && (
+                    <div style={{ border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '16px', marginBottom: '16px', background: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+                      {/* Category */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Category</label>
+                        <input
+                          value={category || ''}
+                          readOnly
+                          style={{ ...inputStyle, background: 'var(--bg)', color: category ? 'var(--text)' : 'var(--text-tertiary)', cursor: 'default' }}
+                          placeholder='Select a category above first'
+                        />
+                      </div>
+
+                      {/* Cities */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Cities</label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                          {PROMPT_CITIES.map(city => (
+                            <label key={city} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--text)', cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={pbCities.includes(city)}
+                                onChange={e => setPbCities(prev => e.target.checked ? [...prev, city] : prev.filter(c => c !== city))}
+                                style={{ cursor: 'pointer' }}
+                              />
+                              {city}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Country */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Country</label>
+                        <input
+                          value={pbCountry}
+                          onChange={e => setPbCountry(e.target.value)}
+                          style={{ ...inputStyle, background: 'var(--bg)' }}
+                          placeholder='India'
+                        />
+                      </div>
+
+                      {/* Focus Notes */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Focus Notes</label>
+                        <textarea
+                          value={pbFocusNotes}
+                          onChange={e => setPbFocusNotes(e.target.value)}
+                          rows={3}
+                          style={{ ...inputStyle, background: 'var(--bg)', resize: 'vertical', lineHeight: 1.5 }}
+                          placeholder='Optional — specific items, units, or rate structures to include'
+                        />
+                      </div>
+
+                      {/* Copy button */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          disabled={!category || pbCities.length === 0}
+                          onClick={() => {
+                            navigator.clipboard.writeText(buildPromptFromParams(category, pbCities, pbCountry, pbFocusNotes))
+                            setPbCopied(true)
+                            setTimeout(() => setPbCopied(false), 2000)
+                          }}
+                          style={{ padding: '8px 20px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: pbCopied ? '#D1FAE5' : (category && pbCities.length > 0 ? 'var(--text)' : 'var(--bg)'), color: pbCopied ? '#065F46' : (category && pbCities.length > 0 ? 'var(--bg)' : 'var(--text-tertiary)'), border: 'none', borderRadius: 'var(--radius-sm)', cursor: (category && pbCities.length > 0) ? 'pointer' : 'default', transition: 'all 0.2s' }}>
+                          {pbCopied ? '✓ Copied!' : 'Copy Prompt'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {!category && !showPromptBuilder && (
                     <p style={{ fontSize: '12px', color: '#B45309', background: '#FEF3C7', padding: '8px 12px', borderRadius: '4px', marginBottom: '12px' }}>
                       Select a category above to copy the prompt for that category.
                     </p>
@@ -507,9 +651,9 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
 }
 
 // ─── Main RateCard component ──────────────────────────────────────────────────
-export default function RateCard({ session, userRole }) {
+export default function RateCard({ session, userRole, canManageRateCards = false }) {
   const isAdmin = userRole === 'admin'
-  const canEdit = isAdmin
+  const canEdit = isAdmin || canManageRateCards
 
   // ── Data ──────────────────────────────────────────────────────────────────
   const [rates,         setRates]         = useState([])
@@ -773,7 +917,10 @@ export default function RateCard({ session, userRole }) {
               )}
 
               {/* 2-panel */}
-              <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '16px', alignItems: 'start' }}>
+              <div
+                onContextMenu={e => e.preventDefault()}
+                onCopy={e => e.preventDefault()}
+                style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '16px', alignItems: 'start' }}>
 
                 {/* ── Left panel — item list ── */}
                 <div style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto', paddingRight: '4px' }}>
@@ -806,16 +953,21 @@ export default function RateCard({ session, userRole }) {
                               onMouseOver={e => { if (!isActive) e.currentTarget.style.background = D.cardHov }}
                               onMouseOut={e => { if (!isActive) e.currentTarget.style.background = D.card }}>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '13px', fontWeight: 600, color: D.text, marginBottom: '3px', lineHeight: 1.3 }}>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: D.text, marginBottom: '3px', lineHeight: 1.3, userSelect: 'none' }}>
                                   {item.element_name}
                                 </div>
                                 <div style={{ fontSize: '11px', color: D.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {item.specification || (item.city && item.city !== 'Pan-India' ? item.city : 'Pan-India')}
                                 </div>
+                                {fmtDate(item.last_updated) && (
+                                  <div style={{ fontSize: '10px', color: D.dim, marginTop: '2px' }}>
+                                    {fmtDate(item.last_updated)}
+                                  </div>
+                                )}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px', flexShrink: 0 }}>
                                 {item.mandatory && <span style={badgeSt(true)}>mandatory</span>}
-                                <span style={{ fontSize: '12px', fontWeight: 500, color: D.text }}>
+                                <span style={{ fontSize: '12px', fontWeight: 500, color: D.text, userSelect: 'none' }}>
                                   {fmtRange(item.rate_min, item.rate_max)}
                                 </span>
                               </div>
@@ -890,7 +1042,7 @@ export default function RateCard({ session, userRole }) {
                       {/* Detail header */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
                         <div style={{ flex: 1, minWidth: 0, paddingRight: '10px' }}>
-                          <div style={{ fontSize: '17px', fontWeight: 600, color: D.text, lineHeight: 1.3, marginBottom: '4px' }}>
+                          <div style={{ fontSize: '17px', fontWeight: 600, color: D.text, lineHeight: 1.3, marginBottom: '4px', userSelect: 'none' }}>
                             {selectedItem.element_name}
                           </div>
                           {selectedItem.specification
@@ -905,7 +1057,7 @@ export default function RateCard({ session, userRole }) {
 
                       {/* Rate highlight box */}
                       <div style={{ background: '#1a1a1a', borderRadius: '10px', padding: '18px', margin: '16px 0', textAlign: 'center' }}>
-                        <div style={{ fontSize: '24px', fontWeight: 600, color: D.text, marginBottom: '5px' }}>
+                        <div style={{ fontSize: '24px', fontWeight: 600, color: D.text, marginBottom: '5px', userSelect: 'none' }}>
                           {fmtRange(selectedItem.rate_min, selectedItem.rate_max) || '—'}
                         </div>
                         <div style={{ fontSize: '12px', color: D.sub }}>
@@ -921,10 +1073,11 @@ export default function RateCard({ session, userRole }) {
                           { label: 'GST',         value: selectedItem.gst_applicable ? 'Applicable' : 'Not applicable' },
                           { label: 'Source',      value: selectedItem.source || selectedItem.vendor_name || '—' },
                           { label: 'Things to know', value: selectedItem.notes || '—' },
-                        ].map(({ label, value }) => (
+                          ...(fmtDate(selectedItem.last_updated) ? [{ label: 'Last updated', value: fmtDate(selectedItem.last_updated), dim: true }] : []),
+                        ].map(({ label, value, dim }) => (
                           <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: `0.5px solid ${D.border}` }}>
                             <span style={{ fontSize: '12px', color: D.sub }}>{label}</span>
-                            <span style={{ fontSize: '12px', color: D.text, textAlign: 'right', maxWidth: '60%' }}>{value}</span>
+                            <span style={{ fontSize: '12px', color: dim ? D.dim : D.text, textAlign: 'right', maxWidth: '60%' }}>{value}</span>
                           </div>
                         ))}
                       </div>
