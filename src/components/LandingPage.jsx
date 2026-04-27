@@ -245,7 +245,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .modal-field { display: flex; flex-direction: column; gap: 6px; }
 .modal-field label { font-size: 12px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.03em; }
 .modal-field input, .modal-field select { border: 0.5px solid var(--border-strong); border-radius: 4px; padding: 11px 14px; font-family: var(--font-body); font-size: 14px; font-weight: 300; color: var(--text); background: #fff; transition: border-color 0.2s; outline: none; }
-.modal-field input:focus, .modal-field select:focus { border-color: var(--red); }
+.modal-field input:focus, .modal-field select:focus, .modal-field textarea:focus { border-color: var(--red); }
 .modal-field input::placeholder { color: var(--text-light); }
 .modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .modal-submit { width: 100%; background: var(--red); color: #fff; border: none; padding: 13px 20px; border-radius: 4px; font-family: var(--font-body); font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
@@ -323,7 +323,9 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", city: "" });
+  const [form, setForm] = useState({ fullName: "", email: "", company: "", city: "", message: "" });
+  const [formErrors, setFormErrors] = useState({});
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -370,23 +372,30 @@ export default function LandingPage() {
     return () => { document.body.style.overflow = ""; };
   }, [modalOpen]);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit() {
+    const errors = {};
+    if (!form.fullName.trim()) errors.fullName = "Full name is required";
+    if (!form.email.trim()) errors.email = "Email is required";
+    if (Object.keys(errors).length) { setFormErrors(errors); return; }
+    setFormErrors({});
+    setSubmitError("");
     setSubmitting(true);
     try {
       if (supabase) {
-        await supabase.from("early_access_requests").insert([{
-          full_name: form.name,
-          email: form.email,
-          phone: form.phone,
-          company: form.company,
-          city: form.city,
-          created_at: new Date().toISOString(),
+        const { error } = await supabase.from("access_requests").insert([{
+          full_name: form.fullName.trim(),
+          email: form.email.trim(),
+          company: form.company.trim() || null,
+          city: form.city.trim() || null,
+          message: form.message.trim() || null,
         }]);
+        if (error) throw error;
       }
       setSubmitted(true);
+      setTimeout(() => setModalOpen(false), 2000);
     } catch (err) {
       console.error(err);
+      setSubmitError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -412,46 +421,59 @@ export default function LandingPage() {
             {submitted ? (
               <div className="modal-success">
                 <div className="modal-success-icon">✓</div>
-                <h3>You're in.</h3>
-                <p>We've received your request. Our team will reach out personally within 24 hours to walk you through ME.</p>
+                <h3>We'll be in touch soon.</h3>
+                <p>Our team will reach out personally within 24 hours to walk you through ME.</p>
               </div>
             ) : (
               <>
                 <div className="modal-label">By Invite Only</div>
                 <div className="modal-title">Request your invite</div>
                 <div className="modal-sub">ME is not open for self-registration. We onboard every user personally — no handbooks, no tutorials. Submit your details and we'll reach out within 24 hours.</div>
-                <form onSubmit={handleSubmit}>
-                  <div className="modal-fields">
-                    <div className="modal-row">
-                      <div className="modal-field">
-                        <label>Your name *</label>
-                        <input required placeholder="How should we address you?" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                      </div>
-                      <div className="modal-field">
-                        <label>Work email *</label>
-                        <input required type="email" placeholder="you@company.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-                      </div>
-                    </div>
-                    <div className="modal-row">
-                      <div className="modal-field">
-                        <label>Phone</label>
-                        <input placeholder="+91 98xxx xxxxx" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-                      </div>
-                      <div className="modal-field">
-                        <label>City</label>
-                        <input placeholder="Mumbai, Delhi, Bangalore..." value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-                      </div>
+                <div className="modal-fields">
+                  <div className="modal-row">
+                    <div className="modal-field">
+                      <input
+                        placeholder="Full name *"
+                        value={form.fullName}
+                        onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                        style={formErrors.fullName ? { borderColor: "#bc1723" } : {}}
+                      />
+                      {formErrors.fullName && <span style={{ fontSize: "12px", color: "#bc1723" }}>{formErrors.fullName}</span>}
                     </div>
                     <div className="modal-field">
-                      <label>Company / Agency name</label>
-                      <input placeholder="Your agency or company name" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
+                      <input
+                        type="email"
+                        placeholder="Work email *"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        style={formErrors.email ? { borderColor: "#bc1723" } : {}}
+                      />
+                      {formErrors.email && <span style={{ fontSize: "12px", color: "#bc1723" }}>{formErrors.email}</span>}
                     </div>
                   </div>
-                  <button type="submit" className="modal-submit" disabled={submitting}>
-                    {submitting ? "Sending..." : "Request Invite →"}
-                  </button>
-                  <p className="modal-fine">No billing. No commitment. We'll reach out personally within 24 hours.</p>
-                </form>
+                  <div className="modal-row">
+                    <div className="modal-field">
+                      <input placeholder="Company / Agency name" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
+                    </div>
+                    <div className="modal-field">
+                      <input placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="modal-field">
+                    <textarea
+                      placeholder="What do you want to solve? (optional)"
+                      rows={3}
+                      value={form.message}
+                      onChange={(e) => setForm({ ...form, message: e.target.value })}
+                      style={{ border: "0.5px solid #d8d2c8", borderRadius: "4px", padding: "11px 14px", fontFamily: "var(--font-body)", fontSize: "14px", fontWeight: 300, color: "#2c2518", background: "#fff", outline: "none", resize: "vertical", width: "100%" }}
+                    />
+                  </div>
+                </div>
+                {submitError && <p style={{ fontSize: "13px", color: "#bc1723", marginBottom: "12px" }}>{submitError}</p>}
+                <button className="modal-submit" disabled={submitting} onClick={handleSubmit}>
+                  {submitting ? "Sending..." : "Request Access"}
+                </button>
+                <p className="modal-fine">No billing. No commitment. We'll reach out personally within 24 hours.</p>
               </>
             )}
           </div>
