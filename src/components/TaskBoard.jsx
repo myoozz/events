@@ -204,7 +204,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
       }
 
       await logActivity({
-        action:      'task_assigned',
+        action:      'assigned',
         entity_type: 'task',
         entity_name: modal.taskTitle,
         event_id:    eventId,
@@ -233,7 +233,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
     const { error } = await db('tasks').update({ status }).eq('id', taskId);
     if (!error) {
       await logActivity({
-        action:      'task_status_changed',
+        action:      'status changed',
         entity_type: 'task',
         entity_name: taskTitle,
         event_id:    eventId,
