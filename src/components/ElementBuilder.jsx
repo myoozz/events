@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import ImportModal from './ImportModal'
 import { CATEGORY_SUGGESTIONS } from './CategoryLibrary'
 import CategoryPicker from './CategoryPicker'
@@ -26,41 +26,7 @@ function fmt(n){ return (!n||n===0)?null:'₹'+Math.round(n).toLocaleString('en-
 function calcClient(el){ return el.lump_sum?(+(el.amount)||0):(+(el.rate)||0)*(+(el.qty)||1)*(+(el.days)||1) }
 function calcInternal(el){ return el.internal_lump?(+(el.internal_amount)||0):(+(el.internal_rate)||0)*(+(el.qty)||1)*(+(el.days)||1) }
 
-// ─── Rate suggestion pill ──────────────────────────────────────────────────
-// Looks up rate_cards for the closest matching entry.
-// Priority: city match → Pan-India fallback.
-// Returns { min, max, source, rate_type } or null.
-function getRateSuggestion(rateCards, category, elementName, city){
-  if(!rateCards?.length||!elementName) return null
-  const name=elementName.toLowerCase()
-  const cat=(category||'').toLowerCase()
 
-  function score(r){
-    const rName=(r.element_name||'').toLowerCase()
-    const rCat=(r.category||'').toLowerCase()
-    let s=0
-    if(rCat===cat) s+=10
-    if(rName===name) s+=20
-    else if(rName.includes(name)||name.includes(rName)) s+=8
-    else {
-      const words=name.split(/\s+/).filter(w=>w.length>2)
-      words.forEach(w=>{ if(rName.includes(w)) s+=2 })
-    }
-    return s
-  }
-
-  const cityMatches=rateCards.filter(r=>(r.city||'').toLowerCase()===(city||'').toLowerCase())
-  const globalMatches=rateCards.filter(r=>r.location_scope==='national'||r.city==='Pan-India'||!r.city)
-  const pool=cityMatches.length?cityMatches:globalMatches
-  if(!pool.length) return null
-
-  const scored=pool.map(r=>({r,s:score(r)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s)
-  if(!scored.length) return null
-
-  const best=scored[0].r
-  if(!best.rate_min&&!best.rate_max) return null
-  return { min:best.rate_min, max:best.rate_max, source:best.vendor_name||best.source||'Rate Card', rate_type:best.rate_type, city:best.city }
-}
 
 function useWindowSize(){
   const [w,setW]=useState(()=>typeof window!=='undefined'?window.innerWidth:1200)
@@ -255,6 +221,26 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
   const isSaved=el.id&&!el.id.startsWith('new-')
   const isGrid=viewMode==='grid'
 
+  const [rateSuggestion,setRateSuggestion]=useState(null)
+  const getRateSuggestion=useCallback(async(elementName,category,eventCity)=>{
+    if(!elementName||!category) return null
+    const cityToUse=eventCity||'Pan-India'
+    let{data}=await supabase.from('rate_cards').select('rate_min,rate_max').eq('category',category).ilike('city',cityToUse).ilike('element_name',`%${elementName}%`)
+    if(!data||data.length===0){
+      ({data}=await supabase.from('rate_cards').select('rate_min,rate_max').eq('category',category).ilike('location_scope','pan-india').ilike('element_name',`%${elementName}%`))
+    }
+    if(!data||data.length===0) return null
+    const sources=data.length
+    const marketFloor=Math.min(...data.map(r=>r.rate_min).filter(v=>v!=null))
+    const marketCeiling=Math.max(...data.map(r=>r.rate_max).filter(v=>v!=null))
+    if(!isFinite(marketFloor)||!isFinite(marketCeiling)) return null
+    return{marketFloor,marketCeiling,sources}
+  },[])
+  useEffect(()=>{
+    if(!el.internal_lump){getRateSuggestion(el.element_name,el.category,city).then(setRateSuggestion)}
+    else{setRateSuggestion(null)}
+  },[el.element_name,el.category,city,el.internal_lump,getRateSuggestion])
+
   // ── GRID MODE ──
   if(isGrid&&!isMobile){
     const cols=getColTemplate(isAdmin,fv,'grid')
@@ -355,7 +341,8 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
               onLump={()=>{onUpdate('internal_lump',true);onSave()}}
               muted={true}
             />
-            {(()=>{const sg=!el.internal_lump?getRateSuggestion(rateCards,el.category,el.element_name,city):null;return sg?(<div title={`Source: ${sg.source}`} style={{fontSize:'9px',marginTop:'2px',padding:'1px 5px',borderRadius:'3px',background:sg.rate_type==='vendor_quoted'?'#D1FAE5':'#EFF6FF',color:sg.rate_type==='vendor_quoted'?'#065F46':'#1D4ED8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',cursor:'default'}}>~{sg.min&&sg.max&&sg.min!==sg.max?`₹${Number(sg.min).toLocaleString('en-IN')}–₹${Number(sg.max).toLocaleString('en-IN')}`:sg.min?`₹${Number(sg.min).toLocaleString('en-IN')}`:``}{sg.city&&sg.city!=='Pan-India'?` · ${sg.city}`:''}</div>):(!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>)})()}
+            {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.sources>=3?'#e6f4ec':'#e8e4dc',color:rateSuggestion.sources>=3?'#1a6b3a':'#7a7060',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
+            {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>}
             {internalAmt>0&&(
               <div style={{fontSize:'11px',color:'#6B7280',fontWeight:500,marginTop:'1px'}}>= {fmt(internalAmt)}</div>
             )}
@@ -500,7 +487,8 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             onLump={()=>{onUpdate('internal_lump',true);onSave()}}
             muted={true}
           />
-          {(()=>{const sg=!el.internal_lump?getRateSuggestion(rateCards,el.category,el.element_name,city):null;return sg?(<div title={`Source: ${sg.source}`} style={{fontSize:'9px',marginTop:'2px',padding:'2px 6px',borderRadius:'3px',background:sg.rate_type==='vendor_quoted'?'#D1FAE5':'#EFF6FF',color:sg.rate_type==='vendor_quoted'?'#065F46':'#1D4ED8',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',cursor:'default'}}>~{sg.min&&sg.max&&sg.min!==sg.max?`₹${Number(sg.min).toLocaleString('en-IN')}–₹${Number(sg.max).toLocaleString('en-IN')}`:sg.min?`₹${Number(sg.min).toLocaleString('en-IN')}`:``} · {sg.source}{sg.city&&sg.city!=='Pan-India'?` · ${sg.city}`:''}</div>):(!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>)})()}
+          {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.sources>=3?'#e6f4ec':'#e8e4dc',color:rateSuggestion.sources>=3?'#1a6b3a':'#7a7060',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
+          {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>}
           {!el.internal_lump&&internalAmt>0&&(
             <div style={{fontSize:'11px',color:'#92400E',marginTop:'2px',fontWeight:500}}>{fmt(internalAmt)}</div>
           )}
