@@ -1,12 +1,22 @@
-import { useState } from 'react'
-import { MASTER_CATEGORIES, CATEGORY_SUGGESTIONS } from './CategoryLibrary'
+import { useState, useEffect } from 'react'
+import { CATEGORY_SUGGESTIONS } from './CategoryLibrary'
+import { supabase } from '../supabase'
 
 export default function CategoryPicker({ existingCategories, onAdd, onClose }) {
   const [selected, setSelected] = useState([])
-  const [customName, setCustomName] = useState('')
+  const [availableCategories, setAvailableCategories] = useState([])
+
+  useEffect(() => {
+    supabase
+      .from('event_categories')
+      .select('name')
+      .eq('is_active', true)
+      .order('sort_order')
+      .then(({ data }) => setAvailableCategories(data?.map(c => c.name) || []))
+  }, [])
 
   const existing = existingCategories.map(c => c.name)
-  const available = MASTER_CATEGORIES.filter(mc => !existing.includes(mc))
+  const available = availableCategories.filter(mc => !existing.includes(mc))
 
   function toggle(mc) {
     setSelected(prev =>
@@ -19,12 +29,6 @@ export default function CategoryPicker({ existingCategories, onAdd, onClose }) {
     setSelected([])
     // Keep picker open so user can add more if needed
     // Close only if they explicitly click Done or ✕
-  }
-
-  function handleAddCustom() {
-    if (!customName.trim()) return
-    onAdd(customName.trim())
-    setCustomName('')
   }
 
   const totalSuggestions = selected.reduce((s, mc) => s + (CATEGORY_SUGGESTIONS[mc]?.length || 0), 0)
@@ -59,7 +63,6 @@ export default function CategoryPicker({ existingCategories, onAdd, onClose }) {
 
         {/* Scrollable list */}
         <div style={{ overflowY: 'auto', flex: 1 }}>
-          {/* Standard categories */}
           <div style={{ marginBottom: '20px' }}>
             <p style={{ fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-tertiary)', marginBottom: '10px' }}>
               Standard categories {available.length === 0 ? '— all added' : `(${available.length} available)`}
@@ -111,40 +114,6 @@ export default function CategoryPicker({ existingCategories, onAdd, onClose }) {
                   All standard categories already added.
                 </p>
               )}
-            </div>
-          </div>
-
-          {/* Custom */}
-          <div style={{ borderTop: '0.5px solid var(--border)', paddingTop: '16px' }}>
-            <p style={{ fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-tertiary)', marginBottom: '10px' }}>
-              Custom category
-            </p>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <input
-                value={customName}
-                onChange={e => setCustomName(e.target.value)}
-                placeholder="Type category name and press Enter..."
-                onKeyDown={e => { if (e.key === 'Enter') handleAddCustom() }}
-                style={{
-                  flex: 1, padding: '8px 12px', fontSize: '13px',
-                  fontFamily: 'var(--font-body)', border: '0.5px solid var(--border-strong)',
-                  borderRadius: 'var(--radius-sm)', background: 'var(--bg)',
-                  color: 'var(--text)', outline: 'none',
-                }}
-              />
-              <button
-                onClick={handleAddCustom}
-                disabled={!customName.trim()}
-                style={{
-                  padding: '8px 16px', fontSize: '13px', fontWeight: 500,
-                  fontFamily: 'var(--font-body)', background: 'var(--bg-secondary)',
-                  color: 'var(--text)', border: '0.5px solid var(--border-strong)',
-                  borderRadius: 'var(--radius-sm)', cursor: customName.trim() ? 'pointer' : 'not-allowed',
-                  opacity: customName.trim() ? 1 : 0.5,
-                }}
-              >
-                Add
-              </button>
             </div>
           </div>
         </div>
