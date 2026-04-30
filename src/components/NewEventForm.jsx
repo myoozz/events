@@ -207,6 +207,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         review_status: userRole === 'event_lead' ? 'pending' : 'approved',
       }
 
+      console.log('INSERT PAYLOAD:', JSON.stringify(payload))
       const { data: event, error: dbErr } = await supabase
         .from('events').insert(payload).select().single()
       if (dbErr) throw dbErr
