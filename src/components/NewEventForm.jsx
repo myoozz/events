@@ -211,7 +211,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
       onCreated(event)
       onClose()
     } catch (err) {
-      console.error('Create event error:', err)
+      console.error('Create event error:', JSON.stringify(err))
       setError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
