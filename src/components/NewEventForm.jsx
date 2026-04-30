@@ -183,6 +183,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
       const payload = {
         name: a.eventName.trim(),
+        event_name: a.eventName.trim(),
         client_spoc_name: a.clientSpocName || a.clientName || null,
         client_spoc_phone: a.clientSpocContact || null,
         event_type: a.eventType || null,
