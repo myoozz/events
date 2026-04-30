@@ -225,16 +225,17 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
   const getRateSuggestion=useCallback(async(elementName,category,eventCity)=>{
     if(!elementName||!category) return null
     const cityToUse=eventCity||'Pan-India'
-    let{data}=await supabase.from('rate_cards').select('rate_min,rate_max').eq('category',category).ilike('city',cityToUse).ilike('element_name',`%${elementName}%`)
+    let{data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).ilike('city',`%${cityToUse}%`).ilike('element_name',`%${elementName}%`)
     if(!data||data.length===0){
-      ({data}=await supabase.from('rate_cards').select('rate_min,rate_max').eq('category',category).ilike('location_scope','pan-india').ilike('element_name',`%${elementName}%`))
+      ({data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).or('location_scope.ilike.%pan-india%,city.is.null').ilike('element_name',`%${elementName}%`))
     }
     if(!data||data.length===0) return null
     const sources=data.length
     const marketFloor=Math.min(...data.map(r=>r.rate_min).filter(v=>v!=null))
     const marketCeiling=Math.max(...data.map(r=>r.rate_max).filter(v=>v!=null))
     if(!isFinite(marketFloor)||!isFinite(marketCeiling)) return null
-    return{marketFloor,marketCeiling,sources}
+    const rateType=data.find(r=>r.rate_type==='vendor_quoted')?'vendor_quoted':'ai_research'
+    return{marketFloor,marketCeiling,sources,rateType}
   },[])
   useEffect(()=>{
     if(!el.internal_lump){getRateSuggestion(el.element_name,el.category,city).then(setRateSuggestion)}
@@ -341,7 +342,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
               onLump={()=>{onUpdate('internal_lump',true);onSave()}}
               muted={true}
             />
-            {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.sources>=3?'#e6f4ec':'#e8e4dc',color:rateSuggestion.sources>=3?'#1a6b3a':'#7a7060',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
+            {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.rateType==='vendor_quoted'?'#e6f4ec':'#e8eef8',color:rateSuggestion.rateType==='vendor_quoted'?'#1a6b3a':'#1a4b8a',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
             {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>}
             {internalAmt>0&&(
               <div style={{fontSize:'11px',color:'#6B7280',fontWeight:500,marginTop:'1px'}}>= {fmt(internalAmt)}</div>
@@ -487,7 +488,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             onLump={()=>{onUpdate('internal_lump',true);onSave()}}
             muted={true}
           />
-          {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.sources>=3?'#e6f4ec':'#e8e4dc',color:rateSuggestion.sources>=3?'#1a6b3a':'#7a7060',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
+          {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.rateType==='vendor_quoted'?'#e6f4ec':'#e8eef8',color:rateSuggestion.rateType==='vendor_quoted'?'#1a6b3a':'#1a4b8a',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
           {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>}
           {!el.internal_lump&&internalAmt>0&&(
             <div style={{fontSize:'11px',color:'#92400E',marginTop:'2px',fontWeight:500}}>{fmt(internalAmt)}</div>
