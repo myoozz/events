@@ -227,7 +227,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
     const cityToUse=eventCity||'Pan-India'
     let{data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).ilike('city',`%${cityToUse}%`).ilike('element_name',`%${elementName}%`)
     if(!data||data.length===0){
-      ({data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).or('location_scope.ilike.%pan-india%,city.is.null').ilike('element_name',`%${elementName}%`))
+      ({data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).or('location_scope.ilike.%national%,city.ilike.%pan-india%,city.is.null').ilike('element_name',`%${elementName}%`))
     }
     if(!data||data.length===0) return null
     const sources=data.length
