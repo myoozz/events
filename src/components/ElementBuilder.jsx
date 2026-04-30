@@ -222,12 +222,12 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
   const isGrid=viewMode==='grid'
 
   const [rateSuggestion,setRateSuggestion]=useState(null)
-  const getRateSuggestion=useCallback(async(elementName,category,eventCity)=>{
-    if(!elementName||!category) return null
+  const getRateSuggestion=useCallback(async(category,eventCity)=>{
+    if(!category) return null
     const cityToUse=eventCity||'Pan-India'
-    let{data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).ilike('city',`%${cityToUse}%`).ilike('element_name',`%${elementName}%`)
+    let{data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).ilike('city',`%${cityToUse}%`)
     if(!data||data.length===0){
-      ({data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).or('location_scope.ilike.%national%,city.ilike.%pan-india%,city.is.null').ilike('element_name',`%${elementName}%`))
+      ({data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).or('location_scope.ilike.%national%,city.ilike.%pan-india%,city.is.null'))
     }
     if(!data||data.length===0) return null
     const sources=data.length
@@ -238,9 +238,9 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
     return{marketFloor,marketCeiling,sources,rateType}
   },[])
   useEffect(()=>{
-    if(!el.internal_lump){getRateSuggestion(el.element_name,el.category,city).then(setRateSuggestion)}
+    if(!el.internal_lump){getRateSuggestion(el.category,city).then(setRateSuggestion)}
     else{setRateSuggestion(null)}
-  },[el.element_name,el.category,city,el.internal_lump,getRateSuggestion])
+  },[el.category,city,el.internal_lump,getRateSuggestion])
 
   // ── GRID MODE ──
   if(isGrid&&!isMobile){
