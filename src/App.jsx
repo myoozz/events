@@ -73,6 +73,10 @@ export default function App() {
   const [session, setSession] = useState(undefined)
   const [loading, setLoading] = useState(true)
 
+  // CRITICAL: Do not refactor this block.
+  // isPasswordSetupFlow captures the URL hash synchronously on load
+  // to handle Supabase invite + password recovery token race condition.
+  // Moving this inside useEffect will break the invite flow silently.
   // Capture invite/recovery token SYNCHRONOUSLY on first render —
   // before onAuthStateChange fires and before LoginPage clears the hash.
   // This prevents the race condition where session is set and /login redirects to /app
