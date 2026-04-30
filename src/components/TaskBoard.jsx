@@ -185,7 +185,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
     const user = users.find((u) => u.id === assignTo);
     const { error } = await db('tasks').update({
       assigned_to:      assignTo || null,
-      assigned_to_name: user?.full_name || null,
+      assigned_name: user?.full_name || null,
     }).eq('id', modal.taskId);
 
     if (!error) {
@@ -199,7 +199,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
         if (otherCityTasks.length > 0) {
           await Promise.all(
             otherCityTasks.map((t) =>
-              db('tasks').update({ assigned_to: assignTo || null, assigned_to_name: user?.full_name || null }).eq('id', t.id)
+              db('tasks').update({ assigned_to: assignTo || null, assigned_name: user?.full_name || null }).eq('id', t.id)
             )
           );
         }
@@ -424,7 +424,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                           key={u.id}
                           onClick={async () => {
                             const ids = grouped[cat].map(t => t.id);
-                            await Promise.all(ids.map(id => db('tasks').update({ assigned_to: u.id, assigned_to_name: u.full_name }).eq('id', id)));
+                            await Promise.all(ids.map(id => db('tasks').update({ assigned_to: u.id, assigned_name: u.full_name }).eq('id', id)));
                             await fetchTasks();
                             setCatAssignMenu(null);
                           }}
@@ -444,7 +444,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
               <div style={styles.taskList}>
                 {grouped[cat].map((task) => {
                   const sm   = STATUS_META[task.status] || STATUS_META.pending;
-                  const ini  = task.assigned_to_name ? initials(task.assigned_to_name) : null;
+                  const ini  = task.assigned_name ? initials(task.assigned_name) : null;
                   return (
                     <div key={task.id} style={styles.card}>
                       <div style={styles.cardLeft}>
@@ -490,10 +490,10 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                           <button
                             style={styles.assignedPill}
                             onClick={() => canAssign && openAssign(task)}
-                            title={canAssign ? `Reassign (${task.assigned_to_name})` : task.assigned_to_name}
+                            title={canAssign ? `Reassign (${task.assigned_name})` : task.assigned_name}
                           >
                             <span style={styles.initialsCircle}>{ini}</span>
-                            <span style={styles.assignedName}>{task.assigned_to_name}</span>
+                            <span style={styles.assignedName}>{task.assigned_name}</span>
                           </button>
                         ) : (
                           canAssign && (
