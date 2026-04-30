@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { createClient } from '@supabase/supabase-js';
+
+const dwContainerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+const dwItemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+};
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -257,17 +268,13 @@ export default function DashboardWidgets({ userId, userRole, userName }) {
           .dw-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
         }
         .dw-card {
-          background: #ffffff;
+          background: linear-gradient(135deg, #ffffff 60%, #fdf5f5 100%);
           border: 1px solid #E8E4DF;
           border-radius: 10px;
           padding: 18px 20px 15px;
           position: relative;
           overflow: hidden;
-          transition: box-shadow 0.15s ease;
           cursor: default;
-        }
-        .dw-card:hover {
-          box-shadow: 0 2px 12px rgba(0,0,0,0.07);
         }
         .dw-card.hot {
           border-color: #f5c4c6;
@@ -354,23 +361,31 @@ export default function DashboardWidgets({ userId, userRole, userName }) {
           <span className="dw-role-tag">{ROLE_LABEL[userRole] || userRole}</span>
         </div>
 
-        <div className="dw-grid">
+        <motion.div
+          className="dw-grid"
+          variants={dwContainerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {loading
             ? [1, 2, 3, 4].map((i) => (
                 <div key={i} className="dw-card dw-skeleton" />
               ))
             : buildCards().map((card, i) => (
-                <div
+                <motion.div
                   key={i}
                   className={`dw-card${card.hot ? ' hot' : ''}`}
+                  variants={dwItemVariants}
+                  whileHover={{ y: -3, boxShadow: '0 8px 24px rgba(26,16,8,0.10)' }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 24 }}
                 >
                   <div className="accent-bar" />
                   <div className="card-label">{card.label}</div>
                   <div className="card-value">{card.value}</div>
                   <div className="card-hint">{card.hint}</div>
-                </div>
+                </motion.div>
               ))}
-        </div>
+        </motion.div>
       </div>
     </>
   );

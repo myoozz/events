@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
 import { version } from '../../package.json'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
@@ -274,38 +275,49 @@ export default function AppShell({ session }) {
 
           {/* Logo area */}
           <div style={{
-            height: '56px',
+            minHeight: '56px',
             display: 'flex',
-            alignItems: 'center',
+            alignItems: collapsed ? 'center' : 'flex-start',
             justifyContent: collapsed ? 'center' : 'space-between',
-            padding: collapsed ? '0' : '0 16px',
+            padding: collapsed ? '14px 0' : '14px 16px',
             borderBottom: '0.5px solid var(--border)',
             flexShrink: 0,
           }}>
             {!collapsed && (
-              <div
+              <motion.div
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
+                whileHover={{ scale: 1.03 }}
+                style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '3px' }}
                 onClick={() => handleNavClick('events')}
-                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
                 <img
-                  src="/myoozz-logo-light.png"
+                  src="/logo-me-events.svg"
                   alt="Myoozz Events"
-                  style={{ height: '26px', objectFit: 'contain', display: 'block' }}
+                  style={{ height: '28px', objectFit: 'contain', display: 'block' }}
                   onError={e => {
                     e.target.style.display = 'none'
-                    if (e.target.nextSibling) e.target.nextSibling.style.display = 'block'
+                    if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline-block'
                   }}
                 />
-                <div style={{
+                <span style={{
                   display: 'none',
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '16px', fontWeight: 500,
-                  color: 'var(--text)', letterSpacing: '-0.2px',
-                  whiteSpace: 'nowrap',
-                }}>
-                  events <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>by myoozz</span>
-                </div>
-              </div>
+                  background: '#bc1723', color: '#fff',
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontWeight: 700, fontSize: '18px',
+                  padding: '2px 10px', borderRadius: '3px', letterSpacing: '1px',
+                  lineHeight: 1.3,
+                }}>ME</span>
+                <span style={{
+                  fontFamily: 'var(--font-body)', fontSize: '10px',
+                  color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px',
+                }}>Myoozz Events</span>
+                <span style={{
+                  fontFamily: "'DM Mono', monospace", fontSize: '10px',
+                  color: '#bc1723',
+                }}>{version}</span>
+              </motion.div>
             )}
             {collapsed && (
               <div

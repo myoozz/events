@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabase'
 import NewEventForm from './NewEventForm'
 import ScreenGuide from './ScreenGuide'
@@ -20,6 +21,22 @@ const statusColor = {
 const STATUS_LABELS = {
   pitch: 'Pitch', submitted: 'Submitted',
   won: 'Won', lost: 'Lost', 'on hold': 'On Hold',
+}
+
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+  hovered: { y: -2, boxShadow: '0 8px 24px rgba(26,16,8,0.10)', transition: { type: 'spring', stiffness: 300, damping: 24 } },
+}
+
+const accentBarVariants = {
+  visible: { scaleX: 0 },
+  hovered: { scaleX: 1, transition: { type: 'spring', stiffness: 400, damping: 30 } },
 }
 
 function ConfirmDialog({ message, onConfirm, onCancel }) {
@@ -84,15 +101,24 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
   }, [])
 
   return (
-    <div style={{
-      border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
-      padding: '20px 24px', background: 'var(--bg)',
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      position: 'relative', transition: 'border-color 0.15s',
-    }}
-      onMouseOver={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
-      onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border)'}
+    <motion.div
+      variants={itemVariants}
+      whileHover="hovered"
+      style={{
+        border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
+        padding: '20px 24px',
+        background: 'linear-gradient(135deg, #ffffff 60%, #fdf5f5 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        position: 'relative', overflow: 'hidden',
+      }}
     >
+      <motion.div
+        variants={accentBarVariants}
+        style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0, width: '3px',
+          background: '#bc1723', transformOrigin: 'left',
+        }}
+      />
       <div style={{ flex: 1, cursor: 'pointer', width: '100%' }} onClick={() => onOpen(ev)}>
         <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>
           {ev.event_name}
@@ -182,7 +208,7 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
         )}
       </div>
       <ScreenGuide screen='dashboard' />
-    </div>
+    </motion.div>
   )
 }
 
@@ -444,7 +470,11 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
   const { greeting, message, urgent } = getGreeting()
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       {confirmArchive && (
         <ConfirmDialog
           message={`Archive "${confirmArchive.event_name}"? It will move to your archive and can be restored anytime.`}
@@ -478,13 +508,29 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
         userName={userName}
       />
 
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        style={{
+          fontSize: '13px', color: '#7a7060',
+          fontFamily: 'var(--font-body)', marginBottom: '16px',
+          ...(urgent ? { color: '#92400E', fontWeight: 500 } : {}),
+        }}
+      >
+        {message}
+      </motion.p>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
           {events.length} active · {archivedEvents.length} archived
         </p>
         {(userRole === 'admin' || userRole === 'manager') && view === 'active' && (
-          <button
+          <motion.button
             onClick={() => setShowNewEvent(true)}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             style={{
               padding: '10px 20px', fontSize: '13px', fontWeight: 500,
               fontFamily: 'var(--font-body)', background: 'var(--text)',
@@ -493,7 +539,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
             }}
           >
             + New event
-          </button>
+          </motion.button>
         )}
       </div>
 
@@ -530,25 +576,42 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
         )}
       </div>
 
-      {/* Active / Archived toggle */}
+      {/* Active / Archived tabs */}
       <div style={{
-        display: 'flex', gap: '0', border: '0.5px solid var(--border)',
-        borderRadius: 'var(--radius-sm)', overflow: 'hidden', width: 'fit-content', marginBottom: '24px',
+        display: 'flex', gap: '0',
+        borderBottom: '1px solid var(--border)',
+        width: 'fit-content', marginBottom: '24px',
       }}>
-        {[{ key: 'active', label: 'Active' }, { key: 'archived', label: 'Archived' }].map(v => (
+        {[
+          { key: 'active', label: `Active${events.length > 0 ? ` (${events.length})` : ''}` },
+          { key: 'archived', label: `Archived${archivedEvents.length > 0 ? ` (${archivedEvents.length})` : ''}` },
+        ].map(v => (
           <button
             key={v.key}
             onClick={() => setView(v.key)}
             style={{
-              padding: '7px 18px', fontSize: '13px',
+              padding: '8px 18px 10px', fontSize: '13px',
               fontWeight: view === v.key ? 500 : 400,
               fontFamily: 'var(--font-body)',
-              background: view === v.key ? 'var(--text)' : 'var(--bg)',
-              color: view === v.key ? 'var(--bg)' : 'var(--text-tertiary)',
+              background: 'none',
+              color: view === v.key ? '#bc1723' : 'var(--text-tertiary)',
               border: 'none', cursor: 'pointer',
+              position: 'relative',
+              transition: 'color 0.15s',
             }}
           >
             {v.label}
+            {view === v.key && (
+              <motion.div
+                layoutId="tab-indicator"
+                style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0,
+                  height: '2px', background: '#bc1723',
+                  borderRadius: '2px 2px 0 0',
+                }}
+                transition={{ type: 'spring', stiffness: 400, damping: 36 }}
+              />
+            )}
           </button>
         ))}
       </div>
@@ -622,59 +685,82 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
 
       {loading ? (
         <p style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>Loading...</p>
-      ) : displayEvents.length === 0 ? (
-        <div style={{ border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius)', padding: '60px 40px', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: 'var(--text-tertiary)', fontStyle: 'italic', marginBottom: '8px' }}>
-            {view === 'active' ? 'No active events.' : 'No archived events.'}
-          </p>
-          <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
-            {view === 'active'
-              ? (userRole === 'admin' || userRole === 'manager')
-                ? 'Create your first event to get started.'
-                : 'No events have been assigned to you yet.'
-              : 'Archived events will appear here. You can restore them anytime.'}
-          </p>
-        </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {displayEvents.map(ev => (
-            view === 'active' ? (
-              <EventCard
-                key={ev.id} ev={ev} userRole={userRole}
-                onOpen={setOpenEvent} onEdit={setEditEvent}
-                onArchive={setConfirmArchive} onAssign={setAssignEvent}
-                getNames={getNames}
-              />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={view}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            {displayEvents.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                style={{ border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius)', padding: '60px 40px', textAlign: 'center' }}
+              >
+                <div style={{ fontSize: '32px', marginBottom: '12px' }}>📅</div>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: 'var(--text-tertiary)', fontStyle: 'italic', marginBottom: '8px' }}>
+                  {view === 'active' ? 'No events yet.' : 'No archived events.'}
+                </p>
+                <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
+                  {view === 'active'
+                    ? (userRole === 'admin' || userRole === 'manager')
+                      ? 'Create your first event to get started.'
+                      : 'No events have been assigned to you yet.'
+                    : 'Archived events will appear here. You can restore them anytime.'}
+                </p>
+              </motion.div>
             ) : (
-              <div key={ev.id} style={{
-                border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
-                padding: '16px 24px', background: 'var(--bg)',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                opacity: 0.7,
-              }}>
-                <div>
-                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text)', marginBottom: '3px' }}>{ev.event_name}</div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
-                    {ev.clients?.group_name}{ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : ''}
-                  </div>
-                </div>
-                {(userRole === 'admin' || userRole === 'manager') && (
-                  <button
-                    onClick={() => handleRestore(ev)}
-                    style={{
-                      padding: '7px 16px', fontSize: '12px', fontWeight: 500,
-                      fontFamily: 'var(--font-body)', background: 'none',
-                      border: '0.5px solid var(--border-strong)',
-                      borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)',
-                    }}
-                  >
-                    Restore
-                  </button>
-                )}
-              </div>
-            )
-          ))}
-        </div>
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+              >
+                {displayEvents.map(ev => (
+                  view === 'active' ? (
+                    <EventCard
+                      key={ev.id} ev={ev} userRole={userRole}
+                      onOpen={setOpenEvent} onEdit={setEditEvent}
+                      onArchive={setConfirmArchive} onAssign={setAssignEvent}
+                      getNames={getNames}
+                    />
+                  ) : (
+                    <motion.div key={ev.id} variants={itemVariants} style={{
+                      border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
+                      padding: '16px 24px', background: 'var(--bg)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      opacity: 0.7,
+                    }}>
+                      <div>
+                        <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text)', marginBottom: '3px' }}>{ev.event_name}</div>
+                        <div style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
+                          {ev.clients?.group_name}{ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : ''}
+                        </div>
+                      </div>
+                      {(userRole === 'admin' || userRole === 'manager') && (
+                        <button
+                          onClick={() => handleRestore(ev)}
+                          style={{
+                            padding: '7px 16px', fontSize: '12px', fontWeight: 500,
+                            fontFamily: 'var(--font-body)', background: 'none',
+                            border: '0.5px solid var(--border-strong)',
+                            borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)',
+                          }}
+                        >
+                          Restore
+                        </button>
+                      )}
+                    </motion.div>
+                  )
+                ))}
+              </motion.div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       )}
       <ScreenGuide screen='dashboard' />
 
@@ -693,6 +779,6 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
           }}
         />
       )}
-    </div>
+    </motion.div>
   )
 }
