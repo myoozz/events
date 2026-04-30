@@ -8,6 +8,7 @@ import TeamView from './TeamView'
 import AnalyticsDashboard from './AnalyticsDashboard'
 import EarlyAccess from './EarlyAccess'
 import RateCard from './RateCard'
+import CategoryManager from './CategoryManager'
 import FeedbackButton from './FeedbackButton'
 import FeedbackAdmin from './FeedbackAdmin'
 import ActivityLog from './ActivityLog'
@@ -82,6 +83,18 @@ const NAV_ITEMS = [
         <rect x="2" y="4" width="14" height="10" rx="1.5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none"/>
         <path d="M6 9h6M6 12h4" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" strokeLinecap="round"/>
         <path d="M11 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} opacity="0.6"/>
+      </svg>
+    ),
+  },
+  {
+    key: 'categories',
+    label: 'Categories',
+    roles: ['admin'],
+    icon: (active) => (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="2" y="2" width="6" height="6" rx="1.5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none"/>
+        <rect x="10" y="2" width="6" height="6" rx="1.5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none" opacity="0.5"/>
+        <path d="M2 13h14M2 16h8" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     ),
   },
@@ -634,6 +647,9 @@ export default function AppShell({ session }) {
           )}
           {activeTab === 'ratecard' && (userRole === 'admin' || canManageRateCards) && (
             <RateCard session={session} userRole={userRole} canManageRateCards={canManageRateCards} />
+          )}
+          {activeTab === 'categories' && userRole === 'admin' && (
+            <CategoryManager userRole={userRole} />
           )}
           {activeTab === 'feedback' && userRole === 'admin' && (
             <FeedbackAdmin />

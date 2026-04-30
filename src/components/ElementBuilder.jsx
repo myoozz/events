@@ -643,8 +643,13 @@ function CategoryBlock({
   const [editingName,setEditingName]=useState(false)
   const [nameVal,setNameVal]=useState(cat.name)
   const nameRef=useRef(null)
+  const [availableCategories,setAvailableCategories]=useState([])
 
   useEffect(()=>{ setNameVal(cat.name) },[cat.name])
+  useEffect(()=>{
+    supabase.from('event_categories').select('name').eq('is_active',true).order('sort_order')
+      .then(({data})=>{ if(data) setAvailableCategories(data.map(c=>c.name)) })
+  },[])
 
   const fv=fieldVis||{days:true,source:true,status:true,size:true,finish:true}
   const isGrid=viewMode==='grid'
@@ -704,17 +709,16 @@ function CategoryBlock({
 
         {/* Editable category name */}
         {editingName?(
-          <input
-            ref={nameRef} value={nameVal} placeholder="Category name" autoFocus
+          <select
+            value={nameVal}
             onClick={e=>e.stopPropagation()}
             onChange={e=>setNameVal(e.target.value)}
             onBlur={e=>{e.stopPropagation();onRename&&onRename(cat.name,nameVal);setEditingName(false)}}
-            onKeyDown={e=>{
-              if(e.key==='Enter'){onRename&&onRename(cat.name,nameVal);setEditingName(false)}
-              if(e.key==='Escape') setEditingName(false)
-            }}
-            style={{flex:1,fontSize:'14px',fontWeight:500,background:'none',border:'none',outline:'none',color:'var(--text)',fontFamily:'var(--font-body)',borderBottom:'1px solid var(--text)'}}
-          />
+            style={{flex:1,fontSize:'14px',fontWeight:500,background:'none',border:'none',outline:'none',color:'var(--text)',fontFamily:'var(--font-body)',borderBottom:'1px solid var(--text)',cursor:'pointer'}}
+          >
+            <option value="">Select category</option>
+            {availableCategories.map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
         ):(
           <span
             onClick={e=>{e.stopPropagation();setEditingName(true)}}

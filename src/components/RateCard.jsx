@@ -259,7 +259,13 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
   const [pbCountry, setPbCountry] = useState('India')
   const [pbFocusNotes, setPbFocusNotes] = useState('')
   const [pbCopied, setPbCopied] = useState(false)
+  const [availableCategories, setAvailableCategories] = useState([])
   const fileRef = useRef(null)
+
+  useEffect(() => {
+    supabase.from('event_categories').select('name').eq('is_active', true).order('sort_order')
+      .then(({ data }) => { if (data) setAvailableCategories(data.map(c => c.name)) })
+  }, [])
 
   async function handleDownload() {
     if (!category) return
@@ -421,7 +427,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                 <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Category</div>
                 <select value={category} onChange={e => setCategory(e.target.value)} style={selectStyle}>
                   <option value="">— Select category —</option>
-                  {RC_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
