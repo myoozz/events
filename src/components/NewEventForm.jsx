@@ -662,7 +662,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
     },
     2: {
       title: "What kind of event is this?",
-      hint: "ME picks the right categories for your event type. Add, remove, or reorder anytime.",
+      hint: "You can add, remove, or reorder categories anytime from the event page.",
       content: (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
