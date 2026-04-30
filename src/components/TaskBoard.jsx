@@ -31,6 +31,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
   const [users,       setUsers]       = useState([]);
   const [activeCity,  setActiveCity]  = useState('');
   const [collapsed,   setCollapsed]   = useState({});
+  const [catAssignMenu, setCatAssignMenu] = useState(null); // cat name or null
   const [loading,     setLoading]     = useState(true);
   const [modal,       setModal]       = useState(null);   // { taskId, taskTitle }
   const [assignTo,    setAssignTo]    = useState('');
@@ -76,6 +77,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
       if (modal      && modalRef.current  && !modalRef.current.contains(e.target))  setModal(null);
       if (statusMenu && statusRef.current && !statusRef.current.contains(e.target)) setStatusMenu(null);
       if (importOpen && importRef.current && !importRef.current.contains(e.target)) setImportOpen(false);
+      setCatAssignMenu(null);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -396,16 +398,46 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
         categories.map((cat) => (
           <div key={cat} style={styles.category}>
             {/* category header */}
-            <button
-              style={styles.catHeader}
-              onClick={() => setCollapsed((p) => ({ ...p, [cat]: !p[cat] }))}
-            >
-              <span style={styles.catTitle}>{cat}</span>
-              <span style={styles.catMeta}>
-                <span style={styles.catCount}>{grouped[cat].length}</span>
-                <span style={styles.catChevron}>{collapsed[cat] ? '▸' : '▾'}</span>
-              </span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <button
+                style={styles.catHeader}
+                onClick={() => setCollapsed((p) => ({ ...p, [cat]: !p[cat] }))}
+              >
+                <span style={styles.catTitle}>{cat}</span>
+                <span style={styles.catMeta}>
+                  <span style={styles.catCount}>{grouped[cat].length}</span>
+                  <span style={styles.catChevron}>{collapsed[cat] ? '▸' : '▾'}</span>
+                </span>
+              </button>
+              {canAssign && (
+                <div style={{ position: 'relative', marginRight: '8px', flexShrink: 0 }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setCatAssignMenu(catAssignMenu === cat ? null : cat); }}
+                    style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', border: '0.5px solid #d8d2c8', background: '#fff', cursor: 'pointer', color: '#2c2518', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}
+                  >
+                    Assign All ▾
+                  </button>
+                  {catAssignMenu === cat && (
+                    <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 200, minWidth: '180px', padding: '4px 0' }}>
+                      {users.map(u => (
+                        <button
+                          key={u.id}
+                          onClick={async () => {
+                            const ids = grouped[cat].map(t => t.id);
+                            await Promise.all(ids.map(id => db('tasks').update({ assigned_to: u.id, assigned_to_name: u.full_name }).eq('id', id)));
+                            await fetchTasks();
+                            setCatAssignMenu(null);
+                          }}
+                          style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', color: '#2c2518' }}
+                        >
+                          {u.full_name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* tasks */}
             {!collapsed[cat] && (
