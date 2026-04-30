@@ -27,13 +27,14 @@ const EVENT_TYPES = [
 ]
 
 const SEATING = [
-  'Theatre', 'Classroom', 'Banquet', 'Cocktail / Standing', 'Exhibition', 'Mixed',
+  'Theatre', 'Classroom', 'Banquet / Rounds', 'Cocktail / Standing',
+  'U-Shape', 'Boardroom', 'Cabaret', 'Hollow Square', 'Hybrid', 'Not decided yet',
 ]
 
 const TIERS = [
-  { value: 'standard',      label: 'Standard',      desc: 'Functional, on-budget delivery' },
-  { value: 'premium',       label: 'Premium',        desc: 'Elevated experience, quality focus' },
-  { value: 'ultra_premium', label: 'Ultra Premium',  desc: 'No-compromise benchmark event' },
+  { value: 'Basic',   label: 'Basic',   desc: 'Functional, on-budget delivery' },
+  { value: 'Mid',     label: 'Mid',     desc: 'Elevated experience, quality focus' },
+  { value: 'Premium', label: 'Premium', desc: 'No-compromise benchmark event' },
 ]
 
 const TOTAL_STEPS = 10
@@ -200,7 +201,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         budget_tier: a.budgetTier || null,
         sub_events: a.hasSubEvents ? { count: a.subEventCount } : null,
         status: 'active',
-        proposal_status: 'pitch',
+        proposal_status: 'draft',
         created_by: session?.user?.id,
         created_by_role: userRole,
         review_status: userRole === 'event_lead' ? 'pending' : 'approved',
