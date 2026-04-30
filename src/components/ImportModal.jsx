@@ -358,15 +358,17 @@ export default function ImportModal({ event, city, onImported, onClose }) {
   async function runImport() {
     setStep('importing')
     let total = 0
+    let errors = 0
     for (const cat of parsed) {
       setProgress(`Importing ${cat.name}...`)
       for (let i = 0; i < cat.items.length; i++) {
         const el = cat.items[i]
+        if (!el.element_name || !el.element_name.trim()) continue
         const clientAmt = el.lump_sum ? (el.amount || 0) : (el.rate || 0) * (el.qty || 1) * (el.days || 1)
         const internalAmt = el.internal_lump ? (el.internal_amount || 0) : (el.internal_rate || 0) * (el.qty || 1) * (el.days || 1)
-        await supabase.from('elements').insert({
+        const { error } = await supabase.from('elements').insert({
           event_id: event.id, city, category: cat.name,
-          element_name: el.element_name, finish: el.finish || '',
+          element_name: el.element_name.trim(), finish: el.finish || '',
           size: el.size || '', size_unit: el.size_unit || 'ft',
           qty: el.qty || 1, days: el.days || 1,
           rate: el.rate || 0, lump_sum: el.lump_sum || false, amount: clientAmt,
@@ -374,12 +376,14 @@ export default function ImportModal({ event, city, onImported, onClose }) {
           internal_amount: internalAmt,
           source: el.source || '', cost_status: 'Estimated',
           bundled: false, sort_order: i,
+          is_option: false, option_group: null,
         })
-        total++
+        if (error) { console.error('Import insert failed:', error.message, el); errors++ }
+        else total++
       }
     }
-    setProgress(`Done — ${total} elements imported.`)
-    setTimeout(() => { onImported(); onClose() }, 1200)
+    setProgress(errors > 0 ? `Done — ${total} imported, ${errors} failed. Check console.` : `Done — ${total} elements imported.`)
+    setTimeout(() => { onImported(); onClose() }, 1800)
   }
 
   const previewRows = rawRows.slice(Math.max(0, headerRowIdx - 2), headerRowIdx + 8)
