@@ -1107,7 +1107,7 @@ function CityElements({ event, city, userRole, teamUsers }){
 
   // ── ADD CATEGORY — reads suggestion items + logs ──
   async function addCategory(name){
-    const id='cat-'+Date.now()
+    const id='cat-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)
     const defaults=getCatDefaults(name)
     const suggestions=(CATEGORY_SUGGESTIONS[name]||[]).map((el,i)=>({
       id:'new-'+Date.now()+'-'+i,
@@ -1276,7 +1276,7 @@ function CityElements({ event, city, userRole, teamUsers }){
     setSaving(true)
     const result=[]
     for(const cat of parsedCats){
-      if(!cat.id) cat.id='cat-'+Date.now()+'-'+Math.random()
+      if(!cat.id) cat.id='cat-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)
       const newItems=[]
       for(let i=0;i<cat.items.length;i++){
         const el=cat.items[i]
