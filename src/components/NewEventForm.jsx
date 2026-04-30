@@ -194,8 +194,6 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         start_date: a.startDate || null,
         end_date: a.endDate || null,
         proposal_due_date: a.proposalDueDate || null,
-        agency_fee: a.agencyFee,
-        gst: a.gst,
         pax_count: a.paxCount ? parseInt(a.paxCount) : null,
         seating_format: a.seatingFormat || null,
         budget_tier: a.budgetTier || null,
