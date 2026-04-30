@@ -648,7 +648,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
   const STEPS = {
     1: {
       title: "What's the event called?",
-      hint: "You can change this anytime.",
+      hint: "ME builds your entire format around this — every document, cost sheet, and export.",
       content: (
         <input
           ref={inputRef}
@@ -662,7 +662,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
     },
     2: {
       title: "What kind of event is this?",
-      hint: "Pick a type, then narrow it down.",
+      hint: "ME picks the right categories for your event type. Add, remove, or reorder anytime.",
       content: (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -712,7 +712,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
     },
     3: {
       title: "When is it happening?",
-      hint: "Start and end dates. Execution days are calculated automatically.",
+      hint: "ME puts it on your dashboard and keeps your whole team on the same timeline.",
       content: (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -742,7 +742,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
     },
     4: {
       title: "Where is it?",
-      hint: "One city or many — ME handles multi-city events.",
+      hint: "One city or ten — ME plans them simultaneously, each with its own elements, costs, and team.",
       content: (
         <div>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
@@ -783,7 +783,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
     },
     5: {
       title: "How many guests are expected?",
-      hint: "An estimate is fine. This helps with venue, F&B, and manpower.",
+      hint: "This one number drives your venue size, F&B quantities, manpower, and equipment.",
       content: (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -805,7 +805,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
     },
     6: {
       title: "How will they be seated?",
-      hint: "Drives stage layout, AV setup, and space planning.",
+      hint: "Seating format sets your stage size, AV layout, and the space you actually need.",
       content: (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
           {SEATING.map(f => (
@@ -830,7 +830,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
     },
     7: {
       title: "What's the budget positioning?",
-      hint: "Helps benchmark elements and flag rate anomalies.",
+      hint: "ME uses this to give you the right rate benchmarks and flag anything that looks off.",
       content: (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
           {TIERS.map(t => (
@@ -863,7 +863,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
     },
     8: {
       title: "Does this event have sub-events?",
-      hint: "e.g. A conference + gala dinner + site visit across separate days.",
+      hint: "A conference, a gala, a site visit — ME plans each one separately so nothing gets mixed up.",
       content: (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -902,7 +902,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
     },
     9: {
       title: "Who is the client contact?",
-      hint: "The person on the client side you coordinate with.",
+      hint: "Saved securely. Your data stays yours — ME never shares it with anyone.",
       content: (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div>
@@ -922,7 +922,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
     },
     10: {
       title: "Who is leading this event?",
-      hint: "The ME team member responsible end-to-end.",
+      hint: "Assign your lead now or do it later from the event page. Your team, your call.",
       content: (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {users.length === 0 && (
