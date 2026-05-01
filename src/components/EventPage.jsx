@@ -302,7 +302,8 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     return () => window.removeEventListener('resize', fn)
   }, [])
 
-  const [activeTab,    setActiveTab]    = useState(initialTab || 'elements')
+  const getDefaultTab = (ps) => ps === 'won' ? 'execution' : 'elements';
+  const [activeTab,    setActiveTab]    = useState(initialTab || getDefaultTab(event?.proposal_status))
   const [refreshKey,   setRefreshKey]   = useState(0)
   const [showWonModal, setShowWonModal] = useState(false)
   const [currentEvent, setCurrentEvent] = useState(event)

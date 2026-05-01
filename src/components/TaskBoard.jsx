@@ -42,6 +42,12 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
   const [adding,      setAdding]      = useState(false);
   const [importOpen,  setImportOpen]  = useState(false);
   const [importEls,   setImportEls]   = useState([]);
+  const [showInlineInvite, setShowInlineInvite] = useState(false);
+  const [inviteEmail,      setInviteEmail]      = useState('');
+  const [inviteSending,    setInviteSending]    = useState(false);
+  const [showCatInvite,    setShowCatInvite]    = useState(null);
+  const [catInviteEmail,   setCatInviteEmail]   = useState('');
+  const [catInviteSending, setCatInviteSending] = useState(false);
   const [importSel,   setImportSel]   = useState({});
   const [importing,   setImporting]   = useState(false);
   const [importLoading, setImportLoading] = useState(false);
@@ -406,10 +412,10 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                 <span style={styles.catTitle}>{cat}</span>
                 <span style={styles.catMeta}>
                   <span style={styles.catCount}>{grouped[cat].length}</span>
-                  <span style={styles.catChevron}>{collapsed[cat] ? '▸' : '▾'}</span>
+                  <span style={styles.catChevron}>{collapsed[cat] ? '▾' : '▸'}</span>
                 </span>
               </button>
-              {canAssign && (
+              {!collapsed[cat] && canAssign && (
                 <div style={{ position: 'relative', marginRight: '8px', flexShrink: 0 }}>
                   <button
                     onClick={(e) => { e.stopPropagation(); setCatAssignMenu(catAssignMenu === cat ? null : cat); }}
@@ -433,14 +439,67 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                           {u.full_name}
                         </button>
                       ))}
+                      {(userRole === 'admin' || userRole === 'manager') && (
+                        <>
+                          <div style={{ height: '0.5px', background: '#d8d2c8', margin: '4px 0' }} />
+                          <button
+                            onClick={() => { setCatAssignMenu(null); setShowCatInvite(cat); }}
+                            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', color: '#bc1723' }}
+                          >
+                            ＋ Invite someone...
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
               )}
             </div>
 
+            {showCatInvite === cat && (userRole === 'admin' || userRole === 'manager') && (
+              <div style={{ margin: '6px 0 4px', padding: '10px', background: '#f2efe9', borderRadius: '6px', border: '0.5px solid #d8d2c8' }}>
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  value={catInviteEmail}
+                  onChange={(e) => setCatInviteEmail(e.target.value)}
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '0.5px solid #d8d2c8', fontSize: '13px', fontFamily: 'var(--font-body)', marginBottom: '8px', boxSizing: 'border-box' }}
+                />
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    disabled={catInviteSending || !catInviteEmail}
+                    onClick={async () => {
+                      setCatInviteSending(true);
+                      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                      const res = await fetch(`${supabaseUrl}/functions/v1/invite-user`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
+                        body: JSON.stringify({ email: catInviteEmail }),
+                      });
+                      const json = await res.json();
+                      setCatInviteSending(false);
+                      if (res.ok && !json.error) {
+                        setCatInviteEmail('');
+                        setShowCatInvite(null);
+                      }
+                    }}
+                    style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#bc1723', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                  >
+                    {catInviteSending ? 'Sending...' : 'Send invite'}
+                  </button>
+                  <button
+                    onClick={() => { setShowCatInvite(null); setCatInviteEmail(''); }}
+                    style={{ fontSize: '12px', background: 'none', border: 'none', color: '#7a7060', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* tasks */}
-            {!collapsed[cat] && (
+            {collapsed[cat] && (
               <div style={styles.taskList}>
                 {grouped[cat].map((task) => {
                   const sm   = STATUS_META[task.status] || STATUS_META.pending;
@@ -526,7 +585,14 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
             <select
               style={styles.select}
               value={assignTo}
-              onChange={(e) => setAssignTo(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value === '__invite__') {
+                  setShowInlineInvite(true);
+                  setAssignTo('');
+                  return;
+                }
+                setAssignTo(e.target.value);
+              }}
             >
               <option value="">— Unassigned —</option>
               {users.map((u) => (
@@ -535,7 +601,51 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                   {u.role ? ` (${u.role.replace('_', ' ')})` : ''}
                 </option>
               ))}
+              {(userRole === 'admin' || userRole === 'manager') && (
+                <option value="__invite__">＋ Invite someone...</option>
+              )}
             </select>
+            {showInlineInvite && (userRole === 'admin' || userRole === 'manager') && (
+              <div style={{ marginTop: '10px', padding: '10px', background: '#f2efe9', borderRadius: '6px', border: '0.5px solid #d8d2c8' }}>
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '0.5px solid #d8d2c8', fontSize: '13px', fontFamily: 'var(--font-body)', marginBottom: '8px', boxSizing: 'border-box' }}
+                />
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    disabled={inviteSending || !inviteEmail}
+                    onClick={async () => {
+                      setInviteSending(true);
+                      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+                      const res = await fetch(`${supabaseUrl}/functions/v1/invite-user`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
+                        body: JSON.stringify({ email: inviteEmail }),
+                      });
+                      const json = await res.json();
+                      setInviteSending(false);
+                      if (res.ok && !json.error) {
+                        setInviteEmail('');
+                        setShowInlineInvite(false);
+                      }
+                    }}
+                    style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#bc1723', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                  >
+                    {inviteSending ? 'Sending...' : 'Send invite'}
+                  </button>
+                  <button
+                    onClick={() => { setShowInlineInvite(false); setInviteEmail(''); }}
+                    style={{ fontSize: '12px', background: 'none', border: 'none', color: '#7a7060', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Apply to all cities — only show when event has multiple cities */}
             {cities.length > 1 && (
