@@ -10,6 +10,16 @@
 
 import { supabase } from '../supabase';
 
+async function resolveUserId(authId) {
+  if (!authId) return null;
+  const { data } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_id', authId)
+    .single();
+  return data?.id ?? null;
+}
+
 // ─────────────────────────────────────────────
 // NOTIFICATION TYPES (reference)
 // ─────────────────────────────────────────────
@@ -56,14 +66,16 @@ export const NOTIF_META = {
 //   });
 
 export async function createNotification(payload) {
+  const resolvedTriggeredBy = await resolveUserId(payload?.triggered_by ?? payload?.[0]?.triggered_by);
+
   // Support single object or array
   const rows = Array.isArray(payload) ? payload : [payload];
 
   // Filter out any rows where user_id is missing or is the same as triggered_by
   // (no self-notifications)
-  const filtered = rows.filter(
-    (n) => n.user_id && n.user_id !== n.triggered_by
-  );
+  const filtered = rows
+    .filter((n) => n.user_id && n.user_id !== resolvedTriggeredBy)
+    .map((n) => ({ ...n, triggered_by: resolvedTriggeredBy }));
 
   if (filtered.length === 0) return { data: null, error: null };
 
