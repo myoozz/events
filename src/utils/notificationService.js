@@ -8,7 +8,7 @@
 // Future: add WhatsApp/email dispatch here when MSG91 is ready.
 // ============================================================
 
-import { supabase } from '../supabaseClient';
+import { supabase } from '../supabase';
 
 // ─────────────────────────────────────────────
 // NOTIFICATION TYPES (reference)
