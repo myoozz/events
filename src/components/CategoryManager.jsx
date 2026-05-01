@@ -35,6 +35,116 @@ export default function CategoryManager({ userRole }) {
     setLoading(false);
   }
 
+  const CATEGORY_TYPES = [
+    { value: 'rental',         label: 'Rental' },
+    { value: 'creative_print', label: 'Creative & Print' },
+    { value: 'booking',        label: 'Booking' },
+    { value: 'service',        label: 'Service' },
+    { value: 'permissions',    label: 'Permissions' },
+  ];
+
+  const [activeTab, setActiveTab] = useState('categories');
+  const [stageConfig, setStageConfig] = useState({});
+  const [stageLoading, setStageLoading] = useState(false);
+  const [editingStage, setEditingStage] = useState(null);
+  const [openPanels, setOpenPanels] = useState({});
+
+  useEffect(() => {
+    if (activeTab === 'stages') fetchStageConfig();
+  }, [activeTab]);
+
+  const fetchStageConfig = async () => {
+    setStageLoading(true);
+    const { data, error } = await supabase
+      .from('category_stage_config')
+      .select('*')
+      .order('category_type')
+      .order('sort_order');
+    if (!error && data) {
+      const grouped = {};
+      CATEGORY_TYPES.forEach(t => { grouped[t.value] = []; });
+      data.forEach(row => {
+        if (grouped[row.category_type]) grouped[row.category_type].push(row);
+      });
+      setStageConfig(grouped);
+    }
+    setStageLoading(false);
+  };
+
+  const updateCategoryType = async (categoryId, newType) => {
+    const { error } = await supabase
+      .from('event_categories')
+      .update({ category_type: newType || null })
+      .eq('id', categoryId);
+    if (!error) {
+      setCategories(prev =>
+        prev.map(c => c.id === categoryId ? { ...c, category_type: newType || null } : c)
+      );
+    }
+  };
+
+  const updateStageName = async (stageId, newName) => {
+    if (!newName.trim()) return;
+    const { error } = await supabase
+      .from('category_stage_config')
+      .update({ stage_name: newName.trim() })
+      .eq('id', stageId);
+    if (!error) fetchStageConfig();
+  };
+
+  const updateStageDays = async (stageId, newDays) => {
+    const parsed = parseInt(newDays, 10);
+    if (isNaN(parsed) || parsed < 0) return;
+    const { error } = await supabase
+      .from('category_stage_config')
+      .update({ days_before_event: parsed })
+      .eq('id', stageId);
+    if (!error) fetchStageConfig();
+  };
+
+  const toggleStageTerminal = async (stageId, current) => {
+    const { error } = await supabase
+      .from('category_stage_config')
+      .update({ is_terminal: !current })
+      .eq('id', stageId);
+    if (!error) fetchStageConfig();
+  };
+
+  const moveStage = async (typeKey, index, direction) => {
+    const stages = [...stageConfig[typeKey]];
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= stages.length) return;
+    const updates = [
+      { id: stages[index].id,     sort_order: stages[swapIndex].sort_order },
+      { id: stages[swapIndex].id, sort_order: stages[index].sort_order },
+    ];
+    await Promise.all(updates.map(u =>
+      supabase.from('category_stage_config').update({ sort_order: u.sort_order }).eq('id', u.id)
+    ));
+    fetchStageConfig();
+  };
+
+  const addStage = async (typeKey) => {
+    const stages = stageConfig[typeKey] || [];
+    const maxOrder = stages.length > 0 ? Math.max(...stages.map(s => s.sort_order)) : 0;
+    const { error } = await supabase
+      .from('category_stage_config')
+      .insert({ category_type: typeKey, stage_name: 'New Stage', sort_order: maxOrder + 1, days_before_event: 0 });
+    if (!error) fetchStageConfig();
+  };
+
+  const deleteStage = async (stageId) => {
+    const { error } = await supabase
+      .from('category_stage_config')
+      .delete()
+      .eq('id', stageId);
+    if (!error) fetchStageConfig();
+  };
+
+  const togglePanel = (typeKey) => {
+    setOpenPanels(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
+  };
+
   async function handleAdd() {
     if (!newName.trim()) return;
     const slug = generateSlug(newName.trim());
@@ -103,6 +213,33 @@ export default function CategoryManager({ userRole }) {
         </p>
       </div>
 
+      {/* Tab Bar */}
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
+        {[
+          { key: 'categories', label: 'Categories' },
+          { key: 'stages',     label: 'Stage Config' },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            style={{
+              padding: '10px 20px',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === tab.key ? '2px solid #bc1723' : '2px solid transparent',
+              color: activeTab === tab.key ? '#1a1008' : '#7a7060',
+              fontFamily: 'var(--sans)',
+              fontSize: 13,
+              fontWeight: activeTab === tab.key ? 600 : 400,
+              cursor: 'pointer',
+              marginBottom: -1,
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {error && (
         <div style={{ background: '#fde8ea', border: '1px solid #f5b5ba', borderRadius: 6, padding: '10px 14px', color: '#bc1723', fontSize: 13, marginBottom: 16 }}>
           {error}
@@ -110,7 +247,7 @@ export default function CategoryManager({ userRole }) {
         </div>
       )}
 
-      {loading ? (
+      {activeTab === 'categories' && (loading ? (
         <div style={{ color: '#7a7060', fontSize: 13 }}>Loading categories...</div>
       ) : (
         <div style={{ background: '#fff', border: '1px solid #d8d2c8', borderRadius: 8 }}>
@@ -154,6 +291,26 @@ export default function CategoryManager({ userRole }) {
               <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#b8b0a0', minWidth: 160 }}>
                 {cat.slug}
               </div>
+
+              <select
+                value={cat.category_type || ''}
+                onChange={e => updateCategoryType(cat.id, e.target.value)}
+                style={{
+                  fontSize: 11,
+                  padding: '3px 7px',
+                  border: '1px solid #d8d2c8',
+                  borderRadius: 4,
+                  background: '#fff',
+                  color: cat.category_type ? '#1a1008' : '#7a7060',
+                  cursor: 'pointer',
+                  fontFamily: 'DM Sans, sans-serif',
+                }}
+              >
+                <option value="">Untyped</option>
+                {CATEGORY_TYPES.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
 
               <div style={{
                 fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 3,
@@ -208,6 +365,190 @@ export default function CategoryManager({ userRole }) {
               {adding ? 'Adding...' : '+ Add Category'}
             </button>
           </div>
+        </div>
+      ))}
+
+      {activeTab === 'stages' && (
+        <div>
+          {stageLoading ? (
+            <p style={{ color: '#7a7060', fontSize: 13 }}>Loading stage config…</p>
+          ) : (
+            CATEGORY_TYPES.map(type => {
+              const stages = stageConfig[type.value] || [];
+              const isOpen = !!openPanels[type.value];
+              return (
+                <div
+                  key={type.value}
+                  style={{
+                    border: '1px solid #d8d2c8',
+                    borderRadius: 8,
+                    marginBottom: 12,
+                    background: '#fff',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Panel Header */}
+                  <div
+                    onClick={() => togglePanel(type.value)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 18px',
+                      cursor: 'pointer',
+                      background: isOpen ? '#f2efe9' : '#fff',
+                      borderBottom: isOpen ? '1px solid #d8d2c8' : 'none',
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1008' }}>
+                        {type.label}
+                      </span>
+                      <span style={{ fontSize: 11, color: '#7a7060', marginLeft: 10 }}>
+                        {stages.length} stage{stages.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 12, color: '#7a7060' }}>
+                      {isOpen ? '▲' : '▼'}
+                    </span>
+                  </div>
+
+                  {/* Panel Body */}
+                  {isOpen && (
+                    <div style={{ padding: '12px 18px 16px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid #f2efe9' }}>
+                            <th style={{ padding: '5px 8px 5px 0', textAlign: 'left', color: '#7a7060', fontWeight: 500, width: 32 }}>#</th>
+                            <th style={{ padding: '5px 8px', textAlign: 'left', color: '#7a7060', fontWeight: 500 }}>Stage Name</th>
+                            <th style={{ padding: '5px 8px', textAlign: 'center', color: '#7a7060', fontWeight: 500, width: 80 }}>Days Before</th>
+                            <th style={{ padding: '5px 8px', textAlign: 'center', color: '#7a7060', fontWeight: 500, width: 72 }}>Terminal</th>
+                            <th style={{ padding: '5px 8px', textAlign: 'center', color: '#7a7060', fontWeight: 500, width: 90 }}>Reorder</th>
+                            <th style={{ padding: '5px 8px', textAlign: 'center', color: '#7a7060', fontWeight: 500, width: 60 }}></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stages.map((stage, idx) => (
+                            <tr key={stage.id} style={{ borderBottom: '1px solid #f2efe9' }}>
+                              <td style={{ padding: '7px 8px 7px 0', color: '#7a7060' }}>
+                                {stage.sort_order}
+                              </td>
+
+                              <td style={{ padding: '7px 8px' }}>
+                                {editingStage?.id === stage.id && editingStage.field === 'name' ? (
+                                  <input
+                                    autoFocus
+                                    defaultValue={stage.stage_name}
+                                    onBlur={e => {
+                                      updateStageName(stage.id, e.target.value);
+                                      setEditingStage(null);
+                                    }}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') { updateStageName(stage.id, e.target.value); setEditingStage(null); }
+                                      if (e.key === 'Escape') setEditingStage(null);
+                                    }}
+                                    style={{ fontSize: 12, border: '1px solid #d8d2c8', borderRadius: 4, padding: '3px 7px', width: '100%', fontFamily: 'DM Sans, sans-serif' }}
+                                  />
+                                ) : (
+                                  <span
+                                    onDoubleClick={() => setEditingStage({ id: stage.id, field: 'name' })}
+                                    style={{ cursor: 'text', color: stage.is_terminal ? '#1a6b3a' : '#1a1008' }}
+                                    title="Double-click to edit"
+                                  >
+                                    {stage.stage_name}
+                                    {stage.is_terminal && (
+                                      <span style={{ fontSize: 10, background: '#e6f4ec', color: '#1a6b3a', padding: '1px 5px', borderRadius: 3, marginLeft: 6 }}>
+                                        Final
+                                      </span>
+                                    )}
+                                  </span>
+                                )}
+                              </td>
+
+                              <td style={{ padding: '7px 8px', textAlign: 'center' }}>
+                                {editingStage?.id === stage.id && editingStage.field === 'days' ? (
+                                  <input
+                                    autoFocus
+                                    type="number"
+                                    min={0}
+                                    defaultValue={stage.days_before_event}
+                                    onBlur={e => { updateStageDays(stage.id, e.target.value); setEditingStage(null); }}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') { updateStageDays(stage.id, e.target.value); setEditingStage(null); }
+                                      if (e.key === 'Escape') setEditingStage(null);
+                                    }}
+                                    style={{ fontSize: 12, border: '1px solid #d8d2c8', borderRadius: 4, padding: '3px 6px', width: 60, textAlign: 'center', fontFamily: 'DM Mono, monospace' }}
+                                  />
+                                ) : (
+                                  <span
+                                    onDoubleClick={() => setEditingStage({ id: stage.id, field: 'days' })}
+                                    style={{ cursor: 'text', fontFamily: 'DM Mono, monospace', fontSize: 12 }}
+                                    title="Double-click to edit"
+                                  >
+                                    {stage.days_before_event}d
+                                  </span>
+                                )}
+                              </td>
+
+                              <td style={{ padding: '7px 8px', textAlign: 'center' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={stage.is_terminal}
+                                  onChange={() => toggleStageTerminal(stage.id, stage.is_terminal)}
+                                  style={{ cursor: 'pointer', accentColor: '#1a6b3a' }}
+                                  title="Mark as terminal (final) stage"
+                                />
+                              </td>
+
+                              <td style={{ padding: '7px 8px', textAlign: 'center' }}>
+                                <button
+                                  onClick={() => moveStage(type.value, idx, 'up')}
+                                  disabled={idx === 0}
+                                  style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1, fontSize: 12, padding: '0 3px' }}
+                                >↑</button>
+                                <button
+                                  onClick={() => moveStage(type.value, idx, 'down')}
+                                  disabled={idx === stages.length - 1}
+                                  style={{ background: 'none', border: 'none', cursor: idx === stages.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === stages.length - 1 ? 0.3 : 1, fontSize: 12, padding: '0 3px' }}
+                                >↓</button>
+                              </td>
+
+                              <td style={{ padding: '7px 8px', textAlign: 'center' }}>
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm(`Delete stage "${stage.stage_name}"?`)) deleteStage(stage.id);
+                                  }}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7a7060', fontSize: 13 }}
+                                  title="Delete stage"
+                                >×</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      <button
+                        onClick={() => addStage(type.value)}
+                        style={{
+                          marginTop: 10,
+                          fontSize: 12,
+                          padding: '5px 12px',
+                          background: 'none',
+                          border: '1px dashed #d8d2c8',
+                          borderRadius: 4,
+                          color: '#7a7060',
+                          cursor: 'pointer',
+                          fontFamily: 'DM Sans, sans-serif',
+                        }}
+                      >
+                        + Add Stage
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 
