@@ -412,7 +412,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                 <span style={styles.catTitle}>{cat}</span>
                 <span style={styles.catMeta}>
                   <span style={styles.catCount}>{grouped[cat].length}</span>
-                  <span style={styles.catChevron}>{collapsed[cat] ? '▾' : '▸'}</span>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:collapsed[cat]?'rotate(-90deg)':'none',transition:'transform 0.18s ease',flexShrink:0}}><path d="M3 5l4 4 4-4" stroke={collapsed[cat]?'#7a7060':'#bc1723'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </span>
               </button>
               {!collapsed[cat] && canAssign && (
@@ -421,7 +421,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                     onClick={(e) => { e.stopPropagation(); setCatAssignMenu(catAssignMenu === cat ? null : cat); }}
                     style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', border: '0.5px solid #d8d2c8', background: '#fff', cursor: 'pointer', color: '#2c2518', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}
                   >
-                    Assign All ▾
+                    Assign All <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </button>
                   {catAssignMenu === cat && (
                     <div data-catassign style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 200, minWidth: '180px', padding: '4px 0' }}>
@@ -515,7 +515,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                             title={canAssign ? 'Change status' : sm.label}
                           >
                             {sm.label}
-                            {canAssign && <span style={{ marginLeft: 3, fontSize: 9 }}>▾</span>}
+                            {canAssign && <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                           </button>
                           {statusMenu === task.id && (
                             <div ref={statusRef} style={styles.statusDropdown}>

@@ -337,7 +337,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                 style={{ ...S.btn, ...S.btnGhost, fontSize: '12px', color: '#7a7060' }}
                 onClick={() => setShowMore(!showMore)}
               >
-                {showMore ? '▾' : '▸'} More details — Agency fee, GST, Proposal date
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:showMore?'rotate(180deg)':'none',transition:'transform 0.18s ease',marginRight:5,verticalAlign:'middle',display:'inline-block'}}><path d="M3 5l4 4 4-4" stroke={showMore?'#bc1723':'#7a7060'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> More details — Agency fee, GST, Proposal date
               </button>
 
               {showMore && (
