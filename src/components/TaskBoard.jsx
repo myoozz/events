@@ -77,7 +77,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
       if (modal      && modalRef.current  && !modalRef.current.contains(e.target))  setModal(null);
       if (statusMenu && statusRef.current && !statusRef.current.contains(e.target)) setStatusMenu(null);
       if (importOpen && importRef.current && !importRef.current.contains(e.target)) setImportOpen(false);
-      setCatAssignMenu(null);
+      if (!e.target.closest('[data-catassign]')) setCatAssignMenu(null);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -418,7 +418,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                     Assign All ▾
                   </button>
                   {catAssignMenu === cat && (
-                    <div style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 200, minWidth: '180px', padding: '4px 0' }}>
+                    <div data-catassign style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 200, minWidth: '180px', padding: '4px 0' }}>
                       {users.map(u => (
                         <button
                           key={u.id}
