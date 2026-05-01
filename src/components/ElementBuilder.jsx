@@ -695,8 +695,8 @@ function CategoryBlock({
       }}>
         {/* Collapse toggle */}
         <button onClick={()=>setOpen(!open)} title={open?'Collapse':'Expand'}
-          style={{width:'26px',height:'26px',display:'flex',alignItems:'center',justifyContent:'center',background:open?'#fde8ea':'#f2efe9',border:'1px solid #d8d2c8',borderRadius:'4px',cursor:'pointer',padding:0,flexShrink:0,transition:'all 0.12s'}}
-        ><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:open?'rotate(180deg)':'none',transition:'transform 0.18s ease'}}><path d="M3 5l4 4 4-4" stroke={open?'#bc1723':'#7a7060'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+          style={{width:'26px',height:'26px',display:'flex',alignItems:'center',justifyContent:'center',background:open?'#e8f5e9':'#fde8ea',border:'1px solid #d8d2c8',borderRadius:'4px',cursor:'pointer',padding:0,flexShrink:0,transition:'all 0.12s'}}
+        ><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:open?'rotate(180deg)':'none',transition:'transform 0.18s ease'}}><path d="M3 5l4 4 4-4" stroke={open?'#2e7d32':'#bc1723'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
 
         {/* Reorder — Phase F */}
         <div style={{display:'flex',gap:'2px',flexShrink:0}} onClick={e=>e.stopPropagation()}>
