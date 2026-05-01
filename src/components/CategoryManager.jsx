@@ -214,7 +214,7 @@ export default function CategoryManager({ userRole }) {
       </div>
 
       {/* Tab Bar */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #d8d2c8', marginBottom: 20 }}>
         {[
           { key: 'categories', label: 'Categories' },
           { key: 'stages',     label: 'Stage Config' },
@@ -228,7 +228,7 @@ export default function CategoryManager({ userRole }) {
               border: 'none',
               borderBottom: activeTab === tab.key ? '2px solid #bc1723' : '2px solid transparent',
               color: activeTab === tab.key ? '#1a1008' : '#7a7060',
-              fontFamily: 'var(--sans)',
+              fontFamily: 'DM Sans, sans-serif',
               fontSize: 13,
               fontWeight: activeTab === tab.key ? 600 : 400,
               cursor: 'pointer',
