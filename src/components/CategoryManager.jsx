@@ -304,6 +304,8 @@ export default function CategoryManager({ userRole }) {
                   color: cat.category_type ? '#1a1008' : '#7a7060',
                   cursor: 'pointer',
                   fontFamily: 'DM Sans, sans-serif',
+                  minWidth: 120,
+                  flexShrink: 0,
                 }}
               >
                 <option value="">Untyped</option>
