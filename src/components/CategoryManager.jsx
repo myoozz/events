@@ -270,72 +270,75 @@ export default function CategoryManager({ userRole }) {
                 {cat.sort_order}
               </div>
 
-              {editingId === cat.id ? (
-                <input
-                  autoFocus
-                  value={editingName}
-                  onChange={e => setEditingName(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleRename(cat); if (e.key === 'Escape') setEditingId(null); }}
-                  onBlur={() => handleRename(cat)}
-                  style={{ flex: 1, fontFamily: 'DM Sans, sans-serif', fontSize: 14, border: '1px solid #bc1723', borderRadius: 4, padding: '4px 8px', outline: 'none', color: '#1a1008' }}
-                />
-              ) : (
-                <div
-                  style={{ flex: 1, fontSize: 14, color: '#1a1008', cursor: 'text' }}
-                  onDoubleClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
-                >
-                  {cat.name}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {editingId === cat.id ? (
+                  <input
+                    autoFocus
+                    value={editingName}
+                    onChange={e => setEditingName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleRename(cat); if (e.key === 'Escape') setEditingId(null); }}
+                    onBlur={() => handleRename(cat)}
+                    style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, border: '1px solid #bc1723', borderRadius: 4, padding: '4px 8px', outline: 'none', color: '#1a1008' }}
+                  />
+                ) : (
+                  <div
+                    style={{ fontSize: 14, color: '#1a1008', cursor: 'text' }}
+                    onDoubleClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
+                  >
+                    {cat.name}
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#b8b0a0' }}>
+                    {cat.slug}
+                  </span>
+                  <span style={{ fontSize: 11, color: '#b8b0a0', flexShrink: 0 }}>Type</span>
+                  <select
+                    value={cat.category_type || ''}
+                    onChange={e => updateCategoryType(cat.id, e.target.value)}
+                    style={{
+                      fontSize: 12,
+                      padding: '1px 5px',
+                      border: '1px solid #e8e4dc',
+                      borderRadius: 3,
+                      background: '#faf8f5',
+                      color: cat.category_type ? '#1a1008' : '#7a7060',
+                      cursor: 'pointer',
+                      fontFamily: 'DM Sans, sans-serif',
+                      height: 22,
+                    }}
+                  >
+                    <option value="">Untyped</option>
+                    {CATEGORY_TYPES.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
                 </div>
-              )}
-
-              <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#b8b0a0', minWidth: 160 }}>
-                {cat.slug}
               </div>
 
-              <select
-                value={cat.category_type || ''}
-                onChange={e => updateCategoryType(cat.id, e.target.value)}
-                style={{
-                  fontSize: 11,
-                  padding: '3px 7px',
-                  border: '1px solid #d8d2c8',
-                  borderRadius: 4,
-                  background: '#fff',
-                  color: cat.category_type ? '#1a1008' : '#7a7060',
-                  cursor: 'pointer',
-                  fontFamily: 'DM Sans, sans-serif',
-                  minWidth: 120,
-                  flexShrink: 0,
-                }}
-              >
-                <option value="">Untyped</option>
-                {CATEGORY_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-
-              <div style={{
-                fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 3,
-                textTransform: 'uppercase', letterSpacing: 0.5, minWidth: 64, textAlign: 'center',
-                background: cat.is_active ? '#e6f4ec' : '#e8e4dc',
-                color: cat.is_active ? '#1a6b3a' : '#7a7060'
-              }}>
-                {cat.is_active ? 'Active' : 'Inactive'}
-              </div>
-
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button
-                  onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
-                  style={{ fontSize: 11, color: '#1a4b8a', background: '#e8eef8', border: 'none', borderRadius: 3, padding: '3px 8px', cursor: 'pointer' }}
-                >
-                  Rename
-                </button>
-                <button
-                  onClick={() => handleToggleActive(cat)}
-                  style={{ fontSize: 11, color: '#7a7060', background: '#f2efe9', border: 'none', borderRadius: 3, padding: '3px 8px', cursor: 'pointer' }}
-                >
-                  {cat.is_active ? 'Deactivate' : 'Activate'}
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{
+                  fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 3,
+                  textTransform: 'uppercase', letterSpacing: 0.5, minWidth: 64, textAlign: 'center',
+                  background: cat.is_active ? '#e6f4ec' : '#e8e4dc',
+                  color: cat.is_active ? '#1a6b3a' : '#7a7060'
+                }}>
+                  {cat.is_active ? 'Active' : 'Inactive'}
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
+                    style={{ fontSize: 11, color: '#1a4b8a', background: '#e8eef8', border: 'none', borderRadius: 3, padding: '3px 8px', cursor: 'pointer' }}
+                  >
+                    Rename
+                  </button>
+                  <button
+                    onClick={() => handleToggleActive(cat)}
+                    style={{ fontSize: 11, color: '#7a7060', background: '#f2efe9', border: 'none', borderRadius: 3, padding: '3px 8px', cursor: 'pointer' }}
+                  >
+                    {cat.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
