@@ -308,6 +308,7 @@ export default function Production({ event, teamUsers = [] }) {
   const [filterStatus, setFilterStatus] = useState('')
   const [collapsedCats, setCollapsedCats] = useState(new Set())
   const [activeCity, setActiveCity] = useState('__all__')
+  const [selectedCat, setSelectedCat] = useState(null)
   const w = useWindowSize()
   const isMobile = w < 768
 
@@ -464,49 +465,87 @@ export default function Production({ event, teamUsers = [] }) {
         </div>
       )}
 
-      {/* Table grouped by category */}
-      {Object.entries(grouped).map(([category, catTasks]) => {
-        const catKey = `${activeCity}__${category}`
-        const isCollapsed = collapsedCats.has(catKey)
-        const catDone = catTasks.filter(t => t.fabrication_status === 'done' || (t.element_type === 'procurement' && t.print_status === 'done') || (t.element_type === 'creative' && t.creative_status === 'file_sent')).length
+      {/* Category cards grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+        {Object.entries(grouped).map(([category, catTasks]) => {
+          const catDone = catTasks.filter(t =>
+            t.fabrication_status === 'done' ||
+            (t.element_type === 'procurement' && t.print_status === 'done') ||
+            (t.element_type === 'creative' && t.creative_status === 'file_sent')
+          ).length
+          const allDone = catDone === catTasks.length && catTasks.length > 0
+          const inProgress = catDone > 0 && !allDone
+          const dotColor = allDone ? '#16A34A' : inProgress ? '#EA580C' : '#9ca3af'
 
-        return (
-          <div key={catKey} style={{ marginBottom: '16px', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+          return (
             <div
-              onClick={() => toggleCat(catKey)}
-              style={{ padding: '8px 12px', background: 'var(--bg-secondary)', borderBottom: isCollapsed ? 'none' : '0.5px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{isCollapsed ? '▶' : '▼'}</span>
-                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>{category}</span>
+              key={category}
+              onClick={() => setSelectedCat(category)}
+              style={{
+                border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
+                padding: '14px 16px', background: 'var(--bg)', cursor: 'pointer',
+                display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px',
+              }}
+              onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+              onMouseOut={e => e.currentTarget.style.background = 'var(--bg)'}
+            >
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>
+                  {category}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
+                  {catTasks.length} element{catTasks.length !== 1 ? 's' : ''} · {catDone}/{catTasks.length} done
+                </div>
               </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{catDone}/{catTasks.length} done</span>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: dotColor, flexShrink: 0, marginTop: 4 }} />
             </div>
-            {!isCollapsed && (
-              // Bug fix: Production table is dense data — correct fix is horizontal scroll
-              // with sticky element column, not a card layout (status comparison is the point)
-              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isMobile ? '600px' : 'auto' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ ...thStyle, minWidth: '160px', position: isMobile ? 'sticky' : 'static', left: 0, zIndex: 1, boxShadow: isMobile ? '2px 0 4px rgba(0,0,0,0.06)' : 'none' }}>Element</th>
-                      <th style={{ ...thStyle, minWidth: '100px' }}>Type</th>
-                      <th style={{ ...thStyle, minWidth: '120px' }}>Creative</th>
-                      <th style={{ ...thStyle, minWidth: '120px' }}>Fabrication</th>
-                      <th style={{ ...thStyle, minWidth: '140px' }}>Print / Procurement</th>
-                      <th style={{ ...thStyle, minWidth: '100px' }}>Assigned to</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {catTasks.map(task => (
-                      <ProductionRow key={task.id} task={task} teamUsers={teamUsers} onUpdate={updateTask} isMobile={isMobile} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+          )
+        })}
+      </div>
+
+      {/* Category detail modal */}
+      {selectedCat && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(26,16,8,0.5)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 16px', overflowY: 'auto' }}
+          onClick={() => setSelectedCat(null)}
+        >
+          <div
+            style={{ background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', width: '100%', maxWidth: '900px', overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '0.5px solid var(--border)', background: 'var(--bg-secondary)' }}>
+              <span style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
+                {selectedCat}
+              </span>
+              <button
+                onClick={() => setSelectedCat(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--text-tertiary)', padding: '0 4px', lineHeight: 1 }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isMobile ? '600px' : 'auto' }}>
+                <thead>
+                  <tr>
+                    <th style={{ ...thStyle, minWidth: '160px', position: isMobile ? 'sticky' : 'static', left: 0, zIndex: 1, boxShadow: isMobile ? '2px 0 4px rgba(0,0,0,0.06)' : 'none' }}>Element</th>
+                    <th style={{ ...thStyle, minWidth: '100px' }}>Type</th>
+                    <th style={{ ...thStyle, minWidth: '120px' }}>Creative</th>
+                    <th style={{ ...thStyle, minWidth: '120px' }}>Fabrication</th>
+                    <th style={{ ...thStyle, minWidth: '140px' }}>Print / Procurement</th>
+                    <th style={{ ...thStyle, minWidth: '100px' }}>Assigned to</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(grouped[selectedCat] || []).map(task => (
+                    <ProductionRow key={task.id} task={task} teamUsers={teamUsers} onUpdate={updateTask} isMobile={isMobile} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )
-      })}
+        </div>
+      )}
     </div>
   )
 }

@@ -87,7 +87,6 @@ function useIsMobile() {
 }
 
 function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userRole, getNames }) {
-  const isMobile = useIsMobile()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
   const sc = statusColor[ev.status] || statusColor.pitch
@@ -100,16 +99,36 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  const line2Parts = []
+  const clientStr = ev.clients?.group_name
+    ? ev.clients.group_name + (ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : '')
+    : null
+  if (clientStr) line2Parts.push(clientStr)
+  if (ev.cities?.length > 0) line2Parts.push(ev.cities.join(', '))
+  const dateStr = (() => {
+    if (ev.city_dates && Object.keys(ev.city_dates).length > 0) {
+      const dates = Object.values(ev.city_dates).filter(d => d?.start)
+      if (dates.length > 0) {
+        const earliest = new Date(Math.min(...dates.map(d => new Date(d.start))))
+        return earliest.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      }
+    }
+    return ev.event_date
+      ? new Date(ev.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      : null
+  })()
+  if (dateStr) line2Parts.push(dateStr)
+
   return (
     <motion.div
       variants={itemVariants}
       whileHover="hovered"
+      onClick={() => onOpen(ev)}
       style={{
         border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
-        padding: '20px 24px',
+        padding: '10px 16px',
         background: 'linear-gradient(135deg, #ffffff 60%, #fdf5f5 100%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        position: 'relative', overflow: 'hidden',
+        position: 'relative', overflow: 'hidden', cursor: 'pointer',
       }}
     >
       <motion.div
@@ -119,39 +138,15 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
           background: '#bc1723', transformOrigin: 'left',
         }}
       />
-      <div style={{ flex: 1, cursor: 'pointer', width: '100%' }} onClick={() => onOpen(ev)}>
-        <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>
-          {ev.event_name}
-        </div>
-        <div style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '2px' }}>
-          {ev.clients?.group_name}
-          {ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : ''}
-          {(() => {
-            if (ev.city_dates && Object.keys(ev.city_dates).length > 0) {
-              const dates = Object.values(ev.city_dates).filter(d => d?.start)
-              if (dates.length > 0) {
-                const earliest = new Date(Math.min(...dates.map(d => new Date(d.start))))
-                return ` · from ${earliest.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
-              }
-            }
-            return ev.event_date ? ` · ${new Date(ev.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''
-          })()}
-        </div>
-        {ev.cities?.length > 0 && (
-          <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginBottom: '2px' }}>
-            {ev.cities.join(' · ')}
-          </div>
-        )}
-        {(userRole === 'admin' || userRole === 'manager') && (
-          <div style={{ fontSize: '11px', color: ev.assigned_to?.length > 0 ? 'var(--text-secondary)' : 'var(--text-tertiary)' }}>
-            {ev.assigned_to?.length > 0
-              ? `Assigned to: ${getNames(ev.assigned_to)}`
-              : 'Not yet assigned'}
-          </div>
-        )}
-      </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      {/* Line 1: name · badge · menu */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: line2Parts.length ? '3px' : 0 }}>
+        <span style={{
+          fontSize: '14px', fontWeight: 500, color: 'var(--text)',
+          flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {ev.event_name}
+        </span>
         <span style={{
           fontSize: '11px', fontWeight: 500, textTransform: 'uppercase',
           letterSpacing: '0.5px', padding: '4px 12px', borderRadius: '20px',
@@ -159,9 +154,8 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
         }}>
           {STATUS_LABELS[ev.status] || ev.status}
         </span>
-
         {(userRole === 'admin' || userRole === 'manager') && (
-          <div style={{ position: 'relative' }} ref={menuRef}>
+          <div style={{ position: 'relative', flexShrink: 0 }} ref={menuRef}>
             <button
               onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
               style={{
@@ -207,6 +201,13 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
           </div>
         )}
       </div>
+
+      {/* Line 2: client · cities · date */}
+      {line2Parts.length > 0 && (
+        <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', lineHeight: 1.4 }}>
+          {line2Parts.join(' · ')}
+        </div>
+      )}
       <ScreenGuide screen='dashboard' />
     </motion.div>
   )

@@ -303,7 +303,10 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   }, [])
 
   const getDefaultTab = (ps) => ps === 'won' ? 'execution' : 'elements';
-  const [activeTab,    setActiveTab]    = useState(initialTab || getDefaultTab(event?.proposal_status))
+  const [activeTab,    setActiveTab]    = useState(() => {
+    const stored = localStorage.getItem(`myoozz_tab_${event?.id}`)
+    return stored || initialTab || getDefaultTab(event?.proposal_status)
+  })
   const [refreshKey,   setRefreshKey]   = useState(0)
   const [showWonModal, setShowWonModal] = useState(false)
   const [currentEvent, setCurrentEvent] = useState(event)
@@ -323,6 +326,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   function handleTabChange(tab) {
     setActiveTab(tab)
     setRefreshKey(k => k + 1)
+    localStorage.setItem(`myoozz_tab_${event?.id}`, tab)
   }
 
   const [status,       setStatus]       = useState(event.status || 'pitch')
