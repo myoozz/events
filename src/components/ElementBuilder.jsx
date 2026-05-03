@@ -44,7 +44,7 @@ function getColTemplate(isAdmin,fv,viewMode){
   if(isAdmin){
     return [
       '2.6fr',
-      (fv.size||fv.days)?'108px':null,
+      fv.days?'108px':null,
       '1.3fr',
       '1.3fr',
       fv.source?'1.1fr':null,
@@ -55,7 +55,7 @@ function getColTemplate(isAdmin,fv,viewMode){
   }
   return [
     '2.6fr',
-    (fv.size||fv.days)?'108px':null,
+    fv.days?'108px':null,
     '1.6fr',
     fv.status?'88px':null,
     '72px',
@@ -224,14 +224,16 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
   const isGrid=viewMode==='grid'
 
   const [rateSuggestion,setRateSuggestion]=useState(null)
-  const parseSizeParts=(s)=>{ const m=(s||'').match(/^(\d*\.?\d*)x(\d*\.?\d*)$/); return m?[m[1],m[2]]:[s||'',''] }
+  const parseSizeParts=(s)=>{ const m=(s||'').match(/^(\d*\.?\d*)x(\d*\.?\d*)(?:x(\d*\.?\d*))?$/); return m?[m[1],m[2],m[3]||'']:[s||'','',''] }
   const [sizeL,setSizeL]=useState(()=>parseSizeParts(el.size)[0])
   const [sizeB,setSizeB]=useState(()=>parseSizeParts(el.size)[1])
-  useEffect(()=>{ const [l,b]=parseSizeParts(el.size); setSizeL(l); setSizeB(b) },[el.size])
-  const commitSize=()=>{ const v=sizeL&&sizeB?`${sizeL}x${sizeB}`:sizeL||''; onUpdate('size',v); onSave() }
+  const [sizeH,setSizeH]=useState(()=>parseSizeParts(el.size)[2])
+  useEffect(()=>{ const [l,b,h]=parseSizeParts(el.size); setSizeL(l); setSizeB(b); setSizeH(h) },[el.size])
+  const commitSize=()=>{ const parts=[sizeL,sizeB,sizeH].filter(Boolean); const v=parts.length>1?parts.join('x'):parts[0]||''; onUpdate('size',v); onSave() }
   const getRateSuggestion=useCallback(async(category,eventCity)=>{
     if(!category) return null
     const cityToUse=eventCity||'Pan-India'
+    console.log('rate lookup:',category,cityToUse)
     let{data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).ilike('city',`%${cityToUse}%`)
     if(!data||data.length===0){
       ({data}=await supabase.from('rate_cards').select('rate_min,rate_max,rate_type').eq('category',category).or('location_scope.ilike.%national%,city.ilike.%pan-india%,city.is.null'))
@@ -274,35 +276,39 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             disabled={locked}
             onChange={e=>onUpdate('finish',e.target.value)} onBlur={onSave}
           />
+          {fv.size&&(
+            <div style={{display:'flex',gap:'3px',alignItems:'center',flexWrap:'wrap',paddingLeft:'8px',paddingBottom:'2px'}}>
+              <span style={{fontSize:'9px',color:'var(--text-tertiary)',flexShrink:0}}>L</span>
+              <input style={{...ginp(false),width:'28px',fontSize:'11px',flex:'0 0 auto'}}
+                type="number" min="0" step="any" placeholder="—" value={sizeL} disabled={locked}
+                onChange={e=>setSizeL(e.target.value)} onBlur={commitSize}
+              />
+              <span style={{fontSize:'9px',color:'var(--text-tertiary)',flexShrink:0}}>B</span>
+              <input style={{...ginp(false),width:'28px',fontSize:'11px',flex:'0 0 auto'}}
+                type="number" min="0" step="any" placeholder="—" value={sizeB} disabled={locked}
+                onChange={e=>setSizeB(e.target.value)} onBlur={commitSize}
+              />
+              <span style={{fontSize:'9px',color:'var(--text-tertiary)',flexShrink:0}}>H</span>
+              <input style={{...ginp(false),width:'28px',fontSize:'11px',flex:'0 0 auto'}}
+                type="number" min="0" step="any" placeholder="—" value={sizeH} disabled={locked}
+                onChange={e=>setSizeH(e.target.value)} onBlur={commitSize}
+              />
+              {sizeL&&sizeB&&!isNaN(+sizeL)&&!isNaN(+sizeB)&&(
+                <span style={{fontSize:'9px',color:'var(--text-tertiary)',background:'#f2efe9',border:'0.5px solid var(--border)',borderRadius:'3px',padding:'1px 3px',flexShrink:0,whiteSpace:'nowrap'}}>{(+sizeL*(+sizeB)).toLocaleString('en-IN')} sqft</span>
+              )}
+              <select value={el.size_unit||'sqft'} disabled={locked}
+                onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
+                style={{fontSize:'10px',padding:'2px 2px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:'var(--text-secondary)',fontFamily:'var(--font-body)',cursor:'pointer'}}
+              >
+                {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
+              </select>
+            </div>
+          )}
         </div>
 
-        {/* Size · Qty · Days — stacked with labels */}
-        {(fv.size||fv.days)&&(
+        {/* Qty · Days — stacked with labels */}
+        {fv.days&&(
           <div style={{...cell(false,false),padding:'5px 6px',gap:'4px',flexDirection:'column',alignItems:'stretch',justifyContent:'center'}}>
-            {fv.size&&(
-              <div style={{display:'flex',gap:'3px',alignItems:'center',flexWrap:'wrap'}}>
-                <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'28px',flexShrink:0,fontWeight:500,letterSpacing:'0.2px'}}>SIZE</span>
-                <span style={{fontSize:'9px',color:'var(--text-tertiary)',flexShrink:0}}>L</span>
-                <input style={{...ginp(false),width:'30px',fontSize:'12px',flex:'0 0 auto'}}
-                  type="number" min="0" step="any" placeholder="—" value={sizeL} disabled={locked}
-                  onChange={e=>setSizeL(e.target.value)} onBlur={commitSize}
-                />
-                <span style={{fontSize:'9px',color:'var(--text-tertiary)',flexShrink:0}}>B</span>
-                <input style={{...ginp(false),width:'30px',fontSize:'12px',flex:'0 0 auto'}}
-                  type="number" min="0" step="any" placeholder="—" value={sizeB} disabled={locked}
-                  onChange={e=>setSizeB(e.target.value)} onBlur={commitSize}
-                />
-                {sizeL&&sizeB&&!isNaN(+sizeL)&&!isNaN(+sizeB)&&(
-                  <span style={{fontSize:'9px',color:'var(--text-tertiary)',background:'#f2efe9',border:'0.5px solid var(--border)',borderRadius:'3px',padding:'1px 3px',flexShrink:0,whiteSpace:'nowrap'}}>{(+sizeL*(+sizeB)).toLocaleString('en-IN')} sqft</span>
-                )}
-                <select value={el.size_unit||'sqft'} disabled={locked}
-                  onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
-                  style={{fontSize:'10px',padding:'2px 2px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:'var(--text-secondary)',fontFamily:'var(--font-body)',flex:'1 1 auto',minWidth:0,cursor:'pointer'}}
-                >
-                  {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
-                </select>
-              </div>
-            )}
             <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
               <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'28px',flexShrink:0,fontWeight:500,letterSpacing:'0.2px'}}>QTY</span>
               <input style={{...ginp(false),width:'40px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
@@ -706,7 +712,7 @@ function CategoryBlock({
   // Column header labels (shared between card and grid, styled differently)
   const headerLabels=[
     'Element · Finish / Specs',
-    (fv.size||fv.days)?'Size · Qty · Days':null,
+    fv.days?'Qty · Days':null,
     'Client cost',
     isAdmin?'Internal cost':null,
     isAdmin&&fv.source?'Source / vendor':null,
