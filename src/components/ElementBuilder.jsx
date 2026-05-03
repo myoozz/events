@@ -10,7 +10,7 @@ import { logElementCreated, logElementDeleted, logCategoryAdded, logCategoryDele
 // ─────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────
-const SIZE_UNITS = ['ft','sqft','mtr','sqmtr','nos','per pax']
+const SIZE_UNITS = ['sqft','sqmtr','nos','per pax']
 const STATUS_OPTIONS = ['Estimated','Confirmed','Actuals','Client scope']
 const STATUS_STYLES = {
   'Estimated':    { bg:'#FEF3C7', color:'#92400E' },
@@ -49,6 +49,7 @@ function getColTemplate(isAdmin,fv,viewMode){
       '1.3fr',
       fv.source?'1.1fr':null,
       fv.status?'88px':null,
+      '72px',
       delCol,
     ].filter(Boolean).join(' ')
   }
@@ -57,6 +58,7 @@ function getColTemplate(isAdmin,fv,viewMode){
     (fv.size||fv.days)?'108px':null,
     '1.6fr',
     fv.status?'88px':null,
+    '72px',
     delCol,
   ].filter(Boolean).join(' ')
 }
@@ -210,7 +212,7 @@ const ginp=(isInternal)=>({
 // ─────────────────────────────────────────────
 // ELEMENT ROW — supports card + grid mode via viewMode prop
 // ─────────────────────────────────────────────
-function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleStatus, otherCategories, onMove, fieldVis, viewMode, onMarkAsOption, rowIndex, rateCards, city }){
+function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleStatus, otherCategories, onMove, fieldVis, viewMode, onMarkAsOption, rowIndex, rateCards, city, workTypes }){
   const fv=fieldVis||{days:true,source:true,status:true,size:true,finish:true}
   const w=useWindowSize()
   const isMobile=w<768
@@ -222,6 +224,11 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
   const isGrid=viewMode==='grid'
 
   const [rateSuggestion,setRateSuggestion]=useState(null)
+  const parseSizeParts=(s)=>{ const m=(s||'').match(/^(\d*\.?\d*)x(\d*\.?\d*)$/); return m?[m[1],m[2]]:[s||'',''] }
+  const [sizeL,setSizeL]=useState(()=>parseSizeParts(el.size)[0])
+  const [sizeB,setSizeB]=useState(()=>parseSizeParts(el.size)[1])
+  useEffect(()=>{ const [l,b]=parseSizeParts(el.size); setSizeL(l); setSizeB(b) },[el.size])
+  const commitSize=()=>{ const v=sizeL&&sizeB?`${sizeL}x${sizeB}`:sizeL||''; onUpdate('size',v); onSave() }
   const getRateSuggestion=useCallback(async(category,eventCity)=>{
     if(!category) return null
     const cityToUse=eventCity||'Pan-India'
@@ -273,13 +280,22 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
         {(fv.size||fv.days)&&(
           <div style={{...cell(false,false),padding:'5px 6px',gap:'4px',flexDirection:'column',alignItems:'stretch',justifyContent:'center'}}>
             {fv.size&&(
-              <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
+              <div style={{display:'flex',gap:'3px',alignItems:'center',flexWrap:'wrap'}}>
                 <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'28px',flexShrink:0,fontWeight:500,letterSpacing:'0.2px'}}>SIZE</span>
-                <input style={{...ginp(false),width:'36px',fontSize:'12px',flex:'0 0 auto'}}
-                  placeholder="—" value={el.size} disabled={locked}
-                  onChange={e=>onUpdate('size',e.target.value)} onBlur={onSave}
+                <span style={{fontSize:'9px',color:'var(--text-tertiary)',flexShrink:0}}>L</span>
+                <input style={{...ginp(false),width:'30px',fontSize:'12px',flex:'0 0 auto'}}
+                  type="number" min="0" step="any" placeholder="—" value={sizeL} disabled={locked}
+                  onChange={e=>setSizeL(e.target.value)} onBlur={commitSize}
                 />
-                <select value={el.size_unit||'ft'} disabled={locked}
+                <span style={{fontSize:'9px',color:'var(--text-tertiary)',flexShrink:0}}>B</span>
+                <input style={{...ginp(false),width:'30px',fontSize:'12px',flex:'0 0 auto'}}
+                  type="number" min="0" step="any" placeholder="—" value={sizeB} disabled={locked}
+                  onChange={e=>setSizeB(e.target.value)} onBlur={commitSize}
+                />
+                {sizeL&&sizeB&&!isNaN(+sizeL)&&!isNaN(+sizeB)&&(
+                  <span style={{fontSize:'9px',color:'var(--text-tertiary)',background:'#f2efe9',border:'0.5px solid var(--border)',borderRadius:'3px',padding:'1px 3px',flexShrink:0,whiteSpace:'nowrap'}}>{(+sizeL*(+sizeB)).toLocaleString('en-IN')} sqft</span>
+                )}
+                <select value={el.size_unit||'sqft'} disabled={locked}
                   onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
                   style={{fontSize:'10px',padding:'2px 2px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:'var(--text-secondary)',fontFamily:'var(--font-body)',flex:'1 1 auto',minWidth:0,cursor:'pointer'}}
                 >
@@ -378,7 +394,19 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
           </div>
         )}
 
-        {/* Delete + alt */}
+        {/* Work type */}
+        <div style={{...cell(false,false),padding:'4px 5px',alignItems:'center'}}>
+          <select
+            value={el.work_type||''} disabled={locked}
+            onChange={e=>{onUpdate('work_type',e.target.value);onSave()}}
+            style={{fontSize:'11px',padding:'2px 2px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:el.work_type?'var(--text-secondary)':'var(--text-tertiary)',fontFamily:'var(--font-body)',width:'100%',cursor:'pointer'}}
+          >
+            <option value="">Type</option>
+            {(workTypes||[]).map(t=><option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+
+        {/* Delete + del */}
         <div style={{...cell(false,true,{flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',padding:'4px 0'})}}>
           <button onClick={onDelete}
             style={{background:'none',border:'1px solid #bc1723',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#bc1723',padding:'2px 4px',lineHeight:1}}
@@ -388,7 +416,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
               style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
               onMouseOver={e=>e.currentTarget.style.color='#bc1723'}
               onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
-            >alt</button>
+            >del</button>
           )}
         </div>
       </div>
@@ -432,10 +460,16 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
       {/* Size · Qty · Days */}
       <div>
         {subLabel('Size · Qty · Days')}
-        <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
-          <input style={{...inp(false,locked),width:'54px',fontSize:'12px',padding:'6px 5px'}}
-            placeholder="Size" value={el.size} disabled={locked}
-            onChange={e=>onUpdate('size',e.target.value)} onBlur={onSave}
+        <div style={{display:'flex',gap:'4px',alignItems:'center',flexWrap:'wrap'}}>
+          <span style={{fontSize:'10px',color:'var(--text-tertiary)'}}>L</span>
+          <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px'}}
+            type="number" min="0" step="any" placeholder="—" value={sizeL} disabled={locked}
+            onChange={e=>setSizeL(e.target.value)} onBlur={commitSize}
+          />
+          <span style={{fontSize:'10px',color:'var(--text-tertiary)'}}>B</span>
+          <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px'}}
+            type="number" min="0" step="any" placeholder="—" value={sizeB} disabled={locked}
+            onChange={e=>setSizeB(e.target.value)} onBlur={commitSize}
           />
 
           <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px',textAlign:'center'}}
@@ -544,7 +578,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
             onMouseOver={e=>e.currentTarget.style.color='#bc1723'}
             onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
-          >alt</button>
+          >del</button>
         )}
       </div>
     </div>
@@ -605,7 +639,7 @@ function CategoryDefaultsBand({ catName, defaults, onChangeDefault }){
       <div style={{display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
         <span style={{fontSize:'11px',color:'var(--text-tertiary)'}}>Unit</span>
         <select
-          value={d.size_unit||'ft'}
+          value={d.size_unit||'sqft'}
           onChange={e=>onChangeDefault(catName,'size_unit',e.target.value)}
           style={{fontSize:'12px',padding:'2px 6px',border:'0.5px solid var(--border)',borderRadius:'4px',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',cursor:'pointer',outline:'none'}}
         >
@@ -638,15 +672,19 @@ function CategoryBlock({
   onMarkAsOption, onOptionBack, onOptionConfirm,
   rateCards,
   city,
+  workTypes,
+  onZoneLabelChange,
 }){
   const [open,setOpen]=useState(false)
   const [showMerge,setShowMerge]=useState(false)
   const [editingName,setEditingName]=useState(false)
   const [nameVal,setNameVal]=useState(cat.name)
+  const [zoneVal,setZoneVal]=useState(cat.zone_label||'')
   const nameRef=useRef(null)
   const [availableCategories,setAvailableCategories]=useState([])
 
   useEffect(()=>{ setNameVal(cat.name) },[cat.name])
+  useEffect(()=>{ setZoneVal(cat.zone_label||'') },[cat.zone_label])
   useEffect(()=>{
     supabase.from('event_categories').select('name').eq('is_active',true).order('sort_order')
       .then(({data})=>{ if(data) setAvailableCategories(data.map(c=>c.name)) })
@@ -673,6 +711,7 @@ function CategoryBlock({
     isAdmin?'Internal cost':null,
     isAdmin&&fv.source?'Source / vendor':null,
     fv.status?'Status':null,
+    'Type',
     '',
   ].filter(Boolean)
 
@@ -724,8 +763,21 @@ function CategoryBlock({
           <span
             onClick={e=>{e.stopPropagation();setEditingName(true)}}
             title="Click to rename"
-            style={{flex:1,fontSize:'14px',fontWeight:500,color:'var(--text)',cursor:'text',padding:'0 2px',borderBottom:'1px solid transparent'}}
+            style={{fontSize:'14px',fontWeight:500,color:'var(--text)',cursor:'text',padding:'0 2px',borderBottom:'1px solid transparent',flexShrink:0}}
           >{cat.name}</span>
+        )}
+        {/* Zone label */}
+        {!editingName&&(
+          <span style={{fontSize:'11px',color:'var(--text-tertiary)',flexShrink:0,display:'flex',alignItems:'center',gap:'2px'}} onClick={e=>e.stopPropagation()}>
+            {zoneVal&&<span style={{opacity:0.5}}>·</span>}
+            <input
+              value={zoneVal}
+              onChange={e=>setZoneVal(e.target.value)}
+              onBlur={e=>{e.stopPropagation();onZoneLabelChange&&onZoneLabelChange(cat.name,zoneVal)}}
+              placeholder="+ zone"
+              style={{fontSize:'11px',color:zoneVal?'var(--text-tertiary)':'#bc172388',background:'none',border:'none',outline:'none',fontFamily:'var(--font-body)',width:'70px',cursor:'text',padding:0}}
+            />
+          </span>
         )}
 
         {/* Item count */}
@@ -853,6 +905,7 @@ function CategoryBlock({
               onCycleStatus={()=>onCycleStatus(el.id)}
               onMove={toCat=>onMoveElement&&onMoveElement(el.id,toCat)}
               onMarkAsOption={()=>onMarkAsOption(el.id)}
+              workTypes={workTypes}
             />
           ))}
 
@@ -897,6 +950,7 @@ function CityElements({ event, city, userRole, teamUsers }){
   const [saving,setSaving]=useState(false)
   const [catDefaults,setCatDefaults]=useState({})   // { catName: { size_unit, qty, days } }
   const [rateCards,setRateCards]=useState([])       // for internal rate suggestion pill
+  const [workTypes,setWorkTypes]=useState([])
   const fileRef=useRef(null)
   const [showPaste,setShowPaste]=useState(false)
   const [pasteText,setPasteText]=useState('')
@@ -931,6 +985,12 @@ function CityElements({ event, city, userRole, teamUsers }){
   useEffect(()=>{
     supabase.from('rate_cards').select('element_name,category,city,rate_min,rate_max,vendor_name,source,rate_type,location_scope').then(({data})=>{ if(data) setRateCards(data) })
   },[])
+  useEffect(()=>{
+    const LABELS={rental:'Rental',creative_print:'Creative & Print',booking:'Booking',service:'Service',permissions:'Permissions'}
+    supabase.from('category_stage_config').select('category_type').order('category_type').then(({data})=>{
+      if(data){ const seen=new Set(); const types=[]; data.forEach(r=>{ if(r.category_type&&!seen.has(r.category_type)){seen.add(r.category_type);types.push({value:r.category_type,label:LABELS[r.category_type]||r.category_type})} }); setWorkTypes(types) }
+    })
+  },[])
 
   // ── LOAD — reads bundle_config + category_config + applies saved order ──
   async function loadElements(){
@@ -959,6 +1019,7 @@ function CityElements({ event, city, userRole, teamUsers }){
             bundle_amt:cb.bundle_amt||0,
             original_amt:0,
             items:[],
+            zone_label:(cityConfig.zone_labels||{})[el.category]||'',
           }
         }
         cats[el.category].items.push(el)
@@ -1000,6 +1061,11 @@ function CityElements({ event, city, userRole, teamUsers }){
     setCatDefaults(prev=>({...prev,[catName]:{...(prev[catName]||{}),[field]:val}}))
   }
 
+  async function saveCatZoneLabel(catName,label){
+    await saveCategoryConfig(cfg=>{ if(!cfg.zone_labels) cfg.zone_labels={}; cfg.zone_labels[catName]=label })
+    setCategories(prev=>prev.map(cat=>cat.name!==catName?cat:{...cat,zone_label:label}))
+  }
+
   function getCatDefaults(catName){
     const PAX_CATS = ['Group Travel', 'Team Travel']
     const d=catDefaults[catName]||{}
@@ -1010,7 +1076,7 @@ function CityElements({ event, city, userRole, teamUsers }){
         days: d.days !== undefined ? d.days : 1
       }
     }
-    return{ size_unit:d.size_unit||'ft', qty:d.qty||1, days:d.days||1 }
+    return{ size_unit:d.size_unit||'sqft', qty:d.qty||1, days:d.days||1 }
   }
 
   // ── SAVE ELEMENT ──
@@ -1400,7 +1466,7 @@ function CityElements({ event, city, userRole, teamUsers }){
 
       {/* Category jump pills */}
       {categories.length>0&&(
-        <div style={{display:'flex',gap:'6px',marginBottom:'12px',flexWrap:'wrap',alignItems:'center'}}>
+        <div style={{display:'flex',gap:'6px',marginBottom:'8px',flexWrap:'wrap',alignItems:'center'}}>
           {['__all__',...categories.map(c=>c.name)].map(pill=>(
             <button key={pill} onClick={()=>{
               setActivePill(pill)
@@ -1415,6 +1481,7 @@ function CityElements({ event, city, userRole, teamUsers }){
               border:'1px solid #d8d2c8',borderRadius:'20px',cursor:'pointer',
               background:activePill===pill?'#1a1008':'none',
               color:activePill===pill?'#fff':'var(--text-secondary)',
+              ...(pill==='__all__'?{marginRight:'8px'}:{}),
             }}>{pill==='__all__'?'All':pill}</button>
           ))}
         </div>
@@ -1452,6 +1519,8 @@ function CityElements({ event, city, userRole, teamUsers }){
             onOptionConfirm={(elId,og)=>optionConfirm(cat.name,elId,og)}
             rateCards={rateCards}
             city={city}
+            workTypes={workTypes}
+            onZoneLabelChange={saveCatZoneLabel}
           />
         </div>
       ))}
