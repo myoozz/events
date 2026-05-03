@@ -345,6 +345,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   const [doneCount,    setDoneCount]    = useState(0)
   const [showConfetti, setShowConfetti] = useState(false)
   const [showProdModal, setShowProdModal] = useState(false)
+  const [showReminderModal, setShowReminderModal] = useState(false)
+  const [reminderTargets, setReminderTargets] = useState('all')
+  const [reminderSelected, setReminderSelected] = useState([])
 
   useEffect(() => {
     if (proposalStatus !== 'won') return
@@ -420,23 +423,10 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     if (itin) setTimeout(() => setShowItineraryPrompt(true), 2600)
   }
 
-  async function handleSendReminder() {
-    const actorId = session?.user?.id
-    const assignedUsers = teamUsers.filter(u => assignedTo.includes(u.email) && u.id)
-    if (!assignedUsers.length) return
-    await createNotification(
-      assignedUsers.map(u => ({
-        user_id:      u.id,
-        triggered_by: actorId,
-        type:         'task_status_changed',
-        title:        `${event.event_name} — What's the update?`,
-        body:         'Share your progress with the team.',
-        entity_type:  'event',
-        entity_id:    event.id,
-        event_id:     event.id,
-        action_url:   '?tab=tasks',
-      }))
-    )
+  function handleSendReminder() {
+    setReminderTargets('all')
+    setReminderSelected([])
+    setShowReminderModal(true)
   }
 
   async function handleRevoke(email) {
@@ -787,33 +777,27 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
           <div style={{
             borderLeft: `3px solid ${cfg.bc}`,
             background: 'var(--bg)',
-            padding: '14px 20px 14px 18px',
-            marginBottom: 24,
+            padding: '8px 16px 8px 14px',
+            marginBottom: 16,
             borderRadius: '0 8px 8px 0',
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             justifyContent: 'space-between',
             gap: 16,
             flexWrap: 'wrap',
           }}>
-            <div>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: cfg.tc }}>
-                {cfg.h}
-              </p>
-              <p style={{ margin: '5px 0 0', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.65, maxWidth: 500 }}>
-                {cfg.sub}
-              </p>
-            </div>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: cfg.tc }}>
+              {cfg.h}
+            </p>
             <button
               onClick={cfg.fn}
               disabled={savingProposal}
               style={{
-                padding: '8px 18px', fontSize: 13, fontWeight: 500,
+                padding: '4px 10px', fontSize: 12, fontWeight: 500,
                 fontFamily: 'var(--font-body)',
                 background: cfg.tc, color: '#fff',
                 border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                 opacity: savingProposal ? 0.6 : 1, flexShrink: 0, whiteSpace: 'nowrap',
-                marginTop: 2,
               }}
             >
               {savingProposal ? 'Saving…' : cfg.btn}
@@ -1065,6 +1049,82 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
           </div>
         </div>
       )}
+
+      {showReminderModal && (() => {
+        const assignedPool = teamUsers.filter(u => assignedTo.includes(u.email) && u.id)
+        const senderName = teamUsers.find(u => u.id === session?.user?.id)?.full_name || 'Team'
+        const targets = reminderTargets === 'all' ? assignedPool : assignedPool.filter(u => reminderSelected.includes(u.id))
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,21,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 600, padding: 24 }}
+            onClick={() => setShowReminderModal(false)}
+          >
+            <div style={{ background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: '28px 28px 24px', maxWidth: 400, width: '100%' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, color: 'var(--text)', margin: '0 0 6px' }}>
+                Send Reminder
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '0 0 18px' }}>
+                Notify your team about pending tasks on {event.event_name}.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer' }}>
+                  <input type="radio" name="reminderTargets" value="all" checked={reminderTargets === 'all'} onChange={() => setReminderTargets('all')} />
+                  All assigned team ({assignedPool.length})
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer' }}>
+                  <input type="radio" name="reminderTargets" value="select" checked={reminderTargets === 'select'} onChange={() => setReminderTargets('select')} />
+                  Select members
+                </label>
+              </div>
+              {reminderTargets === 'select' && (
+                <div style={{ border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {assignedPool.map(u => (
+                    <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={reminderSelected.includes(u.id)}
+                        onChange={e => setReminderSelected(prev => e.target.checked ? [...prev, u.id] : prev.filter(id => id !== u.id))}
+                      />
+                      {u.full_name || u.email}
+                    </label>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+                <button
+                  onClick={() => setShowReminderModal(false)}
+                  style={{ padding: '8px 16px', fontSize: 13, fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={reminderTargets === 'select' && reminderSelected.length === 0}
+                  onClick={async () => {
+                    const actorId = session?.user?.id
+                    if (!targets.length) { setShowReminderModal(false); return }
+                    await createNotification(targets.map(u => ({
+                      user_id:      u.id,
+                      triggered_by: actorId,
+                      type:         'reminder',
+                      title:        `Reminder from ${senderName}`,
+                      body:         `You have pending tasks on ${event.event_name}.`,
+                      entity_type:  'event',
+                      entity_id:    event.id,
+                      event_id:     event.id,
+                      action_url:   '?tab=tasks',
+                    })))
+                    setShowReminderModal(false)
+                  }}
+                  style={{ padding: '8px 18px', fontSize: 13, fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', opacity: (reminderTargets === 'select' && reminderSelected.length === 0) ? 0.5 : 1 }}
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       <FloatingHelp activeTab={activeTab} />
     </div>
