@@ -750,12 +750,14 @@ function CategoryBlock({
 
       {/* ── CATEGORY HEADER ── */}
       <div style={{
-        display:'flex',alignItems:'center',gap:'8px',
+        display:'flex',alignItems:'center',justifyContent:'space-between',
         padding:'10px 14px',
         background:open?'var(--bg-secondary)':'var(--bg)',
         cursor:'pointer',
         borderBottom:open?'0.5px solid var(--border)':'none',
       }}>
+        {/* LEFT GROUP — collapse + reorder + name + zone */}
+        <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
         {/* Collapse toggle */}
         <button onClick={()=>setOpen(!open)} title={open?'Collapse':'Expand'}
           style={{width:'26px',height:'26px',display:'flex',alignItems:'center',justifyContent:'center',background:open?'#e8f5e9':'#fde8ea',border:'1px solid #d8d2c8',borderRadius:'4px',cursor:'pointer',padding:0,flexShrink:0,transition:'all 0.12s'}}
@@ -787,7 +789,7 @@ function CategoryBlock({
           <span
             onClick={e=>{e.stopPropagation();setEditingName(true)}}
             title="Click to rename"
-            style={{fontSize:'14px',fontWeight:500,color:'var(--text)',cursor:'text',padding:'0 2px',borderBottom:'1px solid transparent',flexShrink:0}}
+            style={{fontSize:'14px',fontWeight:500,color:'var(--text)',cursor:'text',padding:'0 2px',borderBottom:'1px solid transparent',flexGrow:1,minWidth:0}}
           >{cat.name}</span>
         )}
         {/* Zone label */}
@@ -803,7 +805,9 @@ function CategoryBlock({
             />
           </span>
         )}
-
+        </div>{/* end LEFT GROUP */}
+        {/* RIGHT GROUP — count + totals + merge + bundle + delete */}
+        <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
         {/* Item count */}
         <span style={{fontSize:'12px',color:'var(--text-tertiary)',flexShrink:0}}>
           {mainItems.length} {mainItems.length===1?'item':'items'}
@@ -860,6 +864,7 @@ function CategoryBlock({
         <button onClick={e=>{e.stopPropagation();onDelete()}} title="Remove category"
           style={{background:'none',border:'1px solid #bc1723',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#bc1723',padding:'2px 5px',lineHeight:1,flexShrink:0}}
         >✕</button>
+        </div>{/* end RIGHT GROUP */}
       </div>
 
       {/* ── EXPANDED CONTENT ── */}
@@ -883,7 +888,7 @@ function CategoryBlock({
           <CategoryDefaultsBand
             catName={cat.name}
             defaults={catDefaults}
-            onChangeDefault={onCatDefaultChange}
+            onChangeDefault={(n,f,v)=>onCatDefaultChange(n,f,v,mainItems.length)}
           />
 
           {/* Column headers */}
@@ -1079,17 +1084,15 @@ function CityElements({ event, city, userRole, teamUsers }){
     await saveCategoryConfig(cfg=>{ cfg.order=orderedNames })
   }
 
-  async function saveCatDefault(catName,field,val){
+  async function saveCatDefault(catName,field,val,existingCount){
     await saveCategoryConfig(cfg=>{
       if(!cfg.defaults) cfg.defaults={}
       if(!cfg.defaults[catName]) cfg.defaults[catName]={}
       cfg.defaults[catName][field]=val
     })
     setCatDefaults(prev=>({...prev,[catName]:{...(prev[catName]||{}),[field]:val}}))
-    const cat=categories.find(c=>c.name===catName)
-    const mainItems=cat?cat.items.filter(el=>!el.is_option):[]
-    if(mainItems.length>0){
-      setPendingDefaultChange({field,value:val,catName,count:mainItems.length})
+    if(existingCount>0){
+      setPendingDefaultChange({field,value:val,catName,count:existingCount})
     }
   }
 
