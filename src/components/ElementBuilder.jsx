@@ -446,7 +446,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
       {/* Element name */}
       <div>
         {subLabel('Element')}
-        <input style={{...inp(false,locked),fontWeight:500}}
+        <input style={{...inp(false,locked),fontWeight:500,whiteSpace:'normal',wordBreak:'break-word',overflow:'visible'}}
           placeholder="Element name" value={el.element_name}
           title="Name of this element" disabled={locked}
           onChange={e=>onUpdate('element_name',e.target.value)} onBlur={onSave}
@@ -456,7 +456,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
       {/* Finish */}
       <div>
         {subLabel('Finish / specs')}
-        <input style={inp(false,locked)}
+        <input style={{...inp(false,locked),whiteSpace:'normal',wordBreak:'break-word',overflow:'visible'}}
           placeholder="Material, specs, details…" value={el.finish}
           disabled={locked}
           onChange={e=>onUpdate('finish',e.target.value)} onBlur={onSave}
@@ -476,6 +476,11 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
           <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px'}}
             type="number" min="0" step="any" placeholder="—" value={sizeB} disabled={locked}
             onChange={e=>setSizeB(e.target.value)} onBlur={commitSize}
+          />
+          <span style={{fontSize:'10px',color:'var(--text-tertiary)'}}>H</span>
+          <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px'}}
+            type="number" min="0" step="any" placeholder="—" value={sizeH} disabled={locked}
+            onChange={e=>setSizeH(e.target.value)} onBlur={commitSize}
           />
 
           <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px',textAlign:'center'}}
@@ -882,6 +887,7 @@ function CategoryBlock({
                 fontWeight:isGrid?600:500,
                 textTransform:'uppercase',letterSpacing:'0.4px',
                 padding:'3px 0',
+                textAlign:i===0?'left':'center',
               }}>{h}</div>
             ))}
           </div>
