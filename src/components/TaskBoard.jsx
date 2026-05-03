@@ -97,7 +97,11 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
   }
 
   async function fetchUsers() {
-    const { data } = await db('users').select('id, full_name, role').order('full_name');
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, full_name, role')
+      .order('full_name');
+    console.log('fetchUsers result:', data, error);
     setUsers(data || []);
   }
 
