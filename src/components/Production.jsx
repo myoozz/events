@@ -476,6 +476,9 @@ export default function Production({ event, teamUsers = [] }) {
           const allDone = catDone === catTasks.length && catTasks.length > 0
           const inProgress = catDone > 0 && !allDone
           const dotColor = allDone ? '#16A34A' : inProgress ? '#EA580C' : '#9ca3af'
+          const done = catTasks.filter(t => t.status === 'done').length
+          const pct = catTasks.length > 0 ? Math.round((done / catTasks.length) * 100) : 0
+          const pctColor = pct === 100 ? '#22c55e' : pct >= 70 ? '#3b82f6' : pct >= 30 ? '#f59e0b' : '#bc1723'
 
           return (
             <div
@@ -484,20 +487,36 @@ export default function Production({ event, teamUsers = [] }) {
               style={{
                 border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
                 padding: '14px 16px', background: 'var(--bg)', cursor: 'pointer',
-                display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px',
+                display: 'flex', flexDirection: 'column', gap: '8px',
               }}
               onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
               onMouseOut={e => e.currentTarget.style.background = 'var(--bg)'}
             >
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>
-                  {category}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>
+                    {category}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
+                    {catTasks.length} element{catTasks.length !== 1 ? 's' : ''} · {catDone}/{catTasks.length} done
+                  </div>
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
-                  {catTasks.length} element{catTasks.length !== 1 ? 's' : ''} · {catDone}/{catTasks.length} done
-                </div>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: dotColor, flexShrink: 0, marginTop: 4 }} />
               </div>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: dotColor, flexShrink: 0, marginTop: 4 }} />
+              <div style={{
+                marginTop: '2px',
+                background: pctColor,
+                color: '#fff',
+                borderRadius: '6px',
+                padding: '8px 0',
+                textAlign: 'center',
+                fontWeight: 600,
+                fontSize: '14px',
+                letterSpacing: '0.3px',
+                cursor: 'default',
+              }}>
+                {pct}% Done · {done}/{catTasks.length} tasks
+              </div>
             </div>
           )
         })}
