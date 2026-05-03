@@ -453,7 +453,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
         />
       </div>
 
-      {/* Finish */}
+      {/* Finish + size inputs */}
       <div>
         {subLabel('Finish / specs')}
         <input style={{...inp(false,locked),whiteSpace:'normal',wordBreak:'break-word',overflow:'visible'}}
@@ -461,12 +461,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
           disabled={locked}
           onChange={e=>onUpdate('finish',e.target.value)} onBlur={onSave}
         />
-      </div>
-
-      {/* Size · Qty · Days */}
-      <div>
-        {subLabel('Size · Qty · Days')}
-        <div style={{display:'flex',gap:'4px',alignItems:'center',flexWrap:'wrap'}}>
+        <div style={{display:'flex',gap:'4px',alignItems:'center',flexWrap:'wrap',marginTop:'4px'}}>
           <span style={{fontSize:'10px',color:'var(--text-tertiary)'}}>L</span>
           <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px'}}
             type="number" min="0" step="any" placeholder="—" value={sizeL} disabled={locked}
@@ -482,15 +477,33 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             type="number" min="0" step="any" placeholder="—" value={sizeH} disabled={locked}
             onChange={e=>setSizeH(e.target.value)} onBlur={commitSize}
           />
+          <select value={el.size_unit||'sqft'} disabled={locked}
+            onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
+            style={{fontSize:'10px',padding:'2px 2px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:'var(--text-secondary)',fontFamily:'var(--font-body)',cursor:'pointer'}}
+          >
+            {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
+          </select>
+        </div>
+      </div>
 
-          <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px',textAlign:'center'}}
-            type="number" min="1" value={el.qty} disabled={locked}
-            onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}
-          />
-          <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px',textAlign:'center'}}
-            type="number" min="1" value={el.days} disabled={locked}
-            onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}
-          />
+      {/* Qty · Days */}
+      <div>
+        {subLabel('Qty · Days')}
+        <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
+          <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
+            <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'28px',flexShrink:0,fontWeight:500,letterSpacing:'0.2px'}}>QTY</span>
+            <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px',textAlign:'center'}}
+              type="number" min="1" value={el.qty} disabled={locked}
+              onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}
+            />
+          </div>
+          <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
+            <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'28px',flexShrink:0,fontWeight:500,letterSpacing:'0.2px'}}>DAYS</span>
+            <input style={{...inp(false,locked),width:'38px',fontSize:'12px',padding:'6px 4px',textAlign:'center'}}
+              type="number" min="1" value={el.days} disabled={locked}
+              onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}
+            />
+          </div>
         </div>
       </div>
 
