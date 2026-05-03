@@ -982,6 +982,8 @@ function CityElements({ event, city, userRole, teamUsers }){
   const [pastePreview,setPastePreview]=useState([])
   const [deleteConfirm,setDeleteConfirm]=useState(null)
   const [categoryDeleteConfirm,setCategoryDeleteConfirm]=useState(null)
+  const [pendingDefaultChange,setPendingDefaultChange]=useState(null) // {field,value,catName,count}
+  const [toastMsg,setToastMsg]=useState('')
   const [showImport,setShowImport]=useState(false)
   const [showCategoryPicker,setShowCategoryPicker]=useState(false)
   const [showSheetSettings,setShowSheetSettings]=useState(false)
@@ -1084,6 +1086,29 @@ function CityElements({ event, city, userRole, teamUsers }){
       cfg.defaults[catName][field]=val
     })
     setCatDefaults(prev=>({...prev,[catName]:{...(prev[catName]||{}),[field]:val}}))
+    const cat=categories.find(c=>c.name===catName)
+    const mainItems=cat?cat.items.filter(el=>!el.is_option):[]
+    if(mainItems.length>0){
+      setPendingDefaultChange({field,value:val,catName,count:mainItems.length})
+    }
+  }
+
+  async function applyDefaultToExistingRows(){
+    if(!pendingDefaultChange) return
+    const {field,value,catName}=pendingDefaultChange
+    const cat=categories.find(c=>c.name===catName)
+    if(!cat){ setPendingDefaultChange(null); return }
+    const rowsToUpdate=cat.items.filter(el=>!el.is_option&&el.id&&!el.id.startsWith('new-'))
+    setCategories(prev=>prev.map(c=>c.name!==catName?c:{
+      ...c,items:c.items.map(el=>el.is_option?el:{...el,[field]:value})
+    }))
+    for(const el of rowsToUpdate){
+      await supabase.from('elements').update({[field]:value}).eq('id',el.id)
+    }
+    const n=rowsToUpdate.length
+    setToastMsg(`${n} row${n!==1?'s':''} updated`)
+    setTimeout(()=>setToastMsg(''),3000)
+    setPendingDefaultChange(null)
   }
 
   async function saveCatZoneLabel(catName,label){
@@ -1696,6 +1721,38 @@ function CityElements({ event, city, userRole, teamUsers }){
               >Cancel</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Default-change cascade confirm */}
+      {pendingDefaultChange&&(()=>{
+        const fieldLabels={size_unit:'Unit',qty:'Qty',days:'Days'}
+        const {field,value,catName,count}=pendingDefaultChange
+        const label=fieldLabels[field]||field
+        return(
+          <div style={{position:'fixed',inset:0,background:'rgba(26,25,21,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:300,padding:'24px'}}>
+            <div style={{background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius)',padding:'28px 32px',maxWidth:'400px',width:'100%'}}>
+              <h3 style={{fontFamily:'var(--font-display)',fontSize:'20px',fontWeight:500,color:'var(--text)',marginBottom:'8px'}}>Apply to existing rows?</h3>
+              <p style={{fontSize:'13px',color:'var(--text-secondary)',lineHeight:1.6,marginBottom:'24px'}}>
+                Update <strong>{label}</strong> to <strong>{value}</strong> for all <strong>{count} row{count!==1?'s':''}</strong> in <em>{catName}</em>?
+              </p>
+              <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                <button onClick={applyDefaultToExistingRows}
+                  style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#bc1723',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
+                >Update {count} row{count!==1?'s':''}</button>
+                <button onClick={()=>setPendingDefaultChange(null)}
+                  style={{padding:'8px 16px',fontSize:'12px',fontFamily:'var(--font-body)',background:'none',border:'none',cursor:'pointer',color:'var(--text-tertiary)'}}
+                >Keep existing</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Toast */}
+      {toastMsg&&(
+        <div style={{position:'fixed',bottom:'24px',left:'50%',transform:'translateX(-50%)',background:'var(--text)',color:'var(--bg)',padding:'10px 20px',borderRadius:'var(--radius-sm)',fontSize:'13px',fontFamily:'var(--font-body)',fontWeight:500,zIndex:400,pointerEvents:'none',whiteSpace:'nowrap'}}>
+          {toastMsg}
         </div>
       )}
 
