@@ -447,65 +447,94 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:collapsed[cat]?'rotate(-90deg)':'none',transition:'transform 0.18s ease',flexShrink:0}}><path d="M3 5l4 4 4-4" stroke={collapsed[cat]?'#F28F3B':'#2e7d32'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </span>
               </button>
-              {!collapsed[cat] && canAssign && (
-                <div style={{ position: 'relative', marginRight: '8px', flexShrink: 0 }}>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setCatAssignMenu(catAssignMenu === cat ? null : cat); }}
-                    style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', border: '0.5px solid #d8d2c8', background: '#fff', cursor: 'pointer', color: '#2c2518', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}
-                  >
-                    Assign All <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={catAssignMenu===cat?'#2e7d32':'#F28F3B'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </button>
-                  {catAssignMenu === cat && (
-                    <div data-catassign style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 200, minWidth: '180px', padding: '4px 0' }}>
-                      {users.map(u => (
-                        <button
-                          key={u.id}
-                          onClick={async () => {
-                            const catTasks = grouped[cat];
-                            // Update tasks table (existing behavior)
-                            await Promise.all(catTasks.map(t => db('tasks').update({ assigned_to: u.id, assigned_name: u.full_name }).eq('id', t.id)));
-                            // Upsert element_assignments for tasks that have an element_id
-                            const withElement = catTasks.filter(t => t.element_id);
-                            if (withElement.length > 0) {
-                              await Promise.all(withElement.map(async t => {
-                                // Delete existing assignment for this element+city
-                                let q = db('element_assignments').delete().eq('element_id', t.element_id);
-                                if (activeCity) q = q.eq('city', activeCity); else q = q.is('city', null);
-                                await q;
-                                // Insert new assignment
-                                await db('element_assignments').insert({
-                                  event_id:    eventId,
-                                  element_id:  t.element_id,
-                                  city:        activeCity || null,
-                                  assigned_to: u.id,
-                                  assigned_by: session?.user?.id,
-                                });
-                              }));
-                              await fetchElementAssignments();
-                            }
-                            await fetchTasks();
-                            setCatAssignMenu(null);
-                          }}
-                          style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', color: '#2c2518' }}
-                        >
-                          {u.full_name}
-                        </button>
-                      ))}
-                      {(userRole === 'admin' || userRole === 'manager') && (
-                        <>
-                          <div style={{ height: '0.5px', background: '#d8d2c8', margin: '4px 0' }} />
-                          <button
-                            onClick={() => { setCatAssignMenu(null); setShowCatInvite(cat); }}
-                            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', color: '#F28F3B' }}
-                          >
-                            ＋ Invite someone...
-                          </button>
-                        </>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '8px', flexShrink: 0 }}>
+                {/* Assignee avatar stack */}
+                {(() => {
+                  const catElTasks = grouped[cat].filter(t => t.element_id);
+                  const assignedIds = [...new Set(catElTasks.map(t => elementAssignments[`${t.element_id}_${activeCity ?? ''}`]?.assigned_to).filter(Boolean))];
+                  if (!assignedIds.length) return null;
+                  const visible = assignedIds.slice(0, 3);
+                  const extra = assignedIds.length - 3;
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {visible.map((uid, i) => {
+                        const u = users.find(u => u.id === uid);
+                        if (!u) return null;
+                        return (
+                          <div key={uid} title={u.full_name} style={{ width: 22, height: 22, borderRadius: '6px', background: '#F28F3B', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-body)', marginLeft: i > 0 ? '-4px' : 0, border: '1.5px solid #fff', position: 'relative', zIndex: visible.length - i }}>
+                            {initials(u.full_name)}
+                          </div>
+                        );
+                      })}
+                      {extra > 0 && (
+                        <div style={{ width: 22, height: 22, borderRadius: '6px', background: '#E5E1DC', color: '#7a7060', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-body)', marginLeft: '-4px', border: '1.5px solid #fff', position: 'relative' }}>
+                          +{extra}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              )}
+                  );
+                })()}
+                {/* Assign All */}
+                {!collapsed[cat] && canAssign && (
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCatAssignMenu(catAssignMenu === cat ? null : cat); }}
+                      style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', border: '0.5px solid #d8d2c8', background: '#fff', cursor: 'pointer', color: '#2c2518', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}
+                    >
+                      Assign All <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={catAssignMenu===cat?'#2e7d32':'#F28F3B'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                    {catAssignMenu === cat && (
+                      <div data-catassign style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 200, minWidth: '180px', padding: '4px 0' }}>
+                        {users.map(u => (
+                          <button
+                            key={u.id}
+                            onClick={async () => {
+                              const catTasks = grouped[cat];
+                              // Update tasks table (existing behavior)
+                              await Promise.all(catTasks.map(t => db('tasks').update({ assigned_to: u.id, assigned_name: u.full_name }).eq('id', t.id)));
+                              // Upsert element_assignments for tasks that have an element_id
+                              const withElement = catTasks.filter(t => t.element_id);
+                              if (withElement.length > 0) {
+                                await Promise.all(withElement.map(async t => {
+                                  // Delete existing assignment for this element+city
+                                  let q = db('element_assignments').delete().eq('element_id', t.element_id);
+                                  if (activeCity) q = q.eq('city', activeCity); else q = q.is('city', null);
+                                  await q;
+                                  // Insert new assignment
+                                  await db('element_assignments').insert({
+                                    event_id:    eventId,
+                                    element_id:  t.element_id,
+                                    city:        activeCity || null,
+                                    assigned_to: u.id,
+                                    assigned_by: session?.user?.id,
+                                  });
+                                }));
+                                await fetchElementAssignments();
+                              }
+                              await fetchTasks();
+                              setCatAssignMenu(null);
+                            }}
+                            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', color: '#2c2518' }}
+                          >
+                            {u.full_name}
+                          </button>
+                        ))}
+                        {(userRole === 'admin' || userRole === 'manager') && (
+                          <>
+                            <div style={{ height: '0.5px', background: '#d8d2c8', margin: '4px 0' }} />
+                            <button
+                              onClick={() => { setCatAssignMenu(null); setShowCatInvite(cat); }}
+                              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', color: '#F28F3B' }}
+                            >
+                              ＋ Invite someone...
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {showCatInvite === cat && (userRole === 'admin' || userRole === 'manager') && (
