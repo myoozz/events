@@ -50,7 +50,6 @@ function getColTemplate(isAdmin,fv,viewMode){
       fv.source?'1.1fr':null,
       fv.status?'88px':null,
       '72px',
-      '58px',
       delCol,
     ].filter(Boolean).join(' ')
   }
@@ -60,7 +59,6 @@ function getColTemplate(isAdmin,fv,viewMode){
     '1.6fr',
     fv.status?'88px':null,
     '72px',
-    '58px',
     delCol,
   ].filter(Boolean).join(' ')
 }
@@ -414,18 +412,6 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
           </select>
         </div>
 
-        {/* Post-event toggle */}
-        <div style={{...cell(false,false),flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',padding:'4px 2px'}}>
-          <input
-            type="checkbox"
-            checked={!!el.post_event}
-            disabled={locked}
-            onChange={e=>{onUpdate('post_event',e.target.checked);onSave()}}
-            style={{cursor:locked?'default':'pointer',accentColor:'#F28F3B',width:'14px',height:'14px'}}
-          />
-          <span style={{fontSize:'9px',color:'var(--text-tertiary)',letterSpacing:'0.2px',textAlign:'center',lineHeight:1}}>Post</span>
-        </div>
-
         {/* Delete + del */}
         <div style={{...cell(false,true,{flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',padding:'4px 0'})}}>
           <button onClick={onDelete}
@@ -445,8 +431,8 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
 
   // ── CARD MODE (original layout) ──
   const cols=isMobile?'1fr 1fr':isAdmin
-    ?'2fr 1.6fr 1.2fr 1.2fr 1.2fr 1.2fr 72px 44px'
-    :'2fr 1.6fr 1.2fr 1.6fr 72px 44px'
+    ?'2fr 1.6fr 1.2fr 1.2fr 1.2fr 1.2fr 72px 72px 44px'
+    :'2fr 1.6fr 1.2fr 1.6fr 72px 72px 44px'
 
   return(
     <div style={{
@@ -606,6 +592,19 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
         </div>
       )}
 
+      {/* Work type */}
+      <div style={{paddingTop:'18px'}}>
+        {subLabel('Type')}
+        <select
+          value={el.work_type||''} disabled={locked}
+          onChange={e=>{onUpdate('work_type',e.target.value);onSave()}}
+          style={{fontSize:'11px',padding:'2px 4px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:el.work_type?'var(--text-secondary)':'var(--text-tertiary)',fontFamily:'var(--font-body)',width:'100%',cursor:'pointer'}}
+        >
+          <option value="">Type</option>
+          {(workTypes||[]).map(t=><option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
+      </div>
+
       {/* Delete + alt */}
       <div style={{paddingTop:'18px',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
         <button onClick={onDelete}
@@ -750,7 +749,6 @@ function CategoryBlock({
     isAdmin&&fv.source?'Source / vendor':null,
     fv.status?'Status':null,
     'Type',
-    'Post-Event',
     '',
   ].filter(Boolean)
 
