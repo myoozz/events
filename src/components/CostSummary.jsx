@@ -226,9 +226,12 @@ export default function CostSummary({ event, userRole }) {
     saveTnc(tncSelected, next)
   }
 
-  // Build summary data per city
-  function getCitySummary(city) {
-    const cityEls = elements.filter(el => el.city === city)
+  const mainEls = elements.filter(el => !el.post_event)
+  const postEventEls = elements.filter(el => !!el.post_event)
+
+  // Build summary data per city for a given element set
+  function getCitySummary(city, els) {
+    const cityEls = els.filter(el => el.city === city)
     const cats = {}
     cityEls.forEach(el => {
       if (!cats[el.category]) cats[el.category] = { name: el.category, clientTotal: 0, internalTotal: 0 }
@@ -238,10 +241,10 @@ export default function CostSummary({ event, userRole }) {
     return Object.values(cats)
   }
 
-  // Grand totals across all cities
+  // Grand totals across all cities — main elements only
   let grandClient = 0, grandInternal = 0
   cities.forEach(city => {
-    getCitySummary(city).forEach(cat => {
+    getCitySummary(city, mainEls).forEach(cat => {
       grandClient += cat.clientTotal
       grandInternal += cat.internalTotal
     })
@@ -277,9 +280,26 @@ export default function CostSummary({ event, userRole }) {
       {/* Combined category breakdown across all cities */}
       <CategoryBreakdown
         cities={cities}
-        getCitySummary={getCitySummary}
+        getCitySummary={(city) => getCitySummary(city, mainEls)}
         isAdmin={isAdmin}
       />
+
+      {/* Post-Event Additions */}
+      {postEventEls.length > 0 && (
+        <div style={{ marginBottom: '32px', paddingTop: '24px', borderTop: '1.5px dashed var(--border)' }}>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>
+            Post-Event Additions
+          </h3>
+          <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '16px' }}>
+            These elements are billed after the event and are not included in the main total above.
+          </p>
+          <CategoryBreakdown
+            cities={cities}
+            getCitySummary={(city) => getCitySummary(city, postEventEls)}
+            isAdmin={isAdmin}
+          />
+        </div>
+      )}
 
       {/* Cost calculation */}
       <div style={{ marginBottom: '32px' }}>
