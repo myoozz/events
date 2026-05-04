@@ -54,7 +54,7 @@ export default function CategoryManager({ userRole }) {
   const [openPanels, setOpenPanels] = useState({});
 
   useEffect(() => {
-    if (activeTab === 'stages') fetchStageConfig();
+    if (activeTab === 'stage_config') fetchStageConfig();
   }, [activeTab]);
 
   const fetchStageConfig = async () => {
