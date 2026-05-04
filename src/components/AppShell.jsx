@@ -293,7 +293,7 @@ export default function AppShell({ session }) {
                 onClick={() => handleNavClick('events')}
               >
                 <img
-                  src="/logo-me-events.svg"
+                  src="/brand/myoozz-white.png"
                   alt="Myoozz Events"
                   style={{ height: '28px', objectFit: 'contain', display: 'block' }}
                   onError={e => {

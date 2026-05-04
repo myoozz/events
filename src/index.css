@@ -6,7 +6,7 @@
 
 :root {
   /* ── Myoozz Brand Palette (v2.0 · April 2026) ─────────── */
-  --red:          #C8102E;   /* Myoozz Red — master brand (logo, errors, legal pages) */
+  --red:          #F28F3B;   /* Myoozz Red — master brand (logo, errors, legal pages) */
   --red-deep:     #8E0A1F;   /* Red deep — hover/pressed on red */
   --accent:       #F28F3B;   /* Me · Events primary accent (all interactive UI) */
   --accent-deep:  #D97A28;   /* Accent hover/pressed */
