@@ -36,11 +36,14 @@ export default function CategoryManager({ userRole }) {
   }
 
   const CATEGORY_TYPES = [
-    { value: 'rental',         label: 'Rental' },
-    { value: 'creative_print', label: 'Creative & Print' },
-    { value: 'booking',        label: 'Booking' },
-    { value: 'service',        label: 'Service' },
-    { value: 'permissions',    label: 'Permissions' },
+    { value: 'rental',           label: 'Rental' },
+    { value: 'creative_print',   label: 'Creative & Print' },
+    { value: 'booking',          label: 'Booking' },
+    { value: 'service',          label: 'Service' },
+    { value: 'permissions',      label: 'Permissions' },
+    { value: 'print_only',       label: 'Print Only' },
+    { value: 'print_fabrication', label: 'Print & Fabrication' },
+    { value: 'design_digital',   label: 'Design — Digital Output' },
   ];
 
   const [activeTab, setActiveTab] = useState('categories');
