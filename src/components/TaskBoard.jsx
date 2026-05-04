@@ -53,6 +53,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
   const [importLoading, setImportLoading] = useState(false);
   const [importSourceCity, setImportSourceCity] = useState('');
   const [applyAllCities, setApplyAllCities] = useState(false);
+  const [elementAssignments, setElementAssignments] = useState({}); // key: `${element_id}_${city}` → { assigned_to }
   const modalRef  = useRef(null);
   const statusRef = useRef(null);
   const importRef = useRef(null);
@@ -70,6 +71,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
     if (!eventId) return;
     fetchTasks();
     fetchUsers();
+    fetchElementAssignments();
   }, [eventId]);
 
   /* set default city tab once tasks + cities load */
@@ -103,6 +105,20 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
       .order('full_name');
     console.log('fetchUsers result:', data, error);
     setUsers(data || []);
+  }
+
+  async function fetchElementAssignments() {
+    const { data } = await db('element_assignments')
+      .select('element_id, city, assigned_to')
+      .eq('event_id', eventId);
+    if (!data) return;
+    const map = {};
+    data.forEach(row => {
+      map[`${row.element_id}_${row.city ?? ''}`] = {
+        assigned_to: row.assigned_to,
+      };
+    });
+    setElementAssignments(map);
   }
 
   async function openImport() {
@@ -433,8 +449,28 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                         <button
                           key={u.id}
                           onClick={async () => {
-                            const ids = grouped[cat].map(t => t.id);
-                            await Promise.all(ids.map(id => db('tasks').update({ assigned_to: u.id, assigned_name: u.full_name }).eq('id', id)));
+                            const catTasks = grouped[cat];
+                            // Update tasks table (existing behavior)
+                            await Promise.all(catTasks.map(t => db('tasks').update({ assigned_to: u.id, assigned_name: u.full_name }).eq('id', t.id)));
+                            // Upsert element_assignments for tasks that have an element_id
+                            const withElement = catTasks.filter(t => t.element_id);
+                            if (withElement.length > 0) {
+                              await Promise.all(withElement.map(async t => {
+                                // Delete existing assignment for this element+city
+                                let q = db('element_assignments').delete().eq('element_id', t.element_id);
+                                if (activeCity) q = q.eq('city', activeCity); else q = q.is('city', null);
+                                await q;
+                                // Insert new assignment
+                                await db('element_assignments').insert({
+                                  event_id:    eventId,
+                                  element_id:  t.element_id,
+                                  city:        activeCity || null,
+                                  assigned_to: u.id,
+                                  assigned_by: session?.user?.id,
+                                });
+                              }));
+                              await fetchElementAssignments();
+                            }
                             await fetchTasks();
                             setCatAssignMenu(null);
                           }}
