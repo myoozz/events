@@ -245,7 +245,7 @@ export default function AppShell({ session }) {
       background: '#FAFAF8', fontFamily: 'sans-serif', gap: '12px',
     }}>
       <div style={{
-        width: '28px', height: '28px', background: '#bc1723', borderRadius: '7px',
+        width: '28px', height: '28px', background: '#C8102E', borderRadius: '7px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: '11px', fontWeight: 700, color: '#fff',
       }}>ME</div>
@@ -303,7 +303,7 @@ export default function AppShell({ session }) {
                 />
                 <span style={{
                   display: 'none',
-                  background: '#bc1723', color: '#fff',
+                  background: '#C8102E', color: '#fff',
                   fontFamily: "'Cormorant Garamond', serif",
                   fontWeight: 700, fontSize: '18px',
                   padding: '2px 10px', borderRadius: '3px', letterSpacing: '1px',
@@ -315,7 +315,7 @@ export default function AppShell({ session }) {
                 }}>Myoozz Events</span>
                 <span style={{
                   fontFamily: "'DM Mono', monospace", fontSize: '10px',
-                  color: '#bc1723',
+                  color: '#C8102E',
                 }}>{version}</span>
               </motion.div>
             )}
@@ -323,7 +323,7 @@ export default function AppShell({ session }) {
               <div
                 style={{
                   width: '28px', height: '28px',
-                  background: '#bc1723', borderRadius: '7px',
+                  background: '#C8102E', borderRadius: '7px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '11px', fontWeight: 700, color: '#fff',
                   cursor: 'pointer', flexShrink: 0,
@@ -392,21 +392,21 @@ export default function AppShell({ session }) {
                   borderRadius: 'var(--radius-sm)', background: activeTab === 'profile' && profileUserId === userId
                     ? 'var(--bg-secondary)' : 'var(--bg-secondary)',
                   border: activeTab === 'profile' && profileUserId === userId
-                    ? '1px solid #bc1723' : '1px solid transparent',
+                    ? '1px solid #C8102E' : '1px solid transparent',
                   cursor: 'pointer', textAlign: 'left',
                   transition: 'border-color 0.15s',
                 }}
-                onMouseOver={e => { e.currentTarget.style.borderColor = '#bc1723' }}
+                onMouseOver={e => { e.currentTarget.style.borderColor = '#C8102E' }}
                 onMouseOut={e => {
                   e.currentTarget.style.borderColor =
-                    (activeTab === 'profile' && profileUserId === userId) ? '#bc1723' : 'transparent'
+                    (activeTab === 'profile' && profileUserId === userId) ? '#C8102E' : 'transparent'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {/* initials circle */}
                   <div style={{
                     width: '28px', height: '28px', borderRadius: '7px',
-                    background: '#bc1723',
+                    background: '#C8102E',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '11px', fontWeight: 700, color: '#fff',
                     flexShrink: 0,
@@ -438,10 +438,10 @@ export default function AppShell({ session }) {
               >
                 <div style={{
                   width: '28px', height: '28px', borderRadius: '7px',
-                  background: '#bc1723',
+                  background: '#C8102E',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '11px', fontWeight: 700, color: '#fff',
-                  outline: (activeTab === 'profile' && profileUserId === userId) ? '2px solid #bc1723' : 'none',
+                  outline: (activeTab === 'profile' && profileUserId === userId) ? '2px solid #C8102E' : 'none',
                   outlineOffset: '2px',
                 }}>
                   {ini || userName.charAt(0).toUpperCase()}
@@ -557,7 +557,7 @@ export default function AppShell({ session }) {
           >
             <div style={{
               width: '22px', height: '22px', borderRadius: '6px',
-              background: activeTab === 'profile' ? '#bc1723' : 'var(--text-tertiary)',
+              background: activeTab === 'profile' ? '#C8102E' : 'var(--text-tertiary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '9px', fontWeight: 700, color: '#fff',
               position: 'relative',
@@ -568,7 +568,7 @@ export default function AppShell({ session }) {
                 <span style={{
                   position: 'absolute', top: '-3px', right: '-3px',
                   width: '8px', height: '8px', borderRadius: '50%',
-                  background: '#bc1723', border: '1.5px solid var(--bg)',
+                  background: '#C8102E', border: '1.5px solid var(--bg)',
                 }} />
               )}
             </div>

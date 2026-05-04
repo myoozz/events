@@ -201,7 +201,7 @@ export default function CategoryManager({ userRole }) {
   return (
     <div style={{ padding: '40px 48px 80px', maxWidth: 720 }}>
       <div style={{ marginBottom: 32 }}>
-        <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#bc1723', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+        <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#C8102E', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
           Admin · Category Manager
         </div>
         <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 34, fontWeight: 600, color: '#1a1008', lineHeight: 1.2 }}>
@@ -226,7 +226,7 @@ export default function CategoryManager({ userRole }) {
               padding: '10px 20px',
               background: 'none',
               border: 'none',
-              borderBottom: activeTab === tab.key ? '2px solid #bc1723' : '2px solid transparent',
+              borderBottom: activeTab === tab.key ? '2px solid #C8102E' : '2px solid transparent',
               color: activeTab === tab.key ? '#1a1008' : '#7a7060',
               fontFamily: 'DM Sans, sans-serif',
               fontSize: 13,
@@ -241,9 +241,9 @@ export default function CategoryManager({ userRole }) {
       </div>
 
       {error && (
-        <div style={{ background: '#fde8ea', border: '1px solid #f5b5ba', borderRadius: 6, padding: '10px 14px', color: '#bc1723', fontSize: 13, marginBottom: 16 }}>
+        <div style={{ background: '#fde8ea', border: '1px solid #f5b5ba', borderRadius: 6, padding: '10px 14px', color: '#C8102E', fontSize: 13, marginBottom: 16 }}>
           {error}
-          <button onClick={() => setError('')} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer', color: '#bc1723', fontSize: 16 }}>×</button>
+          <button onClick={() => setError('')} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer', color: '#C8102E', fontSize: 16 }}>×</button>
         </div>
       )}
 
@@ -278,7 +278,7 @@ export default function CategoryManager({ userRole }) {
                     onChange={e => setEditingName(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleRename(cat); if (e.key === 'Escape') setEditingId(null); }}
                     onBlur={() => handleRename(cat)}
-                    style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, border: '1px solid #bc1723', borderRadius: 4, padding: '4px 8px', outline: 'none', color: '#1a1008' }}
+                    style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, border: '1px solid #C8102E', borderRadius: 4, padding: '4px 8px', outline: 'none', color: '#1a1008' }}
                   />
                 ) : (
                   <div
@@ -360,7 +360,7 @@ export default function CategoryManager({ userRole }) {
               onClick={handleAdd}
               disabled={!newName.trim() || adding}
               style={{
-                background: newName.trim() ? '#bc1723' : '#e8e4dc',
+                background: newName.trim() ? '#C8102E' : '#e8e4dc',
                 color: newName.trim() ? '#fff' : '#b8b0a0',
                 border: 'none', borderRadius: 4, padding: '6px 14px',
                 fontSize: 13, cursor: newName.trim() ? 'pointer' : 'default',

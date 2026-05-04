@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────────
-const BRAND_RED  = '#bc1723'
+const BRAND_RED  = '#C8102E'
 const WARM_BG    = '#FAFAF8'
 const FONT_HEAD  = '"Cormorant Garamond", Georgia, serif'
 const FONT_BODY  = '"DM Sans", system-ui, sans-serif'

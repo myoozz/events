@@ -14,18 +14,18 @@ function MeLogo({ size = 36 }) {
   return (
     <svg width={s * 1.6} height={s} viewBox="0 0 64 40" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* M */}
-      <text x="0" y="34" fontFamily="'DM Sans', sans-serif" fontWeight="800" fontSize="38" fill="#bc1723">M</text>
+      <text x="0" y="34" fontFamily="'DM Sans', sans-serif" fontWeight="800" fontSize="38" fill="#C8102E">M</text>
       {/* e circle */}
       <circle cx="52" cy="24" r="12" fill="#d1d5d8"/>
       {/* e letter */}
-      <text x="46.5" y="29.5" fontFamily="'DM Sans', sans-serif" fontWeight="700" fontSize="14" fill="#bc1723">e</text>
+      <text x="46.5" y="29.5" fontFamily="'DM Sans', sans-serif" fontWeight="700" fontSize="14" fill="#C8102E">e</text>
     </svg>
   );
 }
 
 const css = `
 :root {
-  --red: #bc1723;
+  --red: #C8102E;
   --red-dark: #9a1219;
   --bg: #FAFAF8;
   --bg-warm: #F4F2EE;
@@ -104,7 +104,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .hero-right { position: relative; height: 420px; animation: fadeIn 1s 0.4s ease both; }
 .doc-card { position: absolute; background: #fff; border-radius: 10px; padding: 18px 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06); min-width: 190px; border: 0.5px solid var(--border); }
 .doc-card-bar { height: 4px; border-radius: 2px; margin-bottom: 14px; width: 36px; }
-.doc-card-bar--red { background: #bc1723; }
+.doc-card-bar--red { background: #C8102E; }
 .doc-card-bar--green { background: #22c55e; }
 .doc-card-bar--blue { background: #3b82f6; }
 .doc-card-bar--amber { background: #f59e0b; }
@@ -436,9 +436,9 @@ export default function LandingPage() {
                         placeholder="Full name *"
                         value={form.fullName}
                         onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                        style={formErrors.fullName ? { borderColor: "#bc1723" } : {}}
+                        style={formErrors.fullName ? { borderColor: "#C8102E" } : {}}
                       />
-                      {formErrors.fullName && <span style={{ fontSize: "12px", color: "#bc1723" }}>{formErrors.fullName}</span>}
+                      {formErrors.fullName && <span style={{ fontSize: "12px", color: "#C8102E" }}>{formErrors.fullName}</span>}
                     </div>
                     <div className="modal-field">
                       <input
@@ -446,9 +446,9 @@ export default function LandingPage() {
                         placeholder="Work email *"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        style={formErrors.email ? { borderColor: "#bc1723" } : {}}
+                        style={formErrors.email ? { borderColor: "#C8102E" } : {}}
                       />
-                      {formErrors.email && <span style={{ fontSize: "12px", color: "#bc1723" }}>{formErrors.email}</span>}
+                      {formErrors.email && <span style={{ fontSize: "12px", color: "#C8102E" }}>{formErrors.email}</span>}
                     </div>
                   </div>
                   <div className="modal-row">
@@ -469,7 +469,7 @@ export default function LandingPage() {
                     />
                   </div>
                 </div>
-                {submitError && <p style={{ fontSize: "13px", color: "#bc1723", marginBottom: "12px" }}>{submitError}</p>}
+                {submitError && <p style={{ fontSize: "13px", color: "#C8102E", marginBottom: "12px" }}>{submitError}</p>}
                 <button className="modal-submit" disabled={submitting} onClick={handleSubmit}>
                   {submitting ? "Sending..." : "Request Access"}
                 </button>

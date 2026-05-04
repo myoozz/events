@@ -5,23 +5,46 @@
 }
 
 :root {
-  --bg: #FAFAF8;
-  --bg-secondary: #F2EFE8;
-  --text: #1A1915;
-  --text-secondary: #6B6860;
-  --text-tertiary: #9E9B94;
-  --border: rgba(26,25,21,0.1);
-  --border-strong: rgba(26,25,21,0.2);
-  --gold: #B8965A;
-  --gold-light: #F5EDD8;
-  --green: #2D6A4F;
-  --green-light: #E8F5EE;
-  --blue: #1A4A8A;
-  --blue-light: #E8F0FB;
-  --amber: #8A5A1A;
-  --amber-light: #FBF0E8;
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  /* ── Myoozz Brand Palette (v2.0 · April 2026) ─────────── */
+  --red:          #C8102E;   /* Myoozz Red — master brand accent */
+  --red-deep:     #8E0A1F;   /* Red deep — hover/pressed states */
+
+  /* Sub-brand fields */
+  --me:           #F28F3B;   /* Me · Events (this product) */
+  --mn:           #2D5BFF;   /* Mn · Nexus */
+  --ma:           #00A877;   /* Ma · Assistant */
+  --mx:           #7C3AED;   /* Mx · Experiments */
+
+  /* Status — UI only, < 5% of surface */
+  --signal-live:  #00C853;
+  --signal-warn:  #FFB400;
+
+  /* ── Surfaces & text ────────────────────────────────────── */
+  --bg:               #F5F1E8;            /* paper-3 — page background */
+  --bg-secondary:     #EDE8DD;            /* paper — card/surface background */
+  --bg-surface-2:     #DDD7C7;            /* paper-2 — table headers, hover */
+  --text:             #0A0A0A;            /* ink */
+  --text-2:           #1A1A1A;            /* ink-2 */
+  --text-secondary:   rgba(10,10,10,0.55); /* muted */
+  --text-tertiary:    rgba(10,10,10,0.35);
+  --border:           rgba(10,10,10,0.14); /* hair */
+  --border-strong:    rgba(10,10,10,0.32); /* hair-strong */
+
+  /* ── Semantic aliases (mapped to brand palette) ─────────── */
+  --gold:         #F28F3B;   /* → Me orange (events accent) */
+  --gold-light:   #FEF0E0;
+  --green:        #00A877;   /* → Ma green (positive/success) */
+  --green-light:  #E6F7F2;
+  --blue:         #2D5BFF;   /* → Mn blue (info) */
+  --blue-light:   #EBF0FF;
+  --amber:        #B45309;   /* rust — caution */
+  --amber-light:  #FEF3E2;
+
+  /* ── Typography ─────────────────────────────────────────── */
+  --font-display: 'Bricolage Grotesque', sans-serif; /* headlines */
+  --font-body:    'Inter', system-ui, sans-serif;    /* UI, body */
+  --font-mono:    'JetBrains Mono', monospace;       /* codes, IDs */
+
   --radius: 10px;
   --radius-sm: 6px;
 }
@@ -55,8 +78,8 @@ button {
 }
 
 @keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 106, 79, 0.3); }
-  50%       { box-shadow: 0 0 0 6px rgba(45, 106, 79, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 168, 119, 0.3); }
+  50%       { box-shadow: 0 0 0 6px rgba(0, 168, 119, 0); }
 }
 
 .fade-up {

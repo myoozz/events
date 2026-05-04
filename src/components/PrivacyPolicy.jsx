@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 
 /* ─────────────────────────────────────────────
    Myoozz Events — Privacy Policy Page
-   Brand: #bc1723 red · #FAFAF8 warm white
+   Brand: #C8102E red · #FAFAF8 warm white
    Fonts: Cormorant Garamond (headlines) · DM Sans (body)
    Last updated: April 2026
 ───────────────────────────────────────────── */
@@ -131,7 +131,7 @@ export default function PrivacyPolicy() {
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap');
 
         :root {
-          --red: #bc1723;
+          --red: #C8102E;
           --bg: #FAFAF8;
           --ink: #1a1a1a;
           --muted: #6b6b6b;

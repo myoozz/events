@@ -542,7 +542,7 @@ const S = {
   },
   avatarCircle: {
     width: 72, height: 72, borderRadius: '14px',
-    background: '#bc1723', color: '#fff',
+    background: '#C8102E', color: '#fff',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px',
     fontFamily: "'DM Sans', sans-serif",
@@ -567,7 +567,7 @@ const S = {
   nameEditRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 },
   nameInput: {
     flex: 1, padding: '6px 10px',
-    border: '1.5px solid #bc1723', borderRadius: 7,
+    border: '1.5px solid #C8102E', borderRadius: 7,
     fontSize: 18, fontFamily: "'DM Sans', sans-serif",
     color: '#1a1a1a', background: '#fff', outline: 'none',
   },
@@ -576,7 +576,7 @@ const S = {
     color: '#C4BDB6', padding: 2, display: 'flex', alignItems: 'center',
   },
   miniSaveBtn: {
-    padding: '4px 10px', background: '#bc1723', color: '#fff',
+    padding: '4px 10px', background: '#C8102E', color: '#fff',
     border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600,
   },
   miniCancelBtn: {
@@ -609,7 +609,7 @@ const S = {
     color: '#9CA3AF', fontWeight: 500, marginBottom: -1,
     transition: 'color 0.15s, border-color 0.15s',
   },
-  tabActive: { color: '#bc1723', borderBottomColor: '#bc1723', fontWeight: 600 },
+  tabActive: { color: '#C8102E', borderBottomColor: '#C8102E', fontWeight: 600 },
 
   detailsWrap: { display: 'flex', flexDirection: 'column', gap: 0 },
   fieldBlock: {
@@ -639,14 +639,14 @@ const S = {
   nudgeBenefit: { fontSize: 13, color: '#6B7280', flex: 1, lineHeight: 1.4 },
   nudgeAddBtn: {
     padding: '6px 16px', border: 'none', borderRadius: 20,
-    background: '#bc1723', color: '#fff', cursor: 'pointer',
+    background: '#C8102E', color: '#fff', cursor: 'pointer',
     fontSize: 12, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
     flexShrink: 0, whiteSpace: 'nowrap',
   },
 
   inlineInput: {
     width: '100%', padding: '9px 12px',
-    border: '1.5px solid #bc1723', borderRadius: 7,
+    border: '1.5px solid #C8102E', borderRadius: 7,
     fontSize: 14, fontFamily: "'DM Sans', sans-serif",
     background: '#fff', color: '#1a1a1a', outline: 'none',
     boxSizing: 'border-box',
@@ -658,7 +658,7 @@ const S = {
   },
   inlineSaveBtn: {
     padding: '7px 20px', border: 'none', borderRadius: 7,
-    background: '#bc1723', color: '#fff', cursor: 'pointer',
+    background: '#C8102E', color: '#fff', cursor: 'pointer',
     fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
   },
 
@@ -668,7 +668,7 @@ const S = {
     marginBottom: 8, paddingLeft: 2,
   },
   socialLink: {
-    fontSize: 13, color: '#bc1723', textDecoration: 'none',
+    fontSize: 13, color: '#C8102E', textDecoration: 'none',
     flex: 1, wordBreak: 'break-all',
   },
   addMoreBtn: {

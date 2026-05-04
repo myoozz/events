@@ -135,7 +135,7 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
         variants={accentBarVariants}
         style={{
           position: 'absolute', left: 0, top: 0, bottom: 0, width: '3px',
-          background: '#bc1723', transformOrigin: 'left',
+          background: '#C8102E', transformOrigin: 'left',
         }}
       />
 
@@ -595,7 +595,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
               fontWeight: view === v.key ? 500 : 400,
               fontFamily: 'var(--font-body)',
               background: 'none',
-              color: view === v.key ? '#bc1723' : 'var(--text-tertiary)',
+              color: view === v.key ? '#C8102E' : 'var(--text-tertiary)',
               border: 'none', cursor: 'pointer',
               position: 'relative',
               transition: 'color 0.15s',
@@ -607,7 +607,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
                 layoutId="tab-indicator"
                 style={{
                   position: 'absolute', bottom: 0, left: 0, right: 0,
-                  height: '2px', background: '#bc1723',
+                  height: '2px', background: '#C8102E',
                   borderRadius: '2px 2px 0 0',
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 36 }}

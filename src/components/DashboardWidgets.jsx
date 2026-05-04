@@ -288,7 +288,7 @@ export default function DashboardWidgets({ userId, userRole, userName }) {
           border-radius: 10px 10px 0 0;
         }
         .dw-card.hot .accent-bar {
-          background: #bc1723;
+          background: #C8102E;
         }
         .dw-card .card-value {
           font-family: 'Cormorant Garamond', serif;
@@ -300,7 +300,7 @@ export default function DashboardWidgets({ userId, userRole, userName }) {
           letter-spacing: -0.5px;
         }
         .dw-card.hot .card-value {
-          color: #bc1723;
+          color: #C8102E;
         }
         .dw-card .card-label {
           font-family: 'DM Sans', sans-serif;
@@ -343,7 +343,7 @@ export default function DashboardWidgets({ userId, userRole, userName }) {
           font-family: 'DM Sans', sans-serif;
           font-size: 11px;
           font-weight: 600;
-          color: #bc1723;
+          color: #C8102E;
           background: #fdf0f0;
           border: 1px solid #f5c4c6;
           border-radius: 100px;

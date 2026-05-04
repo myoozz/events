@@ -416,7 +416,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                 <span style={styles.catTitle}>{cat}</span>
                 <span style={styles.catMeta}>
                   <span style={styles.catCount}>{grouped[cat].length}</span>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:collapsed[cat]?'rotate(-90deg)':'none',transition:'transform 0.18s ease',flexShrink:0}}><path d="M3 5l4 4 4-4" stroke={collapsed[cat]?'#bc1723':'#2e7d32'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:collapsed[cat]?'rotate(-90deg)':'none',transition:'transform 0.18s ease',flexShrink:0}}><path d="M3 5l4 4 4-4" stroke={collapsed[cat]?'#C8102E':'#2e7d32'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </span>
               </button>
               {!collapsed[cat] && canAssign && (
@@ -425,7 +425,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                     onClick={(e) => { e.stopPropagation(); setCatAssignMenu(catAssignMenu === cat ? null : cat); }}
                     style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', border: '0.5px solid #d8d2c8', background: '#fff', cursor: 'pointer', color: '#2c2518', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}
                   >
-                    Assign All <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={catAssignMenu===cat?'#2e7d32':'#bc1723'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    Assign All <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={catAssignMenu===cat?'#2e7d32':'#C8102E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </button>
                   {catAssignMenu === cat && (
                     <div data-catassign style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 200, minWidth: '180px', padding: '4px 0' }}>
@@ -448,7 +448,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                           <div style={{ height: '0.5px', background: '#d8d2c8', margin: '4px 0' }} />
                           <button
                             onClick={() => { setCatAssignMenu(null); setShowCatInvite(cat); }}
-                            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', color: '#bc1723' }}
+                            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', color: '#C8102E' }}
                           >
                             ＋ Invite someone...
                           </button>
@@ -488,7 +488,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                         setShowCatInvite(null);
                       }
                     }}
-                    style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#bc1723', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                    style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#C8102E', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
                   >
                     {catInviteSending ? 'Sending...' : 'Send invite'}
                   </button>
@@ -519,7 +519,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                             title={canAssign ? 'Change status' : sm.label}
                           >
                             {sm.label}
-                            {canAssign && <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={statusMenu===task.id?'#2e7d32':'#bc1723'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            {canAssign && <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={statusMenu===task.id?'#2e7d32':'#C8102E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                           </button>
                           {statusMenu === task.id && (
                             <div ref={statusRef} style={styles.statusDropdown}>
@@ -637,7 +637,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                         setShowInlineInvite(false);
                       }
                     }}
-                    style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#bc1723', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                    style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#C8102E', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
                   >
                     {inviteSending ? 'Sending...' : 'Send invite'}
                   </button>
@@ -658,7 +658,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                   type="checkbox"
                   checked={applyAllCities}
                   onChange={(e) => setApplyAllCities(e.target.checked)}
-                  style={{ marginRight: 8, accentColor: '#bc1723' }}
+                  style={{ marginRight: 8, accentColor: '#C8102E' }}
                 />
                 <span>Apply to all cities</span>
                 <span style={styles.allCitiesHint}>
@@ -724,7 +724,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                           type="checkbox"
                           checked={!!importSel[el.id]}
                           onChange={(e) => setImportSel((p) => ({ ...p, [el.id]: e.target.checked }))}
-                          style={{ marginRight: 10, accentColor: '#bc1723', flexShrink: 0, marginTop: 1 }}
+                          style={{ marginRight: 10, accentColor: '#C8102E', flexShrink: 0, marginTop: 1 }}
                         />
                         <span style={styles.importElName}>{el.element_name}</span>
                         <span style={styles.importElCat}>{el.category || 'General'}</span>
@@ -792,8 +792,8 @@ const styles = {
     transition: 'all 0.15s',
   },
   tabActive: {
-    background: '#bc1723',
-    borderColor: '#bc1723',
+    background: '#C8102E',
+    borderColor: '#C8102E',
     color: '#fff',
     fontWeight: 600,
   },
@@ -1026,7 +1026,7 @@ const styles = {
     width: 22,
     height: 22,
     borderRadius: '6px',
-    background: '#bc1723',
+    background: '#C8102E',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
@@ -1136,8 +1136,8 @@ const styles = {
     cursor: 'pointer',
   },
   importCityPillActive: {
-    background: '#bc1723',
-    borderColor: '#bc1723',
+    background: '#C8102E',
+    borderColor: '#C8102E',
     color: '#fff',
   },
   importBody: {
@@ -1210,7 +1210,7 @@ const styles = {
     padding: '9px 22px',
     border: 'none',
     borderRadius: 8,
-    background: '#bc1723',
+    background: '#C8102E',
     color: '#fff',
     cursor: 'pointer',
     fontSize: 13,
@@ -1286,7 +1286,7 @@ const styles = {
     padding: '9px 22px',
     border: 'none',
     borderRadius: 8,
-    background: '#bc1723',
+    background: '#C8102E',
     color: '#fff',
     cursor: 'pointer',
     fontSize: 13,

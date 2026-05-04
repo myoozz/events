@@ -88,16 +88,33 @@ Never change DB values. Display rename = find/replace in UI strings only.
 - City match priority, Pan-India fallback
 - Seeding workflow: Gemini JSON → validate in chat → clean JSON → Vikram imports via UI
 
-## Design Rules
-- Brand red: `#bc1723` — the only accent color. No exceptions.
-- Ink: `#1a1008` · Background: `#faf8f5` · Surface: `#f2efe9` · Border: `#d8d2c8` · Dim text: `#7a7060`
-- Fonts: Cormorant Garamond (`--font-display`, headings) · DM Sans (`--font-body`, UI) · DM Mono (`--font-mono`, IDs/codes)
+## Design Rules — Myoozz Brand v2.0 (April 2026)
+
+### Color Tokens
+- **Myoozz Red**: `#C8102E` (`--red`) — master brand accent. Use for primary actions, active states, tab underlines.
+- **Red Deep**: `#8E0A1F` (`--red-deep`) — hover/pressed on red elements.
+- **Me (Events) field**: `#F28F3B` (`--me`) — the Events sub-brand color. Used for semantic "gold/featured" states.
+- **Mn (Nexus)**: `#2D5BFF` (`--mn`) · **Ma (Assistant)**: `#00A877` (`--ma`) · **Mx (Experiments)**: `#7C3AED` (`--mx`)
+- **Signal Live**: `#00C853` (`--signal-live`) · **Signal Warn**: `#FFB400` (`--signal-warn`)
+- **Ink**: `#0A0A0A` (`--text`) · **Ink-2**: `#1A1A1A` (`--text-2`)
+- **Background (page)**: `#F5F1E8` (`--bg`) · **Surface (cards)**: `#EDE8DD` (`--bg-secondary`) · **Surface-2 (table heads)**: `#DDD7C7` (`--bg-surface-2`)
+- **Border**: `rgba(10,10,10,0.14)` (`--border`) · **Border strong**: `rgba(10,10,10,0.32)` (`--border-strong`)
+- **Muted text**: `rgba(10,10,10,0.55)` (`--text-secondary`)
+
+### Typography
+- **Display/Headlines**: Bricolage Grotesque (`--font-display`) — 700–800 weight, tight tracking
+- **UI/Body**: Inter (`--font-body`) — 400/500/600, 14–18px
+- **System/Mono**: JetBrains Mono (`--font-mono`) — codes, IDs, labels, receipts
+- Brand mark (M monogram, MYOOZZ wordmark): locked artwork — use PNGs from `public/brand/`, never re-typeset
+
+### Other Rules
 - CSS radius tokens: `--radius` 10px · `--radius-sm` 6px
-- Warm light theme throughout. No cold grays.
+- Warm cream theme throughout. No cold grays. Paper is warm, not white.
 - FloatingHelp pattern only — never inline help text on page load.
 - Avatar style: rounded squares everywhere. Not circles.
-- Tab active: `#bc1723` underline. Not a filled pill.
+- Tab active: `#C8102E` underline. Not a filled pill.
 - Framer Motion is installed (framer-motion@12). Use it for entrance/hover animations on new UI.
+- Brand assets (logos, PNGs): `public/brand/` — wordmark, monogram, Me/Mn/Ma/Mx lockups, bubble glyphs.
 
 ## What Belongs Here vs Chat
 - **HERE**: File edits, git commits, SQL migrations, JSON fixes, multi-file changes

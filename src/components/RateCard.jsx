@@ -806,7 +806,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
     text:      '#ffffff',
     sub:       '#aaaaaa',
     dim:       '#666666',
-    red:       '#bc1723',
+    red:       '#C8102E',
   }
 
   const s = { fontFamily: 'var(--font-body)' }
@@ -1185,7 +1185,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={confirmAddToEvent}
                     disabled={!targetEvent || !targetCity || adding}
-                    style={{ ...s, flex: 1, padding: '9px', fontSize: '13px', fontWeight: 500, background: '#bc1723', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', opacity: targetEvent && targetCity ? 1 : 0.5 }}>
+                    style={{ ...s, flex: 1, padding: '9px', fontSize: '13px', fontWeight: 500, background: '#C8102E', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', opacity: targetEvent && targetCity ? 1 : 0.5 }}>
                     {adding ? 'Adding…' : addWarnings.some(w => w.type === 'duplicate') ? 'Add anyway' : 'Confirm'}
                   </button>
                   <button onClick={() => setShowAddModal(false)}

@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Myoozz — Brand Guidelines v2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:ital,wght@0,400;0,600;0,800;1,400;1,600&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Sentient:ital,wght@0,400;0,600;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Familjen+Grotesk:ital,wght@0,400;0,500;0,700;1,400;1,700&display=swap" rel="stylesheet" />
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"></script>
+<style>
+  :root {
+    --ink: #0A0A0A;
+    --ink-2: #1A1A1A;
+    --paper: #EDE8DD;
+    --paper-2: #DDD7C7;
+    --paper-3: #F5F1E8;
+    --hair: rgba(10,10,10,0.14);
+    --hair-strong: rgba(10,10,10,0.32);
+    --muted: rgba(10,10,10,0.55);
+    --red: #C8102E;
+    --red-deep: #8E0A1F;
+    --me: #F28F3B;
+    --mn: #2D5BFF;
+    --ma: #00A877;
+    --mx: #7C3AED;
+    --signal-live: #00C853;
+    --signal-warn: #FFB400;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  .page { max-width: 1280px; margin: 0 auto; padding: 0 56px; }
+
+  /* Topbar — hard module index */
+  .topbar { position: sticky; top: 0; z-index: 50; background: var(--ink); color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; }
+  .topbar-inner { max-width: 1280px; margin: 0 auto; padding: 14px 56px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .topbar a { color: rgba(255,255,255,0.55); text-decoration: none; margin-left: 18px; transition: color 0.15s; }
+  .topbar a:hover { color: #fff; }
+  .dot { width: 8px; height: 8px; background: var(--red); border-radius: 50%; display: inline-block; }
+
+  /* Hero — bigger, looser, with a numbered index column */
+  .hero { padding: 120px 0 130px; position: relative; }
+  .hero::before { content: ""; position: absolute; top: 0; left: 56px; right: 56px; height: 1px; background: var(--ink); opacity: 0.85; }
+  .hero-grid { display: grid; grid-template-columns: 80px 1fr; gap: 48px; align-items: start; }
+  .hero-num { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--ink); writing-mode: vertical-rl; transform: rotate(180deg); padding-top: 4px; }
+  .kicker { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); display: inline-flex; align-items: center; gap: 12px; }
+  .hero h1 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: clamp(64px, 9vw, 156px); line-height: 0.86; letter-spacing: -0.045em; margin: 24px 0 0; max-width: 1100px; text-wrap: balance; font-variation-settings: 'opsz' 96; }
+  .hero h1 em { font-style: italic; font-weight: 400; color: var(--red); font-family: 'Bricolage Grotesque', sans-serif; font-variation-settings: 'opsz' 96; }
+  .hero-sub { margin-top: 36px; font-size: 18px; line-height: 1.55; color: rgba(10,10,10,0.72); max-width: 720px; text-wrap: pretty; }
+  .hero-meta { margin-top: 64px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; padding-top: 32px; border-top: 1px solid var(--hair-strong); font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
+  .hero-meta b { color: var(--ink); display: block; margin-top: 6px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 0; text-transform: none; }
+
+  /* Sections — each opens with a thick rule and a giant number */
+  section { padding: 110px 0 100px; position: relative; border-top: 2px solid var(--ink); }
+  section.dark { background: var(--ink); color: #fff; border-top-color: var(--ink); }
+  section.dark .sec-num, section.dark .label, section.dark .caption, section.dark .specs { color: rgba(255,255,255,0.55); }
+  section.dark .sec-lede { color: rgba(255,255,255,0.72); }
+  section.dark .sec-h, section.dark h3 { color: #fff; }
+  section.dark .card { background: #181818; border-color: rgba(255,255,255,0.1); color: #fff; }
+  section.dark hr.rule { border-top-color: rgba(255,255,255,0.14); }
+  /* Body text inside dark sections — ensure ol/ul/p/li read as light by default,
+     but DO NOT bleed into nested cards/tables that have their own light background. */
+  section.dark > .page > .sec-head p,
+  section.dark > .page > .sec-body > p,
+  section.dark > .page > .sec-body > ol,
+  section.dark > .page > .sec-body > ul,
+  section.dark > .page > .sec-body > div > p,
+  section.dark > .page > .sec-body > div > ol,
+  section.dark > .page > .sec-body > div > ul,
+  section.dark > .page > .sec-body > div > li,
+  section.dark > .page > .sec-body > div > div > p { color: rgba(255,255,255,0.78); }
+  section.dark code { background: rgba(255,255,255,0.08); color: #fff; padding: 1px 6px; border-radius: 3px; }
+  section.dark .sec-head b, section.dark .sec-head strong { color: #fff; }
+  /* Cards on dark sections keep their own readable color */
+  section.dark .check-card { background: #fff; }
+  section.dark .check-card p { color: var(--ink); }
+  section.dark .voice-card { background: #fff; }
+  section.dark .voice-card .v-yes, section.dark .voice-card .v-no { color: var(--ink); }
+  section.dark .caption { color: rgba(255,255,255,0.55); }
+  .sec-head { display: grid; grid-template-columns: 80px 1fr; gap: 48px; align-items: start; margin-bottom: 64px; }
+  .sec-num { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--ink); writing-mode: vertical-rl; transform: rotate(180deg); padding-top: 4px; }
+  .sec-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: clamp(44px, 5.6vw, 84px); line-height: 0.94; letter-spacing: -0.035em; margin: 0 0 24px; max-width: 1100px; text-wrap: balance; font-variation-settings: 'opsz' 96; }
+  .sec-h em { font-style: italic; font-weight: 500; color: var(--red); }
+  .sec-lede { font-size: 17.5px; line-height: 1.6; color: rgba(10,10,10,0.72); max-width: 760px; text-wrap: pretty; margin: 0; }
+  .sec-body { padding-left: 128px; }
+
+  .grid { display: grid; gap: 24px; }
+  .g2 { grid-template-columns: 1fr 1fr; }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+  .card { background: #fff; border: 1px solid var(--hair); padding: 28px; }
+  .card.dark { background: var(--ink); color: #fff; border-color: rgba(255,255,255,0.08); }
+  .card.cream { background: var(--paper-2); }
+  .label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+  .card.dark .label { color: rgba(255,255,255,0.55); }
+  .caption { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--muted); text-wrap: pretty; }
+
+  .logo-display { aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; padding: 32px; }
+  .logo-display.red { background: var(--red); }
+  .logo-display.ink { background: var(--ink); }
+  .logo-display.cream { background: var(--paper-2); }
+  .logo-display.white { background: #fff; border: 1px solid var(--hair); }
+  .wordmark img { display: block; height: 1em; width: auto; }
+
+  /* Sub-brand letter pairs: M is locked artwork (img.m-art), letter stays Poppins.
+     The standalone monogram is custom artwork (assets/myoozz-monogram-m-white.png), never typeset. */
+  .m-mark { font-family: 'Poppins', sans-serif; font-weight: 700; line-height: 0.82; letter-spacing: -0.05em; }
+  .m-art { display: block; height: 0.95em; width: auto; align-self: flex-end; transform: translateY(0.04em); }
+
+  /* Tweak modes — drive M treatment + font system from data attributes on <html> */
+  /* Mode A: original (M big) | B: M smaller, optical-aligned | C: drop M, letter only | D: bubble + dot */
+  html[data-mtreat="B"] .sb-mark .m-mark { font-size: 0.62em !important; align-self: flex-end; transform: translateY(-0.04em); opacity: 0.9; }
+  html[data-mtreat="B"] .sb-mark .sb-letter { font-size: 1em !important; }
+  html[data-mtreat="C"] .sb-mark .m-mark { display: none !important; }
+  html[data-mtreat="C"] .sb-mark .sb-letter { font-size: 1.4em !important; }
+  html[data-mtreat="D"] .sb-mark .m-mark, html[data-mtreat="D"] .sb-mark .sb-letter { display: none !important; }
+  html[data-mtreat="D"] .sb-mark::before { content: ""; display: block; width: 0.7em; height: 0.7em; border-radius: 50% 50% 50% 8%; background: var(--red); }
+  html[data-mtreat="D"] .sb-mark::after { content: var(--sb-dot, ""); display: block; width: 0.32em; height: 0.32em; border-radius: 50%; background: #fff; margin-left: 0.18em; align-self: center; }
+
+  /* Font pairings */
+  html[data-fontpair="current"] body { font-family: 'Inter', sans-serif; }
+  html[data-fontpair="current"] .sec-h, html[data-fontpair="current"] .hero h1 { font-family: 'Bricolage Grotesque', sans-serif; font-variation-settings: 'opsz' 96; }
+  html[data-fontpair="geist"] body { font-family: 'Geist', sans-serif; }
+  html[data-fontpair="geist"] .sec-h, html[data-fontpair="geist"] .hero h1 { font-family: 'Geist', sans-serif; font-weight: 700; letter-spacing: -0.03em; }
+  html[data-fontpair="geist"] .label, html[data-fontpair="geist"] .kicker, html[data-fontpair="geist"] .topbar, html[data-fontpair="geist"] .specs, html[data-fontpair="geist"] .sec-num { font-family: 'Geist Mono', monospace !important; }
+  html[data-fontpair="editorial"] body { font-family: 'Sentient', serif; }
+  html[data-fontpair="editorial"] .sec-h, html[data-fontpair="editorial"] .hero h1 { font-family: 'Instrument Serif', serif; font-weight: 400; letter-spacing: -0.02em; }
+  html[data-fontpair="poppins-only"] body { font-family: 'Poppins', sans-serif; font-weight: 400; }
+  html[data-fontpair="poppins-only"] .sec-h, html[data-fontpair="poppins-only"] .hero h1 { font-family: 'Poppins', sans-serif; font-weight: 800; letter-spacing: -0.04em; }
+
+  /* Sub-brand letter — Fraunces italic, the original */
+  .sb-letter { font-family: 'Fraunces', serif; font-weight: 600; font-style: italic; line-height: 0.82; letter-spacing: -0.04em; }
+
+  /* Color swatches */
+  .swatch-strip { display: flex; }
+  .swatch { flex: 1; aspect-ratio: 1/1; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.6px; }
+  .swatch .name { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0; }
+
+  /* Type rows */
+  .type-row { display: grid; grid-template-columns: 120px 1fr 200px; gap: 24px; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--hair); }
+  .type-row .meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
+  .type-row .specs { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); text-align: right; }
+
+  /* Env table — keep readable inside dark sections too */
+  section.dark .env-table { background: #fff; color: var(--ink); }
+  section.dark .env-table th { background: var(--paper-2); color: var(--muted); }
+  section.dark .env-table td { color: var(--ink); }
+  section.dark .env-table p, section.dark .env-table li { color: var(--ink); }
+
+  /* Sub-brand tile */
+  .sub-tile { aspect-ratio: 1/1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; container-type: inline-size; container-name: subtile; }
+  /* M monogram dominant; lowercase letter overlaps slightly behind, contained in frame.
+     Sized via container query units so M + letter scale relative to tile width. */
+  .sub-tile .sb-mark { display: flex !important; align-items: center !important; justify-content: center; gap: 0 !important; line-height: 1 !important; font-size: 0 !important; }
+  .sub-tile .m-art { height: auto !important; width: 56cqw !important; transform: none !important; align-self: center !important; flex-shrink: 0; position: relative; z-index: 2; }
+  .sub-tile .sb-letter { font-size: 52cqw !important; line-height: 0.78 !important; margin-left: -0.18em; align-self: center; position: relative; z-index: 1; padding-bottom: 0.06em; }
+  .sub-tile .name { position: absolute; bottom: 16px; left: 16px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; color: rgba(255,255,255,0.85); }
+  .sub-tile .product { position: absolute; bottom: 16px; right: 16px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+
+  /* Do/Don't */
+  .check { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .check-card { padding: 22px; border: 1px solid var(--hair); background: #fff; }
+  .check-card.do { border-left: 3px solid var(--signal-live); }
+  .check-card.dont { border-left: 3px solid var(--red); }
+  .check-card .check-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 6px; }
+  .check-card.do .check-label { color: #058a3a; }
+  .check-card.dont .check-label { color: var(--red); }
+  .check-card p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink); }
+
+  /* Voice */
+  .voice-card { padding: 32px; background: #fff; border: 1px solid var(--hair); display: flex; flex-direction: column; gap: 14px; }
+  .voice-card .v-h { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: -0.01em; }
+  .voice-card .v-yes b, .voice-card .v-no b { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.4px; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .voice-card .v-yes b { color: #058a3a; }
+  .voice-card .v-no b { color: var(--red); }
+  .voice-card .v-yes, .voice-card .v-no { font-size: 13.5px; line-height: 1.55; }
+
+  /* App bleed */
+  .app-bleed { padding: 56px 48px; min-height: 360px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+  .app-bleed.red { background: var(--red); color: #fff; }
+  .app-bleed.ink { background: var(--ink); color: #fff; }
+  .app-bleed h3 { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 64px; line-height: 0.92; letter-spacing: -0.03em; margin: 0; max-width: 90%; text-wrap: balance; }
+  .app-bleed h3 em { font-style: italic; font-weight: 400; }
+
+  .status { display: flex; align-items: center; gap: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 1px; }
+  .status .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--signal-live); box-shadow: 0 0 12px var(--signal-live); animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity:0.5; transform:scale(1) } 50% { opacity:1; transform:scale(1.3) } }
+
+  /* Environment matrix */
+  .env-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--hair); }
+  .env-table th, .env-table td { padding: 16px 20px; text-align: left; border-bottom: 1px solid var(--hair); font-size: 13.5px; line-height: 1.5; vertical-align: top; }
+  .env-table th { background: var(--paper-2); font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .env-table tr:last-child td { border-bottom: 0; }
+  .env-table .env-name { font-family: 'Poppins', sans-serif; font-weight: 600; }
+  .env-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; }
+  .env-tag.online { background: rgba(45,91,255,0.12); color: var(--mn); }
+  .env-tag.offline { background: rgba(20,20,20,0.08); color: var(--ink-2); }
+
+  /* Social templates — phone frame */
+  .phone { width: 100%; aspect-ratio: 9/16; background: #000; border-radius: 28px; padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.08); }
+  .phone-screen { width: 100%; height: 100%; background: #fff; border-radius: 22px; overflow: hidden; position: relative; }
+  .post-square { aspect-ratio: 1/1; position: relative; overflow: hidden; }
+  .post-story { aspect-ratio: 9/16; position: relative; overflow: hidden; }
+
+  /* URL pill */
+  .urls { display: flex; gap: 10px; flex-wrap: wrap; }
+  .urls .url { background: #fff; border: 1px solid var(--hair); padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .urls .url b { font-family: 'Poppins', sans-serif; font-weight: 600; color: var(--red); margin-right: 8px; }
+  .urls .url .bk { color: var(--muted); margin-left: 6px; }
+
+  footer { padding: 80px 0 60px; border-top: 1px solid var(--hair); }
+  footer .row { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 32px; }
+  footer .colophon { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; color: var(--muted); }
+
+  hr.rule { border: 0; border-top: 1px solid var(--hair); margin: 64px 0; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <span><span class="dot"></span> &nbsp;Myoozz · Brand guidelines · v2.0</span>
+    <span>
+      <a href="#foundation">01 Foundation</a>
+      <a href="#logo">02 Logo</a>
+      <a href="#color">03 Color</a>
+      <a href="#type">04 Type</a>
+      <a href="#family">05 Sub-brands</a>
+      <a href="#voice">06 Voice</a>
+      <a href="#environments">07 Environments</a>
+      <a href="#social">08 Social</a>
+    </span>
+  </div>
+</div>
+
+<!-- Hero -->
+<div class="page hero">
+  <div class="hero-grid">
+    <div class="hero-num">§ 00 · Cover</div>
+    <div>
+      <span class="kicker"><span class="dot"></span> Myoozz · Brand guidelines · v2.0 · April 2026</span>
+      <h1>We bring what we know <em>to what comes next.</em></h1>
+      <p class="hero-sub">
+    Myoozz is a marketing-and-experience company turning years of on-the-ground craft into tools that help our customers, our colleagues, and the people who'll come after us. We watch closely. We see the gaps. We build the things that fill them — sometimes a stage, sometimes a workflow, sometimes a chat thread that closes the loop. The brand is a quiet promise that whatever we touch will work, and outlast the moment.
+  </p>
+  <div class="hero-meta">
+    <span>Today<b>Me · Experiences &amp; events</b></span>
+    <span>Building<b>Mn · Lead &amp; data engine</b></span>
+    <span>Building<b>Ma · WhatsApp assistant</b></span>
+    <span>Always<b>Mx · Experiments</b></span>
+  </div>
+    </div>
+  </div>
+</div>
+
+<!-- 01 Foundation -->
+<section id="foundation">
+  <div class="page">
+    <div class="sec-head">
+      <div class="sec-num">§ 01 · Foundation</div>
+      <div>
+        <h2 class="sec-h">Built on craft. Bent toward what's next.</h2>
+        <p class="sec-lede">
+      Three commitments shape every decision in this document. Read them once; they sit underneath every page that follows.
+    </p>
+      </div>
+    </div>
+    <div class="sec-body">
+
+    <div class="grid g3">
+      <div class="card">
+        <div class="label">Commitment 01</div>
+        <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;letter-spacing:-0.02em;margin:0 0 12px;line-height:1.05">We carry the craft forward.</h3>
+        <p style="margin:0;font-size:14px;line-height:1.55;color:rgba(20,20,20,0.72)">Years of running rooms, planning campaigns, and watching customers tell us what's broken. We take what works and bring it to the next medium — software, automation, AI — without losing the manners.</p>
+      </div>
+      <div class="card">
+        <div class="label">Commitment 02</div>
+        <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;letter-spacing:-0.02em;margin:0 0 12px;line-height:1.05">We fill the gaps quietly.</h3>
+        <p style="margin:0;font-size:14px;line-height:1.55;color:rgba(20,20,20,0.72)">Our products start as observations: a customer chasing leads at midnight, a colleague rebuilding the same deck for the third time. Look closely and you'll see we're solving the things nobody else got around to fixing.</p>
+      </div>
+      <div class="card">
+        <div class="label">Commitment 03</div>
+        <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;letter-spacing:-0.02em;margin:0 0 12px;line-height:1.05">A system, not a style.</h3>
+        <p style="margin:0;font-size:14px;line-height:1.55;color:rgba(20,20,20,0.72)">Sub-brands plug in by following the M-second-letter rule. Color, naming, type and the bubbles do the rest. We never start from scratch — and the next person on the team won't either.</p>
+      </div>
+    </div>
+
+    <hr class="rule" />
+
+    <div class="grid g2">
+      <div>
+        <div class="label">Mission</div>
+        <p style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:30px;line-height:1.15;letter-spacing:-0.02em;margin:0;text-wrap:balance">
+          Take what marketing has taught us, hand it to technology, and leave a better way of working for everyone who comes next.
+        </p>
+      </div>
+      <div>
+        <div class="label">Personality — five dials</div>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
+          <div class="dial" data-l="Warm" data-r="Clinical" data-v="32"></div>
+          <div class="dial" data-l="Quiet" data-r="Loud" data-v="38"></div>
+          <div class="dial" data-l="Crafted" data-r="Fast" data-v="46"></div>
+          <div class="dial" data-l="Indian" data-r="Universal" data-v="34"></div>
+          <div class="dial" data-l="Agency" data-r="Product" data-v="58"></div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="rule" />
+
+    <div class="label">Where to find us</div>
+    <div class="urls">
+      <div class="url"><b>M</b> themyoozz.com <span class="bk">· backup myoozz.in</span></div>
+      <div class="url"><b>Me</b> myoozz.events <span class="bk">· backup myoozzevents.com</span></div>
+      <div class="url"><b>Mn</b> <span style="color:var(--muted)">reserved · launch tbd</span></div>
+      <div class="url"><b>Ma</b> <span style="color:var(--muted)">reserved · launch tbd</span></div>
+    </div>
+    <p class="caption" style="margin-top:18px;max-width:760px">Master site goes to <code>themyoozz.com</code> — not bare myoozz.com — to avoid disambiguation with the legacy domain. Always link primary domains in published material; backups are reserved for redirects only.</p>
+  </div>
+</div>
+</section>
+
+<!-- 02 Logo -->
+<section id="logo" class="dark">
+  <div class="page">
+    <div class="sec-head">
+      <div class="sec-num">§ 02 · The mark</div>
+      <div>
+        <h2 class="sec-h">Locked artwork. Two masters. One M.</h2>
+        <p class="sec-lede">
+      The MYOOZZ wordmark is registered trademark artwork — never re-typeset, never redrawn. There are exactly two masters: the original red mark (transparent background) for use on light surfaces, and a white master for use on red and ink. The standalone <b>M</b> is the only place we still use Poppins Bold by hand.
+    </p>
+      </div>
+    </div>
+    <div class="sec-body">
+
+    <div class="grid g2">
+      <div>
+        <div class="label">Primary — red mark on cream</div>
+        <div class="card" style="padding:0">
+          <div class="logo-display cream">
+            <span class="wordmark" style="font-size:140px"><img src="assets/myoozz-red-trans.png" alt="Myoozz" /></span>
+          </div>
+        </div>
+        <p class="caption">The trademarked artwork, transparent background. Place on cream, white, off-white, or any photo that's been muted to a flat plate. <b>Never sit it on a white rectangle</b> — let the mark breathe on the surface itself.</p>
+      </div>
+      <div>
+        <div class="label">Reverse — white mark on red</div>
+        <div class="card" style="padding:0">
+          <div class="logo-display red">
+            <span class="wordmark" style="font-size:140px"><img src="assets/myoozz-white.png" alt="Myoozz" /></span>
+          </div>
+        </div>
+        <p class="caption">For Myoozz Red, ink, and dark photography. Use the white master directly — never CSS-filter the red original.</p>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:32px">
+      <div>
+        <div class="label">Monogram — M</div>
+        <div class="card" style="padding:0"><div class="logo-display" style="background:var(--red);padding:0"><img src="assets/myoozz-monogram-m.png" alt="Myoozz monogram M" style="width:100%;height:100%;object-fit:cover;display:block" /></div></div>
+        <p class="caption">Custom-drawn M derived from Poppins Black, optically corrected. Used at small sizes &amp; as a quiet stamp. The M is artwork — never re-typeset.</p>
+      </div>
+      <div>
+        <div class="label">Bubble glyph</div>
+        <div class="card" style="padding:0">
+          <div class="logo-display" style="background:var(--red);padding:0">
+            <img src="assets/myoozz-bubble-glyph.png" alt="Myoozz bubble glyph" style="width:100%;height:100%;object-fit:cover;display:block" />
+          </div>
+        </div>
+        <p class="caption">Favicon, app icon, profile picture, loading state. The shape alone is enough.</p>
+      </div>
+      <div>
+        <div class="label">Stacked lockup</div>
+        <div class="card" style="padding:0">
+          <div class="logo-display" style="background:#000;padding:0">
+            <img src="assets/myoozz-stacked-lockup.png" alt="Myoozz stacked lockup" style="width:100%;height:100%;object-fit:contain;display:block" />
+          </div>
+        </div>
+        <p class="caption">Vertical real estate — social avatars, square placements, badges.</p>
+      </div>
+    </div>
+
+    <hr class="rule" />
+
+    <div class="grid g2">
+      <div>
+        <div class="label">Clear space &amp; minimums</div>
+        <div class="card cream" style="padding: 60px 80px; display: flex; align-items: center; justify-content: center; background-color: rgb(200, 198, 198)">
+          <div style="position:relative;display:inline-block">
+            <span class="wordmark" style="font-size:88px"><img src="assets/myoozz-red-trans.png" alt="Myoozz" /></span>
+            <div style="position:absolute;inset:-36px;border:1px dashed var(--hair-strong);pointer-events:none"></div>
+            <div style="position:absolute;left:-52px;top:50%;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;display:flex;align-items:center;justify-content:center;transform:translateY(-50%)">x</div>
+            <div style="position:absolute;right:-52px;top:50%;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;display:flex;align-items:center;justify-content:center;transform:translateY(-50%)">x</div>
+          </div>
+        </div>
+        <p class="caption">Clear space = <b>x</b> (cap-height of the M). Minimum digital width: <b>96px</b> for full wordmark, <b>24px</b> for monogram. Print: <b>20mm</b> wordmark, <b>6mm</b> monogram.</p>
+      </div>
+
+      <div>
+        <div class="label">Don't</div>
+        <div class="check" style="grid-template-columns:1fr 1fr;gap:14px">
+          <div class="check-card dont"><div class="check-label">No re-typesetting</div><p>The wordmark is locked TM artwork. Never rebuild it from a font.</p></div>
+          <div class="check-card dont"><div class="check-label">No white plate</div><p>The red mark sits on the surface — no white box behind it.</p></div>
+          <div class="check-card dont"><div class="check-label">No stretching</div><p>Don't condense, expand, rotate, italicize, or skew.</p></div>
+          <div class="check-card dont"><div class="check-label">No re-color</div><p>Only the supplied red, white, and ink masters. No gradients.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 03 Color -->
+<section id="color">
+  <div class="page">
+    <div class="sec-head">
+      <div class="sec-num">§ 03 · Color</div>
+      <div>
+        <h2 class="sec-h">Red is the master. Sub-brands wear their own color.</h2>
+        <p class="sec-lede">
+          <b>Myoozz Red</b> belongs to the parent brand. Each sub-brand owns one color used as a <b>field</b>, not an accent — the locked M monogram and the second letter both sit white on top, and the chosen hue fills the surface behind. This inverts the noise: less red overall, more visual identity per product.
+    </p>
+      </div>
+    </div>
+    <div class="sec-body">
+
+    <div class="label">Anchor — used by the master brand</div>
+    <div class="swatch-strip" style="margin-bottom:48px">
+      <div class="swatch" style="background:var(--red);color:#fff"><span>MYOOZZ RED</span><span class="name" style="color:#fff">#C8102E</span></div>
+      <div class="swatch" style="background:var(--red-deep);color:#fff"><span>RED DEEP</span><span class="name" style="color:#fff">#8E0A1F</span></div>
+      <div class="swatch" style="background:var(--ink);color:#fff"><span>INK</span><span class="name" style="color:#fff">#141414</span></div>
+      <div class="swatch" style="background:var(--paper);color:var(--ink);border:1px solid var(--hair)"><span>PAPER</span><span class="name">#FBF6EE</span></div>
+      <div class="swatch" style="background:#fff;color:var(--ink);border:1px solid var(--hair)"><span>WHITE</span><span class="name">#FFFFFF</span></div>
+    </div>
+
+    <div class="label">Sub-brand fields — one color per product, locked</div>
+    <div class="swatch-strip" style="margin-bottom:48px">
+      <div class="swatch" style="background:var(--me);color:#fff"><span>ME · EVENTS</span><span class="name" style="color:#fff">#F28F3B</span></div>
+      <div class="swatch" style="background:var(--mn);color:#fff"><span>MN · NEXUS</span><span class="name" style="color:#fff">#2D5BFF</span></div>
+      <div class="swatch" style="background:var(--ma);color:#fff"><span>MA · ASSISTANT</span><span class="name" style="color:#fff">#00A877</span></div>
+      <div class="swatch" style="background:var(--mx);color:#fff"><span>MX · EXPERIMENTS</span><span class="name" style="color:#fff">#7C3AED</span></div>
+    </div>
+
+    <div class="label">Status — UI only, &lt; 5% of surface</div>
+    <div class="swatch-strip" style="margin-bottom:48px">
+      <div class="swatch" style="background:var(--signal-live);color:#fff"><span>LIVE</span><span class="name" style="color:#fff">#00C853</span></div>
+      <div class="swatch" style="background:var(--signal-warn);color:var(--ink)"><span>WARN</span><span class="name">#FFB400</span></div>
+      <div class="swatch" style="background:var(--red);color:#fff"><span>ERROR</span><span class="name" style="color:#fff">#C8102E</span></div>
+      <div class="swatch" style="background:rgba(20,20,20,0.4);color:#fff"><span>IDLE</span><span class="name" style="color:#fff">#141414·40%</span></div>
+    </div>
+
+    <div class="check">
+      <div class="check-card do"><div class="check-label">Do</div><p>Reach for sub-brand color first when designing for that product. Red is for the master brand and parent moments only.</p></div>
+      <div class="check-card dont"><div class="check-label">Don't</div><p>Mix sub-brand colors decoratively. Mn blue does not appear in Me Events collateral. Each color stays in its lane.</p></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 04 Type -->
+<section id="type">
+  <div class="page">
+    <div class="sec-head">
+      <div class="sec-num">§ 04 · Typography</div>
+      <div>
+        <h2 class="sec-h">Three families. Each does one job.</h2>
+        <p class="sec-lede">
+      The <b>M monogram</b> is custom artwork (a redrawn Poppins Black M, optically corrected) and is never re-typeset — always use the supplied PNG/SVG. <b>Bricolage Grotesque</b> is the architectural voice: headlines, statements, section heads. <b>Inter</b> handles every other word: body, UI, captions, labels, fine print. <b>JetBrains Mono</b> is reserved for system signals — receipts, codes, IDs, technical labels.
+    </p>
+      </div>
+    </div>
+    <div class="sec-body">
+
+    <div class="card">
+      <div class="type-row">
+        <div class="meta">Display</div>
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:60px;line-height:1;letter-spacing:-0.03em">Carry it forward.</div>
+        <div class="specs">Bricolage 800<br/>56–124px · -3% tracking</div>
+      </div>
+      <div class="type-row">
+        <div class="meta">Display italic</div>
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:400;font-style:italic;font-size:46px;line-height:1;letter-spacing:-0.02em">— what comes next.</div>
+        <div class="specs">Bricolage 400 italic<br/>Reserved for accents</div>
+      </div>
+      <div class="type-row">
+        <div class="meta">H1 / H2</div>
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:32px;line-height:1.05;letter-spacing:-0.02em">Section openers, page heads</div>
+        <div class="specs">Bricolage 700<br/>32–52px</div>
+      </div>
+      <div class="type-row">
+        <div class="meta">Brand mark — locked artwork</div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:56px;height:56px;background:var(--red);display:flex;align-items:center;justify-content:center;border-radius:6px"><img src="assets/myoozz-monogram-m-white.png" alt="M" style="width:36px;height:36px;display:block" /></div>
+          <span class="wordmark" style="font-size:30px"><img src="assets/myoozz-red-trans.png" alt="Myoozz" /></span>
+        </div>
+        <div class="specs">Custom artwork (derived from Poppins Black)<br/>Never re-typeset. Use PNG/SVG only.</div>
+      </div>
+      <div class="type-row">
+        <div class="meta">UI / Body</div>
+        <div style="font-family:'Inter',sans-serif;font-weight:400;font-size:17px;line-height:1.55;color:var(--ink-2)">Inter at 16–18px is the default for paragraphs, product UI, dashboards and email. Tabular nums for any numbers.</div>
+        <div class="specs">Inter 400 / 500 / 600<br/>14–18px body</div>
+      </div>
+      <div class="type-row" style="border-bottom:0">
+        <div class="meta">System</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.02em">m·e / m·n / m·a / m·x → 200 OK · 14ms</div>
+        <div class="specs">JetBrains Mono<br/>Labels, codes, IDs</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 05 Sub-brand family -->
+<section id="family" class="dark">
+  <div class="page">
+    <div class="sec-head">
+      <div class="sec-num">§ 05 · Sub-brand framework</div>
+      <div>
+        <h2 class="sec-h" id="sb-headline">M leads. Letter follows. Colored field.</h2>
+        <p class="sec-lede">
+      Every Myoozz product reads as <b>M + lowercase letter</b> — both white, on the product's color field. Each pair (Me, Mn, Ma, Mx) is supplied as <b>locked artwork</b>, kerned and optically corrected — never re-typeset, never rebuilt from a font. The family resemblance comes from the M; the product comes from the letter and the hue.
+    </p>
+      </div>
+    </div>
+    <div class="sec-body">
+
+    <div class="label">Primary lockups — locked artwork, one per product</div>
+    <div class="grid g4" style="margin-top:18px">
+      <div>
+        <div class="sub-tile" style="background:var(--me);overflow:hidden">
+          <img src="assets/logo-me-official.png" alt="Me · Myoozz Events" style="width:100%;height:100%;object-fit:cover;display:block" />
+          <span class="name">M·E</span>
+          <span class="product">EVENTS</span>
+        </div>
+        <p class="caption" style="margin-top:14px"><b>Today's hero.</b> Production, on-ground, IPs.</p>
+      </div>
+
+      <div>
+        <div class="sub-tile" style="background:var(--mn);overflow:hidden">
+          <img src="assets/logo-mn-official.png" alt="Mn · Myoozz Nexus" style="width:100%;height:100%;object-fit:cover;display:block" />
+          <span class="name">M·N</span>
+          <span class="product">NEXUS</span>
+        </div>
+        <p class="caption" style="margin-top:14px">Lead-data &amp; CRM engine. (Note: amber field — pending realignment to mn-blue.)</p>
+      </div>
+
+      <div>
+        <div class="sub-tile" style="background:var(--ma);overflow:hidden">
+          <img src="assets/logo-ma-official.png" alt="Ma · Myoozz Assistant" style="width:100%;height:100%;object-fit:cover;display:block" />
+          <span class="name">M·A</span>
+          <span class="product">ASSISTANT</span>
+        </div>
+        <p class="caption" style="margin-top:14px">WhatsApp-native agent. Green pairs with the channel.</p>
+      </div>
+
+      <div>
+        <div class="sub-tile" style="background:var(--mx);overflow:hidden">
+          <img src="assets/logo-mx-official.png" alt="Mx · Myoozz Experiments" style="width:100%;height:100%;object-fit:cover;display:block" />
+          <span class="name">M·X</span>
+          <span class="product">EXPERIMENTS</span>
+        </div>
+        <p class="caption" style="margin-top:14px">Sandbox, R&amp;D, anything pre-launch.</p>
+      </div>
+    </div>
+
+    <hr class="rule" />
+
+    <div class="label">Secondary mark — single letter with M flag</div>
+    <p class="sec-lede" style="margin: 12px 0 24px;max-width:760px">
+      For surfaces where the full <b>M-letter</b> pair is too tight — favicons, app icons, social avatars at small sizes, sticker sheets — use the single-letter form with M as a small superscript flag (<i>e<sup style="font-size:0.55em;font-weight:700;font-family:'Poppins',sans-serif">M</sup></i>). The letter does the work; the M flag preserves family identity. <b>Never use this as the primary lockup</b> — the wordmark or the M-letter pair must lead.
+    </p>
+    <div class="grid g4">
+      <div>
+        <div class="sub-tile" style="background:var(--me);overflow:hidden">
+          <img src="assets/logo-me-icon.png" alt="e with M flag · Me icon" style="width:100%;height:100%;object-fit:cover;display:block" />
+        </div>
+        <p class="caption" style="margin-top:14px">Me · favicon &amp; app icon variant.</p>
+      </div>
+      <div>
+        <div class="sub-tile" style="background:var(--mn);overflow:hidden">
+          <img src="assets/logo-mn-icon.png" alt="n with M flag · Mn icon" style="width:100%;height:100%;object-fit:cover;display:block" />
+        </div>
+        <p class="caption" style="margin-top:14px">Mn · favicon &amp; app icon variant.</p>
+      </div>
+      <div>
+        <div class="sub-tile" style="background:var(--ma);overflow:hidden">
+          <img src="assets/logo-ma-icon.png" alt="a with M flag · Ma icon" style="width:100%;height:100%;object-fit:cover;display:block" />
+        </div>
+        <p class="caption" style="margin-top:14px">Ma · favicon &amp; app icon variant.</p>
+      </div>
+      <div>
+        <div class="sub-tile" style="background:var(--mx);overflow:hidden">
+          <img src="assets/logo-mx-icon.png" alt="x with M flag · Mx icon" style="width:100%;height:100%;object-fit:cover;display:block" />
+        </div>
+        <p class="caption" style="margin-top:14px">Mx · favicon &amp; app icon variant.</p>
+      </div>
+    </div>
+
+    <hr class="rule" />
+
+    <div class="grid g2">
+      <div>
+        <div class="label">How to add a new product</div>
+        <ol style="margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.7">
+          <li>Pick a free single letter (B, C, D, F, G, H, I, J, K, L, O, P, Q, R, S, T, U, V, W, Y, Z).</li>
+          <li>Choose a hue from the reserved palette (right). Avoid clashes with existing sub-brand colors.</li>
+          <li>Lockup is the <b>M monogram</b> (locked artwork, white) + your letter (Fraunces italic, white) on the chosen color.</li>
+          <li>Master brand stays Myoozz in red. Your product never replaces it — it joins the family.</li>
+          <li>Domain pattern: <code>myoozz.[product]</code> (e.g. <code>myoozz.events</code>).</li>
+        </ol>
+      </div>
+      <div>
+        <div class="label">Reserved fields for future products</div>
+        <div class="swatch-strip" style="flex-wrap:wrap;gap:0">
+          <div class="swatch" style="background:#06B6D4;color:#fff;flex:0 0 25%"><span>CYAN</span><span class="name" style="color:#fff">#06B6D4</span></div>
+          <div class="swatch" style="background:#FFB400;color:var(--ink);flex:0 0 25%"><span>AMBER</span><span class="name">#FFB400</span></div>
+          <div class="swatch" style="background:#EC4899;color:#fff;flex:0 0 25%"><span>PINK</span><span class="name" style="color:#fff">#EC4899</span></div>
+          <div class="swatch" style="background:#0E7C5C;color:#fff;flex:0 0 25%"><span>FOREST</span><span class="name" style="color:#fff">#0E7C5C</span></div>
+          <div class="swatch" style="background:#475569;color:#fff;flex:0 0 25%"><span>SLATE</span><span class="name" style="color:#fff">#475569</span></div>
+          <div class="swatch" style="background:#B45309;color:#fff;flex:0 0 25%"><span>RUST</span><span class="name" style="color:#fff">#B45309</span></div>
+          <div class="swatch" style="background:#1E293B;color:#fff;flex:0 0 25%"><span>NIGHT</span><span class="name" style="color:#fff">#1E293B</span></div>
+          <div class="swatch" style="background:#9333EA;color:#fff;flex:0 0 25%"><span>IRIS</span><span class="name" style="color:#fff">#9333EA</span></div>
+        </div>
+        <p class="caption" style="margin-top:14px">Eight hues reserved, distinct from Me/Mn/Ma/Mx. Each new product claims one and locks it.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 06 Voice -->
+<section id="voice">
+  <div class="page">
+    <div class="sec-head">
+      <div class="sec-num">§ 06 · Voice</div>
+      <div>
+        <h2 class="sec-h">Sound like a senior practitioner who's done the work.</h2>
+        <p class="sec-lede">
+      Myoozz speaks the way a good operator briefs a teammate — direct without being curt, warm without being eager, certain without performing. We earn authority by what we've already shipped, not by claiming it.
+    </p>
+      </div>
+    </div>
+    <div class="sec-body">
+
+    <div class="grid g3">
+      <div class="voice-card">
+        <div class="v-h">Observed, not assumed.</div>
+        <div class="v-yes"><b>Say</b>"We watched ten event teams chase leads after the show. So we built Ma."</div>
+        <div class="v-no"><b>Not</b>"Revolutionary AI-powered lead reactivation engine."</div>
+      </div>
+      <div class="voice-card">
+        <div class="v-h">Warm, not cute.</div>
+        <div class="v-yes"><b>Say</b>"Hey — we built this so you don't have to chase leads at 11pm."</div>
+        <div class="v-no"><b>Not</b>"Meet your new bestie 🤖✨ Ma is here to slay."</div>
+      </div>
+      <div class="voice-card">
+        <div class="v-h">Certain, not boastful.</div>
+        <div class="v-yes"><b>Say</b>"Six weeks. Four cities. 12,400 leads replied to."</div>
+        <div class="v-no"><b>Not</b>"India's #1 award-winning event powerhouse leader."</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 07 Environments -->
+<section id="environments">
+  <div class="page">
+    <div class="sec-head">
+      <div class="sec-num">§ 07 · Environments</div>
+      <div>
+        <h2 class="sec-h">Mostly online. Offline only where we control the room.</h2>
+        <p class="sec-lede">
+      The brand lives almost entirely on screens — site, social, decks, ads, email, dashboards. Offline applications are limited to <b>office stationery</b> and <b>boards/signage in spaces we control</b>. We don't print billboards, OOH, or third-party merch unless explicitly briefed.
+    </p>
+      </div>
+    </div>
+    <div class="sec-body">
+
+    <table class="env-table">
+      <thead>
+        <tr>
+          <th style="width:24%">Surface</th>
+          <th style="width:14%">Channel</th>
+          <th>Wordmark to use</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="env-name">Master site · themyoozz.com</td>
+          <td><span class="env-tag online">Online</span></td>
+          <td>Red (transparent) on cream / paper</td>
+          <td>Hero plate is cream. Footer flips to red, white wordmark.</td>
+        </tr>
+        <tr>
+          <td class="env-name">Sub-brand site · myoozz.events</td>
+          <td><span class="env-tag online">Online</span></td>
+          <td>White wordmark on Me orange field</td>
+          <td>Master Myoozz wordmark sits in footer; Me identity owns the page.</td>
+        </tr>
+        <tr>
+          <td class="env-name">Decks · pitch &amp; case studies</td>
+          <td><span class="env-tag online">Online</span></td>
+          <td>Cover red; interior cream</td>
+          <td>Cover slide uses white wordmark on red. All other slides are paper with red mark.</td>
+        </tr>
+        <tr>
+          <td class="env-name">Email · transactional &amp; brand</td>
+          <td><span class="env-tag online">Online</span></td>
+          <td>Red wordmark, no white plate</td>
+          <td>Header on cream/paper. Sub-brand emails use the field color.</td>
+        </tr>
+        <tr>
+          <td class="env-name">Social — feed &amp; story</td>
+          <td><span class="env-tag online">Online</span></td>
+          <td>Both — see §08</td>
+          <td>Templates locked. No off-system layouts.</td>
+        </tr>
+        <tr>
+          <td class="env-name">Dashboard / product UI</td>
+          <td><span class="env-tag online">Online</span></td>
+          <td>White wordmark on ink, top-left, 24px</td>
+          <td>Status row uses Live / Warn / Error tokens.</td>
+        </tr>
+        <tr>
+          <td class="env-name">Letterhead &amp; invoices</td>
+          <td><span class="env-tag offline">Offline</span></td>
+          <td>Red wordmark top-right, 24mm</td>
+          <td>Cream stock preferred. Address in JetBrains Mono 9pt at footer.</td>
+        </tr>
+        <tr>
+          <td class="env-name">Business cards</td>
+          <td><span class="env-tag offline">Offline</span></td>
+          <td>Front: white M monogram on red. Back: details on cream.</td>
+          <td>85×55mm. Matte finish only.</td>
+        </tr>
+        <tr>
+          <td class="env-name">Office signage &amp; boards</td>
+          <td><span class="env-tag offline">Offline</span></td>
+          <td>White wordmark on red plate</td>
+          <td>Reception, meeting-room nameplates, internal boards. No third-party venues.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</section>
+
+<!-- 08 Social -->
+<section id="social" class="dark">
+  <div class="page">
+    <div class="sec-head">
+      <div class="sec-num">§ 08 · Social media</div>
+      <div>
+        <h2 class="sec-h">Five templates. Pick one, fill it, ship it.</h2>
+        <p class="sec-lede">
+      Every social post lives inside one of these templates — across Instagram, LinkedIn, X. The grid is locked: 1080×1080 for feed, 1080×1920 for stories. <b>No off-template posts</b>. If a thought doesn't fit, rewrite the thought.
+    </p>
+      </div>
+    </div>
+    <div class="sec-body">
+
+    <div class="grid g3" style="margin-bottom:36px">
+      <!-- Template 01: Statement -->
+      <div>
+        <div class="label">T01 · Statement (1:1)</div>
+        <div class="post-square card" style="padding:0;background:var(--red)">
+          <div style="position:absolute;inset:0;padding:32px;color:#fff;display:flex;flex-direction:column;justify-content:space-between">
+            <span class="wordmark" style="font-size:18px"><img src="assets/myoozz-white.png" alt="Myoozz" /></span>
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:36px;line-height:0.95;letter-spacing:-0.03em">Carry it<br/><em style="font-weight:400">forward.</em></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;opacity:0.75;display:flex;justify-content:space-between"><span>themyoozz.com</span><span>04 / 26</span></div>
+          </div>
+        </div>
+        <p class="caption"><b>Use for:</b> brand voice posts, manifestos, founder thoughts. Big idea, no image.</p>
+      </div>
+
+      <!-- Template 02: Sub-brand product -->
+      <div>
+        <div class="label">T02 · Sub-brand drop (1:1)</div>
+        <div class="post-square card" style="padding:0;background:var(--me)">
+          <div style="position:absolute;inset:0;padding:32px;color:#fff;display:flex;flex-direction:column;justify-content:space-between">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;opacity:0.85">Myoozz · Me Events</div>
+            <img src="assets/logo-me-official.png" alt="Me · Myoozz Events" style="width:78%;align-self:center;display:block;mix-blend-mode:normal" />
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;line-height:1;letter-spacing:-0.02em">Now booking<br/>FY26 calendar.</div>
+          </div>
+        </div>
+        <p class="caption"><b>Use for:</b> product launches, sub-brand announcements. The mark is the hero.</p>
+      </div>
+
+      <!-- Template 03: Number / proof -->
+      <div>
+        <div class="label">T03 · Proof (1:1)</div>
+        <div class="post-square card" style="padding:0;background:var(--paper)">
+          <div style="position:absolute;inset:0;padding:32px;color:var(--ink);display:flex;flex-direction:column;justify-content:space-between;text-align:left">
+            <span class="wordmark" style="font-size:16px"><img src="assets/myoozz-red-trans.png" alt="Myoozz" /></span>
+            <div>
+              <div style="font-family: 'Bricolage Grotesque',sans-serif; font-weight: 200; font-size: 88px; line-height: 0.9; letter-spacing: -0.04em; color: var(--red)">12,400</div>
+              <div style="font-family:'Inter',sans-serif;font-size:14px;color:var(--muted);margin-top:8px;line-height:1.4;max-width:80%">leads replied to in 9 hours · across 4 city events · season 26</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between"><span>case file 04</span><span>m·a · m·n</span></div>
+          </div>
+        </div>
+        <p class="caption"><b>Use for:</b> case studies, proof points, results. One big number + one line.</p>
+      </div>
+    </div>
+
+    <div class="grid g3">
+      <!-- Template 04: Story (vertical) -->
+      <div>
+        <div class="label">T04 · Story (9:16)</div>
+        <div class="post-story card" style="padding:0;background:var(--ink)">
+          <div style="position:absolute;inset:0;padding:24px 20px;color:#fff;display:flex;flex-direction:column;justify-content:space-between">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="wordmark" style="font-size:14px"><img src="assets/myoozz-white.png" alt="Myoozz" /></span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:1.2px;opacity:0.6">04/26</span>
+            </div>
+            <div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mn);margin-bottom:14px">— now building</div>
+              <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:30px;line-height:0.95;letter-spacing:-0.02em">A small thing<br/>that closes the loop<br/><em style="font-weight:400;color:var(--mn)">after the show.</em></div>
+            </div>
+            <div style="font-family:'Inter',sans-serif;font-size:11px;opacity:0.7">swipe up · myoozz.events</div>
+          </div>
+        </div>
+        <p class="caption"><b>Use for:</b> behind-the-scenes, build-in-public, daily updates.</p>
+      </div>
+
+      <!-- Template 05: Quote / testimonial -->
+      <div>
+        <div class="label">T05 · Voice (1:1)</div>
+        <div class="post-square card" style="padding:0;background:var(--paper-2)">
+          <div style="position:absolute;inset:0;padding:32px;color:var(--ink);display:flex;flex-direction:column;justify-content:space-between">
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:22px;font-style:italic;line-height:1.25;letter-spacing:-0.01em;color:var(--ink-2);text-wrap:pretty">"They didn't pitch us a platform. They watched our team for two weeks and shipped exactly what we needed."</div>
+            <div>
+              <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:13px">— Operations Lead</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px">Major Indian sportswear brand · season 25</div>
+            </div>
+            <span class="wordmark" style="font-size:14px;align-self:flex-end"><img src="assets/myoozz-red-trans.png" alt="Myoozz" /></span>
+          </div>
+        </div>
+        <p class="caption"><b>Use for:</b> testimonials, customer voice, attributed quotes.</p>
+      </div>
+
+      <!-- Profile picture & cover -->
+      <div>
+        <div class="label">Profile · cover · avatar</div>
+        <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;gap:14px;align-items:center">
+            <div style="width:64px;height:64px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+              <img src="assets/myoozz-monogram-m-white.png" alt="M" style="width:42px;height:42px;display:block" />
+            </div>
+            <div>
+              <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:14px">Avatar — master</div>
+              <div style="font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:2px">Red circle · white M · 400×400</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:center">
+            <div style="width:64px;height:64px;border-radius:50%;background:var(--me);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+              <img src="assets/logo-me-icon.png" alt="Me icon" style="width:100%;height:100%;object-fit:cover;display:block" />
+            </div>
+            <div>
+              <div style="font-family:'Poppins',sans-serif;font-weight:600;font-size:14px">Avatar — sub-brand</div>
+              <div style="font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:2px">Field color · white M artwork · white letter</div>
+            </div>
+          </div>
+          <div style="height:80px;background:var(--red);border-radius:6px;display:flex;align-items:center;justify-content:center;margin-top:6px">
+            <span class="wordmark" style="font-size:32px"><img src="assets/myoozz-white.png" alt="Myoozz" /></span>
+          </div>
+          <div style="font-size:11.5px;color:var(--muted);line-height:1.4">Cover (LinkedIn / X) — wordmark center, red bleed, 1584×396.</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="rule" />
+
+    <!-- Posting cadence + don'ts -->
+    <div class="grid g2">
+      <div>
+        <div class="label">Cadence &amp; rhythm</div>
+        <table class="env-table">
+          <thead><tr><th>Channel</th><th>Mix</th><th>Frequency</th></tr></thead>
+          <tbody>
+            <tr><td class="env-name">Instagram</td><td>40% T02 · 30% T03 · 20% T04 · 10% T01</td><td>3× / week</td></tr>
+            <tr><td class="env-name">LinkedIn</td><td>40% T03 · 30% T05 · 20% T01 · 10% T02</td><td>2× / week</td></tr>
+            <tr><td class="env-name">X / Twitter</td><td>50% T01 · 30% T03 · 20% T04</td><td>Daily</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="label">Social don'ts</div>
+        <div class="check" style="grid-template-columns:1fr 1fr;gap:14px">
+          <div class="check-card dont"><div class="check-label">No off-template</div><p>If it doesn't fit T01–T05, design a new template — don't free-form.</p></div>
+          <div class="check-card dont"><div class="check-label">No hashtag pile</div><p>Max 3 hashtags. Always include #myoozz.</p></div>
+          <div class="check-card dont"><div class="check-label">No emoji-as-decor</div><p>One emoji per caption max, and only when it carries meaning.</p></div>
+          <div class="check-card dont"><div class="check-label">No stock photos</div><p>If we don't own the image, we don't post it.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="page">
+    <div class="row">
+      <div>
+        <span class="wordmark" style="font-size:40px"><img src="assets/myoozz-red-trans.png" alt="Myoozz" /></span>
+        <p style="margin:18px 0 0;font-size:13px;color:var(--muted);max-width:480px;line-height:1.55">Brand guidelines v2.0 — wordmark locked to TM artwork. Living document; revisions ship as v2.1, v2.2…</p>
+      </div>
+      <div class="colophon">© 2026 Myoozz™  ·  Issued April 2026  ·  Owner: Myoozz Consulting Pvt. Ltd.  ·  Next review: Oct 2026</div>
+    </div>
+  </div>
+</footer>
+
+<!-- Tweaks panel -->
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel">
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "fontPair": "current"
+  }/*EDITMODE-END*/;
+
+  function MyoozzTweaks() {
+    const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+    React.useEffect(() => {
+      document.documentElement.setAttribute('data-fontpair', tweaks.fontPair);
+    }, [tweaks.fontPair]);
+
+    return (
+      <TweaksPanel title="Tweaks">
+
+        <TweakSection title="Font pairing">
+          <TweakRadio
+            value={tweaks.fontPair}
+            onChange={v => setTweak('fontPair', v)}
+            options={[
+              { value: 'current', label: 'Current · Bricolage + Inter' },
+              { value: 'geist', label: 'Geist · sans-only, modern' },
+              { value: 'editorial', label: 'Instrument + Sentient · editorial' },
+              { value: 'poppins-only', label: 'Poppins only · own what you bought' },
+            ]}
+          />
+          <p style={{margin:'8px 0 0',fontSize:11,lineHeight:1.5,color:'rgba(0,0,0,0.6)'}}>
+            Bricolage Grotesque has personality without being trendy. Geist is the cleanest SaaS read. Geist is a cleaner SaaS read. Poppins-only is the cheapest, most cohesive, and you already own it.
+          </p>
+        </TweakSection>
+
+        <TweakSection title="Designer's note">
+          <p style={{margin:0,fontSize:11.5,lineHeight:1.55,color:'rgba(0,0,0,0.7)'}}>
+            <b>On the marks:</b> Me/Mn/Ma/Mx are now locked artwork — supplied as PNGs, never re-typeset. The single-letter "eᴹ" form is the secondary icon for tight surfaces (favicons, app icons), never the primary lockup.
+            <br/><br/>
+            <b>On fonts:</b> two families is the discipline. Three is okay if one is monospaced for system labels. Four is design-as-decoration.
+          </p>
+        </TweakSection>
+      </TweaksPanel>
+    );
+  }
+
+  const root = document.createElement('div');
+  document.body.appendChild(root);
+  ReactDOM.createRoot(root).render(<MyoozzTweaks />);
+</script>
+
+<script>
+  document.querySelectorAll('.dial').forEach(d => {
+    const l = d.dataset.l, r = d.dataset.r, v = parseFloat(d.dataset.v);
+    d.innerHTML = `
+      <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px"><span>${l}</span><span>${r}</span></div>
+      <div style="position:relative;height:6px;background:var(--paper-2);border-radius:3px">
+        <div style="position:absolute;left:${v}%;top:50%;width:14px;height:14px;background:var(--red);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 3px var(--paper)"></div>
+      </div>
+    `;
+  });
+</script>
+
+</body>
+</html>

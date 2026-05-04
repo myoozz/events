@@ -5,23 +5,41 @@
 }
 
 :root {
-  --bg: #FAFAF8;
-  --bg-secondary: #F2EFE8;
-  --text: #1A1915;
-  --text-secondary: #6B6860;
-  --text-tertiary: #9E9B94;
-  --border: rgba(26,25,21,0.1);
-  --border-strong: rgba(26,25,21,0.2);
-  --gold: #B8965A;
-  --gold-light: #F5EDD8;
-  --green: #2D6A4F;
-  --green-light: #E8F5EE;
-  --blue: #1A4A8A;
-  --blue-light: #E8F0FB;
-  --amber: #8A5A1A;
-  --amber-light: #FBF0E8;
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  /* ── Myoozz Brand Palette (v2.0 · April 2026) ─────────── */
+  --red:          #C8102E;
+  --red-deep:     #8E0A1F;
+
+  --me:           #F28F3B;
+  --mn:           #2D5BFF;
+  --ma:           #00A877;
+  --mx:           #7C3AED;
+
+  --signal-live:  #00C853;
+  --signal-warn:  #FFB400;
+
+  --bg:               #F5F1E8;
+  --bg-secondary:     #EDE8DD;
+  --bg-surface-2:     #DDD7C7;
+  --text:             #0A0A0A;
+  --text-2:           #1A1A1A;
+  --text-secondary:   rgba(10,10,10,0.55);
+  --text-tertiary:    rgba(10,10,10,0.35);
+  --border:           rgba(10,10,10,0.14);
+  --border-strong:    rgba(10,10,10,0.32);
+
+  --gold:         #F28F3B;
+  --gold-light:   #FEF0E0;
+  --green:        #00A877;
+  --green-light:  #E6F7F2;
+  --blue:         #2D5BFF;
+  --blue-light:   #EBF0FF;
+  --amber:        #B45309;
+  --amber-light:  #FEF3E2;
+
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
   --radius: 10px;
   --radius-sm: 6px;
 }
@@ -55,8 +73,8 @@ button {
 }
 
 @keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 106, 79, 0.3); }
-  50%       { box-shadow: 0 0 0 6px rgba(45, 106, 79, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 168, 119, 0.3); }
+  50%       { box-shadow: 0 0 0 6px rgba(0, 168, 119, 0); }
 }
 
 .fade-up {

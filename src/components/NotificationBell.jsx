@@ -91,13 +91,13 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
         {/* Bell SVG */}
         <svg
           width="20" height="20" viewBox="0 0 24 24"
-          fill="none" stroke={hasUnread ? '#bc1723' : '#6b6b6b'}
+          fill="none" stroke={hasUnread ? '#C8102E' : '#6b6b6b'}
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         >
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           {hasUnread && (
-            <circle cx="18" cy="5" r="4" fill="#bc1723" stroke="#FAFAF8" strokeWidth="1.5" />
+            <circle cx="18" cy="5" r="4" fill="#C8102E" stroke="#FAFAF8" strokeWidth="1.5" />
           )}
         </svg>
 
@@ -110,7 +110,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
             minWidth:      '16px',
             height:        '16px',
             borderRadius:  '8px',
-            backgroundColor: '#bc1723',
+            backgroundColor: '#C8102E',
             color:         '#fff',
             fontSize:      '10px',
             fontFamily:    'DM Sans, sans-serif',
@@ -172,7 +172,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
                   cursor:      'pointer',
                   fontSize:    '12px',
                   fontFamily:  'DM Sans, sans-serif',
-                  color:       '#bc1723',
+                  color:       '#C8102E',
                   fontWeight:  '500',
                   padding:     '2px 6px',
                   borderRadius:'4px',
@@ -283,7 +283,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
                       width:           '7px',
                       height:          '7px',
                       borderRadius:    '50%',
-                      backgroundColor: '#bc1723',
+                      backgroundColor: '#C8102E',
                       flexShrink:      0,
                       marginTop:       '5px',
                     }} />
