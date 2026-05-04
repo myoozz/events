@@ -50,6 +50,7 @@ function getColTemplate(isAdmin,fv,viewMode){
       fv.source?'1.1fr':null,
       fv.status?'88px':null,
       '72px',
+      '58px',
       delCol,
     ].filter(Boolean).join(' ')
   }
@@ -59,6 +60,7 @@ function getColTemplate(isAdmin,fv,viewMode){
     '1.6fr',
     fv.status?'88px':null,
     '72px',
+    '58px',
     delCol,
   ].filter(Boolean).join(' ')
 }
@@ -412,6 +414,18 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
           </select>
         </div>
 
+        {/* Post-event toggle */}
+        <div style={{...cell(false,false),flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',padding:'4px 2px'}}>
+          <input
+            type="checkbox"
+            checked={!!el.post_event}
+            disabled={locked}
+            onChange={e=>{onUpdate('post_event',e.target.checked);onSave()}}
+            style={{cursor:locked?'default':'pointer',accentColor:'#F28F3B',width:'14px',height:'14px'}}
+          />
+          <span style={{fontSize:'9px',color:'var(--text-tertiary)',letterSpacing:'0.2px',textAlign:'center',lineHeight:1}}>Post</span>
+        </div>
+
         {/* Delete + del */}
         <div style={{...cell(false,true,{flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',padding:'4px 0'})}}>
           <button onClick={onDelete}
@@ -736,6 +750,7 @@ function CategoryBlock({
     isAdmin&&fv.source?'Source / vendor':null,
     fv.status?'Status':null,
     'Type',
+    'Post-Event',
     '',
   ].filter(Boolean)
 
@@ -1146,6 +1161,7 @@ function CityElements({ event, city, userRole, teamUsers }){
       source:el.source||'',cost_status:el.cost_status||'Estimated',
       bundled:el.bundled||false,sort_order:el.sort_order||0,
       is_option:el.is_option||false,option_group:el.option_group||null,
+      post_event:el.post_event||false,
     }
     if(el.id&&!el.id.startsWith('new-')){
       await supabase.from('elements').update(payload).eq('id',el.id)
