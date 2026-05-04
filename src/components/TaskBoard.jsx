@@ -432,6 +432,18 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                 <span style={styles.catTitle}>{cat}</span>
                 <span style={styles.catMeta}>
                   <span style={styles.catCount}>{grouped[cat].length}</span>
+                  {(() => {
+                    const elTasks = grouped[cat].filter(t => t.element_id);
+                    if (elTasks.length === 0) return null;
+                    const assignedCount = elTasks.filter(t =>
+                      elementAssignments[`${t.element_id}_${activeCity ?? ''}`]?.assigned_to
+                    ).length;
+                    return (
+                      <span style={{ fontSize: '10px', color: assignedCount === elTasks.length ? '#2563EB' : '#9CA3AF', marginLeft: 4 }}>
+                        {assignedCount}/{elTasks.length} assigned
+                      </span>
+                    );
+                  })()}
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:collapsed[cat]?'rotate(-90deg)':'none',transition:'transform 0.18s ease',flexShrink:0}}><path d="M3 5l4 4 4-4" stroke={collapsed[cat]?'#F28F3B':'#2e7d32'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </span>
               </button>
@@ -545,7 +557,14 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                   const sm   = STATUS_META[task.status] || STATUS_META.pending;
                   const ini  = task.assigned_name ? initials(task.assigned_name) : null;
                   return (
-                    <div key={task.id} style={styles.card}>
+                    <div key={task.id} style={{
+                      ...styles.card,
+                      ...(task.element_id ? {
+                        borderLeft: elementAssignments[`${task.element_id}_${activeCity ?? ''}`]?.assigned_to
+                          ? '3px solid #2563EB'
+                          : '3px solid #D1D5DB',
+                      } : {}),
+                    }}>
                       <div style={styles.cardLeft}>
                         {/* status pill */}
                         <div style={{ position: 'relative' }}>
