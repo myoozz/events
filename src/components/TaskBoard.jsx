@@ -584,6 +584,62 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                           </span>
                         )}
 
+                        {/* Element-level assignee — only for tasks with element_id */}
+                        {task.element_id && canAssign && (() => {
+                          const key = `${task.element_id}_${activeCity ?? ''}`;
+                          const existing = elementAssignments[key];
+                          const assignedUser = existing?.assigned_to ? users.find(u => u.id === existing.assigned_to) : null;
+                          return (
+                            <select
+                              value={existing?.assigned_to ?? ''}
+                              onChange={async (e) => {
+                                const userId = e.target.value;
+                                let q = db('element_assignments').delete().eq('element_id', task.element_id);
+                                if (activeCity) q = q.eq('city', activeCity); else q = q.is('city', null);
+                                await q;
+                                if (userId) {
+                                  await db('element_assignments').insert({
+                                    event_id:    eventId,
+                                    element_id:  task.element_id,
+                                    city:        activeCity || null,
+                                    assigned_to: userId,
+                                    assigned_by: session?.user?.id,
+                                  });
+                                }
+                                await fetchElementAssignments();
+                              }}
+                              style={{
+                                fontSize: '11px',
+                                padding: '3px 6px',
+                                borderRadius: '4px',
+                                border: '0.5px solid #d8d2c8',
+                                background: assignedUser ? '#EBF5FF' : '#fff',
+                                color: assignedUser ? '#1d4ed8' : '#6B7280',
+                                fontFamily: 'var(--font-body)',
+                                cursor: 'pointer',
+                                maxWidth: '120px',
+                              }}
+                            >
+                              <option value="">— Assign —</option>
+                              {users.map(u => (
+                                <option key={u.id} value={u.id}>{u.full_name}</option>
+                              ))}
+                            </select>
+                          );
+                        })()}
+                        {task.element_id && !canAssign && (() => {
+                          const key = `${task.element_id}_${activeCity ?? ''}`;
+                          const existing = elementAssignments[key];
+                          if (!existing?.assigned_to) return null;
+                          const assignedUser = users.find(u => u.id === existing.assigned_to);
+                          if (!assignedUser) return null;
+                          return (
+                            <span style={{ fontSize: '11px', color: '#1d4ed8', background: '#EBF5FF', padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-body)' }}>
+                              {assignedUser.full_name}
+                            </span>
+                          );
+                        })()}
+
                         {/* assigned user pill */}
                         {ini ? (
                           <button
