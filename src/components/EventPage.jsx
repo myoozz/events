@@ -348,6 +348,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   const [showReminderModal, setShowReminderModal] = useState(false)
   const [reminderTargets, setReminderTargets] = useState('all')
   const [reminderSelected, setReminderSelected] = useState([])
+  const [elementAssignees, setElementAssignees] = useState([])
 
   useEffect(() => {
     if (proposalStatus !== 'won') return
@@ -423,9 +424,21 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     if (itin) setTimeout(() => setShowItineraryPrompt(true), 2600)
   }
 
-  function handleSendReminder() {
+  async function handleSendReminder() {
     setReminderTargets('all')
     setReminderSelected([])
+    // Fetch unique assigned_to user IDs from element_assignments for this event
+    const { data: eaRows } = await supabase
+      .from('element_assignments')
+      .select('assigned_to')
+      .eq('event_id', event.id)
+      .not('assigned_to', 'is', null);
+    const uniqueIds = [...new Set((eaRows || []).map(r => r.assigned_to))];
+    // Resolve full user objects from teamUsers (already loaded)
+    const resolved = uniqueIds
+      .map(uid => teamUsers.find(u => u.id === uid))
+      .filter(Boolean);
+    setElementAssignees(resolved);
     setShowReminderModal(true)
   }
 
@@ -1051,7 +1064,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
       )}
 
       {showReminderModal && (() => {
-        const assignedPool = teamUsers.filter(u => assignedTo.includes(u.email) && u.id)
+        const assignedPool = elementAssignees.length > 0
+          ? elementAssignees
+          : teamUsers.filter(u => assignedTo.includes(u.email) && u.id)
         const senderName = teamUsers.find(u => u.id === session?.user?.id)?.full_name || 'Team'
         const targets = reminderTargets === 'all' ? assignedPool : assignedPool.filter(u => reminderSelected.includes(u.id))
         return (
@@ -1106,9 +1121,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                     await createNotification(targets.map(u => ({
                       user_id:      u.id,
                       triggered_by: actorId,
-                      type:         'reminder',
+                      type:         'task_assigned',
                       title:        `Reminder from ${senderName}`,
-                      body:         `You have pending tasks on ${event.event_name}.`,
+                      body:         `Reminder: You have elements assigned on ${event.event_name}.`,
                       entity_type:  'event',
                       entity_id:    event.id,
                       event_id:     event.id,
