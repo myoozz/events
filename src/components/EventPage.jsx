@@ -217,8 +217,8 @@ function FloatingHelp({ activeTab }) {
         style={{
           width: 34, height: 34,
           borderRadius: '50%',
-          background: open ? '#C8102E' : 'var(--bg)',
-          border: '0.5px solid ' + (open ? '#C8102E' : 'var(--border-strong)'),
+          background: open ? '#F28F3B' : 'var(--bg)',
+          border: '0.5px solid ' + (open ? '#F28F3B' : 'var(--border-strong)'),
           color: open ? '#fff' : 'var(--text-tertiary)',
           fontSize: 14, fontWeight: 600,
           cursor: 'pointer',
@@ -227,7 +227,7 @@ function FloatingHelp({ activeTab }) {
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
           transition: 'all 0.15s',
         }}
-        onMouseOver={e => { if (!open) { e.currentTarget.style.borderColor = '#C8102E'; e.currentTarget.style.color = '#C8102E' } }}
+        onMouseOver={e => { if (!open) { e.currentTarget.style.borderColor = '#F28F3B'; e.currentTarget.style.color = '#F28F3B' } }}
         onMouseOut={e => { if (!open) { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-tertiary)' } }}
       >
         ?
@@ -245,10 +245,10 @@ const tabStyle = (active) => ({
   fontSize: '13px',
   fontWeight: active ? 500 : 400,
   fontFamily: 'var(--font-body)',
-  color: active ? '#C8102E' : 'var(--text-tertiary)',
+  color: active ? '#F28F3B' : 'var(--text-tertiary)',
   background: 'none',
   border: 'none',
-  borderBottom: active ? '2px solid #C8102E' : '2px solid transparent',
+  borderBottom: active ? '2px solid #F28F3B' : '2px solid transparent',
   cursor: 'pointer',
   letterSpacing: '0.2px',
   transition: 'color 0.15s',
@@ -283,7 +283,7 @@ const statusColor = {
   'on hold':{ bg: 'var(--bg-secondary)',color: 'var(--text-tertiary)' },
 }
 
-const CONFETTI_COLORS = ['#C8102E', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']
+const CONFETTI_COLORS = ['#F28F3B', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']
 const CONFETTI_PIECES = Array.from({ length: 44 }, (_, i) => ({
   left:     ((i * 13.7 + 5) % 100).toFixed(1) + '%',
   color:    CONFETTI_COLORS[i % CONFETTI_COLORS.length],

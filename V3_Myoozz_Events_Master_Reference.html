@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myoozz Events — Master Reference v2.1</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root {
+    --red:#bc1723;--red-bg:#fde8ea;--ink:#1a1008;--bg:#faf8f5;--bg2:#f2efe9;--bg3:#e8e4dc;
+    --border:#d8d2c8;--text:#2c2518;--dim:#7a7060;--green:#1a6b3a;--green-bg:#e6f4ec;
+    --amber:#b86e00;--amber-bg:#fef3e0;--blue:#1a4b8a;--blue-bg:#e8eef8;
+    --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--serif:'Cormorant Garamond',serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}
+  .layout{display:flex;min-height:100vh;}
+  .sidebar{width:252px;min-width:252px;background:var(--ink);color:#e8e4dc;position:sticky;top:0;height:100vh;overflow-y:auto;padding:0 0 40px;display:flex;flex-direction:column;}
+  .sidebar::-webkit-scrollbar{width:3px;}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);}
+  .sidebar-brand{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:8px;}
+  .me-box{display:inline-block;background:var(--red);color:#fff;font-family:var(--serif);font-size:18px;font-weight:700;padding:2px 10px;border-radius:3px;letter-spacing:1px;margin-bottom:6px;}
+  .sidebar-brand p{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;text-transform:uppercase;}
+  .sidebar-brand .version{font-family:var(--mono);font-size:10px;color:var(--red);margin-top:4px;}
+  .nav-section{margin-top:6px;}
+  .nav-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.22);padding:10px 20px 4px;font-weight:500;}
+  .nav-item{display:block;padding:7px 20px;font-size:12.5px;color:rgba(255,255,255,0.55);text-decoration:none;cursor:pointer;border-left:2px solid transparent;transition:all 0.12s;}
+  .nav-item:hover{color:#fff;background:rgba(255,255,255,0.05);}
+  .nav-item.active{color:#fff;border-left-color:var(--red);background:rgba(188,23,35,0.12);}
+  .main{flex:1;overflow-x:hidden;}
+  .page{display:none;padding:40px 52px 100px;max-width:920px;}
+  .page.active{display:block;}
+  .page-header{margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid var(--border);}
+  .section-num{font-family:var(--mono);font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+  .page-header h1{font-family:var(--serif);font-size:38px;font-weight:700;color:var(--ink);line-height:1.15;}
+  .page-header p{color:var(--dim);margin-top:8px;font-size:14px;}
+  .card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:14px;}
+  .card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.9px;color:var(--dim);margin-bottom:12px;}
+  .kv{width:100%;border-collapse:collapse;}
+  .kv tr{border-bottom:1px solid var(--bg3);}
+  .kv tr:last-child{border-bottom:none;}
+  .kv td{padding:8px 0;vertical-align:top;}
+  .kv td:first-child{color:var(--dim);font-size:12px;width:170px;padding-right:16px;font-weight:500;}
+  code{font-family:var(--mono);font-size:11.5px;background:var(--bg2);padding:1px 5px;border-radius:3px;color:var(--blue);}
+  .badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:0.5px;margin-right:4px;}
+  .badge-red{background:var(--red-bg);color:var(--red);}
+  .badge-green{background:var(--green-bg);color:var(--green);}
+  .badge-amber{background:var(--amber-bg);color:var(--amber);}
+  .badge-blue{background:var(--blue-bg);color:var(--blue);}
+  .badge-gray{background:var(--bg3);color:var(--dim);}
+  .rule{background:var(--bg2);border-left:3px solid var(--red);padding:9px 13px;border-radius:0 4px 4px 0;margin-bottom:8px;font-size:13px;color:var(--text);}
+  .rule strong{color:var(--ink);}
+  .tip{background:var(--green-bg);border:1px solid #b0d9c0;border-radius:6px;padding:11px 15px;font-size:13px;color:#0d4a26;margin-bottom:10px;}
+  .tip strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;}
+  .warn{background:var(--amber-bg);border:1px solid #f0d080;border-radius:6px;padding:11px 15px;font-size:13px;color:#7a4a00;margin-bottom:10px;}
+  .warn strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;}
+  .danger{background:#fde8ea;border:1px solid #f5b5ba;border-radius:6px;padding:11px 15px;font-size:13px;color:#8a1119;margin-bottom:10px;}
+  .danger strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;}
+  pre{background:var(--ink);color:#a8d870;font-family:var(--mono);font-size:11.5px;padding:16px 20px;border-radius:6px;overflow-x:auto;margin:10px 0;line-height:1.75;}
+  .db-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .db-table th{background:var(--ink);color:rgba(255,255,255,0.6);padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;}
+  .db-table td{padding:7px 10px;border-bottom:1px solid var(--bg3);vertical-align:top;}
+  .db-table tr:hover td{background:var(--bg2);}
+  .file-list{list-style:none;}
+  .file-list li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg3);font-size:13px;}
+  .file-list li:last-child{border-bottom:none;}
+  .file-path{font-family:var(--mono);font-size:11px;color:var(--blue);white-space:nowrap;min-width:240px;}
+  .file-desc{color:var(--dim);font-size:12px;}
+  .phase-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .phase-block{border:1px solid var(--border);border-radius:6px;padding:14px 16px;background:#fff;}
+  .phase-block.done{border-left:3px solid var(--green);}
+  .phase-block.inprogress{border-left:3px solid var(--amber);}
+  .phase-block.parked{border-left:3px solid var(--dim);}
+  .phase-block.future{border-left:3px solid var(--blue);}
+  .phase-block .phase-label{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:4px;}
+  .phase-block.done .phase-label{color:var(--green);}
+  .phase-block.inprogress .phase-label{color:var(--amber);}
+  .phase-block.parked .phase-label{color:var(--dim);}
+  .phase-block.future .phase-label{color:var(--blue);}
+  .phase-block h4{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+  .phase-block ul{list-style:none;}
+  .phase-block ul li{font-size:12px;color:var(--dim);padding:1px 0;}
+  .phase-block ul li::before{content:"·  ";}
+  .role-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+  .role-cell{border-radius:6px;padding:10px 12px;font-size:11px;text-align:center;}
+  .role-cell .role-name{font-weight:700;font-size:12px;margin-bottom:4px;}
+  .role-admin{background:var(--red-bg);color:var(--red);}
+  .role-manager{background:var(--blue-bg);color:var(--blue);}
+  .role-lead{background:var(--amber-bg);color:var(--amber);}
+  .role-team{background:var(--green-bg);color:var(--green);}
+  .role-staff{background:var(--bg3);color:var(--dim);}
+  .flow-step{display:flex;gap:16px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--bg3);}
+  .flow-step:last-child{border-bottom:none;}
+  .flow-num{width:28px;height:28px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono);}
+  .flow-body h4{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+  .flow-body p{font-size:12px;color:var(--dim);}
+  hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media print{.sidebar{display:none;}.page{display:block!important;page-break-after:always;}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="me-box">ME</div>
+    <p>Myoozz Events · Master Reference</p>
+    <div class="version">v2.1 · 02 May 2026</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Start Here</div>
+    <a class="nav-item active" onclick="show('start')">00 · How to Use This Doc</a>
+    <a class="nav-item" onclick="show('overview')">01 · Project Identity & Infra</a>
+    <a class="nav-item" onclick="show('stack')">02 · Tech Stack & Setup</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Product</div>
+    <a class="nav-item" onclick="show('userflow')">03 · User Flow & Screens</a>
+    <a class="nav-item" onclick="show('roles')">04 · Roles & Permissions</a>
+    <a class="nav-item" onclick="show('design')">05 · Design System</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Engineering</div>
+    <a class="nav-item" onclick="show('files')">06 · Files & Codebase Map</a>
+    <a class="nav-item" onclick="show('database')">07 · Database</a>
+    <a class="nav-item" onclick="show('categories')">08 · Category Registry</a>
+    <a class="nav-item" onclick="show('ratecard')">09 · Rate Card System</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Strategy</div>
+    <a class="nav-item" onclick="show('roadmap')">10 · Roadmap — Done & Next</a>
+    <a class="nav-item" onclick="show('brandlang')">11 · Brand Language</a>
+    <a class="nav-item" onclick="show('research')">12 · Market Research</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Working Rules</div>
+    <a class="nav-item" onclick="show('howwework')">13 · How We Work</a>
+    <a class="nav-item" onclick="show('workflow')">14 · Git & Deploy</a>
+    <a class="nav-item" onclick="show('tokens')">15 · Token Efficiency</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- 00 START -->
+<div id="start" class="page active">
+  <div class="page-header">
+    <div class="section-num">00 · How to Use This Document</div>
+    <h1>Developer Onboarding Guide</h1>
+    <p>Everything a developer needs to understand, build, and extend Myoozz Events from day one.</p>
+  </div>
+  <div class="tip">
+    <strong>If you are a developer joining this project</strong>
+    Read sections 00 through 07 in order before touching any code. That gives you the full picture. Sections 08 onwards are reference — consult as needed.
+  </div>
+  <div class="card">
+    <div class="card-title">What This Document Is</div>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:12px;">This is the single source of truth for the Myoozz Events (ME) product. It covers what the product is, how it works, what is built, what is not built yet, and all the rules for working on it. It is updated after every major build session.</p>
+    <p style="font-size:13px;color:var(--dim);">This document replaces all previous reference docs. If something in an older document conflicts with this one, this version wins.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Two Companion Documents — Use Both</div>
+    <table class="kv">
+      <tr><td><strong>This document</strong><br><code>V3_Myoozz_Events_Master_Reference.html</code></td><td>Engineering reference. Tech stack, DB schema, files map, rules, roadmap, brand language, market research, working rules. Read before coding.</td></tr>
+      <tr><td><strong>Product Flow Document</strong><br><code>ME_Product_Flow_v1.html</code></td><td>Screen-by-screen product narrative. Every page in workflow order. What each screen does, what's on it, role-by-role view, future plans, file paths, and watch-outs. Use this in planning sessions. Drop into NotebookLM for mind maps. Reference when discussing any screen.</td></tr>
+    </table>
+    <p style="font-size:12px;color:var(--dim);margin-top:8px;">Both documents live in the same repo folder. Both are updated after each session using the end-of-session prompt in Section 13.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Current Version Status</div>
+    <table class="kv">
+      <tr><td>Document version</td><td><code>v2.1</code> · 02 May 2026</td></tr>
+      <tr><td>App version</td><td><code>v0.50.0-beta</code></td></tr>
+      <tr><td>Last session</td><td>Product Flow Document + Session Prompt · 02 May 2026</td></tr>
+      <tr><td>Production URL</td><td><code>myoozzevents.netlify.app</code></td></tr>
+      <tr><td>Status</td><td><span class="badge badge-amber">Beta — Internal Use</span></td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Reading Order for a New Developer</div>
+    <div class="flow-step"><div class="flow-num">0</div><div class="flow-body"><h4>Product Flow Document (ME_Product_Flow_v1.html)</h4><p>Walk every screen of the product first. Understand what the user sees before you read any code. Use the role selector to see how each role experiences each screen.</p></div></div>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><h4>Section 01 — Project Identity</h4><p>Understand what ME is, who owns it, what problem it solves.</p></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><h4>Section 02 — Tech Stack</h4><p>How to set up locally and what every technology does.</p></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><h4>Section 04 — Roles</h4><p>Understand the 5 roles and what each can see and do.</p></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-body"><h4>Section 06 — Files</h4><p>Learn where every component lives and what it does.</p></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-body"><h4>Section 07 — Database</h4><p>Understand the full data model before writing any queries.</p></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-body"><h4>Section 13 — How We Work</h4><p>Read all the rules before writing a single line of code.</p></div></div>
+  </div>
+</div>
+
+<!-- 01 OVERVIEW -->
+<div id="overview" class="page">
+  <div class="page-header">
+    <div class="section-num">01 · Project Identity & Infrastructure</div>
+    <h1>What is Myoozz Events</h1>
+    <p>The product, the owner, the infrastructure, and the hosting setup.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Identity</div>
+    <table class="kv">
+      <tr><td>Product name</td><td>Myoozz Events · Internal shorthand: <strong>ME</strong></td></tr>
+      <tr><td>Positioning</td><td>My Events Operating System</td></tr>
+      <tr><td>Tagline</td><td>Stop running your events. Start running your business.</td></tr>
+      <tr><td>Sub-tagline</td><td>Born in India · Built for the world</td></tr>
+      <tr><td>Version</td><td><code>v0.50.0-beta</code></td></tr>
+      <tr><td>Owner</td><td>Vikram Parmar · Myoozz Consulting Pvt. Ltd. · Noida, India</td></tr>
+      <tr><td>Stage</td><td>Beta — in active use internally. Not yet public.</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">What the Product Does</div>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:10px;">ME is an internal operations platform for event management companies. It is NOT an attendee-facing event app. It is the back-office system the event company uses to manage their work.</p>
+    <div class="rule"><strong>Element Builder</strong> — structured cost sheets per event, per city, per category. With vendor rate benchmarks.</div>
+    <div class="rule"><strong>Task Engine</strong> — assign tasks to team members per event per city. Real accountability.</div>
+    <div class="rule"><strong>Team Access</strong> — multi-role team with scoped access. Admin sees everything. Staff sees their tasks.</div>
+    <div class="rule"><strong>Rate Card Library</strong> — pricing benchmark database across 22 categories and all major Indian cities. Powers cost suggestions in ElementBuilder.</div>
+    <div class="rule"><strong>Client Documents</strong> — 8 export types from one data entry: estimates, invoices, show flows, timelines, and more.</div>
+    <div class="rule"><strong>Travel & MICE Itinerary</strong> — full travel planning and itinerary builder with AI paste modal.</div>
+    <div class="rule"><strong>Activity Log</strong> — full audit trail of everything that happens on every event.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Domains & URLs</div>
+    <table class="kv">
+      <tr><td>Primary domain</td><td><code>myoozz.events</code> — on Cloudflare</td></tr>
+      <tr><td>Alternate domain</td><td><code>myoozzevents.com</code> — on Cloudflare</td></tr>
+      <tr><td>Production app</td><td><code>myoozzevents.netlify.app</code></td></tr>
+      <tr><td>Demo site</td><td><code>demo.myoozz.events</code> — separate Netlify site, same GitHub repo</td></tr>
+      <tr><td>WhatsApp</td><td>Verified on Meta Business · connected via MSG91</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Hosting — Production</div>
+    <table class="kv">
+      <tr><td>Frontend</td><td>Netlify — auto-deploys from GitHub main branch</td></tr>
+      <tr><td>Backend / DB</td><td>Supabase · Project ID: <code>rjscsnakkexunvsfhdut</code></td></tr>
+      <tr><td>Supabase URL</td><td><code>rjscsnakkexunvsfhdut.supabase.co</code></td></tr>
+      <tr><td>Env vars on Netlify</td><td><code>VITE_SUPABASE_URL</code> + <code>VITE_SUPABASE_ANON_KEY</code> only</td></tr>
+      <tr><td>Service role key</td><td>NEVER in frontend — auto-injected by Supabase into edge functions only</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Demo Site Status</div>
+    <table class="kv">
+      <tr><td>URL</td><td><code>demo.myoozz.events</code></td></tr>
+      <tr><td>Supabase</td><td>Borrowed from CRM project (free tier = max 2 projects)</td></tr>
+      <tr><td>Status</td><td><span class="badge badge-amber">Schema out of sync</span> — missing several columns added post Phase A. Not ready to show externally.</td></tr>
+      <tr><td>Demo login</td><td><code>demo@myoozz.events</code> · role: admin</td></tr>
+      <tr><td>Demo data names</td><td>Abhishek, Naveen, Joseph, Balwinder, Amir, Subhash — NOT Vikram/Rahul/Kuldeep</td></tr>
+      <tr><td>Demo margins</td><td>10–13% only. Never show real margins.</td></tr>
+    </table>
+  </div>
+  <div class="warn">
+    <strong>⚠ Security Note</strong>
+    A .env file with old Supabase keys was accidentally committed to git history on April 9 (commit aa76c05c). Those keys are rotated and dead. New keys are in place. .env is now correctly gitignored. dist/ was also accidentally committed on 30 Apr — fixed and gitignored.
+  </div>
+</div>
+
+<!-- 02 STACK -->
+<div id="stack" class="page">
+  <div class="page-header">
+    <div class="section-num">02 · Tech Stack & Setup</div>
+    <h1>Tech Stack</h1>
+    <p>Every technology used, what it does, and how to set up locally.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Core Stack</div>
+    <table class="kv">
+      <tr><td>Frontend framework</td><td>React 18 + Vite</td></tr>
+      <tr><td>Backend / DB</td><td>Supabase (Postgres + Auth + Realtime + Storage + Edge Functions)</td></tr>
+      <tr><td>Hosting</td><td>Netlify (frontend) + Supabase (backend)</td></tr>
+      <tr><td>DNS / CDN</td><td>Cloudflare</td></tr>
+      <tr><td>Notifications</td><td>Supabase Realtime (in-app) · MSG91 (WhatsApp — schema ready, not yet wired)</td></tr>
+      <tr><td>AI</td><td>Anthropic API — used in TravelItinerary.jsx paste modal only</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Key Installed Packages</div>
+    <table class="kv">
+      <tr><td>Animations</td><td><code>framer-motion@12.38.0</code> · <code>@emotion/is-prop-valid</code></td></tr>
+      <tr><td>Scroll observer</td><td><code>react-intersection-observer@10.0.3</code></td></tr>
+      <tr><td>Lottie</td><td><code>lottie-react@2.4.1</code></td></tr>
+      <tr><td>UI primitives</td><td><code>@radix-ui/react-dialog@1.1.15</code></td></tr>
+      <tr><td>Excel export</td><td><code>exceljs</code> — used in excelExport.js</td></tr>
+      <tr><td>Excel import</td><td><code>xlsx</code> (SheetJS) — used in RateCard.jsx</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Local Setup</div>
+    <table class="kv">
+      <tr><td>Project folder</td><td><code>~/Documents/Myoozz-events/</code></td></tr>
+      <tr><td>Start dev server</td><td><code>cd ~/Documents/Myoozz-events && npm run dev</code></td></tr>
+      <tr><td>Local URL</td><td><code>http://localhost:5173/</code> (or 5174 if port taken)</td></tr>
+      <tr><td>.env file</td><td>In <code>.gitignore</code> — NEVER commit. Contains <code>VITE_SUPABASE_URL</code> + <code>VITE_SUPABASE_ANON_KEY</code></td></tr>
+      <tr><td>Supabase import path</td><td><code>import { supabase } from '../supabase'</code> — NOT supabaseClient</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Deploy Flow</div>
+    <pre>Edit file locally → save → download file
+→ Drag-and-drop to GitHub repo (main branch)
+→ Netlify auto-detects push → builds → deploys
+→ Live in ~60 seconds</pre>
+    <p style="font-size:12px;color:var(--dim);margin-top:8px;">No CLI deploy. No npm run build locally. Netlify handles the build. Never commit the dist/ folder.</p>
+  </div>
+  <div class="danger">
+    <strong>🚫 Never do these</strong>
+    Never commit .env · Never commit dist/ · Never use supabase.schema() (causes infinite loading) · Never use the service role key in frontend code · Never hard-delete any record (soft archive only)
+  </div>
+</div>
+
+<!-- 03 USER FLOW -->
+<div id="userflow" class="page">
+  <div class="page-header">
+    <div class="section-num">03 · User Flow & Screens</div>
+    <h1>How the Product Works</h1>
+    <p>Every screen, in the order a user encounters them, and what happens at each step.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Entry Point — Login</div>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><h4>LoginPage.jsx — 3 modes</h4><p><strong>Login:</strong> email + password → Supabase Auth → redirect to Dashboard. <strong>Forgot password:</strong> sends reset email. <strong>Set password:</strong> handles invite flow — new users arrive via magic link from email invite, set their password here. Race condition fix in place — isPasswordSetupFlow captures the URL hash synchronously on load.</p></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Shell — AppShell.jsx</div>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:10px;">The persistent wrapper around the entire authenticated app. Contains the left sidebar nav, notification bell, and renders the active screen based on the selected nav item.</p>
+    <table class="kv">
+      <tr><td>Nav items</td><td>Events · Team · Activity Log · Early Access · Feedback · Rate Cards · Categories (admin only)</td></tr>
+      <tr><td>Role awareness</td><td>NAV_ITEMS array has a roles[] filter. Items only show if userRole is in the array.</td></tr>
+      <tr><td>Collapsed state</td><td>Sidebar collapses to initials + icons on mobile. Bottom nav on mobile.</td></tr>
+      <tr><td>Notification bell</td><td>Fixed top-right. Badge with 99+ cap. Realtime subscription.</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Dashboard — Dashboard.jsx</div>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><h4>Event list</h4><p>Shows all events the user has access to. Admin/Manager see all. Event Lead and Team see only events they are assigned to. Soft archived events hidden by default — Archived tab shows them.</p></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><h4>DashboardWidgets.jsx</h4><p>Role-aware stat cards at top. Admin sees: Pending Approvals, Active Events, Team Members, Overdue Tasks. Shimmer skeleton while loading.</p></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><h4>New Event</h4><p>+ New Event button → NewEventForm.jsx. Manager-created events go live immediately. Event Lead-created events go into review_status = pending → admin notified.</p></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-body"><h4>Assign Event</h4><p>Admin/Manager can assign events to team members via AssignEvent.jsx. Delegation scope set per user: Full / Operations / View Only.</p></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Event Page — EventPage.jsx (7 Tabs)</div>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:12px;">The core of the product. One event = one EventPage with 7 tabs. Tab visibility is controlled by the user's delegation_scope for that event.</p>
+    <table class="db-table">
+      <thead><tr><th>Tab</th><th>Component</th><th>What it does</th><th>Scope needed</th></tr></thead>
+      <tbody>
+        <tr><td>Elements & Costs</td><td>ElementBuilder.jsx</td><td>Full cost sheet. Per city, per category. Grid + Card modes. Rate suggestion pill. Options/Alternates. Bundle config.</td><td>All scopes</td></tr>
+        <tr><td>Tasks</td><td>TaskBoard.jsx</td><td>Task assignment per city per category. Status tracking. Notifications on assign and status change.</td><td>Full / Operations</td></tr>
+        <tr><td>Production</td><td>Production.jsx</td><td>Production schedule. City tabs. Collapse/expand per category.</td><td>Full / Operations</td></tr>
+        <tr><td>Show Flow</td><td>— </td><td>Run-of-show timeline.</td><td>Full / Operations</td></tr>
+        <tr><td>Travel</td><td>TravelItinerary.jsx</td><td>Event Travel + MICE Itinerary. AI paste modal (Anthropic API). All 6 DB tables wired.</td><td>Full / Operations</td></tr>
+        <tr><td>Delivered</td><td>DeliveredCenter.jsx</td><td>8-document export system. Confidentiality disclaimer on download.</td><td>Full</td></tr>
+        <tr><td>Costs Summary</td><td>—</td><td>Cost breakdown. Margins visible to admin only.</td><td>View Only +</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ElementBuilder Deep Dive (1682 lines)</div>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:10px;">The most complex component. Handles the entire cost sheet of an event.</p>
+    <div class="rule"><strong>Add Category:</strong> Opens CategoryPicker.jsx modal → user selects from 22 live categories from event_categories table. Selected categories become blocks on the event.</div>
+    <div class="rule"><strong>Grid mode (default):</strong> Excel-like table per category. Each row = one element with name, spec, unit, qty, days, client rate, internal rate.</div>
+    <div class="rule"><strong>Card mode:</strong> Alternate view. Toggle stored in localStorage key <code>myoozz_element_view</code>.</div>
+    <div class="rule"><strong>Rate suggestion pill:</strong> When internal rate is entered → system checks rate_cards for a matching element in that city → shows "Usually ₹X–₹Y in [city]". Green pill = vendor_quoted. Blue pill = ai_research.</div>
+    <div class="rule"><strong>Options/Alternates:</strong> Elements can be marked as option_group alternatives. Only one from each group is active in the final cost.</div>
+    <div class="rule"><strong>Reorder:</strong> ↑↓ buttons to reorder elements within a category.</div>
+    <div class="rule"><strong>CategoryBlock → ElementRow chain:</strong> When adding props to ElementRow, ALWAYS check CategoryBlock signature AND its call site (~line 1387). Missing props here caused silent failures in the past.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Rate Card — RateCard.jsx (853 lines)</div>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:10px;">Admin-only screen. The pricing benchmark library. Dark theme.</p>
+    <div class="rule">3-tab import modal: Upload Excel / JSON paste / Field mapping. Dupe check on import.</div>
+    <div class="rule">Category tabs pull from event_categories (live). Category selector in import modal is dynamic.</div>
+    <div class="rule">City filter: Ahmedabad, Bangalore, Chennai, Delhi, Hyderabad, Kolkata, Mumbai, Pune, Pan-India.</div>
+    <div class="rule">No export or download. Ever. For any role. This is a hard business rule — the benchmark data is proprietary.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Category Manager — CategoryManager.jsx (Admin only)</div>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:10px;">Admin sidebar item. Manages the event_categories master table directly from the UI.</p>
+    <div class="rule">Add new category — name input, slug auto-generated.</div>
+    <div class="rule">Rename — cascades automatically to all rate_cards and elements rows. Double-click to edit inline.</div>
+    <div class="rule">Reorder — ↑↓ buttons update sort_order.</div>
+    <div class="rule">Deactivate / reactivate — inactive categories hidden from all dropdowns but existing data preserved.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Other Screens</div>
+    <table class="db-table">
+      <thead><tr><th>Screen</th><th>Component</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Team View</td><td>TeamView.jsx</td><td>Workload bars + last active per team member. Admin = all, Manager = scoped.</td></tr>
+        <tr><td>Analytics</td><td>AnalyticsDashboard.jsx</td><td>Admin only. Event Pipeline, Task Trends, Team Workload. Period selector.</td></tr>
+        <tr><td>Profile</td><td>ProfilePage.jsx</td><td>Bio, phone, city, social links, events tab. Admin can edit any profile.</td></tr>
+        <tr><td>User Management</td><td>UserManagement.jsx</td><td>Invite users. Role-scoped invite permissions. can_manage_rate_cards toggle for admin.</td></tr>
+        <tr><td>Activity Log</td><td>ActivityLog.jsx</td><td>Admin only. Grouped by date. Filter by team member + entity type.</td></tr>
+        <tr><td>Notifications</td><td>NotificationBell.jsx</td><td>Bell + badge. Realtime. Last 30. Mark read / mark all.</td></tr>
+        <tr><td>Landing Page</td><td>LandingPage.jsx</td><td>Public face. framer-motion. Dark #16203A sections. Not behind auth.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 04 ROLES -->
+<div id="roles" class="page">
+  <div class="page-header">
+    <div class="section-num">04 · Roles & Permissions</div>
+    <h1>Roles & Access Control</h1>
+    <p>Five roles. DB values are fixed strings. Display names are what users see in the UI.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Role Map — DB Value → Display Name</div>
+    <div class="role-grid">
+      <div class="role-cell role-admin"><div class="role-name">Admin</div>DB: <code>admin</code></div>
+      <div class="role-cell role-manager"><div class="role-name">Project Head</div>DB: <code>manager</code></div>
+      <div class="role-cell role-lead"><div class="role-name">Manager</div>DB: <code>event_lead</code></div>
+      <div class="role-cell role-team"><div class="role-name">Project Team</div>DB: <code>team</code></div>
+      <div class="role-cell role-staff"><div class="role-name">Staff</div>DB: <code>staff</code></div>
+    </div>
+    <p style="font-size:12px;color:var(--dim);margin-top:10px;">Role rename is parked. Display-only change required in 5 files: AppShell, UserManagement, AssignEvent, Dashboard, EventPage. No DB changes needed.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">What Each Role Can Do</div>
+    <table class="db-table">
+      <thead><tr><th>Capability</th><th>Admin</th><th>Project Head</th><th>Manager</th><th>Team</th><th>Staff</th></tr></thead>
+      <tbody>
+        <tr><td>See all events</td><td>✅</td><td>✅</td><td>Assigned only</td><td>Assigned only</td><td>Assigned only</td></tr>
+        <tr><td>Create events</td><td>✅ live</td><td>✅ live</td><td>✅ pending review</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Assign events to team</td><td>✅</td><td>✅ scoped</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        <tr><td>See margins</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Rate card page</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Rate pill in ElementBuilder</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        <tr><td>Category Manager</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Analytics dashboard</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Activity log</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Invite users</td><td>All roles</td><td>event_lead + team</td><td>team only</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Download documents</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+        <tr><td>Export rate cards</td><td>❌ never</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Delegation Scope — Per Event Assignment</div>
+    <table class="kv">
+      <tr><td>Full</td><td>All 7 tabs visible</td></tr>
+      <tr><td>Operations</td><td>Elements, Tasks, Production, Show Flow, Travel</td></tr>
+      <tr><td>View Only</td><td>Elements, Costs Summary only</td></tr>
+    </table>
+    <p style="font-size:12px;color:var(--dim);margin-top:8px;">Admin and Manager (Project Head) always get Full scope regardless of assignment.</p>
+  </div>
+</div>
+
+<!-- 05 DESIGN -->
+<div id="design" class="page">
+  <div class="page-header">
+    <div class="section-num">05 · Design System</div>
+    <h1>Design Language</h1>
+    <p>The visual and UX language locked for Myoozz Events. Do not deviate from these.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Core Palette</div>
+    <table class="kv">
+      <tr><td>Brand red</td><td><code>#bc1723</code> — primary accent, CTAs, active states, nav indicator</td></tr>
+      <tr><td>Ink / dark</td><td><code>#1a1008</code> — sidebar background, headings, dark sections</td></tr>
+      <tr><td>Background</td><td><code>#faf8f5</code> warm off-white — NOT pure white</td></tr>
+      <tr><td>Surface</td><td><code>#f2efe9</code> — cards, subtle backgrounds</td></tr>
+      <tr><td>Border</td><td><code>#d8d2c8</code> — card borders, dividers</td></tr>
+      <tr><td>Dim text</td><td><code>#7a7060</code> — labels, secondary text</td></tr>
+      <tr><td>Landing dark</td><td><code>#16203A</code> navy — landing page dark sections only</td></tr>
+      <tr><td>Rate card dark</td><td><code>#141413</code> / <code>#1e1e1c</code> — rate card page dark theme</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Typography</div>
+    <table class="kv">
+      <tr><td>Brand / headings</td><td>Cormorant Garamond (serif) — all page titles, hero text</td></tr>
+      <tr><td>UI font</td><td>DM Sans — all body text, buttons, labels</td></tr>
+      <tr><td>Code / mono</td><td>DM Mono — IDs, slugs, code blocks, version numbers</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Design Rules — Locked. Do Not Change.</div>
+    <div class="rule"><strong>Warm light theme</strong> throughout the app. No cold grays. No pure white backgrounds.</div>
+    <div class="rule"><strong>#bc1723</strong> is the one accent color. Not orange, not purple, not teal. One red.</div>
+    <div class="rule"><strong>FloatingHelp pattern</strong> — fixed bottom-right ? button. NEVER inline help text on page load. All contextual help goes into HELP_CONTENT map keyed by tab/screen.</div>
+    <div class="rule"><strong>Avatar style</strong> — rounded squares everywhere, not circles. Consistent across all components.</div>
+    <div class="rule"><strong>Tab active state</strong> — #bc1723 underline. Not a filled pill.</div>
+    <div class="rule"><strong>No hard deletes.</strong> Soft archive only. Everything is recoverable.</div>
+    <div class="rule"><strong>Margins never visible</strong> to non-admin. Client cost ≠ internal cost in the UI.</div>
+    <div class="rule"><strong>Rate card data stays in the product.</strong> No export, no download, no API access. Any role. Ever.</div>
+    <div class="rule"><strong>Admin identity hidden</strong> from non-admin users — assigned-by field not shown.</div>
+    <div class="rule"><strong>Never use supabase.schema()</strong> — causes silent infinite loading. Always <code>supabase.from()</code> directly.</div>
+  </div>
+</div>
+
+<!-- 06 FILES -->
+<div id="files" class="page">
+  <div class="page-header">
+    <div class="section-num">06 · Files & Codebase Map</div>
+    <h1>Every File That Matters</h1>
+    <p>Full map of src/components/, src/utils/, and root files. Current state as of 30 Apr 2026.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">src/components/ — Screens & UI</div>
+    <ul class="file-list">
+      <li><span class="file-path">AppShell.jsx</span><span class="file-desc">Main authenticated shell. NAV_ITEMS with roles[]. Notification bell. Sidebar. Mobile bottom nav. Renders active screen by activeKey.</span></li>
+      <li><span class="file-path">Dashboard.jsx</span><span class="file-desc">Events list. DashboardWidgets. Role-aware event creation. Soft archive. Approval flow (manager → admin notify).</span></li>
+      <li><span class="file-path">DashboardWidgets.jsx</span><span class="file-desc">Role-aware stat cards. Shimmer skeleton on load. Admin / Manager / Event Lead / Team views differ.</span></li>
+      <li><span class="file-path">EventPage.jsx</span><span class="file-desc">7 tabs. Tab access via delegation_scope. FloatingHelp. Proposal lifecycle banners. Travel tab. City bubbles.</span></li>
+      <li><span class="file-path">NewEventForm.jsx</span><span class="file-desc">Created_by_role + review_status on insert. Manager events go live immediately. Event Lead events go to pending.</span></li>
+      <li><span class="file-path">AssignEvent.jsx</span><span class="file-desc">Delegation scope selector per user (Full / Operations / View). Saves to assigned_to + delegation_scope on events table.</span></li>
+      <li><span class="file-path">ElementBuilder.jsx</span><span class="file-desc">~1682 lines. Grid + Cards mode. Rate suggestion pill. getRateSuggestion(). Bundle config. Options/Alternates. Reorder ↑↓. Category dropdown from event_categories. SURGICAL EDITS ONLY.</span></li>
+      <li><span class="file-path">CategoryPicker.jsx</span><span class="file-desc">Modal for adding category blocks to an event. Fetches from event_categories (live). Custom free-text input removed. CATEGORY_SUGGESTIONS kept for item count badges.</span></li>
+      <li><span class="file-path">CategoryManager.jsx</span><span class="file-desc">Admin-only. Manages event_categories table. Add, rename (cascades to rate_cards + elements), reorder, deactivate. Accessible from sidebar.</span></li>
+      <li><span class="file-path">TaskBoard.jsx</span><span class="file-desc">City tabs. Task assignment to any login user. Status dropdown. notifyTaskAssigned + notifyTaskStatusChanged.</span></li>
+      <li><span class="file-path">Production.jsx</span><span class="file-desc">City tabs. Collapse/expand per category.</span></li>
+      <li><span class="file-path">RateCard.jsx</span><span class="file-desc">853 lines. Dark theme. 3-tab import modal. Category selector dynamic from event_categories. Dupe check. Admin-only controls. No export ever.</span></li>
+      <li><span class="file-path">TravelItinerary.jsx</span><span class="file-desc">1238 lines. Event Travel + MICE Itinerary tabs. AI paste modal (Anthropic API). All 6 travel DB tables wired.</span></li>
+      <li><span class="file-path">ProfilePage.jsx</span><span class="file-desc">Nudge UX. Social links JSONB. Bio/phone/city inline edit. Events tab. canEdit = isOwn || admin || manager.</span></li>
+      <li><span class="file-path">TeamView.jsx</span><span class="file-desc">Team workload panel. Admin=all, Manager=scoped. Workload bars + last active. Role filter + search.</span></li>
+      <li><span class="file-path">AnalyticsDashboard.jsx</span><span class="file-desc">Admin only. Event Pipeline / Task Trends / Team Workload. Period selector: Week/Month/Year/Custom.</span></li>
+      <li><span class="file-path">NotificationBell.jsx</span><span class="file-desc">Bell + badge (99+ cap). Realtime subscription. Last 30. Mark read / mark all.</span></li>
+      <li><span class="file-path">UserManagement.jsx</span><span class="file-desc">All roles. Scoped invite per inviter role. can_manage_rate_cards toggle (admin). Edge Function invite.</span></li>
+      <li><span class="file-path">ActivityLog.jsx</span><span class="file-desc">Admin only. Grouped by date. Filter by team member + entity type.</span></li>
+      <li><span class="file-path">DeliveredCenter.jsx</span><span class="file-desc">Confidentiality disclaimer on download. 8-document export system.</span></li>
+      <li><span class="file-path">LoginPage.jsx</span><span class="file-desc">3 modes: login / forgot / setpassword. Race condition fix for invite flow — isPasswordSetupFlow captures hash synchronously.</span></li>
+      <li><span class="file-path">LandingPage.jsx</span><span class="file-desc">Public page. Dark #16203A navy sections. framer-motion animations. Sticky CTA. Request Access modal (Radix Dialog). Lottie hero. Logo placement pending.</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title">src/utils/ — Utility Layer</div>
+    <ul class="file-list">
+      <li><span class="file-path">activityLogger.js</span><span class="file-desc">logActivity() core + convenience wrappers for event, task, element, category, user entity types.</span></li>
+      <li><span class="file-path">notificationService.js</span><span class="file-desc">createNotification(), fetchNotifications(), markRead, realtime. 6 trigger types. NOTIF_META map.</span></li>
+      <li><span class="file-path">excelExport.js</span><span class="file-desc">~1601 lines. 11 export functions. generateRateCardTemplate(). exportTravelPlan(). exportMICEItinerary(). generateAgentTemplate(). Uses ExcelJS.</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title">Root Files</div>
+    <ul class="file-list">
+      <li><span class="file-path">src/App.jsx</span><span class="file-desc">Router. Invite flow race condition fix. isPasswordSetupFlow captures hash synchronously on load.</span></li>
+      <li><span class="file-path">src/supabase.js</span><span class="file-desc">Supabase client init. Import as: <code>import {'{'} supabase {'}'} from '../supabase'</code>. NOT supabaseClient.</span></li>
+      <li><span class="file-path">.env</span><span class="file-desc">LOCAL ONLY — gitignored. Contains VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.</span></li>
+      <li><span class="file-path">.gitignore</span><span class="file-desc">Includes .env and dist/ — never commit either.</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title">Critical Patterns — Read Before Touching Anything</div>
+    <div class="rule"><strong>ElementBuilder is 1682 lines.</strong> Surgical edits only. Run grep to find exact line numbers before any change. Never rewrite the file. Never restructure.</div>
+    <div class="rule"><strong>CategoryBlock → ElementRow chain:</strong> Adding props to ElementRow requires checking CategoryBlock signature AND its call site (~line 1387). Silent failures happen here.</div>
+    <div class="rule"><strong>supabase.from() only.</strong> Never supabase.schema() — infinite loading bug if schema is not explicitly exposed in Supabase dashboard settings.</div>
+    <div class="rule"><strong>Supabase import path is ../supabase</strong> — confirmed from RateCard.jsx and ElementBuilder.jsx. Not supabaseClient.</div>
+  </div>
+</div>
+
+<!-- 07 DATABASE -->
+<div id="database" class="page">
+  <div class="page-header">
+    <div class="section-num">07 · Database</div>
+    <h1>Database Structure</h1>
+    <p>Supabase · Project rjscsnakkexunvsfhdut · Postgres. All tables, columns, and migration history.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Core Tables</div>
+    <table class="db-table">
+      <thead><tr><th>Table</th><th>Key Columns</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>events</code></td><td>id, name, dates, cities, city_dates (jsonb), status, proposal_status, created_by, created_by_role, assigned_to (jsonb), delegation_scope (jsonb), category_config (jsonb), bundle_config (jsonb), review_status, archived_at, archived_by</td><td>Soft delete via archived_at. Multi-city via city_dates jsonb.</td></tr>
+        <tr><td><code>users</code></td><td>id, email, full_name, role, base_city, base_state, phone, bio, social_links (jsonb), notification_preferences (jsonb), can_manage_rate_cards (bool)</td><td>Role CHECK: admin/manager/event_lead/team/staff</td></tr>
+        <tr><td><code>tasks</code></td><td>id, event_id, assigned_to, title, status, city, category, due_date</td><td>Linked to events. Multi-user assignment supported.</td></tr>
+        <tr><td><code>elements</code></td><td>id, event_id, category, element_name, specification, unit, qty, days, client_rate, internal_rate, is_lump, is_option, option_group, city</td><td>Per-city per-category. is_option for alternates. category is free text — must match event_categories.name for pill to work.</td></tr>
+        <tr><td><code>event_categories</code></td><td>id, name, slug, sort_order, is_active, created_at</td><td>Single source of truth for all category dropdowns. 22 rows. Admin-managed via CategoryManager.</td></tr>
+        <tr><td><code>rate_cards</code></td><td>id, category, element_name, specification, unit, city, country, location_scope, rate_min, rate_max, rate_type, source, source_url, venue_type, pax_min, pax_max, per_unit_type, mandatory, gst_applicable</td><td>rate_type: ai_research/vendor_quoted/user_entered/system_captured. Index on category+city+element_name.</td></tr>
+        <tr><td><code>notifications</code></td><td>id, user_id, triggered_by, type, title, body, entity_type, entity_id, event_id, action_url, is_read, channel, created_at</td><td>Realtime enabled. 6 trigger types. RLS: users read own.</td></tr>
+        <tr><td><code>activity_log</code></td><td>id, user_id, entity_type, entity_id, event_id, action, metadata (jsonb), created_at</td><td>Admin-only view. Never deleted.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Travel & Itinerary Tables</div>
+    <table class="db-table">
+      <thead><tr><th>Table</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>travel_plan</code></td><td>Per-event travel header. Links to event.</td></tr>
+        <tr><td><code>itinerary</code></td><td>MICE itinerary header (trip title, destinations, inclusions).</td></tr>
+        <tr><td><code>itinerary_days</code></td><td>Day-level rows within an itinerary.</td></tr>
+        <tr><td><code>itinerary_sections</code></td><td>Sections within a day.</td></tr>
+        <tr><td><code>itinerary_items</code></td><td>Granular items per section. Has cost column.</td></tr>
+        <tr><td><code>rooming_list</code></td><td>Hotel room allocation. Admin gets Mobile + ID columns.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Supabase Views</div>
+    <table class="db-table">
+      <thead><tr><th>View</th><th>Used by</th></tr></thead>
+      <tbody>
+        <tr><td><code>v_user_workload</code></td><td>AnalyticsDashboard — Team Workload panel</td></tr>
+        <tr><td><code>v_user_last_active</code></td><td>TeamView — last active display</td></tr>
+        <tr><td><code>v_event_health</code></td><td>AnalyticsDashboard — Event Pipeline chart</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Migration History</div>
+    <table class="db-table">
+      <thead><tr><th>Phase</th><th>Changes added</th></tr></thead>
+      <tbody>
+        <tr><td>Phase A</td><td>archived_by, archived_at, delegation_scope on events. base_city, base_state on users. event_lead role constraint.</td></tr>
+        <tr><td>Phase B</td><td>phone, bio, social_links jsonb on users.</td></tr>
+        <tr><td>Phase C</td><td>notifications table + RLS + Realtime. notification_preferences jsonb on users.</td></tr>
+        <tr><td>Phase D</td><td>v_user_workload, v_user_last_active, v_event_health views. idx_activity_log_email_created index.</td></tr>
+        <tr><td>Rate Card v1</td><td>city, rate_min, rate_max, rate_type, source, source_url, venue_type, pax_min, pax_max, per_unit_type, mandatory, gst_applicable on rate_cards.</td></tr>
+        <tr><td>Rate Card v2</td><td>country, location_scope added. per_unit_type CHECK constraint expanded.</td></tr>
+        <tr><td>Phase F (Travel)</td><td>proposal_status on events. 6 travel tables: travel_plan, itinerary, itinerary_days, itinerary_sections, itinerary_items, rooming_list.</td></tr>
+        <tr><td>Rate Card v3</td><td>can_manage_rate_cards boolean DEFAULT false on users.</td></tr>
+        <tr><td>Phase 6 (30 Apr 2026)</td><td>event_categories table with RLS. 22 rows seeded. Stage rows in elements + rate_cards updated to Stage & Structure.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="warn">
+    <strong>Important: Category string matching</strong>
+    The rate pill works by matching elements.category against rate_cards.category. Both must be identical strings. The event_categories table is now the enforced source. CategoryManager rename cascades to both tables automatically. Never manually insert a category string that differs from event_categories.name.
+  </div>
+</div>
+
+<!-- 08 CATEGORIES -->
+<div id="categories" class="page">
+  <div class="page-header">
+    <div class="section-num">08 · Category Registry</div>
+    <h1>event_categories — Single Source of Truth</h1>
+    <p>Built in Phase 6 · 30 Apr 2026. All category dropdowns across the app pull from this table.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">The 22 Standard Categories (in sort order)</div>
+    <table class="db-table">
+      <thead><tr><th>#</th><th>Name</th><th>Slug</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Permissions & Legal</td><td>permissions-legal</td><td>239 rate card rows total across all categories</td></tr>
+        <tr><td>2</td><td>Sound</td><td>sound</td><td></td></tr>
+        <tr><td>3</td><td>Lighting</td><td>lighting</td><td></td></tr>
+        <tr><td>4</td><td>Video & LED</td><td>video-led</td><td></td></tr>
+        <tr><td>5</td><td>Stage & Structure</td><td>stage-structure</td><td>Canonical name. "Stage" rows in elements + rate_cards migrated to this.</td></tr>
+        <tr><td>6</td><td>Production & Fabrication</td><td>production-fabrication</td><td></td></tr>
+        <tr><td>7</td><td>Branding & Signage</td><td>branding-signage</td><td></td></tr>
+        <tr><td>8</td><td>Manpower</td><td>manpower</td><td></td></tr>
+        <tr><td>9</td><td>Furniture</td><td>furniture</td><td></td></tr>
+        <tr><td>10</td><td>Venue & Infrastructure</td><td>venue-infrastructure</td><td></td></tr>
+        <tr><td>11</td><td>Power & Electrical</td><td>power-electrical</td><td></td></tr>
+        <tr><td>12</td><td>Food & Beverage</td><td>food-beverage</td><td></td></tr>
+        <tr><td>13</td><td>Travel Booking</td><td>travel-booking</td><td>Group Travel + Team Travel folded into this. Not separate categories.</td></tr>
+        <tr><td>14</td><td>Logistics</td><td>logistics</td><td></td></tr>
+        <tr><td>15</td><td>Insurance</td><td>insurance</td><td></td></tr>
+        <tr><td>16</td><td>Photography & Videography</td><td>photography-videography</td><td></td></tr>
+        <tr><td>17</td><td>Technology & IT</td><td>technology-it</td><td></td></tr>
+        <tr><td>18</td><td>Venue Booking</td><td>venue-booking</td><td>The venue rental fee. Distinct from Venue & Infrastructure (physical setup).</td></tr>
+        <tr><td>19</td><td>Gifts & Merchandise</td><td>gifts-merchandise</td><td></td></tr>
+        <tr><td>20</td><td>Miscellaneous</td><td>miscellaneous</td><td>Post-closure costs not fitting elsewhere.</td></tr>
+        <tr><td>21</td><td>Agency Cost</td><td>agency-cost</td><td>Agency fee line item.</td></tr>
+        <tr><td>22</td><td>Additional</td><td>additional</td><td>Elements added after PO closure.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">What Uses event_categories</div>
+    <table class="kv">
+      <tr><td>CategoryPicker.jsx</td><td>Add Categories modal on ElementBuilder. Shows all active categories as tiles.</td></tr>
+      <tr><td>ElementBuilder.jsx</td><td>CategoryBlock — category dropdown when adding/editing a block.</td></tr>
+      <tr><td>RateCard.jsx</td><td>ImportModal — category selector dropdown for importing rate data.</td></tr>
+      <tr><td>CategoryManager.jsx</td><td>Reads and writes event_categories directly. Admin sidebar.</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">What Was Retired</div>
+    <div class="rule"><strong>MASTER_CATEGORIES</strong> — hardcoded array in CategoryPicker. Gone.</div>
+    <div class="rule"><strong>RC_CATEGORIES</strong> — hardcoded array in RateCard. Gone.</div>
+    <div class="rule"><strong>Custom category free-text input</strong> — was at bottom of CategoryPicker modal. Removed permanently. Only admins add categories now via CategoryManager.</div>
+  </div>
+  <div class="tip">
+    <strong>Zones vs Categories</strong>
+    Zones like "Ballroom", "Pre Function Area", "Registration Zone" are NOT categories. They describe where an element is placed within a venue. They exist in some legacy elements rows as free-text. A future "Location" or "Zone" field on elements is the correct home. Do not add them to event_categories.
+  </div>
+  <div class="card">
+    <div class="card-title">Future: Admin Settings Panel</div>
+    <p style="font-size:13px;color:var(--dim);">CategoryManager is the first component in what will become an Admin Settings section in the sidebar. Future items here: Cities master list, Event types, Rate card config. All master data management from one admin panel — no code changes needed to add new values.</p>
+  </div>
+</div>
+
+<!-- 09 RATE CARD -->
+<div id="ratecard" class="page">
+  <div class="page-header">
+    <div class="section-num">09 · Rate Card System</div>
+    <h1>Rate Card</h1>
+    <p>The pricing benchmark library powering the ElementBuilder suggestion pill.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">What It Is</div>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:10px;">A <strong>pricing benchmark database</strong> — not an element catalog. It tells the system "a P3.9 LED Wall usually costs ₹180–₹250/sqft/day in Mumbai." When a team member enters an internal rate in ElementBuilder, the system checks this library and shows a suggestion pill.</p>
+    <div class="rule">Rate card ≠ event elements. Seeding rate cards does NOT auto-populate events.</div>
+    <div class="rule">Pill shows: "Usually ₹X–₹Y in [city] · [Source]" — city-specific match first, Pan-India fallback.</div>
+    <div class="rule">Pill color: <span class="badge badge-green">Green</span> = vendor_quoted · <span class="badge badge-blue">Blue</span> = ai_research</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Rate Card Seeding — Current Status</div>
+    <table class="db-table">
+      <thead><tr><th>Category</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>All 15 original categories + Sound</td><td><span class="badge badge-green">Seeded</span> 239 total rows as of 30 Apr 2026</td></tr>
+        <tr><td>Photography & Videography, Technology & IT, Venue Booking, Gifts & Merchandise, Miscellaneous, Agency Cost, Additional</td><td><span class="badge badge-gray">Not yet seeded</span> Will be added post new event flow is set</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Seeding Workflow (for each new category)</div>
+    <div class="rule"><strong>Step 1:</strong> Copy Gemini research prompt from MemPalace rate-card room → add category-specific notes.</div>
+    <div class="rule"><strong>Step 2:</strong> Run in Gemini 2.0 Pro (primary) or Perplexity Pro (secondary). Get pure JSON array back.</div>
+    <div class="rule"><strong>Step 3:</strong> Paste JSON into Claude Chat → Claude validates, fixes smart quotes, schema mismatches → returns clean JSON.</div>
+    <div class="rule"><strong>Step 4:</strong> Paste clean JSON into RateCard.jsx JSON tab → select category → import. rate_type = ai_research.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">4 Seeding Phases (long-term vision)</div>
+    <table class="kv">
+      <tr><td>Phase 1 — now</td><td>AI-researched via Gemini/Perplexity → JSON paste → rate_type = ai_research</td></tr>
+      <tr><td>Phase 2</td><td>Vendor rate cards collected by team → Excel upload → rate_type = vendor_quoted</td></tr>
+      <tr><td>Phase 3</td><td>ElementBuilder internal rates optionally write back → rate_type = user_entered</td></tr>
+      <tr><td>Phase 4</td><td>Autofill suggestion pill fully reliable once coverage is sufficient</td></tr>
+    </table>
+  </div>
+  <div class="danger">
+    <strong>🚫 Hard Rule — No Export Ever</strong>
+    Rate card data is proprietary. No export button, no download function, no API endpoint, no workaround. Any role. Any situation. This is a permanent business rule.
+  </div>
+</div>
+
+<!-- 10 ROADMAP -->
+<div id="roadmap" class="page">
+  <div class="page-header">
+    <div class="section-num">10 · Roadmap</div>
+    <h1>Where We Are & Where We're Going</h1>
+    <p>What is fully built, what is in progress, what is next, and what is future.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✓ Completed Phases</div>
+    <div class="phase-grid">
+      <div class="phase-block done"><div class="phase-label">✓ Complete</div><h4>Phase A — Foundation</h4><ul><li>Event Lead role</li><li>Delegation model</li><li>Tab-level access control</li><li>Task assignment</li></ul></div>
+      <div class="phase-block done"><div class="phase-label">✓ Complete</div><h4>Phase B — Profiles</h4><ul><li>Profile page per user</li><li>Social links, bio, phone</li><li>Admin can edit all profiles</li></ul></div>
+      <div class="phase-block done"><div class="phase-label">✓ Complete</div><h4>Phase C — Notifications</h4><ul><li>Notification bell (realtime)</li><li>6 trigger types</li><li>Mark read / mark all</li></ul></div>
+      <div class="phase-block done"><div class="phase-label">✓ Complete</div><h4>Phase D — Dashboards</h4><ul><li>Role-aware stat cards</li><li>Team workload panel</li><li>DashboardWidgets</li></ul></div>
+      <div class="phase-block done"><div class="phase-label">✓ Complete</div><h4>Phase E — Analytics</h4><ul><li>Event pipeline chart</li><li>Task trends</li><li>Team workload stacked bar</li></ul></div>
+      <div class="phase-block done"><div class="phase-label">✓ Complete</div><h4>Phase F — ElementBuilder + Travel</h4><ul><li>Grid + Card modes</li><li>Options/Alternates</li><li>Rate card pill</li><li>Travel & Itinerary tab</li></ul></div>
+      <div class="phase-block done"><div class="phase-label">✓ Complete</div><h4>Phase 6 — Category Registry</h4><ul><li>event_categories table</li><li>CategoryManager admin screen</li><li>All dropdowns dynamic</li><li>22 categories live</li></ul></div>
+      <div class="phase-block done"><div class="phase-label">✓ Complete</div><h4>Rate Card Seeding</h4><ul><li>239 rows across all categories</li><li>All cities covered</li><li>Pill functional</li></ul></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">→ Current Focus</div>
+    <div class="phase-grid">
+      <div class="phase-block inprogress"><div class="phase-label">→ Now</div><h4>New Event Flow Redesign</h4><ul><li>Event brief form (type, pax, tier, city)</li><li>This drives everything downstream</li><li>Smart element pre-population</li></ul></div>
+      <div class="phase-block inprogress"><div class="phase-label">→ Parallel Track</div><h4>Marketing Dept Skill</h4><ul><li>Claude-based Marketing Dept skill being built</li><li>Runs alongside product development</li><li>Marketing thinking shapes product decisions</li><li>Prevents rework — positioning set while building</li></ul></div>
+      <div class="phase-block parked"><div class="phase-label">⏸ Parked</div><h4>Demo Site</h4><ul><li>Schema out of sync</li><li>Will do after event flow set</li></ul></div>
+      <div class="phase-block parked"><div class="phase-label">⏸ Parked</div><h4>Landing Page</h4><ul><li>Logo placement pending</li><li>Truth section pending</li><li>Will do after event flow set</li></ul></div>
+      <div class="phase-block parked"><div class="phase-label">⏸ Parked</div><h4>Role Renames</h4><ul><li>Display-only, 5 files</li><li>No DB changes needed</li></ul></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Future Phases</div>
+    <div class="phase-grid">
+      <div class="phase-block future"><div class="phase-label">Future · Phase 5</div><h4>Smart Event Creation</h4><ul><li>Brief form on NewEventForm</li><li>element_templates table</li><li>Pre-population engine</li><li>In-field element autocomplete</li></ul></div>
+      <div class="phase-block future"><div class="phase-label">Future · Phase 7</div><h4>AI Layer</h4><ul><li>Brief → Claude API → element suggestion</li><li>Uses rate_cards + templates as ground truth</li><li>Not before data is populated</li></ul></div>
+      <div class="phase-block future"><div class="phase-label">Future · Phase 8</div><h4>External Features</h4><ul><li>Public proposal view (no login)</li><li>WhatsApp via MSG91 (schema ready)</li><li>Myoozz Nexus CRM integration</li></ul></div>
+      <div class="phase-block future"><div class="phase-label">Future</div><h4>Admin Settings Panel</h4><ul><li>CategoryManager already there</li><li>Add: Cities, Event types</li><li>All master data from one place</li></ul></div>
+      <div class="phase-block future"><div class="phase-label">Future</div><h4>Photo Upload</h4><ul><li>Placeholder in ProfilePage</li><li>Supabase Storage + 1 function</li></ul></div>
+      <div class="phase-block future"><div class="phase-label">Future</div><h4>Location / Zone Field</h4><ul><li>Separate field on elements</li><li>Replaces zone workaround in category</li><li>Ballroom, Pre Function etc go here</li></ul></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">IP Protection — In Progress</div>
+    <table class="kv">
+      <tr><td>Copyright notice</td><td>Add to codebase + landing page: © 2025–2026 Myoozz Consulting Pvt. Ltd.</td></tr>
+      <tr><td>Copyright registration</td><td>Form XIV · Ministry of Education · ~₹500 · Before demo goes live</td></tr>
+      <tr><td>NDA template</td><td>Before showing to any external party. Lawyer to draft.</td></tr>
+      <tr><td>Trademark</td><td>Class 42 + Class 41 · After logo finalised · File together</td></tr>
+      <tr><td>IP assignment</td><td>All contributors must sign IP assignment to Myoozz Consulting Pvt. Ltd.</td></tr>
+      <tr><td>Trade secrets</td><td>Rate card data + Gemini workflow = proprietary. No export. Documented internally.</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 11 BRAND -->
+<div id="brandlang" class="page">
+  <div class="page-header">
+    <div class="section-num">11 · Brand Language</div>
+    <h1>Brand Language & Copy Bank</h1>
+    <p>All locked copy lines and usage rules. Read before editing LandingPage.jsx or writing any external communication.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Core Lines — Locked</div>
+    <table class="kv">
+      <tr><td>Hero line</td><td>"Run your event before you run your EVENT."</td></tr>
+      <tr><td>Positioning</td><td>My Events Operating System</td></tr>
+      <tr><td>Supporting line</td><td>"Sorted here. Fearless on ground."</td></tr>
+      <tr><td>Landing hero (live)</td><td>"Stop running your events. Start running your business."</td></tr>
+      <tr><td>Tagline</td><td>My Events. My System.</td></tr>
+      <tr><td>Global sub-line</td><td>Born in India · Built for the world</td></tr>
+      <tr><td>Shift section</td><td>"ME makes YOU look beautiful."</td></tr>
+      <tr><td>Pricing line</td><td>"You're not buying software. You're upgrading your team."</td></tr>
+      <tr><td>Differentiator</td><td>"Every event tool is built for your attendees. ME is built for you."</td></tr>
+      <tr><td>Peer close</td><td>"Got a brief? Try this first."</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Rules — Do Not Break</div>
+    <div class="rule"><strong>Never call ME a "template"</strong> — anchors price expectations wrong.</div>
+    <div class="rule"><strong>Never call ME "software"</strong> in peer conversations — use "system" or "operating system."</div>
+    <div class="rule"><strong>"Fearless" is ours.</strong> Nobody in the events industry is using it. Own it.</div>
+    <div class="rule"><strong>Fearlessness = process, not personality.</strong> ME is the process that creates the confidence.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Peer Pitch — 6 Beats</div>
+    <table class="kv">
+      <tr><td>Beat 1 — Opener</td><td>"Tera event ka full picture kahan hai right now?" Let them answer. Nod.</td></tr>
+      <tr><td>Beat 2 — Probe</td><td>Four questions with silence after each: ops dependency · rate sheet readiness · cost surprise · team clarity</td></tr>
+      <tr><td>Beat 3 — Story</td><td>The multi-city Excel rate disaster. Personal. Real. One story, then stop.</td></tr>
+      <tr><td>Beat 4 — Turn</td><td>"What if I told you — ek jagah hai. Sab kuch." Pause.</td></tr>
+      <tr><td>Beat 5 — Hook</td><td>Paint the feeling. No tech words. "Sorted here. Fearless on ground." Stop.</td></tr>
+      <tr><td>Beat 6 — Close</td><td>"Main zyada nahi bolunga. Got a brief? Try this first." Never fill the silence.</td></tr>
+    </table>
+    <p style="font-size:12px;color:var(--dim);margin-top:8px;">Win signal: If they ask "how does it work?" before Beat 6 — you've won. Full pitch in MemPalace brand-language room.</p>
+  </div>
+</div>
+
+<!-- 12 RESEARCH -->
+<div id="research" class="page">
+  <div class="page-header">
+    <div class="section-num">12 · Market Research</div>
+    <h1>Market Context</h1>
+    <p>India events market data and ME positioning. Research completed April 17 2026.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">India Events Market</div>
+    <table class="kv">
+      <tr><td>Market size (2025)</td><td>~$15.4 Billion</td></tr>
+      <tr><td>Projected (2035)</td><td>~$32 Billion</td></tr>
+      <tr><td>India event software</td><td>~$319M (2025) → $1.5B by 2033</td></tr>
+      <tr><td>India CAGR</td><td>~17.9% — highest globally</td></tr>
+      <tr><td>Competition</td><td>Zero direct competitors in the internal ops / back-office category</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">4 Pain Points ME Directly Addresses</div>
+    <div class="rule"><strong>Vendor rate trap</strong> — No benchmark. Users overpay or underpay without knowing.</div>
+    <div class="rule"><strong>Template ritual</strong> — Every event starts from a blank Excel or a copy-paste nightmare.</div>
+    <div class="rule"><strong>Ops dependency</strong> — Everything lives in one person's head or WhatsApp.</div>
+    <div class="rule"><strong>WhatsApp chaos</strong> — Tasks, assignments, changes — all lost in chat threads.</div>
+  </div>
+</div>
+
+<!-- 13 HOW WE WORK -->
+<div id="howwework" class="page">
+  <div class="page-header">
+    <div class="section-num">13 · How We Work</div>
+    <h1>Vikram + Claude — Working Rules</h1>
+    <p>How this project is built. Who does what. What to never do. Read this before every session.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Who Does What</div>
+    <table class="kv">
+      <tr><td>Vikram does</td><td>Product decisions · Gemini research runs · pasting JSON into the app · GitHub drag-and-drop · Supabase SQL runs · reviewing UI on live site · testing on device</td></tr>
+      <tr><td>Claude Chat does</td><td>All planning · All code writing · SQL migrations · JSON validation + fixing · product decisions when asked · MemPalace documentation · handoff prompts · this reference document</td></tr>
+      <tr><td>Claude Code does</td><td>Surgical file edits when directed · git commits · npm run dev · reading file line numbers</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Claude Chat — Session Rules</div>
+    <div class="rule"><strong>No code without a confirmed plan.</strong> Planning and building are separate phases. Claude Chat presents the plan first. Vikram confirms. Then code is written. Never start coding during a planning discussion.</div>
+    <div class="rule"><strong>Plain text for planning sessions.</strong> No HTML widgets or formatted tables during brainstorming. Plain text only — saves tokens and loads faster.</div>
+    <div class="rule"><strong>One task per chat.</strong> Open a new chat for each distinct task. Don't carry three unrelated problems into one long conversation.</div>
+    <div class="rule"><strong>Start every session with the handoff prompt.</strong> It loads MemPalace context. Without it, the session starts cold and wastes tokens on re-explanation.</div>
+    <div class="rule"><strong>Session end: Claude writes the MemPalace summary.</strong> Always. Vikram pastes it in. Never end a session without this step.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Claude Code — Rules</div>
+    <div class="rule"><strong>Always start with: <code>cd ~/Documents/Myoozz-events</code></strong> — This anchors Claude Code to the main project folder. Without it, Claude Code may create a worktree on a separate branch.</div>
+    <div class="rule"><strong>Never use worktrees.</strong> If Claude Code creates a worktree branch (e.g. claude/some-branch-name), merge it to main immediately. Worktrees add complexity to a drag-and-drop workflow.</div>
+    <div class="rule"><strong>Never commit dist/.</strong> dist/ is in .gitignore. If Claude Code commits dist/ files, run: git rm -r --cached dist/ and recommit.</div>
+    <div class="rule"><strong>Always use actual timestamp in commits.</strong> Use $(date '+%H:%M') in the commit message. Never leave HH:MM as a literal placeholder.</div>
+    <div class="rule"><strong>Surgical edits only on large files.</strong> ElementBuilder.jsx is 1682 lines. RateCard.jsx is 853 lines. TravelItinerary.jsx is 1238 lines. These are never rewritten — only specific lines are changed. Always grep for line numbers first.</div>
+    <div class="rule"><strong>Read before writing.</strong> When starting a new Claude Code session, always read the relevant files first (grep for line numbers, show existing code) before making changes.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">What Vikram Is Not Comfortable With (technical)</div>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:10px;">This is not a weakness — it's a workflow constraint. Claude must account for these when giving instructions.</p>
+    <div class="rule"><strong>Terminal commands</strong> — Vikram can copy-paste and run them, but does not debug them independently. Every command must be complete and correct the first time. Explain what it does in plain language before giving it.</div>
+    <div class="rule"><strong>Technical jargon in planning sessions</strong> — Terms like "grep output", "worktree", "merge conflict", "rebase" need a plain English explanation before use. Don't assume familiarity.</div>
+    <div class="rule"><strong>File paths and line numbers</strong> — Vikram can use Cmd+F to search a file. He cannot navigate code structure intuitively. Always give context: "open this file, search for this exact phrase, the change is on the line that contains..."</div>
+    <div class="rule"><strong>Debugging</strong> — Vikram reports what he sees on screen. Claude diagnoses from that description. Never ask Vikram to read error stack traces — ask him to copy-paste them.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">MemPalace — Project Memory</div>
+    <table class="kv">
+      <tr><td>Wing</td><td><code>myoozz-events</code></td></tr>
+      <tr><td>Rooms to read at session start</td><td><code>sessions</code> + <code>decisions</code> + <code>rate-card</code></td></tr>
+      <tr><td>Also read for copy/brand work</td><td><code>brand-language</code></td></tr>
+      <tr><td>Session end</td><td>Claude writes summary to <code>sessions</code> room. Vikram pastes it in. Use the End of Session Prompt below — it covers MemPalace + Product Flow Document updates in one step.</td></tr>
+      <tr><td>Timeout handling</td><td>If MemPalace times out mid-session, content is NOT lost — it's in the chat. Restart MCP server, refile from chat history. Never assume saved without a drawer_id returned.</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">End of Session Prompt — Paste at End of Every Session</div>
+    <pre>END OF SESSION SUMMARY — SAVE TO MEMPALACE
+
+Date: [DD Mon YYYY]
+Time: [HH:MM IST]
+Session conducted by: Vikram Parmar
+
+---
+
+Claude — do the following:
+
+1. Write a session summary for MemPalace (wing: myoozz-events, room: sessions) covering:
+   - What was planned or decided today
+   - What was built or changed (file names, DB changes, new components)
+   - What was tested and the result
+   - Anything parked or deferred — and why
+   - Any open questions or blockers
+
+2. Update the decisions room if any product, design, or architecture decision was made today.
+   One line per decision, present tense.
+
+3. Rebuild the current context snapshot — write it as if a new developer or a new Claude
+   session is reading it cold:
+   - Current app version and status
+   - Last 3 things completed
+   - What is actively being built right now
+   - What comes next
+   - Any known issues or watch-outs
+
+4. Check if any section of the Product Flow Document was affected by today's session.
+   For each section that changed, write a surgical update in this format:
+
+   SECTION UPDATE
+   Section: [screen or component name]
+   File: [filename + path]
+   Last updated: [DD Mon YYYY]
+   What changed: [one clear paragraph — what was built, decided, modified, or locked]
+
+Format each of the above as a separate MemPalace drawer entry.
+Give me the text to paste — I will file it.</pre>
+  </div>
+</div>
+
+  <div class="card">
+    <div class="card-title">Handoff Prompt — Session Start</div>
+    <pre>Myoozz Events — Session Handoff
+Read MemPalace: wing `myoozz-events`, rooms `sessions` + `decisions` + `rate-card` before starting.
+(For copy/landing/brand work: also read `brand-language`)
+
+Last session [date]: [what was done]. Committed to main.
+Next priority: [specific task]
+Parked: [anything not completed]
+
+Companion docs in project:
+- V3_Myoozz_Events_Master_Reference.html (engineering reference)
+- ME_Product_Flow_v1.html (screen-by-screen product flow, role views, file paths)
+
+Rules: No code without confirmed plan · Plain text in planning · cd ~/Documents/Myoozz-events first in Claude Code · No export/download on rate cards ever · Surgical edits only on large files</pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Two Documents — When to Use Which</div>
+    <table class="kv">
+      <tr><td>Planning a new screen or feature</td><td>Open Product Flow Doc first. Find the section. Read core objective + role view + future plans.</td></tr>
+      <tr><td>Writing code</td><td>Open Master Reference. Section 06 (files) + Section 07 (DB) are what you need.</td></tr>
+      <tr><td>Writing SQL migration</td><td>Master Reference Section 07 — full schema and migration history.</td></tr>
+      <tr><td>Discussing roles / permissions</td><td>Product Flow Doc — role selector on every screen. Master Reference Section 04 for the matrix.</td></tr>
+      <tr><td>Writing copy or landing page content</td><td>Master Reference Section 11 (Brand Language). Always read before editing LandingPage.jsx.</td></tr>
+      <tr><td>Session end</td><td>End of Session Prompt above — updates MemPalace and Product Flow Doc in one step.</td></tr>
+    </table>
+  </div>
+<div id="workflow" class="page">
+  <div class="page-header">
+    <div class="section-num">14 · Git & Deploy</div>
+    <h1>Development Workflow</h1>
+    <p>The full deploy chain and all git rules.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Full Deploy Chain</div>
+    <pre>1. Edit file locally in ~/Documents/Myoozz-events/src/
+2. Save the file
+3. In Claude Code: git add + git commit with proper message
+4. In GitHub: drag-and-drop the changed file to the repo (main branch)
+   OR: git push from terminal if Claude Code has already committed
+5. Netlify detects the push → runs npm run build → deploys
+6. Live in ~60 seconds at myoozzevents.netlify.app</pre>
+  </div>
+  <div class="card">
+    <div class="card-title">Git Commit Format — Mandatory</div>
+    <pre>feat: [description] · DD Mon YYYY, HH:MM IST
+fix: [description] · DD Mon YYYY, HH:MM IST
+chore: [description] · DD Mon YYYY, HH:MM IST
+
+Examples:
+feat: add event_categories table with RLS and seed · 30 Apr 2026, 11:00 IST
+fix: CategoryPicker free-text input removed · 30 Apr 2026, 15:45 IST
+chore: remove dist from tracking, add to gitignore · 30 Apr 2026, 16:00 IST</pre>
+    <p style="font-size:12px;color:var(--dim);margin-top:8px;">Always use actual timestamp. Never leave HH:MM as a placeholder. In Claude Code: use $(date '+%H:%M') to auto-fill.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Gitignore — Must Always Contain</div>
+    <pre>.env
+dist/
+node_modules/
+.DS_Store</pre>
+  </div>
+  <div class="card">
+    <div class="card-title">Branch Rules</div>
+    <div class="rule"><strong>Always work on main.</strong> No feature branches for this workflow. Main deploys directly to Netlify.</div>
+    <div class="rule"><strong>Claude Code worktrees:</strong> If Claude Code creates a branch (claude/some-name), merge it to main immediately with: <code>git checkout main && git merge [branch-name] && git push</code></div>
+    <div class="rule"><strong>Commit after each distinct change.</strong> Not at the end of a session. One fix = one commit.</div>
+  </div>
+</div>
+
+<!-- 15 TOKENS -->
+<div id="tokens" class="page">
+  <div class="page-header">
+    <div class="section-num">15 · Token Efficiency</div>
+    <h1>Working Efficiently with Claude</h1>
+    <p>Rules that save tokens, time, and prevent repeated mistakes.</p>
+  </div>
+  <div class="tip">
+    <strong>Golden Rule</strong>
+    One task per chat. New task = new chat. Don't carry unrelated problems into a long conversation — context window fills up and quality drops.
+  </div>
+  <div class="card">
+    <div class="card-title">Do These — Save Tokens</div>
+    <div class="rule">Start every session with the handoff prompt. MemPalace loads context. You don't re-explain everything.</div>
+    <div class="rule">During planning: plain text only. No HTML responses in brainstorming. Explicitly tell Claude: "plain text, planning session."</div>
+    <div class="rule">When reporting a bug: file name + what you see + what you expect. That's enough. Don't paste the whole file.</div>
+    <div class="rule">When pasting code: paste only the section Claude asked for — not the entire file.</div>
+    <div class="rule">For SQL errors: paste the error message only. Not the migration file.</div>
+    <div class="rule">For Claude Code tasks: give the full context in one prompt. Include file names, expected behavior, and the exact command to run after. Claude Code doesn't need to ask clarifying questions if the prompt is complete.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Don't Do These — Waste Tokens</div>
+    <div class="rule">Pasting full files without being asked first.</div>
+    <div class="rule">Mixing 3 different problems in one message.</div>
+    <div class="rule">Starting with "can you help me with X" with no context — always give context upfront.</div>
+    <div class="rule">Asking Claude to rewrite large files — always ask for surgical edits with specific line targets.</div>
+    <div class="rule">Continuing a chat session after a task is complete — close it. Start fresh for the next task.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">When to Open a New Chat</div>
+    <table class="kv">
+      <tr><td>New bug fix</td><td>New chat</td></tr>
+      <tr><td>New component build</td><td>New chat</td></tr>
+      <tr><td>New SQL migration</td><td>New chat</td></tr>
+      <tr><td>New planning session</td><td>New chat</td></tr>
+      <tr><td>Rate card JSON validation</td><td>Same chat is fine — it's light</td></tr>
+      <tr><td>Design discussion only</td><td>Same chat is fine — no code involved</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">Claude Code vs Claude Chat — When to Use Which</div>
+    <table class="kv">
+      <tr><td>Use Claude Chat for</td><td>Planning · Architecture decisions · Writing new component code · SQL migration writing · JSON validation · Documentation · This document</td></tr>
+      <tr><td>Use Claude Code for</td><td>Making surgical edits to existing files · Committing to git · Running npm commands · Finding exact line numbers in large files · Merging branches</td></tr>
+      <tr><td>Don't use Claude Code for</td><td>Planning · Deciding what to build · Writing code from scratch (write in Chat, paste into Code)</td></tr>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+function show(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>

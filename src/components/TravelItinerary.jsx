@@ -186,7 +186,7 @@ function FormActions({ onSave, onCancel, saving }) {
       }}>Cancel</button>
       <button onClick={onSave} disabled={saving} style={{
         padding: '7px 14px', border: 'none', borderRadius: 'var(--radius-sm)',
-        background: 'var(--brand-red, #C8102E)', color: '#fff', cursor: 'pointer',
+        background: 'var(--brand-red, #F28F3B)', color: '#fff', cursor: 'pointer',
         fontSize: 13, fontFamily: 'var(--font-body)', fontWeight: 500,
         opacity: saving ? 0.7 : 1
       }}>{saving ? 'Saving…' : 'Save'}</button>
@@ -412,7 +412,7 @@ ${text}
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Sparkles size={16} style={{ color: 'var(--brand-red, #C8102E)' }} />
+            <Sparkles size={16} style={{ color: 'var(--brand-red, #F28F3B)' }} />
             <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-display)' }}>
               Paste Agent Reply
             </h3>
@@ -439,7 +439,7 @@ ${text}
         {error && <p style={{ margin: 0, fontSize: 12, color: '#dc2626' }}>{error}</p>}
         {!preview && (
           <button onClick={handleParse} disabled={parsing || !text.trim()} style={{
-            padding: '9px 18px', background: 'var(--brand-red, #C8102E)', color: '#fff',
+            padding: '9px 18px', background: 'var(--brand-red, #F28F3B)', color: '#fff',
             border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
             fontSize: 13, fontWeight: 500, fontFamily: 'var(--font-body)',
             opacity: parsing ? 0.7 : 1, alignSelf: 'flex-start'
@@ -472,7 +472,7 @@ ${text}
                 color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13
               }}>Re-parse</button>
               <button onClick={handleImport} style={{
-                padding: '8px 18px', background: 'var(--brand-red, #C8102E)', color: '#fff',
+                padding: '8px 18px', background: 'var(--brand-red, #F28F3B)', color: '#fff',
                 border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                 fontSize: 13, fontWeight: 500
               }}>Import {preview.length} Row{preview.length !== 1 ? 's' : ''}</button>
@@ -558,7 +558,7 @@ function EventTravel({ event, userRole }) {
             <button key={c} onClick={() => setActiveCity(c)} style={{
               padding: '6px 14px', border: '0.5px solid var(--border-strong)',
               borderRadius: 20, cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-body)',
-              background: activeCity === c ? 'var(--brand-red, #C8102E)' : 'var(--bg)',
+              background: activeCity === c ? 'var(--brand-red, #F28F3B)' : 'var(--bg)',
               color: activeCity === c ? '#fff' : 'var(--text-secondary)',
               fontWeight: activeCity === c ? 600 : 400
             }}>{c}</button>
@@ -743,7 +743,7 @@ function ItineraryHeader({ itinerary, onSave, saving }) {
       <Field label="Internal Notes" value={form.notes} onChange={s('notes')} full />
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button onClick={() => onSave(form)} disabled={saving} style={{
-          padding: '9px 20px', background: 'var(--brand-red, #C8102E)', color: '#fff',
+          padding: '9px 20px', background: 'var(--brand-red, #F28F3B)', color: '#fff',
           border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
           fontSize: 13, fontWeight: 500, opacity: saving ? 0.7 : 1
         }}>{saving ? 'Saving…' : 'Save Header'}</button>
@@ -849,7 +849,7 @@ function DayProgram({ itineraryId, userRole }) {
           }} onClick={() => toggleDay(day.id)}>
             <span style={{
               width: 26, height: 26, borderRadius: '50%',
-              background: 'var(--brand-red, #C8102E)', color: '#fff',
+              background: 'var(--brand-red, #F28F3B)', color: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 12, fontWeight: 700, flexShrink: 0
             }}>{day.day_number}</span>
@@ -1188,8 +1188,8 @@ function MICEItinerary({ event, userRole }) {
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '10px 16px', border: 'none', background: 'none', cursor: tab.locked ? 'not-allowed' : 'pointer',
               fontSize: 13, fontFamily: 'var(--font-body)',
-              color: tab.locked ? 'var(--text-tertiary)' : activeTab === tab.id ? 'var(--brand-red, #C8102E)' : 'var(--text-secondary)',
-              borderBottom: activeTab === tab.id ? '2px solid var(--brand-red, #C8102E)' : '2px solid transparent',
+              color: tab.locked ? 'var(--text-tertiary)' : activeTab === tab.id ? 'var(--brand-red, #F28F3B)' : 'var(--text-secondary)',
+              borderBottom: activeTab === tab.id ? '2px solid var(--brand-red, #F28F3B)' : '2px solid transparent',
               fontWeight: activeTab === tab.id ? 600 : 400,
               marginBottom: -1
             }}>
@@ -1245,8 +1245,8 @@ export default function TravelItinerary({ event, session, userRole }) {
     padding: '10px 20px', border: 'none', background: 'none',
     cursor: 'pointer', fontSize: 14, fontFamily: 'var(--font-body)',
     fontWeight: activeTab === id ? 600 : 400,
-    color: activeTab === id ? 'var(--brand-red, #C8102E)' : 'var(--text-secondary)',
-    borderBottom: activeTab === id ? '2px solid var(--brand-red, #C8102E)' : '2px solid transparent',
+    color: activeTab === id ? 'var(--brand-red, #F28F3B)' : 'var(--text-secondary)',
+    borderBottom: activeTab === id ? '2px solid var(--brand-red, #F28F3B)' : '2px solid transparent',
     marginBottom: -1
   })
 

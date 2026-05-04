@@ -23,7 +23,7 @@ function Splash({ message = 'Loading...' }) {
     }}>
       <div style={{
         width: '32px', height: '32px',
-        background: '#C8102E', borderRadius: '8px',
+        background: '#F28F3B', borderRadius: '8px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: '11px', fontWeight: 700, color: '#fff',
         letterSpacing: '-0.5px',
@@ -45,14 +45,14 @@ class ErrorBoundary extends Component {
         alignItems: 'center', justifyContent: 'center',
         background: '#FAFAF8', fontFamily: 'sans-serif', gap: '12px', padding: '24px',
       }}>
-        <div style={{ width: '32px', height: '32px', background: '#C8102E', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#fff' }}>ME</div>
+        <div style={{ width: '32px', height: '32px', background: '#F28F3B', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#fff' }}>ME</div>
         <p style={{ fontSize: '15px', fontWeight: 600, color: '#1A1917' }}>Something went wrong</p>
         <p style={{ fontSize: '13px', color: '#9C9488', maxWidth: '400px', textAlign: 'center' }}>
           {this.state.error?.message || 'An unexpected error occurred.'}
         </p>
         <button
           onClick={() => window.location.href = '/'}
-          style={{ marginTop: '8px', padding: '10px 20px', background: '#C8102E', color: '#fff', border: 'none', borderRadius: '7px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+          style={{ marginTop: '8px', padding: '10px 20px', background: '#F28F3B', color: '#fff', border: 'none', borderRadius: '7px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
           Go to home
         </button>
       </div>

@@ -91,9 +91,10 @@ Never change DB values. Display rename = find/replace in UI strings only.
 ## Design Rules — Myoozz Brand v2.0 (April 2026)
 
 ### Color Tokens
-- **Myoozz Red**: `#C8102E` (`--red`) — master brand accent. Use for primary actions, active states, tab underlines.
-- **Red Deep**: `#8E0A1F` (`--red-deep`) — hover/pressed on red elements.
-- **Me (Events) field**: `#F28F3B` (`--me`) — the Events sub-brand color. Used for semantic "gold/featured" states.
+- **Me accent (primary)**: `#F28F3B` (`--accent`, `--me`) — ALL primary interactive UI in Events: buttons, tab underlines, active states, focus rings, icons. This is the Me sub-brand color.
+- **Accent deep**: `#D97A28` (`--accent-deep`) — hover/pressed on accent elements.
+- **Myoozz Red**: `#C8102E` (`--red`) — master brand only: logo areas, error/danger states, Terms/Privacy/Landing pages. Never use as a UI accent inside the app.
+- **Red Deep**: `#8E0A1F` (`--red-deep`) — hover/pressed on red (error/brand only).
 - **Mn (Nexus)**: `#2D5BFF` (`--mn`) · **Ma (Assistant)**: `#00A877` (`--ma`) · **Mx (Experiments)**: `#7C3AED` (`--mx`)
 - **Signal Live**: `#00C853` (`--signal-live`) · **Signal Warn**: `#FFB400` (`--signal-warn`)
 - **Ink**: `#0A0A0A` (`--text`) · **Ink-2**: `#1A1A1A` (`--text-2`)
@@ -112,7 +113,7 @@ Never change DB values. Display rename = find/replace in UI strings only.
 - Warm cream theme throughout. No cold grays. Paper is warm, not white.
 - FloatingHelp pattern only — never inline help text on page load.
 - Avatar style: rounded squares everywhere. Not circles.
-- Tab active: `#C8102E` underline. Not a filled pill.
+- Tab active: `#F28F3B` underline (Me accent). Not a filled pill.
 - Framer Motion is installed (framer-motion@12). Use it for entrance/hover animations on new UI.
 - Brand assets (logos, PNGs): `public/brand/` — wordmark, monogram, Me/Mn/Ma/Mx lockups, bubble glyphs.
 

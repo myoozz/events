@@ -6,11 +6,13 @@
 
 :root {
   /* ── Myoozz Brand Palette (v2.0 · April 2026) ─────────── */
-  --red:          #C8102E;   /* Myoozz Red — master brand accent */
-  --red-deep:     #8E0A1F;   /* Red deep — hover/pressed states */
+  --red:          #C8102E;   /* Myoozz Red — master brand (logo, errors, legal pages) */
+  --red-deep:     #8E0A1F;   /* Red deep — hover/pressed on red */
+  --accent:       #F28F3B;   /* Me · Events primary accent (all interactive UI) */
+  --accent-deep:  #D97A28;   /* Accent hover/pressed */
 
   /* Sub-brand fields */
-  --me:           #F28F3B;   /* Me · Events (this product) */
+  --me:           #F28F3B;   /* Me · Events (this product) — same as --accent */
   --mn:           #2D5BFF;   /* Mn · Nexus */
   --ma:           #00A877;   /* Ma · Assistant */
   --mx:           #7C3AED;   /* Mx · Experiments */

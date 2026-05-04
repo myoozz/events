@@ -415,12 +415,12 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
         {/* Delete + del */}
         <div style={{...cell(false,true,{flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',padding:'4px 0'})}}>
           <button onClick={onDelete}
-            style={{background:'none',border:'1px solid #C8102E',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#C8102E',padding:'2px 4px',lineHeight:1}}
+            style={{background:'none',border:'1px solid #F28F3B',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#F28F3B',padding:'2px 4px',lineHeight:1}}
           >✕</button>
           {isSaved&&(
             <button onClick={onMarkAsOption} title="Move to alternates — not in budget"
               style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
-              onMouseOver={e=>e.currentTarget.style.color='#C8102E'}
+              onMouseOver={e=>e.currentTarget.style.color='#F28F3B'}
               onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
             >del</button>
           )}
@@ -595,12 +595,12 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
       {/* Delete + alt */}
       <div style={{paddingTop:'18px',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
         <button onClick={onDelete}
-          style={{background:'none',border:'1px solid #C8102E',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#C8102E',padding:'3px 5px',lineHeight:1}}
+          style={{background:'none',border:'1px solid #F28F3B',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#F28F3B',padding:'3px 5px',lineHeight:1}}
         >✕</button>
         {isSaved&&(
           <button onClick={onMarkAsOption} title="Move to alternates — not in budget"
             style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
-            onMouseOver={e=>e.currentTarget.style.color='#C8102E'}
+            onMouseOver={e=>e.currentTarget.style.color='#F28F3B'}
             onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
           >del</button>
         )}
@@ -761,7 +761,7 @@ function CategoryBlock({
         {/* Collapse toggle */}
         <button onClick={()=>setOpen(!open)} title={open?'Collapse':'Expand'}
           style={{width:'26px',height:'26px',display:'flex',alignItems:'center',justifyContent:'center',background:open?'#e8f5e9':'#fde8ea',border:'1px solid #d8d2c8',borderRadius:'4px',cursor:'pointer',padding:0,flexShrink:0,transition:'all 0.12s'}}
-        ><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:open?'rotate(180deg)':'none',transition:'transform 0.18s ease'}}><path d="M3 5l4 4 4-4" stroke={open?'#2e7d32':'#C8102E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+        ><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:open?'rotate(180deg)':'none',transition:'transform 0.18s ease'}}><path d="M3 5l4 4 4-4" stroke={open?'#2e7d32':'#F28F3B'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
 
         {/* Reorder — Phase F */}
         <div style={{display:'flex',gap:'2px',flexShrink:0}} onClick={e=>e.stopPropagation()}>
@@ -801,7 +801,7 @@ function CategoryBlock({
               onChange={e=>setZoneVal(e.target.value)}
               onBlur={e=>{e.stopPropagation();onZoneLabelChange&&onZoneLabelChange(cat.name,zoneVal)}}
               placeholder="+ zone"
-              style={{fontSize:'11px',color:zoneVal?'var(--text-tertiary)':'#C8102E88',background:'none',border:'none',outline:'none',fontFamily:'var(--font-body)',width:'70px',cursor:'text',padding:0}}
+              style={{fontSize:'11px',color:zoneVal?'var(--text-tertiary)':'#F28F3B88',background:'none',border:'none',outline:'none',fontFamily:'var(--font-body)',width:'70px',cursor:'text',padding:0}}
             />
           </span>
         )}
@@ -811,7 +811,7 @@ function CategoryBlock({
         {/* Item count */}
         <span style={{fontSize:'12px',color:'var(--text-tertiary)',flexShrink:0}}>
           {mainItems.length} {mainItems.length===1?'item':'items'}
-          {optionItems.length>0&&<span style={{color:'#C8102E',marginLeft:'4px'}}>+{optionItems.length} alt</span>}
+          {optionItems.length>0&&<span style={{color:'#F28F3B',marginLeft:'4px'}}>+{optionItems.length} alt</span>}
         </span>
 
         {/* Category total */}
@@ -862,7 +862,7 @@ function CategoryBlock({
 
         {/* Delete category */}
         <button onClick={e=>{e.stopPropagation();onDelete()}} title="Remove category"
-          style={{background:'none',border:'1px solid #C8102E',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#C8102E',padding:'2px 5px',lineHeight:1,flexShrink:0}}
+          style={{background:'none',border:'1px solid #F28F3B',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#F28F3B',padding:'2px 5px',lineHeight:1,flexShrink:0}}
         >✕</button>
         </div>{/* end RIGHT GROUP */}
       </div>
@@ -1483,7 +1483,7 @@ function CityElements({ event, city, userRole, teamUsers }){
             <button onClick={()=>setShowImport(true)} style={{padding:'9px 18px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>
               ↑ Upload or Paste
             </button>
-            <button onClick={()=>setShowCategoryPicker(true)} style={{padding:'9px 18px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#C8102E',color:'#fff',border:'1px solid #C8102E',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>
+            <button onClick={()=>setShowCategoryPicker(true)} style={{padding:'9px 18px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#F28F3B',color:'#fff',border:'1px solid #F28F3B',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>
               + Start from scratch
             </button>
           </div>
@@ -1510,9 +1510,9 @@ function CityElements({ event, city, userRole, teamUsers }){
             </div>
             <button onClick={()=>setShowImport(true)} style={{fontSize:'12px',fontWeight:500,color:'#2c2518',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↑ Import more</button>
             <button onClick={()=>setShowSheetSettings(true)} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>⚙ Sheet</button>
-            <button onClick={handleDownloadElementMaster} style={{fontSize:'12px',fontWeight:500,color:'#fff',background:'#C8102E',border:'1px solid #C8102E',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↓ Download list</button>
+            <button onClick={handleDownloadElementMaster} style={{fontSize:'12px',fontWeight:500,color:'#fff',background:'#F28F3B',border:'1px solid #F28F3B',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↓ Download list</button>
             <button onClick={downloadTemplate} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↓ Template</button>
-            <button onClick={clearAllElements} style={{fontSize:'12px',color:'#C8102E',background:'none',border:'1px solid #C8102E',borderRadius:'var(--radius-sm)',cursor:'pointer',fontFamily:'var(--font-body)',marginLeft:'8px',padding:'5px 10px'}}>Clear all</button>
+            <button onClick={clearAllElements} style={{fontSize:'12px',color:'#F28F3B',background:'none',border:'1px solid #F28F3B',borderRadius:'var(--radius-sm)',cursor:'pointer',fontFamily:'var(--font-body)',marginLeft:'8px',padding:'5px 10px'}}>Clear all</button>
           </div>
         </div>
       )}
@@ -1741,7 +1741,7 @@ function CityElements({ event, city, userRole, teamUsers }){
               </p>
               <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                 <button onClick={applyDefaultToExistingRows}
-                  style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#C8102E',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
+                  style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#F28F3B',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
                 >Update {count} row{count!==1?'s':''}</button>
                 <button onClick={()=>setPendingDefaultChange(null)}
                   style={{padding:'8px 16px',fontSize:'12px',fontFamily:'var(--font-body)',background:'none',border:'none',cursor:'pointer',color:'var(--text-tertiary)'}}
@@ -1775,7 +1775,7 @@ function CityElements({ event, city, userRole, teamUsers }){
                 />
                 <div style={{display:'flex',gap:'8px',marginTop:'12px',justifyContent:'flex-end'}}>
                   <button onClick={()=>{setShowPaste(false);setPasteText('')}} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>Cancel</button>
-                  <button onClick={()=>setPastePreview(parsePaste(pasteText))} disabled={!pasteText.trim()} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#C8102E',color:'#fff',border:'1px solid #C8102E',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Preview →</button>
+                  <button onClick={()=>setPastePreview(parsePaste(pasteText))} disabled={!pasteText.trim()} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#F28F3B',color:'#fff',border:'1px solid #F28F3B',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Preview →</button>
                 </div>
               </>
             ):(
@@ -1797,7 +1797,7 @@ function CityElements({ event, city, userRole, teamUsers }){
                 </div>
                 <div style={{display:'flex',gap:'8px',justifyContent:'flex-end'}}>
                   <button onClick={()=>setPastePreview([])} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>← Edit</button>
-                  <button onClick={confirmPaste} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#C8102E',color:'#fff',border:'1px solid #C8102E',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Import elements</button>
+                  <button onClick={confirmPaste} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#F28F3B',color:'#fff',border:'1px solid #F28F3B',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Import elements</button>
                 </div>
               </>
             )}
@@ -1886,7 +1886,7 @@ export default function ElementBuilder({ event, userRole, teamUsers }){
               disabled={copying||!copyFrom||(copyTo!=='__all__'&&copyTo===copyFrom)}
               style={{
                 padding:'7px 14px',fontSize:'12px',fontWeight:500,
-                fontFamily:'var(--font-body)',background:'#C8102E',color:'#fff',
+                fontFamily:'var(--font-body)',background:'#F28F3B',color:'#fff',
                 border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',
                 opacity:(copying||!copyFrom||(copyTo!=='__all__'&&copyTo===copyFrom))?0.45:1,
               }}

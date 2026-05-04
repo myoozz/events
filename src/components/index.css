@@ -6,8 +6,10 @@
 
 :root {
   /* ── Myoozz Brand Palette (v2.0 · April 2026) ─────────── */
-  --red:          #C8102E;
+  --red:          #C8102E;   /* master brand / errors */
   --red-deep:     #8E0A1F;
+  --accent:       #F28F3B;   /* Me Events primary interactive accent */
+  --accent-deep:  #D97A28;
 
   --me:           #F28F3B;
   --mn:           #2D5BFF;

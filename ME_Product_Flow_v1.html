@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myoozz Events — Product Flow Document v1</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root {
+    --red:#bc1723;--red-bg:#fde8ea;--ink:#1a1008;--bg:#faf8f5;--bg2:#f2efe9;--bg3:#e8e4dc;
+    --border:#d8d2c8;--text:#2c2518;--dim:#7a7060;--green:#1a6b3a;--green-bg:#e6f4ec;
+    --amber:#b86e00;--amber-bg:#fef3e0;--blue:#1a4b8a;--blue-bg:#e8eef8;
+    --purple:#5a2d8a;--purple-bg:#f0e8f8;
+    --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--serif:'Cormorant Garamond',serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;}
+  .layout{display:flex;min-height:100vh;}
+
+  /* SIDEBAR */
+  .sidebar{width:260px;min-width:260px;background:var(--ink);color:#e8e4dc;position:sticky;top:0;height:100vh;overflow-y:auto;padding:0 0 40px;display:flex;flex-direction:column;}
+  .sidebar::-webkit-scrollbar{width:3px;}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);}
+  .sidebar-brand{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:8px;}
+  .me-box{display:inline-block;background:var(--red);color:#fff;font-family:var(--serif);font-size:18px;font-weight:700;padding:2px 10px;border-radius:3px;letter-spacing:1px;margin-bottom:6px;}
+  .sidebar-brand p{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.5px;text-transform:uppercase;}
+  .sidebar-brand .version{font-family:var(--mono);font-size:10px;color:var(--red);margin-top:4px;}
+  .nav-section{margin-top:6px;}
+  .nav-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.22);padding:10px 20px 4px;font-weight:500;}
+  .nav-item{display:block;padding:7px 20px;font-size:12.5px;color:rgba(255,255,255,0.55);text-decoration:none;cursor:pointer;border-left:2px solid transparent;transition:all 0.12s;}
+  .nav-item:hover{color:#fff;background:rgba(255,255,255,0.05);}
+  .nav-item.active{color:#fff;border-left-color:var(--red);background:rgba(188,23,35,0.12);}
+
+  /* MAIN */
+  .main{flex:1;overflow-x:hidden;}
+  .page{display:none;padding:0 0 100px;max-width:960px;}
+  .page.active{display:block;}
+
+  /* ROLE SELECTOR — sticky */
+  .role-bar{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 52px;display:flex;align-items:center;gap:8px;}
+  .role-bar-label{font-size:11px;color:var(--dim);font-weight:500;text-transform:uppercase;letter-spacing:0.6px;margin-right:4px;white-space:nowrap;}
+  .role-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:#fff;font-size:11.5px;font-weight:500;cursor:pointer;transition:all 0.12s;color:var(--dim);}
+  .role-btn:hover{border-color:var(--red);color:var(--red);}
+  .role-btn.active-role{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .role-btn[data-role="admin"].active-role{background:var(--red);border-color:var(--red);}
+  .role-btn[data-role="manager"].active-role{background:var(--blue);border-color:var(--blue);}
+  .role-btn[data-role="event_lead"].active-role{background:var(--amber);border-color:var(--amber);color:#fff;}
+  .role-btn[data-role="team"].active-role{background:var(--green);border-color:var(--green);}
+  .role-btn[data-role="staff"].active-role{background:#5a5a5a;border-color:#5a5a5a;}
+
+  /* ROLE CONTENT */
+  .role-block{display:none;border-radius:6px;padding:12px 16px;margin-bottom:8px;font-size:13px;}
+  .role-block.show{display:block;}
+  .role-block.rb-admin{background:var(--red-bg);border-left:3px solid var(--red);}
+  .role-block.rb-manager{background:var(--blue-bg);border-left:3px solid var(--blue);}
+  .role-block.rb-event_lead{background:var(--amber-bg);border-left:3px solid var(--amber);}
+  .role-block.rb-team{background:var(--green-bg);border-left:3px solid var(--green);}
+  .role-block.rb-staff{background:var(--bg3);border-left:3px solid var(--dim);}
+  .role-block h5{font-size:10px;text-transform:uppercase;letter-spacing:0.7px;font-weight:700;margin-bottom:6px;}
+  .rb-admin h5{color:var(--red);}
+  .rb-manager h5{color:var(--blue);}
+  .rb-event_lead h5{color:var(--amber);}
+  .rb-team h5{color:var(--green);}
+  .rb-staff h5{color:var(--dim);}
+  .role-block ul{list-style:none;padding:0;}
+  .role-block ul li{padding:2px 0;font-size:12.5px;}
+  .role-block ul li::before{content:"→ ";}
+  .role-block .rb-cant{color:#999;}
+  .role-block .rb-cant::before{content:"✕ ";color:#ccc;}
+
+  /* PAGE CONTENT */
+  .page-inner{padding:40px 52px 0;}
+  .page-header{margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+  .section-num{font-family:var(--mono);font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+  .page-header h1{font-family:var(--serif);font-size:36px;font-weight:700;color:var(--ink);line-height:1.15;}
+  .page-header p{color:var(--dim);margin-top:8px;font-size:14px;}
+
+  /* CARDS */
+  .card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:14px;}
+  .card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.9px;color:var(--dim);margin-bottom:12px;}
+  .kv{width:100%;border-collapse:collapse;}
+  .kv tr{border-bottom:1px solid var(--bg3);}
+  .kv tr:last-child{border-bottom:none;}
+  .kv td{padding:8px 0;vertical-align:top;}
+  .kv td:first-child{color:var(--dim);font-size:12px;width:180px;padding-right:16px;font-weight:500;}
+
+  /* BADGES + TAGS */
+  code{font-family:var(--mono);font-size:11.5px;background:var(--bg2);padding:1px 5px;border-radius:3px;color:var(--blue);}
+  .badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:0.5px;margin-right:4px;}
+  .badge-red{background:var(--red-bg);color:var(--red);}
+  .badge-green{background:var(--green-bg);color:var(--green);}
+  .badge-amber{background:var(--amber-bg);color:var(--amber);}
+  .badge-blue{background:var(--blue-bg);color:var(--blue);}
+  .badge-gray{background:var(--bg3);color:var(--dim);}
+  .badge-purple{background:var(--purple-bg);color:var(--purple);}
+
+  /* CALLOUTS */
+  .rule{background:var(--bg2);border-left:3px solid var(--red);padding:9px 13px;border-radius:0 4px 4px 0;margin-bottom:8px;font-size:13px;color:var(--text);}
+  .rule strong{color:var(--ink);}
+  .tip{background:var(--green-bg);border:1px solid #b0d9c0;border-radius:6px;padding:11px 15px;font-size:13px;color:#0d4a26;margin-bottom:10px;}
+  .tip strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;}
+  .warn{background:var(--amber-bg);border:1px solid #f0d080;border-radius:6px;padding:11px 15px;font-size:13px;color:#7a4a00;margin-bottom:10px;}
+  .warn strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;}
+  .danger{background:#fde8ea;border:1px solid #f5b5ba;border-radius:6px;padding:11px 15px;font-size:13px;color:#8a1119;margin-bottom:10px;}
+  .danger strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;}
+  .future-box{background:var(--blue-bg);border:1px solid #b8c8e8;border-radius:6px;padding:11px 15px;font-size:13px;color:#0d2a5a;margin-bottom:10px;}
+  .future-box strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;color:var(--blue);}
+
+  /* TABLES */
+  .db-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .db-table th{background:var(--ink);color:rgba(255,255,255,0.6);padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;}
+  .db-table td{padding:7px 10px;border-bottom:1px solid var(--bg3);vertical-align:top;}
+  .db-table tr:hover td{background:var(--bg2);}
+
+  /* FLOW STEPS */
+  .flow-step{display:flex;gap:16px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--bg3);}
+  .flow-step:last-child{border-bottom:none;}
+  .flow-num{width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono);}
+  .flow-body h4{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;}
+  .flow-body p{font-size:12px;color:var(--dim);}
+
+  /* FILE PILL */
+  .file-pill{display:inline-flex;align-items:center;gap:6px;background:var(--ink);color:#a8d870;font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:4px;margin-bottom:14px;}
+  .file-pill span{color:rgba(255,255,255,0.4);}
+
+  /* SECTION DIVIDER */
+  .section-divider{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--ink);margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid var(--border);}
+
+  hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+  /* AI HIGHLIGHT */
+  .ai-block{background:#f8f0ff;border:1px solid #d4b8f0;border-radius:6px;padding:11px 15px;font-size:13px;color:#3a1060;margin-bottom:10px;}
+  .ai-block strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;color:var(--purple);}
+
+  @media print{.sidebar{display:none;}.page{display:block!important;page-break-after:always;}.role-bar{display:none;}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="me-box">ME</div>
+    <p>Myoozz Events · Product Flow</p>
+    <div class="version">v1.0 · 02 May 2026</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Entry Points</div>
+    <a class="nav-item active" onclick="show('landing')">01 · Landing Page</a>
+    <a class="nav-item" onclick="show('auth')">02 · Login & Auth</a>
+    <a class="nav-item" onclick="show('shell')">03 · App Shell</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Dashboard</div>
+    <a class="nav-item" onclick="show('dashboard')">04 · Dashboard</a>
+    <a class="nav-item" onclick="show('createevent')">05 · Create Event</a>
+    <a class="nav-item" onclick="show('assignevent')">06 · Assign Event</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Inside an Event</div>
+    <a class="nav-item" onclick="show('eventpage')">07 · Event Page Overview</a>
+    <a class="nav-item" onclick="show('elements')">08 · Elements & Costs</a>
+    <a class="nav-item" onclick="show('costssummary')">09 · Costs Summary</a>
+    <a class="nav-item" onclick="show('tasks')">10 · Tasks & Execution</a>
+    <a class="nav-item" onclick="show('production')">11 · Production</a>
+    <a class="nav-item" onclick="show('showflow')">12 · Show Flow</a>
+    <a class="nav-item" onclick="show('travel')">13 · Travel & Itinerary</a>
+    <a class="nav-item" onclick="show('delivered')">14 · Delivered (Exports)</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Admin Settings</div>
+    <a class="nav-item" onclick="show('usermgmt')">15 · User Management</a>
+    <a class="nav-item" onclick="show('categories')">16 · Category Manager</a>
+    <a class="nav-item" onclick="show('ratecard')">17 · Rate Cards</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Other Screens</div>
+    <a class="nav-item" onclick="show('teamview')">18 · Team View</a>
+    <a class="nav-item" onclick="show('analytics')">19 · Analytics</a>
+    <a class="nav-item" onclick="show('activitylog')">20 · Activity Log</a>
+    <a class="nav-item" onclick="show('profile')">21 · Profile Page</a>
+    <a class="nav-item" onclick="show('notifications')">22 · Notifications</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Reference</div>
+    <a class="nav-item" onclick="show('rolematrix')">23 · Full Role Matrix</a>
+    <a class="nav-item" onclick="show('futuremap')">24 · Future Features Map</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ROLE BAR — persistent across all pages -->
+<div class="role-bar" id="roleBar">
+  <span class="role-bar-label">Viewing as:</span>
+  <button class="role-btn active-role" data-role="admin" onclick="setRole('admin')">Admin</button>
+  <button class="role-btn" data-role="manager" onclick="setRole('manager')">Project Head</button>
+  <button class="role-btn" data-role="event_lead" onclick="setRole('event_lead')">Manager</button>
+  <button class="role-btn" data-role="team" onclick="setRole('team')">Project Team</button>
+  <button class="role-btn" data-role="staff" onclick="setRole('staff')">Staff</button>
+</div>
+
+<!-- ============================================================ -->
+<!-- 01 LANDING PAGE -->
+<!-- ============================================================ -->
+<div id="landing" class="page active">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">01 · Entry Point</div>
+      <h1>Landing Page</h1>
+      <p>The public face of Myoozz Events. No login required. First impression for any visitor.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>LandingPage.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Understand what ME is, feel its value, take one action — Request Access or Login.</td></tr>
+        <tr><td>System's job</td><td>Present brand positioning clearly. Capture interest via Request Access modal. Direct existing users to login.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Page Sections — In Order</div>
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><h4>Hero Section</h4><p>Lottie animation. Headline: "Stop running your events. Start running your business." Two CTAs: <strong>Request Access</strong> (primary) + <strong>Login</strong> (secondary). Sticky header with both CTAs persists on scroll.</p></div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><h4>Pain Point Section</h4><p>The 4 pain points ME solves: Vendor rate trap · Template ritual · Ops dependency · WhatsApp chaos. Emotional, not technical language.</p></div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><h4>Product Feature Highlights</h4><p>Element Builder · Task Engine · Rate Card Library · Client Documents · Travel & MICE. Each with brief description. Dark navy (#16203A) background section.</p></div></div>
+      <div class="flow-step"><div class="flow-num">4</div><div class="flow-body"><h4>The Shift Section</h4><p>"ME makes YOU look beautiful." — The differentiator. Every event tool is built for attendees. ME is built for you.</p></div></div>
+      <div class="flow-step"><div class="flow-num">5</div><div class="flow-body"><h4>Born in India Section</h4><p>"Born in India · Built for the world." India-first positioning. CAGR data. Events market context.</p></div></div>
+      <div class="flow-step"><div class="flow-num">6</div><div class="flow-body"><h4>Footer CTA</h4><p>Final Request Access prompt. "Got a brief? Try this first."</p></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Request Access Modal</div>
+      <p style="font-size:13px;color:var(--dim);margin-bottom:10px;">Radix Dialog component. Triggered by all "Request Access" CTAs on the page.</p>
+      <div class="rule"><strong>Fields:</strong> Name · Company · Role · City · Email · Phone (optional) · Brief message</div>
+      <div class="rule"><strong>On submit:</strong> Data currently goes to… <span class="badge badge-amber">TBD — confirm where form data lands</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul><li>Landing page is public — admin sees the same page as any visitor</li><li>Login button routes to LoginPage.jsx</li></ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul><li>Same public view — no role distinction on landing page</li></ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul><li>Same public view</li></ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li>Same public view</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li>Same public view</li></ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      Logo finalisation + placement pending. "Truth section" (real numbers, real proof) to be added. Demo video embed when product is stable. Public proposal preview link (deep link from a client share) lands here with a different hero. Pricing section after public launch.
+    </div>
+
+    <div class="ai-block">
+      <strong>🤖 When AI Comes In</strong>
+      No AI planned for the landing page itself. However, the Request Access form data may feed into an AI-assisted qualification layer — automatically scoring and routing leads before admin sees them.
+    </div>
+
+    <div class="warn">
+      <strong>⚠ Watch-outs</strong>
+      Logo not placed yet — leave space reserved. framer-motion animations are active — do not remove animation imports. Dark sections use #16203A (navy), not #1a1008 (ink) — these are different values, intentional.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 02 AUTH -->
+<!-- ============================================================ -->
+<div id="auth" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">02 · Authentication</div>
+      <h1>Login & Auth Flow</h1>
+      <p>Three modes in one component. Every user enters the app through this screen.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>LoginPage.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+    <div class="file-pill">src/<span>App.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span> &nbsp;·&nbsp; <span>Race condition fix lives here</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Authenticate. First-time users set their password. Returning users log in.</td></tr>
+        <tr><td>System's job</td><td>Verify credentials via Supabase Auth. Detect invite flow. Redirect to Dashboard on success.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Three Modes</div>
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><h4>Login Mode (default)</h4><p>Email + password fields. Submit → Supabase Auth → success → Dashboard. Error states handled inline.</p></div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><h4>Forgot Password Mode</h4><p>Email field only. Submit → Supabase sends reset email → confirmation message shown.</p></div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><h4>Set Password Mode (Invite Flow)</h4><p>Triggered when a new user clicks their invite email link. URL hash contains Supabase auth token. <strong>isPasswordSetupFlow</strong> captures the URL hash synchronously on load — this is critical. User sets new password → saved → auto-logged in → Dashboard.</p></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul><li>Standard login — email + password</li><li>After login → Dashboard with full admin view</li></ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul><li>Standard login</li><li>After login → Dashboard scoped to their events</li></ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul><li>Likely arrives via invite email → Set Password mode first</li><li>Subsequent logins → standard</li></ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li>Invited by admin/manager → Set Password mode on first login</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li>Invited by admin/manager → Set Password on first login</li><li>After login → sees only assigned events and tasks</li></ul>
+      </div>
+    </div>
+
+    <div class="danger">
+      <strong>🚫 Critical — Race Condition Fix</strong>
+      The URL hash from Supabase invite links must be captured synchronously before React hydration clears it. This fix is in App.jsx. Never remove or refactor isPasswordSetupFlow without understanding this. It caused a broken invite flow — already fixed, must stay fixed.
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      SSO / Google login consideration post-public launch. Magic link login as an option for team members who forget passwords frequently.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 03 APP SHELL -->
+<!-- ============================================================ -->
+<div id="shell" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">03 · App Shell</div>
+      <h1>AppShell — The Wrapper</h1>
+      <p>The persistent frame around the entire authenticated app. Everything inside ME lives inside this shell.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>AppShell.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Navigate between screens. See their notifications. Know who they are and what role they have.</td></tr>
+        <tr><td>System's job</td><td>Render the correct sidebar nav items per role. Maintain active screen state. Run the notification realtime subscription. Render the active component in the main area.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">What's Inside AppShell</div>
+      <table class="kv">
+        <tr><td>Left sidebar</td><td>ME logo · Nav items filtered by role (NAV_ITEMS array with roles[]) · User avatar + name at bottom</td></tr>
+        <tr><td>Nav items live</td><td>Events · Team · Activity Log · Early Access · Feedback · Rate Cards · Categories</td></tr>
+        <tr><td>Top right</td><td>NotificationBell.jsx — fixed position, badge with 99+ cap</td></tr>
+        <tr><td>Main area</td><td>Renders active screen based on activeKey state</td></tr>
+        <tr><td>Mobile</td><td>Sidebar collapses to icon-only. Bottom nav bar on mobile devices.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View — What Each Role Sees in the Sidebar</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Events · Team · Activity Log · Early Access · Feedback</li>
+          <li>Rate Cards (admin only)</li>
+          <li>Categories (admin only)</li>
+          <li>Full user identity shown at sidebar bottom</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Events · Team · Early Access · Feedback</li>
+          <li class="rb-cant">No Rate Cards</li>
+          <li class="rb-cant">No Categories</li>
+          <li class="rb-cant">No Activity Log</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Events · Early Access · Feedback</li>
+          <li class="rb-cant">No Team · No Rate Cards · No Categories · No Activity Log</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul>
+          <li>Events · Early Access · Feedback</li>
+          <li class="rb-cant">No Team · No Rate Cards · No Categories · No Activity Log</li>
+        </ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul>
+          <li>Events (assigned only) · Feedback</li>
+          <li class="rb-cant">Most nav items hidden</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      Admin Settings section in sidebar — will house Categories, Rate Card config, Cities master list, Event types. All master data management from one place. Sidebar will gain a Settings group at the bottom.
+    </div>
+
+    <div class="warn">
+      <strong>⚠ Watch-outs</strong>
+      NAV_ITEMS array in AppShell controls what each role sees. Any new screen added to the app must be added to this array with correct roles[]. Forgetting roles[] means the item shows for all roles.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 04 DASHBOARD -->
+<!-- ============================================================ -->
+<div id="dashboard" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">04 · Dashboard</div>
+      <h1>Dashboard</h1>
+      <p>The home screen after login. Events list + role-aware stat widgets.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>Dashboard.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+    <div class="file-pill">src/components/<span>DashboardWidgets.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>See all their events at a glance. Create new events. Understand current workload through widgets.</td></tr>
+        <tr><td>System's job</td><td>Filter events by role and assignment. Show real-time stat cards. Surface pending approvals for admin. Show archived events separately.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Dashboard Widgets — DashboardWidgets.jsx</div>
+      <p style="font-size:13px;color:var(--dim);margin-bottom:10px;">Stat cards at the top of the dashboard. Different cards show per role. Shimmer skeleton while data loads.</p>
+      <table class="db-table">
+        <thead><tr><th>Widget</th><th>Visible to</th></tr></thead>
+        <tbody>
+          <tr><td>Pending Approvals</td><td>Admin only</td></tr>
+          <tr><td>Active Events</td><td>Admin, Project Head</td></tr>
+          <tr><td>Team Members</td><td>Admin, Project Head</td></tr>
+          <tr><td>Overdue Tasks</td><td>Admin, Project Head, Manager</td></tr>
+          <tr><td>My Events</td><td>Manager, Team, Staff</td></tr>
+          <tr><td>My Tasks</td><td>Team, Staff</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Event List</div>
+      <div class="rule"><strong>Active tab (default):</strong> Shows all live events. Admin/Project Head see ALL. Manager, Team, Staff see only assigned events.</div>
+      <div class="rule"><strong>Archived tab:</strong> Soft-archived events. Visible to admin only by default.</div>
+      <div class="rule"><strong>Pending tab:</strong> Events created by Manager (event_lead) waiting for admin approval. Visible to admin.</div>
+      <div class="rule"><strong>Each event card shows:</strong> Event name · Dates · Cities · Status badge · Assigned team · Quick action buttons.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Sees ALL events across all clients and teams</li>
+          <li>Widgets: Pending Approvals + Active Events + Team Members + Overdue Tasks</li>
+          <li>Can create events (goes live immediately)</li>
+          <li>Can approve/reject pending events</li>
+          <li>+ New Event button always visible</li>
+          <li>Can archive any event</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Sees all events (same as admin for visibility)</li>
+          <li>Widgets: Active Events + Team Members + Overdue Tasks</li>
+          <li>Can create events (goes live immediately)</li>
+          <li>+ New Event button visible</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Sees only events assigned to them</li>
+          <li>Can create events — goes into pending review (admin notified)</li>
+          <li>Widgets: My Events + Overdue Tasks</li>
+          <li>+ New Event button visible</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul>
+          <li>Sees only assigned events</li>
+          <li>Widgets: My Events + My Tasks</li>
+          <li class="rb-cant">Cannot create events</li>
+          <li class="rb-cant">No + New Event button</li>
+        </ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul>
+          <li>Sees only assigned events</li>
+          <li>Minimal widgets — tasks only</li>
+          <li class="rb-cant">Cannot create events</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      Event brief (type, pax, tier, city) captured at creation — this drives the New Event Flow Redesign (current focus). Smart element pre-population based on event type. Calendar view of events. Quick search across all events.
+    </div>
+
+    <div class="ai-block">
+      <strong>🤖 When AI Comes In</strong>
+      Dashboard may surface AI-generated summaries: "3 events have tasks overdue by more than 7 days" or "Mumbai events are trending 18% over budget." Smart nudges rather than data tables.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 05 CREATE EVENT -->
+<!-- ============================================================ -->
+<div id="createevent" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">05 · Create Event</div>
+      <h1>Create New Event</h1>
+      <p>The starting point of every event workflow. Everything downstream depends on what is entered here.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>NewEventForm.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Enter the event's basic information — name, dates, cities, client details.</td></tr>
+        <tr><td>System's job</td><td>Create the event record with correct status based on who created it. Notify admin if pending review. Redirect to the new event page.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Current Form Fields</div>
+      <div class="rule">Event name · Client name · Event dates (start + end) · Cities (multi-select) · City-specific dates (city_dates JSONB) · Event type · Status</div>
+      <p style="font-size:12px;color:var(--dim);margin-top:8px;"><span class="badge badge-amber">In Progress</span> Event Brief fields (type, pax, tier) being designed as part of New Event Flow Redesign.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Creation Logic</div>
+      <div class="rule"><strong>Admin or Project Head creates:</strong> Event goes live immediately. review_status = approved.</div>
+      <div class="rule"><strong>Manager (event_lead) creates:</strong> Event goes into pending. review_status = pending. Admin receives notification. Event not visible to team until approved.</div>
+      <div class="rule"><strong>created_by_role</strong> is captured on insert — determines the review path.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Full form — all fields</li>
+          <li>Event goes live immediately on submit</li>
+          <li>Can see and approve pending events from other creators</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Full form — all fields</li>
+          <li>Event goes live immediately on submit</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Full form — all fields</li>
+          <li>Event goes into pending review after submit</li>
+          <li>Confirmation message shown: "Your event has been submitted for review"</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li class="rb-cant">Cannot create events — no access to this form</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">Cannot create events</li></ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans — New Event Flow Redesign (Current Priority)</strong>
+      Event Brief form to be added: Event type (conference/wedding/MICE/concert) · Estimated PAX · Event tier (budget/standard/premium/luxury) · Primary city. This brief will drive smart element pre-population from element_templates table. The brief becomes the seed for everything downstream — ElementBuilder pre-populates based on event type + tier + city.
+    </div>
+
+    <div class="ai-block">
+      <strong>🤖 When AI Comes In — Phase 7</strong>
+      Brief → Claude API → element suggestion. User fills the brief form, AI suggests a full element list based on event type, pax, tier, and city. Uses rate_cards + element_templates as ground truth. One-click accept or modify before the event is finalised.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 06 ASSIGN EVENT -->
+<!-- ============================================================ -->
+<div id="assignevent" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">06 · Assign Event</div>
+      <h1>Assign Event to Team</h1>
+      <p>Delegating access to team members — with scope control.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>AssignEvent.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Select team members and define how much of the event they can see and do.</td></tr>
+        <tr><td>System's job</td><td>Save assigned_to (JSONB array of user IDs) and delegation_scope (JSONB per user) on the events table. Trigger notification to assigned users.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Delegation Scopes</div>
+      <table class="db-table">
+        <thead><tr><th>Scope</th><th>What they can access</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Full</strong></td><td>All 7 tabs of the Event Page</td></tr>
+          <tr><td><strong>Operations</strong></td><td>Elements, Tasks, Production, Show Flow, Travel — no Delivered, no financials</td></tr>
+          <tr><td><strong>View Only</strong></td><td>Elements & Costs tab + Costs Summary only</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Can assign any user to any event</li>
+          <li>Can set any delegation scope</li>
+          <li>Always has Full scope on all events regardless of assignment</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Can assign users — scoped to event_lead + team roles only</li>
+          <li>Always has Full scope on all events</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul><li class="rb-cant">Cannot assign events to others</li></ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li class="rb-cant">Cannot assign events</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">Cannot assign events</li></ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      WhatsApp notification (MSG91) on assignment — schema ready, not yet wired. Bulk assignment — assign multiple team members across multiple events in one action.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 07 EVENT PAGE OVERVIEW -->
+<!-- ============================================================ -->
+<div id="eventpage" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">07 · Event Page</div>
+      <h1>Event Page — The Core of ME</h1>
+      <p>One event = one Event Page. Every operational detail lives inside this page across 7 tabs.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>EventPage.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Navigate between all aspects of the event — costs, tasks, production, travel, documents — from one place.</td></tr>
+        <tr><td>System's job</td><td>Render tabs based on delegation_scope. Show proposal lifecycle banners. Maintain city context. Load FloatingHelp per tab.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">The 7 Tabs — In Workflow Order</div>
+      <table class="db-table">
+        <thead><tr><th>#</th><th>Tab Name</th><th>Component</th><th>Min Scope</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Elements & Costs</td><td>ElementBuilder.jsx</td><td>All scopes</td></tr>
+          <tr><td>2</td><td>Costs Summary</td><td>—</td><td>View Only+</td></tr>
+          <tr><td>3</td><td>Tasks</td><td>TaskBoard.jsx</td><td>Operations+</td></tr>
+          <tr><td>4</td><td>Production</td><td>Production.jsx</td><td>Operations+</td></tr>
+          <tr><td>5</td><td>Show Flow</td><td>—</td><td>Operations+</td></tr>
+          <tr><td>6</td><td>Travel & Itinerary</td><td>TravelItinerary.jsx</td><td>Operations+</td></tr>
+          <tr><td>7</td><td>Delivered</td><td>DeliveredCenter.jsx</td><td>Full only</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">City Bubbles</div>
+      <p style="font-size:13px;color:var(--dim);">Events with multiple cities show city bubble tabs at the top. Clicking a city bubble switches the context — Elements, Tasks, Production all filter to the selected city. City-dates are stored in city_dates JSONB on the events table.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View — Tab Access</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>All 7 tabs always visible</li>
+          <li>Sees margins in Costs Summary</li>
+          <li>Sees all proposal lifecycle banners and approval controls</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>All 7 tabs visible (always Full scope)</li>
+          <li class="rb-cant">Does not see margins in Costs Summary</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Tabs based on their delegation_scope for this event</li>
+          <li>Full scope → all 7 tabs</li>
+          <li>Operations → tabs 1,3,4,5,6</li>
+          <li>View Only → tabs 1,2 only</li>
+          <li class="rb-cant">Never sees margins</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul>
+          <li>Same tab logic as Manager — based on delegation_scope</li>
+          <li class="rb-cant">Never sees margins</li>
+        </ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul>
+          <li>Very limited tab access based on assignment</li>
+          <li class="rb-cant">No Delivered tab · No margins</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="warn">
+      <strong>⚠ Watch-outs</strong>
+      FloatingHelp pattern — fixed bottom-right ? button. All contextual help goes into HELP_CONTENT map keyed by tab. Never add inline help text directly on the page. Tab active state = #bc1723 underline, not a filled pill — do not change this.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 08 ELEMENTS & COSTS -->
+<!-- ============================================================ -->
+<div id="elements" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">08 · Elements & Costs</div>
+      <h1>ElementBuilder — Cost Sheet</h1>
+      <p>The most complex and most important component in ME. The full financial blueprint of every event.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>ElementBuilder.jsx</span> &nbsp;·&nbsp; ~1682 lines · Last updated: <span>30 Apr 2026</span></div>
+    <div class="file-pill">src/components/<span>CategoryPicker.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Build the complete cost sheet for the event. Add categories, add elements per category, enter rates, manage options and alternates.</td></tr>
+        <tr><td>System's job</td><td>Store all elements per city per category. Match internal rates against rate_cards to show benchmark pill. Calculate totals. Respect option groups in cost totals.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Key Features</div>
+      <div class="flow-step"><div class="flow-num">1</div><div class="flow-body"><h4>Add Category</h4><p>Opens CategoryPicker.jsx modal. User selects from 22 live categories pulled from event_categories table. Selected categories become collapsible blocks on the cost sheet.</p></div></div>
+      <div class="flow-step"><div class="flow-num">2</div><div class="flow-body"><h4>Grid Mode (default)</h4><p>Excel-like table per category. Each row = one element. Columns: Name · Specification · Unit · Qty · Days · Client Rate · Internal Rate · Total.</p></div></div>
+      <div class="flow-step"><div class="flow-num">3</div><div class="flow-body"><h4>Card Mode</h4><p>Alternate visual view. Toggle stored in localStorage key myoozz_element_view. Same data, different layout.</p></div></div>
+      <div class="flow-step"><div class="flow-num">4</div><div class="flow-body"><h4>Rate Suggestion Pill</h4><p>When internal rate is entered → system checks rate_cards for matching element in that city → shows "Usually ₹X–₹Y in [city]". Green pill = vendor_quoted. Blue pill = ai_research. City-specific match first, Pan-India fallback.</p></div></div>
+      <div class="flow-step"><div class="flow-num">5</div><div class="flow-body"><h4>Options & Alternates</h4><p>Elements can be flagged as option_group alternatives. Only one from each group is active in the final cost total. Used for vendor alternates — "Option A vs Option B for stage".</p></div></div>
+      <div class="flow-step"><div class="flow-num">6</div><div class="flow-body"><h4>Reorder Elements</h4><p>↑↓ buttons reorder elements within a category. Order saved to DB.</p></div></div>
+      <div class="flow-step"><div class="flow-num">7</div><div class="flow-body"><h4>Bundle Config</h4><p>Bundle configuration stored in bundle_config JSONB on events table.</p></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Full edit access — add, edit, delete elements and categories</li>
+          <li>Sees both Client Rate and Internal Rate columns</li>
+          <li>Sees rate suggestion pill</li>
+          <li>Sees and can configure option groups</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Full edit access</li>
+          <li>Sees Client Rate — Internal Rate visibility TBD by business rule</li>
+          <li>Sees rate suggestion pill</li>
+          <li class="rb-cant">Does not see margin calculations</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Edit access based on delegation_scope</li>
+          <li>Sees rate suggestion pill</li>
+          <li class="rb-cant">No Internal Rate visibility</li>
+          <li class="rb-cant">No margin data</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul>
+          <li>Edit access if scope allows</li>
+          <li>Sees rate suggestion pill</li>
+          <li class="rb-cant">No Internal Rate · No margins</li>
+        </ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul>
+          <li>View only in most cases</li>
+          <li>Rate pill visible</li>
+          <li class="rb-cant">No edit access · No Internal Rate</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      In-field element autocomplete — as user types element name, system suggests from rate_cards library. Zone/Location field on each element (Ballroom, Pre Function Area etc) — separate from category. element_templates table for pre-populating elements based on event type.
+    </div>
+
+    <div class="ai-block">
+      <strong>🤖 When AI Comes In — Phase 7</strong>
+      AI-suggested element list based on event brief. User accepts or modifies. Rate pill evolves into a full AI cost estimate — "Based on 12 similar events in Mumbai, this PA system should cost ₹X–₹Y."
+    </div>
+
+    <div class="danger">
+      <strong>🚫 Engineering Watch-out — SURGICAL EDITS ONLY</strong>
+      ElementBuilder.jsx is 1682 lines. Never rewrite. Never restructure. Always grep for exact line numbers before any change. CategoryBlock → ElementRow chain: adding props to ElementRow requires checking CategoryBlock signature AND its call site (~line 1387). Silent failures happen here if missed.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 09 COSTS SUMMARY -->
+<!-- ============================================================ -->
+<div id="costssummary" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">09 · Costs Summary</div>
+      <h1>Costs Summary</h1>
+      <p>The financial overview of the event. Margins visible to admin only.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>EventPage.jsx</span> &nbsp;·&nbsp; <span>Costs Summary tab rendered within EventPage</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Review the total cost picture of the event — by category, by city, overall.</td></tr>
+        <tr><td>System's job</td><td>Aggregate element totals from ElementBuilder. Show client total vs internal total. Show margin % to admin only. Respect option group logic (only active options counted).</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">What's Displayed</div>
+      <div class="rule"><strong>Category breakdown:</strong> Total client cost per category. Total internal cost per category (admin only).</div>
+      <div class="rule"><strong>City breakdown:</strong> For multi-city events — cost per city.</div>
+      <div class="rule"><strong>Grand total:</strong> Overall client-facing total. Margin % shown to admin only.</div>
+      <div class="rule"><strong>Option groups:</strong> Only the active option from each group is included in totals.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Sees client total AND internal total</li>
+          <li>Sees margin % per category and overall</li>
+          <li>Full cost picture</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Sees client total only</li>
+          <li class="rb-cant">No internal rates · No margin %</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Sees client total only (if View Only scope or higher)</li>
+          <li class="rb-cant">No margins ever</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul>
+          <li>View Only scope minimum required to see this tab</li>
+          <li class="rb-cant">No margins</li>
+        </ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">No access to Costs Summary</li></ul>
+      </div>
+    </div>
+
+    <div class="danger">
+      <strong>🚫 Locked Rule</strong>
+      Margins are NEVER shown to non-admin. Client cost ≠ internal cost in the UI at all times. This is a permanent business and security rule. No exception for any role.
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      Cost variance tracking — compare estimate vs actual spend. Budget health indicator per category. Export cost summary to PDF (admin only, no internal rates in the export).
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 10 TASKS -->
+<!-- ============================================================ -->
+<div id="tasks" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">10 · Tasks & Execution</div>
+      <h1>TaskBoard — Execution Engine</h1>
+      <p>Every task assigned, tracked, and accountable. Per city, per category.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>TaskBoard.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Create tasks, assign them to team members, set due dates, track status.</td></tr>
+        <tr><td>System's job</td><td>Store tasks per event per city per category. Send notifications on assignment and status change. Surface overdue tasks in widgets.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Task Structure</div>
+      <div class="rule"><strong>City tabs:</strong> If multi-city event, tasks are organised per city.</div>
+      <div class="rule"><strong>Task fields:</strong> Title · Assigned to (any login user) · Category · City · Due date · Status.</div>
+      <div class="rule"><strong>Status flow:</strong> Pending → In Progress → Done · Blocked as a separate state.</div>
+      <div class="rule"><strong>Notifications:</strong> notifyTaskAssigned() fires when task is assigned. notifyTaskStatusChanged() fires on status update.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Can create, assign, edit, delete any task on any event</li>
+          <li>Can reassign tasks</li>
+          <li>Sees all tasks across all team members</li>
+          <li>Overdue tasks surface in Dashboard widget</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Can create and assign tasks</li>
+          <li>Sees all tasks on events they manage</li>
+          <li>Overdue tasks in their widget</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Can create tasks and assign to team (if Operations+ scope)</li>
+          <li>Sees tasks on their assigned events</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul>
+          <li>Can see tasks assigned to them</li>
+          <li>Can update status of their own tasks</li>
+          <li class="rb-cant">Cannot assign tasks to others</li>
+        </ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul>
+          <li>Can see their own tasks</li>
+          <li>Can update status</li>
+          <li class="rb-cant">View is very limited</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      WhatsApp task notifications via MSG91 — schema ready, not yet wired. Task templates per event type — pre-populate standard tasks when event is created. Bulk task creation. Task dependency chains (Task B can't start until Task A is done).
+    </div>
+
+    <div class="ai-block">
+      <strong>🤖 When AI Comes In</strong>
+      AI-generated task checklist based on event type and timeline — "For a 500-pax conference in Delhi, here are 47 standard tasks with suggested owners and deadlines." User edits and accepts.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 11 PRODUCTION -->
+<!-- ============================================================ -->
+<div id="production" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">11 · Production</div>
+      <h1>Production Schedule</h1>
+      <p>The day-wise operational timeline of the event on ground.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>Production.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Build the production schedule — who is doing what, when, at which location during the event days.</td></tr>
+        <tr><td>System's job</td><td>Organise schedule by city and category. Allow collapse/expand per category block.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Structure</div>
+      <div class="rule"><strong>City tabs:</strong> Each city has its own production schedule.</div>
+      <div class="rule"><strong>Category blocks:</strong> Each category (Sound, Lighting, etc.) collapses and expands. Items within each block are the production line items — time, activity, responsible party.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul><li>Full access — create, edit, delete production items</li></ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul><li>Full access</li></ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Access if Operations+ scope</li>
+          <li>Can edit if they have write permission</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul>
+          <li>View and edit if Operations scope</li>
+        </ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">No access to Production tab</li></ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      Production schedule auto-generated from event brief and element list. Timeline export as PDF for ground team. Integration with Show Flow tab for seamless Day-of document.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 12 SHOW FLOW -->
+<!-- ============================================================ -->
+<div id="showflow" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">12 · Show Flow</div>
+      <h1>Show Flow — Run of Show</h1>
+      <p>The minute-by-minute programme of the event from the stage perspective.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>EventPage.jsx</span> &nbsp;·&nbsp; <span>Show Flow tab — component TBD</span> · Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Build the programme — every act, segment, speaker slot, break, with exact times and responsible team member.</td></tr>
+        <tr><td>System's job</td><td>Store the show flow timeline. Export it as a formatted document via DeliveredCenter.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul><li>Full create and edit access</li></ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul><li>Full access</li></ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul><li>Operations+ scope required</li></ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li>Operations+ scope required</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">No access</li></ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      AI-generated show flow draft from event type and brief. Auto-calculate total programme duration and flag gaps or overruns. Real-time show flow view for ground team on event day — read-only mobile view.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 13 TRAVEL -->
+<!-- ============================================================ -->
+<div id="travel" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">13 · Travel & Itinerary</div>
+      <h1>Travel & MICE Itinerary</h1>
+      <p>Full travel planning + MICE itinerary builder. AI paste modal included.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>TravelItinerary.jsx</span> &nbsp;·&nbsp; ~1238 lines · Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Build the travel plan for the event team + the full MICE itinerary for attendees/delegates.</td></tr>
+        <tr><td>System's job</td><td>Store across 6 travel DB tables. Process AI-pasted itinerary text via Anthropic API. Export to formatted Excel.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Two Sub-Tabs</div>
+      <div class="rule"><strong>Event Travel:</strong> Team travel bookings — flights, hotels, ground transport. Rooming list with hotel room allocation. Admin gets Mobile + ID columns in rooming list.</div>
+      <div class="rule"><strong>MICE Itinerary:</strong> Full delegate itinerary — days, sections, items with costs. Trip title, destinations, inclusions. Day-by-day structure.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">AI Paste Modal</div>
+      <p style="font-size:13px;color:var(--dim);margin-bottom:10px;">The only place in the current app where the Anthropic API is used.</p>
+      <div class="rule">User pastes raw itinerary text (from a hotel proposal, tour operator email, etc.) → Anthropic API parses it → structured itinerary days/sections/items created automatically.</div>
+      <div class="rule">Saves hours of manual data entry for MICE itineraries that arrive as unformatted text.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">6 Database Tables Behind This Tab</div>
+      <table class="kv">
+        <tr><td>travel_plan</td><td>Per-event travel header</td></tr>
+        <tr><td>itinerary</td><td>MICE itinerary header</td></tr>
+        <tr><td>itinerary_days</td><td>Day-level rows</td></tr>
+        <tr><td>itinerary_sections</td><td>Sections within a day</td></tr>
+        <tr><td>itinerary_items</td><td>Items per section with cost</td></tr>
+        <tr><td>rooming_list</td><td>Hotel room allocation</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Full access — all sub-tabs</li>
+          <li>Rooming list shows Mobile + ID columns</li>
+          <li>Can use AI paste modal</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Full access</li>
+          <li>Rooming list — Mobile + ID visibility TBD</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Operations+ scope required</li>
+          <li>Can use AI paste modal</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul>
+          <li>Operations+ scope required</li>
+          <li>Limited edit access</li>
+        </ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">No access</li></ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      Travel cost integration into Costs Summary. Rooming list export as branded PDF. AI-generated MICE itinerary from destination + duration + budget input — not just paste parsing.
+    </div>
+
+    <div class="danger">
+      <strong>🚫 Engineering Watch-out</strong>
+      TravelItinerary.jsx is 1238 lines. Surgical edits only. Never rewrite. Anthropic API key is managed securely — never expose in frontend code.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 14 DELIVERED -->
+<!-- ============================================================ -->
+<div id="delivered" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">14 · Delivered</div>
+      <h1>Delivered Center — Document Exports</h1>
+      <p>8 client-ready documents generated from one data set. No re-entry.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>DeliveredCenter.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+    <div class="file-pill">src/utils/<span>excelExport.js</span> &nbsp;·&nbsp; ~1601 lines · Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Download any of the 8 document formats — estimate, invoice, show flow, timeline, and more — to send to clients or use on ground.</td></tr>
+        <tr><td>System's job</td><td>Generate formatted documents from the event data already entered. Apply confidentiality disclaimer. Produce Excel or PDF output.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">The 8 Export Documents</div>
+      <table class="db-table">
+        <thead><tr><th>#</th><th>Document</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Client Estimate</td><td>Client-facing cost sheet. No internal rates. No margins.</td></tr>
+          <tr><td>2</td><td>Detailed Estimate</td><td>Expanded line items per category</td></tr>
+          <tr><td>3</td><td>Invoice</td><td>With billing details and GST</td></tr>
+          <tr><td>4</td><td>Show Flow</td><td>Run of show formatted document</td></tr>
+          <tr><td>5</td><td>Production Schedule</td><td>Ground operations timeline</td></tr>
+          <tr><td>6</td><td>Travel Plan</td><td>Team travel + rooming list</td></tr>
+          <tr><td>7</td><td>MICE Itinerary</td><td>Full delegate itinerary</td></tr>
+          <tr><td>8</td><td>Agent Template</td><td>For travel agent or vendor briefing</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Full access to all 8 documents</li>
+          <li>Confidentiality disclaimer shown on download</li>
+          <li>Can download any format at any time</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Full access to all 8 documents</li>
+          <li>Requires Full delegation scope</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Requires Full delegation scope to see Delivered tab</li>
+          <li>Can download if scope allows</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul>
+          <li>Requires Full delegation scope</li>
+          <li>Can download non-financial documents</li>
+        </ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">No access to Delivered tab</li></ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      Public proposal link — shareable URL (no login needed) for the client to view their estimate online. PDF export in addition to Excel for all documents. Branded document templates per client. Version history of sent documents.
+    </div>
+
+    <div class="ai-block">
+      <strong>🤖 When AI Comes In</strong>
+      AI-written cover letter auto-generated per document type — "Here is your estimate for [event name] on [date] in [city]. Key highlights: X, Y, Z." Personalised per client.
+    </div>
+
+    <div class="danger">
+      <strong>🚫 Locked Rule</strong>
+      Client documents NEVER include internal rates or margin data. Confidentiality disclaimer is mandatory on every download. This is non-negotiable.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 15 USER MANAGEMENT -->
+<!-- ============================================================ -->
+<div id="usermgmt" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">15 · Admin Settings — Users</div>
+      <h1>User Management</h1>
+      <p>Invite, manage, and control access for all team members.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>UserManagement.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Invite new team members, assign roles, manage existing users.</td></tr>
+        <tr><td>System's job</td><td>Send invite email via Supabase Edge Function. Create user record with correct role. Trigger set-password invite flow.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Invite Flow</div>
+      <div class="rule"><strong>Admin invites → any role.</strong> Invite email sent → user clicks link → Set Password mode in LoginPage.jsx → user enters password → auto-logged in.</div>
+      <div class="rule"><strong>can_manage_rate_cards toggle:</strong> Special permission (boolean on users table) that allows non-admin users to access Rate Card management. Set by admin only.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View — Who Can Invite Whom</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Can invite any role (admin, manager, event_lead, team, staff)</li>
+          <li>Can set can_manage_rate_cards toggle</li>
+          <li>Can deactivate users</li>
+          <li>Full user management</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Can invite event_lead and team roles only</li>
+          <li class="rb-cant">Cannot invite admin or another Project Head</li>
+          <li class="rb-cant">Cannot set rate card permissions</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul>
+          <li>Can invite team role only</li>
+          <li class="rb-cant">Cannot invite any other role</li>
+        </ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li class="rb-cant">Cannot invite anyone</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">No access</li></ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans — Admin Settings Panel</strong>
+      User Management will move into a dedicated Settings section in the sidebar. All admin-only master data management (Users · Categories · Cities · Event types · Rate card config) from one panel. No code changes needed to add new values — all from the UI.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 16 CATEGORIES -->
+<!-- ============================================================ -->
+<div id="categories" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">16 · Admin Settings — Categories</div>
+      <h1>Category Manager</h1>
+      <p>The master list of all 22 event categories. Admin-only. Every dropdown in the app pulls from here.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>CategoryManager.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Add new categories, rename existing ones, reorder, deactivate unused ones.</td></tr>
+        <tr><td>System's job</td><td>Update event_categories table. Cascade renames to elements + rate_cards tables automatically. Reflect changes across all dropdowns instantly.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">What Admin Can Do</div>
+      <div class="rule"><strong>Add:</strong> Type name → slug auto-generated → category goes live in all dropdowns immediately.</div>
+      <div class="rule"><strong>Rename:</strong> Double-click to edit inline → saves → cascades automatically to all rate_cards rows AND all elements rows with that category name.</div>
+      <div class="rule"><strong>Reorder:</strong> ↑↓ buttons update sort_order. Order reflected in CategoryPicker modal.</div>
+      <div class="rule"><strong>Deactivate:</strong> Inactive categories hidden from all dropdowns but existing event data preserved. Can reactivate.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Current 22 Categories</div>
+      <p style="font-size:13px;color:var(--dim);">Permissions & Legal · Sound · Lighting · Video & LED · Stage & Structure · Production & Fabrication · Branding & Signage · Manpower · Furniture · Venue & Infrastructure · Power & Electrical · Food & Beverage · Travel Booking · Logistics · Insurance · Photography & Videography · Technology & IT · Venue Booking · Gifts & Merchandise · Miscellaneous · Agency Cost · Additional</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Full access — add, rename, reorder, deactivate</li>
+          <li>Sidebar nav item visible</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul><li class="rb-cant">No access — not in sidebar</li></ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul><li class="rb-cant">No access</li></ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li class="rb-cant">No access</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">No access</li></ul>
+      </div>
+    </div>
+
+    <div class="warn">
+      <strong>⚠ Category String Matching</strong>
+      Rate suggestion pill works by matching elements.category against rate_cards.category. Both must be identical strings. Rename cascades automatically via CategoryManager. Never manually insert a category string that differs from event_categories.name.
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      CategoryManager is the first component of the future Admin Settings Panel. Cities master list, Event types, and Rate card config will join here. First item to be added: Cities dropdown management.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 17 RATE CARDS -->
+<!-- ============================================================ -->
+<div id="ratecard" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">17 · Admin Settings — Rate Cards</div>
+      <h1>Rate Card Library</h1>
+      <p>Proprietary pricing benchmark database. Powers the suggestion pill in ElementBuilder.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>RateCard.jsx</span> &nbsp;·&nbsp; ~853 lines · Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Import and manage pricing benchmarks for all event categories across Indian cities.</td></tr>
+        <tr><td>System's job</td><td>Store rates in rate_cards table. When internal rate is entered in ElementBuilder, match against this library and surface the suggestion pill.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Rate Card Screen Features</div>
+      <div class="rule"><strong>Dark theme:</strong> Rate Card page uses a dark (#141413 / #1e1e1c) theme — intentional. Different from the rest of the app.</div>
+      <div class="rule"><strong>3-tab import modal:</strong> Upload Excel file · JSON paste · Field mapping. Duplicate check on import.</div>
+      <div class="rule"><strong>Category filter:</strong> Dynamic from event_categories table — same 22 categories.</div>
+      <div class="rule"><strong>City filter:</strong> Ahmedabad · Bangalore · Chennai · Delhi · Hyderabad · Kolkata · Mumbai · Pune · Pan-India.</div>
+      <div class="rule"><strong>Current data:</strong> 239 rows seeded across 15 categories as of 30 Apr 2026. rate_type = ai_research.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Full access — view, import, manage all rate card data</li>
+          <li>Can grant can_manage_rate_cards to other users via User Management</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul><li class="rb-cant">No access to Rate Card page</li><li>Rate suggestion pill in ElementBuilder is visible</li></ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul><li class="rb-cant">No access to Rate Card page</li><li>Rate suggestion pill visible in ElementBuilder</li></ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li class="rb-cant">No Rate Card page</li><li>Pill visible in ElementBuilder</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">No Rate Card page · Pill visible</li></ul>
+      </div>
+    </div>
+
+    <div class="danger">
+      <strong>🚫 Hard Rule — Permanent</strong>
+      No export button. No download function. No API access. No workaround. Any role. Any situation. Rate card data is proprietary. This rule never changes.
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans — 4 Seeding Phases</strong>
+      Phase 1 (now): AI-researched via Gemini/Perplexity → JSON paste → ai_research. Phase 2: Vendor rate cards collected by team → Excel upload → vendor_quoted. Phase 3: ElementBuilder internal rates write back optionally → user_entered. Phase 4: Pill becomes fully reliable, drives AI cost estimation.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 18 TEAM VIEW -->
+<!-- ============================================================ -->
+<div id="teamview" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">18 · Other Screens</div>
+      <h1>Team View</h1>
+      <p>Workload visibility across all team members.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>TeamView.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>See who is overloaded, who is free, who has been active recently.</td></tr>
+        <tr><td>System's job</td><td>Aggregate task and event counts per user. Show workload bar. Show last active timestamp from v_user_last_active view.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Sees all team members</li>
+          <li>Workload bars + last active for everyone</li>
+          <li>Role filter + search</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Sees team members scoped to their events</li>
+          <li>Workload of their team only</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul><li class="rb-cant">No access to Team View</li></ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li class="rb-cant">No access</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li class="rb-cant">No access</li></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 19 ANALYTICS -->
+<!-- ============================================================ -->
+<div id="analytics" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">19 · Other Screens</div>
+      <h1>Analytics Dashboard</h1>
+      <p>Business intelligence for the admin. Event pipeline, task trends, team workload.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>AnalyticsDashboard.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Understand patterns across all events and the team — are we on track, what's overdue, who is stretched.</td></tr>
+        <tr><td>System's job</td><td>Aggregate data from DB views (v_event_health, v_user_workload). Render charts. Filter by period.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Three Panels</div>
+      <div class="rule"><strong>Event Pipeline:</strong> Events by status — active, pending, completed, archived. Funnel view. Uses v_event_health view.</div>
+      <div class="rule"><strong>Task Trends:</strong> Task completion rate over time. Overdue task patterns.</div>
+      <div class="rule"><strong>Team Workload:</strong> Stacked bar chart per team member. Uses v_user_workload view.</div>
+      <div class="rule"><strong>Period selector:</strong> Week / Month / Year / Custom date range.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul><li>Full access — all three panels</li></ul>
+      </div>
+      <div class="role-block rb-manager"><h5>Project Head</h5><ul><li class="rb-cant">No access</li></ul></div>
+      <div class="role-block rb-event_lead"><h5>Manager</h5><ul><li class="rb-cant">No access</li></ul></div>
+      <div class="role-block rb-team"><h5>Project Team</h5><ul><li class="rb-cant">No access</li></ul></div>
+      <div class="role-block rb-staff"><h5>Staff</h5><ul><li class="rb-cant">No access</li></ul></div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      Revenue tracking across events — total billed, total collected. City-wise event volume. Category cost trends — which categories are consistently over budget. Client-wise analytics. Export analytics as PDF report.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 20 ACTIVITY LOG -->
+<!-- ============================================================ -->
+<div id="activitylog" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">20 · Other Screens</div>
+      <h1>Activity Log</h1>
+      <p>Full audit trail. Every action on every event, forever.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>ActivityLog.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+    <div class="file-pill">src/utils/<span>activityLogger.js</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Know who did what, when, on which event. Full accountability.</td></tr>
+        <tr><td>System's job</td><td>Log every significant action to activity_log table. Never delete logs. Group by date. Allow filter by team member and entity type.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">What Gets Logged</div>
+      <p style="font-size:13px;color:var(--dim);">Event created/updated/archived · Task created/assigned/status changed · Element added/edited/deleted · Category added/renamed · User invited · Document downloaded</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Full access — complete audit trail for all users and all events</li>
+          <li>Filter by team member + entity type</li>
+          <li>Grouped by date for easy scanning</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager"><h5>Project Head</h5><ul><li class="rb-cant">No access</li></ul></div>
+      <div class="role-block rb-event_lead"><h5>Manager</h5><ul><li class="rb-cant">No access</li></ul></div>
+      <div class="role-block rb-team"><h5>Project Team</h5><ul><li class="rb-cant">No access</li></ul></div>
+      <div class="role-block rb-staff"><h5>Staff</h5><ul><li class="rb-cant">No access</li></ul></div>
+    </div>
+
+    <div class="danger">
+      <strong>🚫 Locked Rule</strong>
+      Activity logs are NEVER deleted. The activity_log table has no soft delete, no archive, no expiry. It is a permanent audit trail.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 21 PROFILE -->
+<!-- ============================================================ -->
+<div id="profile" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">21 · Other Screens</div>
+      <h1>Profile Page</h1>
+      <p>Each team member's profile. Bio, contact, social links, event history.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>ProfilePage.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>View and update their professional profile. See their event history.</td></tr>
+        <tr><td>System's job</td><td>Store bio, phone, city, social_links (JSONB) on users table. Inline editing with save. Nudge UX for incomplete profiles.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Profile Fields</div>
+      <div class="rule">Full name · Bio · Phone · Base city · Base state · Social links (LinkedIn, Instagram, etc. stored as JSONB) · Avatar (placeholder — Supabase Storage pending)</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">canEdit Logic</div>
+      <p style="font-size:13px;color:var(--dim);">canEdit = isOwn profile OR admin OR manager. Admins can edit any team member's profile. Managers can edit profiles in their team.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Can view and edit any team member's profile</li>
+          <li>Events tab on profile shows all events they've been involved in</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul>
+          <li>Can edit their own profile + team members' profiles</li>
+        </ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul><li>Can view and edit own profile only</li></ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li>Own profile only</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li>Own profile only — limited fields</li></ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      Photo upload via Supabase Storage — placeholder exists in ProfilePage. One function needed. Skills/specialisation tags per team member. Availability calendar.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 22 NOTIFICATIONS -->
+<!-- ============================================================ -->
+<div id="notifications" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">22 · Other Screens</div>
+      <h1>Notifications</h1>
+      <p>Real-time bell. Every important action surfaces here instantly.</p>
+    </div>
+
+    <div class="file-pill">src/components/<span>NotificationBell.jsx</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+    <div class="file-pill">src/utils/<span>notificationService.js</span> &nbsp;·&nbsp; Last updated: <span>30 Apr 2026</span></div>
+
+    <div class="card">
+      <div class="card-title">Core Objective</div>
+      <table class="kv">
+        <tr><td>User's job</td><td>Stay informed about actions that need their attention — task assigned, event approved, status changed.</td></tr>
+        <tr><td>System's job</td><td>Push notifications in real-time via Supabase Realtime. Badge count. Mark read. Store last 30 per user.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">6 Trigger Types</div>
+      <p style="font-size:13px;color:var(--dim);">Task assigned · Task status changed · Event assigned · Event status changed · Event pending approval · Event approved/rejected</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role View</div>
+      <div class="role-block rb-admin show">
+        <h5>Admin</h5>
+        <ul>
+          <li>Receives: pending event approval requests · all critical status changes</li>
+          <li>Bell visible, badge with 99+ cap</li>
+        </ul>
+      </div>
+      <div class="role-block rb-manager">
+        <h5>Project Head</h5>
+        <ul><li>Receives: task and event notifications for their scope</li></ul>
+      </div>
+      <div class="role-block rb-event_lead">
+        <h5>Manager</h5>
+        <ul><li>Receives: event approval result · task assignments on their events</li></ul>
+      </div>
+      <div class="role-block rb-team">
+        <h5>Project Team</h5>
+        <ul><li>Receives: task assigned to them · task status updates</li></ul>
+      </div>
+      <div class="role-block rb-staff">
+        <h5>Staff</h5>
+        <ul><li>Receives: their task assignments only</li></ul>
+      </div>
+    </div>
+
+    <div class="future-box">
+      <strong>🔭 Future Plans</strong>
+      WhatsApp notifications via MSG91 — schema already has channel column. Notification preferences per user (in-app only vs WhatsApp vs both). Email digest option.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 23 ROLE MATRIX -->
+<!-- ============================================================ -->
+<div id="rolematrix" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">23 · Reference</div>
+      <h1>Full Role Matrix</h1>
+      <p>Every capability. Every role. One table.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Role Names — DB Value → Display</div>
+      <table class="db-table">
+        <thead><tr><th>DB Value</th><th>Display Name</th><th>Colour</th></tr></thead>
+        <tbody>
+          <tr><td><code>admin</code></td><td>Admin</td><td><span class="badge badge-red">Red</span></td></tr>
+          <tr><td><code>manager</code></td><td>Project Head</td><td><span class="badge badge-blue">Blue</span></td></tr>
+          <tr><td><code>event_lead</code></td><td>Manager</td><td><span class="badge badge-amber">Amber</span></td></tr>
+          <tr><td><code>team</code></td><td>Project Team</td><td><span class="badge badge-green">Green</span></td></tr>
+          <tr><td><code>staff</code></td><td>Staff</td><td><span class="badge badge-gray">Gray</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Capability Matrix</div>
+      <table class="db-table">
+        <thead><tr><th>Capability</th><th>Admin</th><th>Proj Head</th><th>Manager</th><th>Team</th><th>Staff</th></tr></thead>
+        <tbody>
+          <tr><td>See all events</td><td>✅</td><td>✅</td><td>Assigned</td><td>Assigned</td><td>Assigned</td></tr>
+          <tr><td>Create events (live)</td><td>✅</td><td>✅</td><td>Pending</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Assign events</td><td>✅</td><td>Scoped</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>See margins</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Rate card page</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Rate pill (ElementBuilder)</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Category Manager</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Analytics dashboard</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Activity log</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Invite users</td><td>All roles</td><td>Lead+Team</td><td>Team only</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Download documents</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+          <tr><td>Export rate cards</td><td>❌ NEVER</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Edit any profile</td><td>✅</td><td>Team only</td><td>Own only</td><td>Own only</td><td>Own only</td></tr>
+          <tr><td>Team View</td><td>All</td><td>Scoped</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warn">
+      <strong>⚠ Role Rename Status</strong>
+      Role rename (display names only) is parked. Display-only change required in 5 files: AppShell, UserManagement, AssignEvent, Dashboard, EventPage. No DB changes needed. Will be done as a single focused session.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 24 FUTURE MAP -->
+<!-- ============================================================ -->
+<div id="futuremap" class="page">
+  <div class="page-inner">
+    <div class="page-header">
+      <div class="section-num">24 · Reference</div>
+      <h1>Future Features Map</h1>
+      <p>Every planned feature, where it lands, and what phase it belongs to.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Current Priority — New Event Flow Redesign</div>
+      <div class="rule"><strong>Event Brief form:</strong> Type · PAX · Tier (budget/standard/premium/luxury) · Primary city → drives everything downstream</div>
+      <div class="rule"><strong>element_templates table:</strong> Pre-population engine based on event type + tier + city</div>
+      <div class="rule"><strong>Smart element pre-population:</strong> ElementBuilder pre-fills from templates when event is created</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Phase 7 — AI Layer</div>
+      <div class="rule"><strong>Brief → Claude API → element suggestion.</strong> Full element list suggested from event brief. rate_cards + templates as ground truth. One-click accept or modify.</div>
+      <div class="rule"><strong>In-field autocomplete</strong> in ElementBuilder — as user types, rate_cards library surfaces matching elements.</div>
+      <div class="rule"><strong>Not before data is populated.</strong> Rate card seeding must be substantially complete first.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Phase 8 — External Features</div>
+      <div class="rule"><strong>Public proposal view:</strong> Shareable URL (no login needed) for client to view their estimate. Deep link from Delivered tab.</div>
+      <div class="rule"><strong>WhatsApp via MSG91:</strong> Schema ready, not yet wired. Notifications + task assignments via WhatsApp.</div>
+      <div class="rule"><strong>Myoozz Nexus CRM integration:</strong> Leads from CRM flow directly into ME as events.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Admin Settings Panel</div>
+      <div class="rule"><strong>CategoryManager already built.</strong> Next to add: Cities master list · Event types · Rate card config.</div>
+      <div class="rule"><strong>All master data from one panel.</strong> No code changes to add new values. UI-driven.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Parked Items</div>
+      <table class="kv">
+        <tr><td>Demo site sync</td><td>Schema out of sync. After new event flow is set.</td></tr>
+        <tr><td>Landing page completion</td><td>Logo placement + Truth section pending. After event flow.</td></tr>
+        <tr><td>Role renames</td><td>Display-only, 5 files. Parked.</td></tr>
+        <tr><td>Photo upload</td><td>Placeholder in ProfilePage. Supabase Storage + 1 function when ready.</td></tr>
+        <tr><td>Location/Zone field on elements</td><td>Separate field for Ballroom/Pre Function etc. Future.</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">IP Protection Checklist</div>
+      <table class="db-table">
+        <thead><tr><th>Item</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Copyright notice in codebase + landing</td><td><span class="badge badge-amber">Pending</span></td></tr>
+          <tr><td>Copyright registration — Form XIV</td><td><span class="badge badge-amber">Before demo goes live</span></td></tr>
+          <tr><td>NDA template</td><td><span class="badge badge-amber">Before any external demo</span></td></tr>
+          <tr><td>Trademark — Class 42 + 41</td><td><span class="badge badge-amber">After logo finalised</span></td></tr>
+          <tr><td>IP assignment for contributors</td><td><span class="badge badge-amber">All contributors must sign</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+// PAGE NAVIGATION
+function show(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0,0);
+  applyRole(currentRole);
+}
+
+// ROLE SELECTOR
+let currentRole = 'admin';
+
+function setRole(role) {
+  currentRole = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active-role'));
+  document.querySelector('[data-role="' + role + '"]').classList.add('active-role');
+  applyRole(role);
+}
+
+function applyRole(role) {
+  document.querySelectorAll('.role-block').forEach(b => b.classList.remove('show'));
+  document.querySelectorAll('.rb-' + role).forEach(b => b.classList.add('show'));
+}
+
+// Init
+applyRole('admin');
+</script>
+</body>
+</html>

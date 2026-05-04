@@ -380,7 +380,7 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
                   title="View profile"
                   style={{
                     width: '36px', height: '36px', borderRadius: '8px',
-                    background: '#C8102E',
+                    background: '#F28F3B',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '13px', fontWeight: 700, color: '#fff',
                     flexShrink: 0,
@@ -425,7 +425,7 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
                       borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                       color: 'var(--text-secondary)', transition: 'all 0.15s',
                     }}
-                    onMouseOver={e => { e.currentTarget.style.borderColor = '#C8102E'; e.currentTarget.style.color = '#C8102E' }}
+                    onMouseOver={e => { e.currentTarget.style.borderColor = '#F28F3B'; e.currentTarget.style.color = '#F28F3B' }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
                   >
                     View profile
@@ -466,7 +466,7 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
                       type='checkbox'
                       checked={!!u.can_manage_rate_cards}
                       onChange={() => handleRateCardToggle(u.id, !!u.can_manage_rate_cards)}
-                      style={{ accentColor: '#C8102E', width: '14px', height: '14px', cursor: 'pointer' }}
+                      style={{ accentColor: '#F28F3B', width: '14px', height: '14px', cursor: 'pointer' }}
                     />
                     <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>Rate Cards Access</span>
                   </label>

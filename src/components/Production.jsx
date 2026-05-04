@@ -104,7 +104,7 @@ function StatusPill({ statuses, current, onSelect, blocked, blockMsg, isQC }) {
           outline: 'none',
         }}
       >
-        {current_s.label} <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={open?'#2e7d32':'#C8102E'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        {current_s.label} <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={open?'#2e7d32':'#F28F3B'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {open && (
         <>
@@ -478,7 +478,7 @@ export default function Production({ event, teamUsers = [] }) {
           const dotColor = allDone ? '#16A34A' : inProgress ? '#EA580C' : '#9ca3af'
           const done = catTasks.filter(t => t.status === 'done').length
           const pct = catTasks.length > 0 ? Math.round((done / catTasks.length) * 100) : 0
-          const pctColor = pct === 100 ? '#22c55e' : pct >= 70 ? '#3b82f6' : pct >= 30 ? '#f59e0b' : '#C8102E'
+          const pctColor = pct === 100 ? '#22c55e' : pct >= 70 ? '#3b82f6' : pct >= 30 ? '#f59e0b' : '#F28F3B'
 
           return (
             <div

@@ -330,7 +330,7 @@ export default function LoginPage() {
               padding: '10px 20px',
               fontSize: '13px', fontWeight: 500,
               fontFamily: 'var(--font-body)',
-              color: '#C8102E',
+              color: '#F28F3B',
               background: 'rgba(188,23,35,0.06)',
               border: '0.5px solid rgba(188,23,35,0.2)',
               borderRadius: 'var(--radius-sm)',

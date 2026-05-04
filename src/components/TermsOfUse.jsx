@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 
 /* ─────────────────────────────────────────────
    Myoozz Events — Terms of Use
-   Brand: #C8102E red · #FAFAF8 warm white
+   Brand: #F28F3B red · #FAFAF8 warm white
    Fonts: Cormorant Garamond (headlines) · DM Sans (body)
    Last updated: April 2026
    © Myoozz Consulting Pvt. Ltd.
@@ -165,7 +165,7 @@ export default function TermsOfUse() {
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap');
 
         :root {
-          --red: #C8102E;
+          --red: #F28F3B;
           --bg: #FAFAF8;
           --ink: #1a1a1a;
           --muted: #6b6b6b;

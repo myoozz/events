@@ -57,13 +57,13 @@ const STYLES = `
   }
 
   .tc-box.checked {
-    background: #C8102E;
-    border-color: #C8102E;
+    background: #F28F3B;
+    border-color: #F28F3B;
     box-shadow: 0 0 0 3px rgba(188,23,35,0.12);
   }
 
   .tc-box.error-state {
-    border-color: #C8102E;
+    border-color: #F28F3B;
     box-shadow: 0 0 0 3px rgba(188,23,35,0.10);
     animation: tc-shake 0.35s ease;
   }
@@ -95,14 +95,14 @@ const STYLES = `
   }
 
   .tc-label a {
-    color: #C8102E;
+    color: #F28F3B;
     text-decoration: none;
     font-weight: 400;
     border-bottom: 1px solid rgba(188,23,35,0.25);
     transition: border-color 0.15s ease;
   }
   .tc-label a:hover {
-    border-bottom-color: #C8102E;
+    border-bottom-color: #F28F3B;
   }
 
   /* ── Error message ── */
@@ -114,7 +114,7 @@ const STYLES = `
     margin-left: 32px;
     font-size: 12px;
     font-weight: 400;
-    color: #C8102E;
+    color: #F28F3B;
     opacity: 0;
     transform: translateY(-4px);
     transition: opacity 0.2s ease, transform 0.2s ease;
@@ -127,7 +127,7 @@ const STYLES = `
   .tc-error-dot {
     width: 4px; height: 4px;
     border-radius: 50%;
-    background: #C8102E;
+    background: #F28F3B;
     flex-shrink: 0;
   }
 
