@@ -43,7 +43,8 @@ export default function CategoryManager({ userRole }) {
     { value: 'permissions',      label: 'Permissions' },
     { value: 'print_only',       label: 'Print Only' },
     { value: 'print_fabrication', label: 'Print & Fabrication' },
-    { value: 'design_digital',   label: 'Design — Digital Output' },
+    { value: 'design_digital',         label: 'Design — Digital Output' },
+    { value: 'purchase_procurement',   label: 'Purchase & Procurement' },
   ];
 
   const [activeTab, setActiveTab] = useState('categories');
