@@ -43,10 +43,10 @@ const PROCUREMENT_STATUSES = [
 ]
 
 const ELEMENT_TYPES = [
-  { key: 'fab_print',    label: 'Fabrication & Print' },
-  { key: 'print',        label: 'Print only' },
-  { key: 'creative',     label: 'Creative only' },
-  { key: 'procurement',  label: 'Procurement' },
+  { key: 'print_only',           label: 'Print Only' },
+  { key: 'print_fabrication',    label: 'Print & Fabrication' },
+  { key: 'design_digital',       label: 'Design — Digital Output' },
+  { key: 'purchase_procurement', label: 'Purchase & Procurement' },
 ]
 
 // Auto-suggest type from category
@@ -433,11 +433,10 @@ export default function Production({ event, teamUsers = [] }) {
       {/* Legend */}
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
         {[
-          { label: 'Not started', c: C.grey },
-          { label: 'In progress', c: C.orange },
-          { label: 'QC check', c: C.lime },
+          { label: 'Not Started', c: C.grey },
+          { label: 'In Progress', c: C.orange },
           { label: 'Done', c: C.green },
-          { label: 'Blocked', c: C.red },
+          { label: 'Overdue', c: C.red },
         ].map(l => (
           <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: l.c.dot || l.c.color }} />
