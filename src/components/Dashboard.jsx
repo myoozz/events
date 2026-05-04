@@ -86,7 +86,7 @@ function useIsMobile() {
   return mobile
 }
 
-function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userRole, getNames }) {
+function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userRole, getNames, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
   const sc = statusColor[ev.status] || statusColor.pitch
@@ -178,6 +178,7 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
                   ...(userRole === 'manager' ? [{ label: 'Assign team', action: () => { onAssign(ev); setMenuOpen(false) }, color: 'var(--text)' }] : []),
                   null,
                   { label: 'Archive event', action: () => { onArchive(ev); setMenuOpen(false) }, color: '#A32D2D', hoverBg: '#FCEBEB' },
+                  ...(userRole === 'admin' ? [null, { label: 'Delete Event', action: () => { onDelete(ev.id, ev.event_name); setMenuOpen(false) }, color: '#C8102E', hoverBg: '#FCEBEB' }] : []),
                 ].map((item, i) => item === null ? (
                   <div key={i} style={{ height: '0.5px', background: 'var(--border)' }} />
                 ) : (
@@ -401,6 +402,26 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
     setArchivedEvents(prev => prev.filter(e => e.id !== ev.id))
     setEvents(prev => [{ ...ev, archived: false }, ...prev])
     await logEventRestored(ev)
+  }
+
+  const handleDeleteEvent = async (eventId, eventName) => {
+    const confirmed = window.confirm(`Are you sure? Permanently delete "${eventName}"?`)
+    if (!confirmed) return
+
+    try {
+      await supabase.from('elements').delete().eq('event_id', eventId)
+      await supabase.from('tasks').delete().eq('event_id', eventId)
+      await supabase.from('notifications').delete().eq('event_id', eventId)
+      await supabase.from('activity_log').delete().eq('event_id', eventId)
+      await supabase.from('rooming_list').delete().eq('event_id', eventId)
+      await supabase.from('travel_plan').delete().eq('event_id', eventId)
+      await supabase.from('itinerary').delete().eq('event_id', eventId)
+      await supabase.from('events').delete().eq('id', eventId)
+      setEvents(prev => prev.filter(e => e.id !== eventId))
+    } catch (err) {
+      console.error('Delete failed:', err)
+      alert('Delete failed. Check console.')
+    }
   }
 
   if (openEvent) {
@@ -727,6 +748,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
                       key={ev.id} ev={ev} userRole={userRole}
                       onOpen={setOpenEvent} onEdit={setEditEvent}
                       onArchive={setConfirmArchive} onAssign={setAssignEvent}
+                      onDelete={handleDeleteEvent}
                       getNames={getNames}
                     />
                   ) : (
