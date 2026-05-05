@@ -369,20 +369,61 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
     }
   }
 
-  const filteredEvents = (view === 'active' ? events : archivedEvents).filter(ev => {
-    const matchSearch = !search ||
-      ev.event_name?.toLowerCase().includes(search.toLowerCase()) ||
-      ev.clients?.group_name?.toLowerCase().includes(search.toLowerCase()) ||
-      ev.clients?.brand_name?.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = !filterStatus || ev.status === filterStatus
-    const matchType   = !filterType   || ev.event_type === filterType
-    const matchClient = !filterClient || ev.clients?.group_name === filterClient
-    return matchSearch && matchStatus && matchType && matchClient
-  })
+  const STATUS_ORDER = { active: 0, pitch: 1, won: 2, completed: 3, archived: 4 }
 
-  const displayEvents = filteredEvents
-  const allClients = [...new Set(events.map(e => e.clients?.group_name).filter(Boolean))].sort()
-  const allTypes   = [...new Set(events.map(e => e.event_type).filter(Boolean))].sort()
+  const allClients = useMemo(() =>
+    [...new Set(events.map(e => e.clients?.group_name).filter(Boolean))].sort(),
+    [events])
+
+  const allCities = useMemo(() =>
+    [...new Set(events.flatMap(e => e.cities || []).filter(Boolean))].sort(),
+    [events])
+
+  const allTypes = useMemo(() =>
+    [...new Set(events.map(e => e.event_type).filter(Boolean))].sort(),
+    [events])
+
+  const displayEvents = useMemo(() => {
+    const pool = view === 'active' ? events : archivedEvents
+    const filtered = pool.filter(ev => {
+      if (!showTestEvents && ev.is_test) return false
+      const q = search.toLowerCase()
+      const matchSearch = !search ||
+        ev.event_name?.toLowerCase().includes(q) ||
+        ev.clients?.group_name?.toLowerCase().includes(q) ||
+        ev.clients?.brand_name?.toLowerCase().includes(q)
+      const matchStatus = !filterStatus || ev.status === filterStatus
+      const matchType   = !filterType   || ev.event_type === filterType
+      const matchClient = !filterClient || ev.clients?.group_name === filterClient
+      const matchCity   = !filterCity   || (ev.cities || []).includes(filterCity)
+      return matchSearch && matchStatus && matchType && matchClient && matchCity
+    })
+
+    if (filterSort === 'smart') {
+      return [...filtered].sort((a, b) => {
+        const sa = STATUS_ORDER[a.status] ?? 99
+        const sb = STATUS_ORDER[b.status] ?? 99
+        if (sa !== sb) return sa - sb
+        return new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
+      })
+    }
+    if (filterSort === 'recent_opened') {
+      return [...filtered].sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))
+    }
+    if (filterSort === 'recent_created') {
+      return [...filtered].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+    }
+    if (filterSort === 'date_asc') {
+      return [...filtered].sort((a, b) => new Date(a.start_date || a.event_date || 0) - new Date(b.start_date || b.event_date || 0))
+    }
+    if (filterSort === 'date_desc') {
+      return [...filtered].sort((a, b) => new Date(b.start_date || b.event_date || 0) - new Date(a.start_date || a.event_date || 0))
+    }
+    if (filterSort === 'az') {
+      return [...filtered].sort((a, b) => (a.event_name || '').localeCompare(b.event_name || ''))
+    }
+    return filtered
+  }, [events, archivedEvents, view, search, filterStatus, filterType, filterClient, filterCity, filterSort, showTestEvents])
 
   const { greeting, message, urgent } = getGreeting()
 
