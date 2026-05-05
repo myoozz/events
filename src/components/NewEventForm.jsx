@@ -37,7 +37,7 @@ const TIERS = [
   { value: 'Premium', label: 'Premium', desc: 'No-compromise benchmark event' },
 ]
 
-const TOTAL_STEPS = 10
+const TOTAL_STEPS = 12
 
 // ─── Shared Styles ────────────────────────────────────────────────────────────
 
@@ -144,12 +144,11 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
     cities: [],
     paxCount: '',
     seatingFormat: '',
-    budgetTier: '',
+    budgetTier: '', perPaxBudget: '',
     hasSubEvents: false, subEventCount: 2,
-    clientSpocName: '', clientSpocContact: '',
-    agencyPocId: '',
-    // More details
     clientName: '', brandName: '',
+    clientSpocName: '', clientSpocPhone: '', clientSpocEmail: '',
+    agencyPocId: '',
     proposalDueDate: '',
     agencyFee: 10, gst: 18,
   })
@@ -161,6 +160,10 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
       .in('role', ['admin', 'manager', 'event_lead'])
       .then(({ data }) => { if (data) setUsers(data) })
   }, [])
+
+  useEffect(() => {
+    if (step === 7 && a.cities.length === 1) setStep(8)
+  }, [step, a.cities.length])
 
   const set = (key, val) => setA(prev => ({ ...prev, [key]: val }))
 
@@ -185,8 +188,11 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
       const payload = {
         name: a.eventName.trim(),
         event_name: a.eventName.trim(),
-        client_spoc_name: a.clientSpocName || a.clientName || null,
-        client_spoc_phone: a.clientSpocContact || null,
+        client_name: a.clientName || null,
+        brand_name: a.brandName || null,
+        client_spoc_name: a.clientSpocName || null,
+        client_spoc_phone: a.clientSpocPhone || null,
+        client_spoc_email: a.clientSpocEmail || null,
         event_type: a.eventType || null,
         event_subtype: a.subCategory || null,
         cities: a.cities,
@@ -199,6 +205,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         pax_count: a.paxCount ? parseInt(a.paxCount) : null,
         seating_format: a.seatingFormat || null,
         budget_tier: a.budgetTier || null,
+        per_pax_budget: a.perPaxBudget ? parseInt(a.perPaxBudget) : null,
         sub_events: a.hasSubEvents ? { count: a.subEventCount } : null,
         status: 'active',
         proposal_status: 'draft',
@@ -207,7 +214,6 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         review_status: userRole === 'event_lead' ? 'pending' : 'approved',
       }
 
-      console.log('INSERT PAYLOAD:', JSON.stringify(payload))
       const { data: event, error: dbErr } = await supabase
         .from('events').insert(payload).select().single()
       if (dbErr) throw dbErr
@@ -264,7 +270,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   if (flowMode === 'guided' && step !== 'preview') {
     const pct = (step / TOTAL_STEPS) * 100
     const isLastStep = step >= TOTAL_STEPS
-    const canAdvance = step !== 1 || a.eventName.trim().length > 0
+    const canAdvance = step !== 2 || a.eventName.trim().length > 0
 
     return (
       <div style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -451,10 +457,16 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                   placeholder="Name" />
               </div>
               <div>
-                <label style={S.label}>Phone / Email</label>
-                <input style={S.input} value={a.clientSpocContact}
-                  onChange={e => set('clientSpocContact', e.target.value)}
-                  placeholder="Phone or email" />
+                <label style={S.label}>Phone</label>
+                <input style={S.input} value={a.clientSpocPhone}
+                  onChange={e => set('clientSpocPhone', e.target.value)}
+                  placeholder="e.g. +91 98765 43210" />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>Email</label>
+                <input style={S.input} type="email" value={a.clientSpocEmail}
+                  onChange={e => set('clientSpocEmail', e.target.value)}
+                  placeholder="e.g. rahul@client.com" />
               </div>
             </div>
 
@@ -647,6 +659,26 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
 
   const STEPS = {
     1: {
+      title: "Who is this event for?",
+      hint: "ME keeps all client details organised and linked to every document it generates.",
+      content: (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div>
+            <label style={S.label}>Client / Group</label>
+            <input ref={inputRef} style={S.input} value={a.clientName}
+              onChange={e => set('clientName', e.target.value)}
+              placeholder="e.g. Aditya Birla Group" />
+          </div>
+          <div>
+            <label style={S.label}>Brand / Division</label>
+            <input style={S.input} value={a.brandName}
+              onChange={e => set('brandName', e.target.value)}
+              placeholder="e.g. Birla Opus" />
+          </div>
+        </div>
+      ),
+    },
+    2: {
       title: "What's the event called?",
       hint: "ME builds your entire format around this — every document, cost sheet, and export.",
       content: (
@@ -660,9 +692,37 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
         />
       ),
     },
-    2: {
+    3: {
+      title: "Who do you coordinate with on the client side?",
+      hint: "Saved securely. Your data stays yours — ME never shares it with anyone.",
+      content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div>
+            <label style={S.label}>Name</label>
+            <input ref={inputRef} style={S.input} value={a.clientSpocName}
+              onChange={e => set('clientSpocName', e.target.value)}
+              placeholder="e.g. Rahul Sharma" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div>
+              <label style={S.label}>Phone</label>
+              <input style={S.input} value={a.clientSpocPhone}
+                onChange={e => set('clientSpocPhone', e.target.value)}
+                placeholder="e.g. +91 98765 43210" />
+            </div>
+            <div>
+              <label style={S.label}>Email</label>
+              <input style={S.input} type="email" value={a.clientSpocEmail}
+                onChange={e => set('clientSpocEmail', e.target.value)}
+                placeholder="e.g. rahul@client.com" />
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    4: {
       title: "What kind of event is this?",
-      hint: "You can add, remove, or reorder categories anytime from the event page.",
+      hint: "ME picks the right categories for your event type. Add, remove, or reorder anytime.",
       content: (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -710,7 +770,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
         </div>
       ),
     },
-    3: {
+    5: {
       title: "When is it happening?",
       hint: "ME puts it on your dashboard and keeps your whole team on the same timeline.",
       content: (
@@ -740,7 +800,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
         </div>
       ),
     },
-    4: {
+    6: {
       title: "Where is it?",
       hint: "One city or ten — ME plans them simultaneously, each with its own elements, costs, and team.",
       content: (
@@ -770,18 +830,45 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
               </span>
             ))}
           </div>
-          {a.cities.length > 1 && (
-            <div style={{
-              marginTop: '10px', padding: '10px 14px', background: '#fef3e0',
-              borderRadius: '6px', fontSize: '12px', color: '#7a4a00',
-            }}>
-              Multi-city event — set different dates per city on the event page after creating.
-            </div>
-          )}
         </div>
       ),
     },
-    5: {
+    7: {
+      title: "Single city or multiple?",
+      hint: "ME builds separate city-level plans when needed — same event, different markets.",
+      content: (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          {[
+            { label: 'Single city', multi: false },
+            { label: 'Multi-city',  multi: true  },
+          ].map(({ label, multi }) => {
+            const isSelected = multi === (a.cities.length > 1)
+            return (
+              <div key={label}
+                style={{
+                  ...S.tile,
+                  ...(isSelected ? S.tileActive : {}),
+                  padding: '20px 14px', textAlign: 'center',
+                }}
+              >
+                <div style={{
+                  fontSize: '14px', fontWeight: 600,
+                  color: isSelected ? '#bc1723' : '#1a1008',
+                }}>
+                  {label}
+                </div>
+                {isSelected && (
+                  <div style={{ fontSize: '12px', color: '#7a7060', marginTop: '4px' }}>
+                    {multi ? `${a.cities.length} cities added` : a.cities[0] || ''}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      ),
+    },
+    8: {
       title: "How many guests are expected?",
       hint: "This one number drives your venue size, F&B quantities, manpower, and equipment.",
       content: (
@@ -803,7 +890,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
         </div>
       ),
     },
-    6: {
+    9: {
       title: "How will they be seated?",
       hint: "Seating format sets your stage size, AV layout, and the space you actually need.",
       content: (
@@ -828,40 +915,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
         </div>
       ),
     },
-    7: {
-      title: "What's the budget positioning?",
-      hint: "ME uses this to give you the right rate benchmarks and flag anything that looks off.",
-      content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
-          {TIERS.map(t => (
-            <button key={t.value}
-              style={{
-                ...S.tile,
-                ...(a.budgetTier === t.value ? S.tileActive : {}),
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              }}
-              onClick={() => set('budgetTier', t.value)}
-            >
-              <div>
-                <div style={{
-                  fontWeight: 600, fontSize: '14px',
-                  color: a.budgetTier === t.value ? '#bc1723' : '#1a1008',
-                }}>
-                  {t.label}
-                </div>
-                <div style={{ fontSize: '12px', color: '#7a7060', marginTop: '2px' }}>
-                  {t.desc}
-                </div>
-              </div>
-              {a.budgetTier === t.value && (
-                <span style={{ color: '#bc1723', fontSize: '18px', flexShrink: 0 }}>✓</span>
-              )}
-            </button>
-          ))}
-        </div>
-      ),
-    },
-    8: {
+    10: {
       title: "Does this event have sub-events?",
       hint: "A conference, a gala, a site visit — ME plans each one separately so nothing gets mixed up.",
       content: (
@@ -900,27 +954,50 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
         </div>
       ),
     },
-    9: {
-      title: "Who is the client contact?",
-      hint: "Saved securely. Your data stays yours — ME never shares it with anyone.",
+    11: {
+      title: "What's the budget positioning?",
+      hint: "ME uses this to give you the right rate benchmarks and flag anything that looks off.",
       content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div>
-            <label style={S.label}>Name</label>
-            <input ref={inputRef} style={S.input} value={a.clientSpocName}
-              onChange={e => set('clientSpocName', e.target.value)}
-              placeholder="e.g. Rahul Sharma" />
-          </div>
-          <div>
-            <label style={S.label}>Phone or Email</label>
-            <input style={S.input} value={a.clientSpocContact}
-              onChange={e => set('clientSpocContact', e.target.value)}
-              placeholder="Phone number or email" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
+          {TIERS.map(t => (
+            <button key={t.value}
+              style={{
+                ...S.tile,
+                ...(a.budgetTier === t.value ? S.tileActive : {}),
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}
+              onClick={() => set('budgetTier', t.value)}
+            >
+              <div>
+                <div style={{
+                  fontWeight: 600, fontSize: '14px',
+                  color: a.budgetTier === t.value ? '#bc1723' : '#1a1008',
+                }}>
+                  {t.label}
+                </div>
+                <div style={{ fontSize: '12px', color: '#7a7060', marginTop: '2px' }}>
+                  {t.desc}
+                </div>
+              </div>
+              {a.budgetTier === t.value && (
+                <span style={{ color: '#bc1723', fontSize: '18px', flexShrink: 0 }}>✓</span>
+              )}
+            </button>
+          ))}
+          <div style={{ marginTop: '8px' }}>
+            <label style={S.label}>Per guest budget (₹) — optional</label>
+            <input
+              style={{ ...S.input, maxWidth: '200px' }}
+              type="number"
+              value={a.perPaxBudget}
+              onChange={e => set('perPaxBudget', e.target.value)}
+              placeholder="e.g. 5000"
+            />
           </div>
         </div>
       ),
     },
-    10: {
+    12: {
       title: "Who is leading this event?",
       hint: "Assign your lead now or do it later from the event page. Your team, your call.",
       content: (
@@ -995,15 +1072,16 @@ function PreviewCard({ a, onEdit }) {
   const tierLabel = TIERS.find(t => t.value === a.budgetTier)?.label
 
   const rows = [
-    { label: 'Event name',   value: a.eventName,        step: 1 },
-    { label: 'Type',         value: selectedType ? `${selectedType.label}${a.subCategory ? ` · ${a.subCategory}` : ''}` : '—', step: 2 },
-    { label: 'Dates',        value: a.startDate ? `${a.startDate}${a.endDate ? ` → ${a.endDate}` : ''}` : '—', step: 3 },
-    { label: 'Cities',       value: a.cities.length ? a.cities.join(', ') : '—', step: 4 },
-    { label: 'PAX',          value: a.paxCount ? `${a.paxCount} guests` : '—', step: 5 },
-    { label: 'Seating',      value: a.seatingFormat || '—', step: 6 },
-    { label: 'Tier',         value: tierLabel || '—', step: 7 },
-    { label: 'Sub-events',   value: a.hasSubEvents ? `Yes · ${a.subEventCount}` : 'No', step: 8 },
-    { label: 'Client SPOC',  value: [a.clientSpocName, a.clientSpocContact].filter(Boolean).join(' · ') || '—', step: 9 },
+    { label: 'Client',       value: [a.clientName, a.brandName].filter(Boolean).join(' · ') || '—', step: 1 },
+    { label: 'Event name',   value: a.eventName || '—', step: 2 },
+    { label: 'SPOC',         value: [a.clientSpocName, a.clientSpocPhone, a.clientSpocEmail].filter(Boolean).join(' · ') || '—', step: 3 },
+    { label: 'Type',         value: selectedType ? `${selectedType.label}${a.subCategory ? ` · ${a.subCategory}` : ''}` : '—', step: 4 },
+    { label: 'Dates',        value: a.startDate ? `${a.startDate}${a.endDate ? ` → ${a.endDate}` : ''}` : '—', step: 5 },
+    { label: 'Cities',       value: a.cities.length ? a.cities.join(', ') : '—', step: 6 },
+    { label: 'PAX',          value: a.paxCount ? `${a.paxCount} guests` : '—', step: 8 },
+    { label: 'Seating',      value: a.seatingFormat || '—', step: 9 },
+    { label: 'Sub-events',   value: a.hasSubEvents ? `Yes · ${a.subEventCount}` : 'No', step: 10 },
+    { label: 'Tier',         value: [tierLabel, a.perPaxBudget ? `₹${a.perPaxBudget}/pax` : ''].filter(Boolean).join(' · ') || '—', step: 11 },
   ]
 
   return (
