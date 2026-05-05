@@ -10,18 +10,7 @@ import AssignEvent from './AssignEvent'
 import { logEventCreated, logEventArchived, logEventRestored, logEventAssigned } from '../utils/activityLogger'
 import { notifyApprovalRequired, notifyEventCreated } from '../utils/notificationService'
 import DashboardWidgets from './DashboardWidgets'
-const statusColor = {
-  pitch: { bg: 'var(--blue-light)', color: 'var(--blue)' },
-  submitted: { bg: 'var(--amber-light)', color: 'var(--amber)' },
-  won: { bg: 'var(--green-light)', color: 'var(--green)' },
-  lost: { bg: '#FCEBEB', color: '#A32D2D' },
-  'on hold': { bg: 'var(--bg-secondary)', color: 'var(--text-tertiary)' },
-}
-
-const STATUS_LABELS = {
-  pitch: 'Pitch', submitted: 'Submitted',
-  won: 'Won', lost: 'Lost', 'on hold': 'On Hold',
-}
+import EventCard from './EventCard'
 
 const containerVariants = {
   hidden: {},
@@ -32,11 +21,6 @@ const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
   hovered: { y: -2, boxShadow: '0 8px 24px rgba(26,16,8,0.10)', transition: { type: 'spring', stiffness: 300, damping: 24 } },
-}
-
-const accentBarVariants = {
-  visible: { scaleX: 0 },
-  hovered: { scaleX: 1, transition: { type: 'spring', stiffness: 400, damping: 30 } },
 }
 
 function ConfirmDialog({ message, onConfirm, onCancel }) {
@@ -83,133 +67,6 @@ function useIsMobile() {
     return () => window.removeEventListener('resize', fn)
   }, [])
   return mobile
-}
-
-function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userRole, getNames, onDelete }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef(null)
-  const sc = statusColor[ev.status] || statusColor.pitch
-
-  useEffect(() => {
-    function handleClick(e) {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  const line2Parts = []
-  const clientStr = ev.clients?.group_name
-    ? ev.clients.group_name + (ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : '')
-    : null
-  if (clientStr) line2Parts.push(clientStr)
-  if (ev.cities?.length > 0) line2Parts.push(ev.cities.join(', '))
-  const dateStr = (() => {
-    if (ev.city_dates && Object.keys(ev.city_dates).length > 0) {
-      const dates = Object.values(ev.city_dates).filter(d => d?.start)
-      if (dates.length > 0) {
-        const earliest = new Date(Math.min(...dates.map(d => new Date(d.start))))
-        return earliest.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-      }
-    }
-    return ev.event_date
-      ? new Date(ev.event_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-      : null
-  })()
-  if (dateStr) line2Parts.push(dateStr)
-
-  return (
-    <motion.div
-      variants={itemVariants}
-      whileHover="hovered"
-      onClick={() => onOpen(ev)}
-      style={{
-        border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
-        padding: '10px 16px',
-        background: 'linear-gradient(135deg, #ffffff 60%, #fdf5f5 100%)',
-        position: 'relative', cursor: 'pointer', zIndex: menuOpen ? 100 : 'auto',
-      }}
-    >
-      <motion.div
-        variants={accentBarVariants}
-        style={{
-          position: 'absolute', left: 0, top: 0, bottom: 0, width: '3px',
-          background: '#F28F3B', transformOrigin: 'left', borderRadius: 'var(--radius) 0 0 var(--radius)',
-        }}
-      />
-
-      {/* Line 1: name · badge · menu */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: line2Parts.length ? '3px' : 0 }}>
-        <span style={{
-          fontSize: '14px', fontWeight: 500, color: 'var(--text)',
-          flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
-          {ev.event_name}
-        </span>
-        <span style={{
-          fontSize: '11px', fontWeight: 500, textTransform: 'uppercase',
-          letterSpacing: '0.5px', padding: '4px 12px', borderRadius: '20px',
-          background: sc.bg, color: sc.color, flexShrink: 0,
-        }}>
-          {STATUS_LABELS[ev.status] || ev.status}
-        </span>
-        {(userRole === 'admin' || userRole === 'manager') && (
-          <div style={{ position: 'relative', flexShrink: 0, zIndex: menuOpen ? 1000 : 50 }} ref={menuRef}>
-            <button
-              onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: '18px', color: 'var(--text-tertiary)', padding: '0 4px', lineHeight: 1,
-              }}
-            >
-              ···
-            </button>
-            {menuOpen && (
-              <div style={{
-                position: 'absolute', right: 0, top: '100%', marginTop: '4px',
-                background: 'var(--bg)', border: '0.5px solid var(--border-strong)',
-                borderRadius: 'var(--radius-sm)', zIndex: 1001, minWidth: '160px', overflow: 'hidden',
-              }}>
-                {[
-                  { label: 'Open event',   action: () => { onOpen(ev); setMenuOpen(false) },   color: 'var(--text)' },
-                  { label: 'Edit details', action: () => { onEdit(ev); setMenuOpen(false) },   color: 'var(--text)' },
-                  ...(userRole === 'admin' ? [{ label: 'Assign team', action: () => { onAssign(ev); setMenuOpen(false) }, color: 'var(--text)' }] : []),
-                  ...(userRole === 'manager' ? [{ label: 'Assign team', action: () => { onAssign(ev); setMenuOpen(false) }, color: 'var(--text)' }] : []),
-                  null,
-                  { label: 'Archive event', action: () => { onArchive(ev); setMenuOpen(false) }, color: '#A32D2D', hoverBg: '#FCEBEB' },
-                  ...(userRole === 'admin' ? [null, { label: 'Delete Event', action: () => { onDelete(ev.id, ev.event_name); setMenuOpen(false) }, color: '#C8102E', hoverBg: '#FCEBEB' }] : []),
-                ].map((item, i) => item === null ? (
-                  <div key={i} style={{ height: '0.5px', background: 'var(--border)' }} />
-                ) : (
-                  <button
-                    key={i}
-                    onClick={item.action}
-                    style={{
-                      display: 'block', width: '100%', padding: '10px 16px',
-                      fontSize: '13px', textAlign: 'left', background: 'none',
-                      border: 'none', cursor: 'pointer',
-                      fontFamily: 'var(--font-body)', color: item.color,
-                    }}
-                    onMouseOver={e => e.currentTarget.style.background = item.hoverBg || 'var(--bg-secondary)'}
-                    onMouseOut={e => e.currentTarget.style.background = 'none'}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Line 2: client · cities · date */}
-      {line2Parts.length > 0 && (
-        <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', lineHeight: 1.4 }}>
-          {line2Parts.join(' · ')}
-        </div>
-      )}
-    </motion.div>
-  )
 }
 
 // Bug 10: Added userName and resetKey props
