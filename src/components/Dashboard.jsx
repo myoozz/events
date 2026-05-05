@@ -526,6 +526,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
         userId={session?.user?.id}
         userRole={userRole}
         userName={userName}
+        userEmail={session?.user?.email}
       />
 
       <motion.p

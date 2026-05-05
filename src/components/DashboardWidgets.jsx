@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../supabase';
 
 const dwContainerVariants = {
   hidden: {},
@@ -12,10 +12,6 @@ const dwItemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
 };
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 const ROLE_LABEL = {
   admin: 'Admin',
@@ -37,14 +33,14 @@ function formatShortDate(d) {
   return dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
-export default function DashboardWidgets({ userId, userRole, userName }) {
+export default function DashboardWidgets({ userId, userRole, userName, userEmail }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!userId || !userRole) return;
     loadStats();
-  }, [userId, userRole]);
+  }, [userId, userRole, userEmail]);
 
   async function loadStats() {
     setLoading(true);
@@ -62,12 +58,14 @@ export default function DashboardWidgets({ userId, userRole, userName }) {
           supabase
             .from('events')
             .select('*', { count: 'exact', head: true })
-            .eq('review_status', 'pending')
-            .eq('archived', false),
+            .eq('review_status', 'pending_review')
+            .eq('archived', false)
+            .eq('is_test', false),
           supabase
             .from('events')
             .select('*', { count: 'exact', head: true })
-            .eq('archived', false),
+            .eq('archived', false)
+            .eq('is_test', false),
           supabase
             .from('users')
             .select('*', { count: 'exact', head: true }),
@@ -84,8 +82,9 @@ export default function DashboardWidgets({ userId, userRole, userName }) {
         const { data: myEventRows } = await supabase
           .from('events')
           .select('id')
-          .contains('assigned_to', [userId])
-          .eq('archived', false);
+          .or(`assigned_to.cs.{"${userEmail}"},created_by.eq.${userEmail}`)
+          .eq('archived', false)
+          .eq('is_test', false);
 
         const ids = myEventRows?.map((e) => e.id) || [];
         let pending = 0, inProgress = 0, overdue = 0;
