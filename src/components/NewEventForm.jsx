@@ -92,7 +92,7 @@ const S = {
     fontFamily: "'DM Sans', sans-serif",
   },
   tileActive: {
-    borderColor: '#F28F3B', background: '#fde8ea',
+    borderColor: '#bc1723', background: '#fde8ea',
   },
   btn: {
     padding: '9px 18px', borderRadius: '6px', fontSize: '13px',
@@ -101,7 +101,7 @@ const S = {
     display: 'inline-flex', alignItems: 'center', gap: '6px',
   },
   btnDark: { background: '#1a1008', color: '#fff' },
-  btnRed:  { background: '#F28F3B', color: '#fff' },
+  btnRed:  { background: '#bc1723', color: '#fff' },
   btnGhost: {
     background: 'transparent', color: '#7a7060',
     padding: '9px 0',
@@ -281,7 +281,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
           {/* Progress bar */}
           <div style={{ height: '2px', background: '#e8e4dc', margin: '12px 28px 0', borderRadius: '2px' }}>
             <div style={{
-              height: '2px', background: '#F28F3B', borderRadius: '2px',
+              height: '2px', background: '#bc1723', borderRadius: '2px',
               width: `${pct}%`, transition: 'width 0.3s ease',
             }} />
           </div>
@@ -337,7 +337,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                 style={{ ...S.btn, ...S.btnGhost, fontSize: '12px', color: '#7a7060' }}
                 onClick={() => setShowMore(!showMore)}
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:showMore?'rotate(180deg)':'none',transition:'transform 0.18s ease',marginRight:5,verticalAlign:'middle',display:'inline-block'}}><path d="M3 5l4 4 4-4" stroke={showMore?'#2e7d32':'#F28F3B'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> More details — Agency fee, GST, Proposal date
+                {showMore ? '▾' : '▸'} More details — Agency fee, GST, Proposal date
               </button>
 
               {showMore && (
@@ -365,7 +365,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                       <input type="range" min="0" max="30" step="0.5"
                         value={a.agencyFee}
                         onChange={e => set('agencyFee', parseFloat(e.target.value))}
-                        style={{ width: '100%', accentColor: '#F28F3B' }} />
+                        style={{ width: '100%', accentColor: '#bc1723' }} />
                     </div>
                     <div>
                       <label style={S.label}>GST</label>
@@ -433,7 +433,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
             <div style={S.sectionLabel}>Client & Brand</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
               <div>
-                <label style={S.label}>Client / Group <span style={{ color: '#F28F3B' }}>*</span></label>
+                <label style={S.label}>Client / Group <span style={{ color: '#bc1723' }}>*</span></label>
                 <input style={S.input} value={a.clientName}
                   onChange={e => set('clientName', e.target.value)}
                   placeholder="e.g. Aditya Birla Group" />
@@ -463,14 +463,14 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
             {/* EVENT DETAILS */}
             <div style={S.sectionLabel}>Event Details</div>
             <div style={{ marginBottom: '10px' }}>
-              <label style={S.label}>Event Name <span style={{ color: '#F28F3B' }}>*</span></label>
+              <label style={S.label}>Event Name <span style={{ color: '#bc1723' }}>*</span></label>
               <input style={S.input} value={a.eventName}
                 onChange={e => set('eventName', e.target.value)}
                 placeholder="e.g. Udaan Contractor Meet 2026" />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
               <div>
-                <label style={S.label}>Event Type <span style={{ color: '#F28F3B' }}>*</span></label>
+                <label style={S.label}>Event Type <span style={{ color: '#bc1723' }}>*</span></label>
                 <select style={S.input} value={a.eventType}
                   onChange={e => { set('eventType', e.target.value); set('subCategory', '') }}>
                   <option value="">Select type</option>
@@ -544,7 +544,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                 <input type="range" min="0" max="30" step="0.5"
                   value={a.agencyFee}
                   onChange={e => set('agencyFee', parseFloat(e.target.value))}
-                  style={{ width: '100%', accentColor: '#F28F3B', marginTop: '6px' }} />
+                  style={{ width: '100%', accentColor: '#bc1723', marginTop: '6px' }} />
               </div>
               <div>
                 <label style={S.label}>GST</label>
@@ -679,7 +679,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
                 <span style={{ fontSize: '18px' }}>{t.icon}</span>
                 <span style={{
                   fontSize: '12px', fontWeight: 600,
-                  color: a.eventType === t.value ? '#F28F3B' : '#1a1008',
+                  color: a.eventType === t.value ? '#bc1723' : '#1a1008',
                 }}>{t.label}</span>
               </button>
             ))}
@@ -694,9 +694,9 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
                       padding: '6px 13px', borderRadius: '20px', cursor: 'pointer',
                       fontSize: '12px', fontFamily: "'DM Sans', sans-serif",
                       border: '1px solid',
-                      borderColor: a.subCategory === sub ? '#F28F3B' : '#d8d2c8',
+                      borderColor: a.subCategory === sub ? '#bc1723' : '#d8d2c8',
                       background: a.subCategory === sub ? '#fde8ea' : '#fff',
-                      color: a.subCategory === sub ? '#F28F3B' : '#2c2518',
+                      color: a.subCategory === sub ? '#bc1723' : '#2c2518',
                       transition: 'all 0.12s',
                     }}
                     onClick={() => set('subCategory', sub)}
@@ -819,7 +819,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
             >
               <div style={{
                 fontSize: '13px', fontWeight: 600,
-                color: a.seatingFormat === f ? '#F28F3B' : '#1a1008',
+                color: a.seatingFormat === f ? '#bc1723' : '#1a1008',
               }}>
                 {f}
               </div>
@@ -845,7 +845,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
               <div>
                 <div style={{
                   fontWeight: 600, fontSize: '14px',
-                  color: a.budgetTier === t.value ? '#F28F3B' : '#1a1008',
+                  color: a.budgetTier === t.value ? '#bc1723' : '#1a1008',
                 }}>
                   {t.label}
                 </div>
@@ -854,7 +854,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
                 </div>
               </div>
               {a.budgetTier === t.value && (
-                <span style={{ color: '#F28F3B', fontSize: '18px', flexShrink: 0 }}>✓</span>
+                <span style={{ color: '#bc1723', fontSize: '18px', flexShrink: 0 }}>✓</span>
               )}
             </button>
           ))}
@@ -881,7 +881,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
               >
                 <div style={{
                   fontSize: '13px', fontWeight: 600,
-                  color: a.hasSubEvents === val ? '#F28F3B' : '#1a1008',
+                  color: a.hasSubEvents === val ? '#bc1723' : '#1a1008',
                 }}>
                   {label}
                 </div>
@@ -939,7 +939,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
             >
               <div style={{
                 width: '34px', height: '34px', borderRadius: '7px', flexShrink: 0,
-                background: a.agencyPocId === u.id ? '#F28F3B' : '#1a1008',
+                background: a.agencyPocId === u.id ? '#bc1723' : '#1a1008',
                 color: '#fff', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', fontSize: '13px', fontWeight: 700,
               }}>
@@ -948,7 +948,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
               <div style={{ flex: 1, textAlign: 'left' }}>
                 <div style={{
                   fontSize: '13px', fontWeight: 600,
-                  color: a.agencyPocId === u.id ? '#F28F3B' : '#1a1008',
+                  color: a.agencyPocId === u.id ? '#bc1723' : '#1a1008',
                 }}>
                   {u.full_name}
                 </div>
@@ -961,7 +961,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
                 </div>
               </div>
               {a.agencyPocId === u.id && (
-                <span style={{ color: '#F28F3B', fontSize: '16px' }}>✓</span>
+                <span style={{ color: '#bc1723', fontSize: '16px' }}>✓</span>
               )}
             </button>
           ))}
@@ -1024,7 +1024,7 @@ function PreviewCard({ a, onEdit }) {
           <button
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: '#F28F3B', fontSize: '11px', padding: '2px 8px',
+              color: '#bc1723', fontSize: '11px', padding: '2px 8px',
               fontFamily: "'DM Sans', sans-serif",
             }}
             onClick={() => onEdit(row.step)}
