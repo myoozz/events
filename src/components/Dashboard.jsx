@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabase'
 import NewEventForm from './NewEventForm'
@@ -7,7 +7,7 @@ import ModeSelector from './ModeSelector'
 import EventPage from './EventPage'
 import AssignEvent from './AssignEvent'
 
-import { logEventCreated, logEventArchived, logEventRestored, logEventAssigned } from '../utils/activityLogger'
+import { logEventCreated, logEventArchived, logEventRestored, logEventAssigned, logActivity } from '../utils/activityLogger'
 import { notifyApprovalRequired, notifyEventCreated } from '../utils/notificationService'
 import DashboardWidgets from './DashboardWidgets'
 import EventCard from './EventCard'
@@ -86,8 +86,14 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
   const [openEvent, setOpenEvent] = useState(null)
   const [assignEvent, setAssignEvent] = useState(null)
   const [confirmArchive, setConfirmArchive] = useState(null)
+  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [deleteTyped, setDeleteTyped] = useState('')
+  const [toast, setToast] = useState(null)
   const [view, setView] = useState('active')
   const [teamUsers, setTeamUsers] = useState([])
+  const [filterCity, setFilterCity] = useState('')
+  const [filterSort, setFilterSort] = useState('smart')
+  const [showTestEvents, setShowTestEvents] = useState(false)
 
   useEffect(() => { if (userRole) { fetchEvents(); fetchTeam() } }, [userRole])
 
@@ -268,24 +274,49 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
     await logEventRestored(ev)
   }
 
-  const handleDeleteEvent = async (eventId, eventName) => {
-    const confirmed = window.confirm(`Are you sure? Permanently delete "${eventName}"?`)
-    if (!confirmed) return
+  function showToast(msg) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3500)
+  }
 
+  const handleDeleteEvent = (ev) => {
+    setConfirmDelete(ev)
+    setDeleteTyped('')
+  }
+
+  const executeDelete = async () => {
+    const ev = confirmDelete
+    setConfirmDelete(null)
+    setDeleteTyped('')
     try {
-      await supabase.from('elements').delete().eq('event_id', eventId)
-      await supabase.from('tasks').delete().eq('event_id', eventId)
-      await supabase.from('notifications').delete().eq('event_id', eventId)
-      await supabase.from('activity_log').delete().eq('event_id', eventId)
-      await supabase.from('rooming_list').delete().eq('event_id', eventId)
-      await supabase.from('travel_plan').delete().eq('event_id', eventId)
-      await supabase.from('itinerary').delete().eq('event_id', eventId)
-      await supabase.from('events').delete().eq('id', eventId)
-      setEvents(prev => prev.filter(e => e.id !== eventId))
+      await logActivity({
+        action: 'event_deleted',
+        entity_type: 'event',
+        entity_name: ev.event_name,
+        event_id: ev.id,
+        details: { full_event_snapshot: ev, deleted_by_role: userRole },
+      })
+      await supabase.from('elements').delete().eq('event_id', ev.id)
+      await supabase.from('tasks').delete().eq('event_id', ev.id)
+      await supabase.from('notifications').delete().eq('event_id', ev.id)
+      await supabase.from('activity_log').delete().eq('event_id', ev.id)
+      await supabase.from('rooming_list').delete().eq('event_id', ev.id)
+      await supabase.from('travel_plan').delete().eq('event_id', ev.id)
+      await supabase.from('itinerary').delete().eq('event_id', ev.id)
+      await supabase.from('element_assignments').delete().eq('event_id', ev.id)
+      await supabase.from('events').delete().eq('id', ev.id)
+      setEvents(prev => prev.filter(e => e.id !== ev.id))
+      showToast(`"${ev.event_name}" permanently deleted.`)
     } catch (err) {
       console.error('Delete failed:', err)
-      alert('Delete failed. Check console.')
+      showToast('Delete failed — check console.')
     }
+  }
+
+  const handleMarkTest = async (ev) => {
+    const newVal = !ev.is_test
+    await supabase.from('events').update({ is_test: newVal }).eq('id', ev.id)
+    setEvents(prev => prev.map(e => e.id === ev.id ? { ...e, is_test: newVal } : e))
   }
 
   if (openEvent) {
@@ -375,6 +406,75 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
           onClose={() => setAssignEvent(null)}
           onUpdated={handleUpdated}
         />
+      )}
+
+      {confirmDelete && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(26,25,21,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 300, padding: '24px',
+        }}>
+          <div style={{
+            background: '#faf8f5', border: '1px solid #d8d2c8',
+            borderRadius: '12px', padding: '28px 32px',
+            maxWidth: '400px', width: '100%',
+          }}>
+            <p style={{ fontSize: '15px', fontWeight: 600, color: '#1a1008', marginBottom: '6px', fontFamily: 'var(--font-body)' }}>
+              Delete "{confirmDelete.event_name}"?
+            </p>
+            <p style={{ fontSize: '13px', color: '#7a7060', marginBottom: '18px', lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
+              This permanently deletes all elements, tasks, travel, and activity data. Type the event name to confirm.
+            </p>
+            <input
+              value={deleteTyped}
+              onChange={e => setDeleteTyped(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && deleteTyped === confirmDelete.event_name) executeDelete() }}
+              placeholder={confirmDelete.event_name}
+              style={{
+                width: '100%', padding: '9px 12px', fontSize: '13px',
+                border: '1px solid #c8c2b8', borderRadius: '8px',
+                background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)',
+                outline: 'none', boxSizing: 'border-box', marginBottom: '16px',
+              }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={() => { setConfirmDelete(null); setDeleteTyped('') }} style={{
+                padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
+                background: 'none', border: '1px solid #c8c2b8',
+                borderRadius: '8px', cursor: 'pointer', color: '#1a1008',
+              }}>
+                Cancel
+              </button>
+              <button
+                onClick={executeDelete}
+                disabled={deleteTyped !== confirmDelete.event_name}
+                style={{
+                  padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
+                  fontWeight: 500, background: deleteTyped === confirmDelete.event_name ? '#bc1723' : '#e0d8d0',
+                  color: deleteTyped === confirmDelete.event_name ? '#fff' : '#a09080',
+                  border: 'none', borderRadius: '8px',
+                  cursor: deleteTyped === confirmDelete.event_name ? 'pointer' : 'not-allowed',
+                  transition: 'background 0.15s',
+                }}
+              >
+                Delete permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+          background: '#1a1008', color: '#faf8f5', padding: '10px 20px',
+          borderRadius: '8px', fontSize: '13px', fontFamily: 'var(--font-body)',
+          zIndex: 400, pointerEvents: 'none', whiteSpace: 'nowrap',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+        }}>
+          {toast}
+        </div>
       )}
 
       {(showNewEvent || editEvent) && (
