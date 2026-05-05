@@ -246,16 +246,25 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
   async function confirmAndArchive() {
     const ev = confirmArchive
     setConfirmArchive(null)
-    await supabase.from('events').update({ archived: true }).eq('id', ev.id)
+    const archivedAt = new Date().toISOString()
+    await supabase.from('events').update({
+      archived: true,
+      archived_at: archivedAt,
+      archived_by: session.user.email,
+    }).eq('id', ev.id)
     setEvents(prev => prev.filter(e => e.id !== ev.id))
-    setArchivedEvents(prev => [ev, ...prev])
+    setArchivedEvents(prev => [{ ...ev, archived: true, archived_at: archivedAt, archived_by: session.user.email }, ...prev])
     await logEventArchived(ev)
   }
 
   async function handleRestore(ev) {
-    await supabase.from('events').update({ archived: false }).eq('id', ev.id)
+    await supabase.from('events').update({
+      archived: false,
+      archived_at: null,
+      archived_by: null,
+    }).eq('id', ev.id)
     setArchivedEvents(prev => prev.filter(e => e.id !== ev.id))
-    setEvents(prev => [{ ...ev, archived: false }, ...prev])
+    setEvents(prev => [{ ...ev, archived: false, archived_at: null, archived_by: null }, ...prev])
     await logEventRestored(ev)
   }
 
