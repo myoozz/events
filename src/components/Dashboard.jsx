@@ -124,7 +124,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
     let activeQuery = supabase
       .from('events')
       .select('*, clients(group_name, brand_name, contact_person, contact_info)')
-      .eq('archived', false)
+      .is('archived_at', null)
       .order('created_at', { ascending: false })
 
     if (userRole !== 'admin') {
@@ -137,8 +137,8 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
     let archivedQuery = supabase
       .from('events')
       .select('*, clients(group_name, brand_name)')
-      .eq('archived', true)
-      .order('created_at', { ascending: false })
+      .not('archived_at', 'is', null)
+      .order('archived_at', { ascending: false })
 
     if (userRole !== 'admin') {
       archivedQuery = archivedQuery.or(`assigned_to.cs.{"${session.user.email}"},created_by.eq.${session.user.email}`)
