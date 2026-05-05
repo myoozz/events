@@ -572,37 +572,71 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
       </div>
 
       {/* Search + filters */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search events or clients..."
           style={{
             flex: 1, minWidth: '200px', padding: '8px 12px', fontSize: '13px',
-            border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
-            background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)', outline: 'none',
+            border: '1px solid #c8c2b8', borderRadius: '8px',
+            background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)', outline: 'none',
           }}
         />
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-          style={{ padding: '8px 12px', fontSize: '13px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
           <option value="">All statuses</option>
-          {['pitch','won','active','on hold','lost'].map(s => (
+          {['pitch','won','active','on hold','lost','completed'].map(s => (
             <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>
           ))}
         </select>
         {allClients.length > 0 && (
           <select value={filterClient} onChange={e => setFilterClient(e.target.value)}
-            style={{ padding: '8px 12px', fontSize: '13px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+            style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
             <option value="">All clients</option>
             {allClients.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         )}
-        {(search || filterStatus || filterClient) && (
-          <button onClick={() => { setSearch(''); setFilterStatus(''); setFilterClient('') }}
-            style={{ padding: '8px 12px', fontSize: '12px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-tertiary)' }}>
+        {allCities.length > 0 && (
+          <select value={filterCity} onChange={e => setFilterCity(e.target.value)}
+            style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+            <option value="">All cities</option>
+            {allCities.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )}
+        <select value={filterSort} onChange={e => setFilterSort(e.target.value)}
+          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+          <option value="smart">Default smart</option>
+          <option value="recent_opened">Recently opened</option>
+          <option value="recent_created">Recently created</option>
+          <option value="date_asc">Date ↑</option>
+          <option value="date_desc">Date ↓</option>
+          <option value="az">A – Z</option>
+        </select>
+        {(search || filterStatus || filterClient || filterCity) && (
+          <button onClick={() => { setSearch(''); setFilterStatus(''); setFilterClient(''); setFilterCity('') }}
+            style={{ padding: '8px 12px', fontSize: '12px', fontFamily: 'var(--font-body)', background: 'none', border: '1px solid #c8c2b8', borderRadius: '8px', cursor: 'pointer', color: '#7a7060' }}>
             Clear
           </button>
         )}
       </div>
+      {userRole === 'admin' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <button
+            onClick={() => setShowTestEvents(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '7px',
+              padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
+              background: showTestEvents ? '#1a1008' : 'none',
+              color: showTestEvents ? '#faf8f5' : '#7a7060',
+              border: '1px solid #c8c2b8', borderRadius: '20px',
+              cursor: 'pointer', transition: 'all 0.15s',
+            }}
+          >
+            <span style={{ fontSize: '10px', opacity: 0.7 }}>TEST</span>
+            {showTestEvents ? 'Showing test events' : 'Show test events'}
+          </button>
+        </div>
+      )}
 
       {/* Active / Archived tabs */}
       <div style={{
