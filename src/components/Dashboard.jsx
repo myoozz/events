@@ -71,7 +71,6 @@ function ConfirmDialog({ message, onConfirm, onCancel }) {
           </button>
         </div>
       </div>
-      <ScreenGuide screen='dashboard' />
     </div>
   )
 }
@@ -128,14 +127,14 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
         border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
         padding: '10px 16px',
         background: 'linear-gradient(135deg, #ffffff 60%, #fdf5f5 100%)',
-        position: 'relative', overflow: 'hidden', cursor: 'pointer',
+        position: 'relative', cursor: 'pointer', zIndex: menuOpen ? 100 : 'auto',
       }}
     >
       <motion.div
         variants={accentBarVariants}
         style={{
           position: 'absolute', left: 0, top: 0, bottom: 0, width: '3px',
-          background: '#F28F3B', transformOrigin: 'left',
+          background: '#F28F3B', transformOrigin: 'left', borderRadius: 'var(--radius) 0 0 var(--radius)',
         }}
       />
 
@@ -155,7 +154,7 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
           {STATUS_LABELS[ev.status] || ev.status}
         </span>
         {(userRole === 'admin' || userRole === 'manager') && (
-          <div style={{ position: 'relative', flexShrink: 0 }} ref={menuRef}>
+          <div style={{ position: 'relative', flexShrink: 0, zIndex: menuOpen ? 1000 : 50 }} ref={menuRef}>
             <button
               onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen) }}
               style={{
@@ -169,7 +168,7 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
               <div style={{
                 position: 'absolute', right: 0, top: '100%', marginTop: '4px',
                 background: 'var(--bg)', border: '0.5px solid var(--border-strong)',
-                borderRadius: 'var(--radius-sm)', zIndex: 10, minWidth: '160px', overflow: 'hidden',
+                borderRadius: 'var(--radius-sm)', zIndex: 1001, minWidth: '160px', overflow: 'hidden',
               }}>
                 {[
                   { label: 'Open event',   action: () => { onOpen(ev); setMenuOpen(false) },   color: 'var(--text)' },
@@ -209,7 +208,6 @@ function EventCard({ ev, onOpen, onEdit, onArchive, onAssign, onDuplicate, userR
           {line2Parts.join(' · ')}
         </div>
       )}
-      <ScreenGuide screen='dashboard' />
     </motion.div>
   )
 }

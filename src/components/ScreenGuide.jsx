@@ -41,22 +41,22 @@ const GUIDES = {
   },
 }
 
-const STORAGE_KEY = 'myoozz_guide_counts'
+const STORAGE_KEY = 'myoozz_guide_dismissed'
 
-function getLoginCounts() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') } catch { return {} }
+function isDismissed(screen) {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')[screen] === true } catch { return false }
 }
 
-function incrementCount(screen) {
-  const counts = getLoginCounts()
-  counts[screen] = (counts[screen] || 0) + 1
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(counts))
-  return counts[screen]
+function dismiss(screen) {
+  try {
+    const map = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+    map[screen] = true
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(map))
+  } catch {}
 }
 
-function getCount(screen) {
-  return getLoginCounts()[screen] || 0
-}
+// Module-level guard: prevents multiple simultaneous mounts for the same screen
+const activeScreens = new Set()
 
 export default function ScreenGuide({ screen }) {
   const [visible, setVisible] = useState(false)
@@ -65,13 +65,16 @@ export default function ScreenGuide({ screen }) {
 
   useEffect(() => {
     if (!guide) return
-    const count = getCount(screen)
-    if (count < 10) {
-      setVisible(true)
-      setStep(0)
-      incrementCount(screen)
-    }
+    if (activeScreens.has(screen)) return
+    activeScreens.add(screen)
+    if (!isDismissed(screen)) setVisible(true)
+    return () => activeScreens.delete(screen)
   }, [screen])
+
+  function close() {
+    dismiss(screen)
+    setVisible(false)
+  }
 
   if (!visible || !guide) return null
 
@@ -99,7 +102,7 @@ export default function ScreenGuide({ screen }) {
           </div>
         </div>
         <button
-          onClick={() => setVisible(false)}
+          onClick={close}
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--text-tertiary)', padding: '4px' }}
         >✕</button>
       </div>
@@ -137,19 +140,16 @@ export default function ScreenGuide({ screen }) {
             >← Back</button>
           )}
           <button
-            onClick={() => isLast ? setVisible(false) : setStep(s => s + 1)}
+            onClick={() => isLast ? close() : setStep(s => s + 1)}
             style={{ flex: 2, padding: '8px', fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
           >
             {isLast ? 'Got it ✓' : 'Next →'}
           </button>
           <button
-            onClick={() => setVisible(false)}
+            onClick={close}
             style={{ padding: '8px 10px', fontSize: '11px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-tertiary)' }}
-            title="Skip for now — guide will show again next time"
+            title="Dismiss guide permanently"
           >Skip</button>
-        </div>
-        <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textAlign: 'center', marginTop: '8px' }}>
-          This guide shows for your first 10 sessions on this screen
         </div>
       </div>
     </div>
