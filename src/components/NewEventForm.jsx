@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase'
+import { notifyApprovalRequired } from '../utils/notificationService'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -32,9 +33,9 @@ const SEATING = [
 ]
 
 const TIERS = [
-  { value: 'Basic',   label: 'Basic',   desc: 'Functional, on-budget delivery' },
-  { value: 'Mid',     label: 'Mid',     desc: 'Elevated experience, quality focus' },
-  { value: 'Premium', label: 'Premium', desc: 'No-compromise benchmark event' },
+  { value: 'Standard',      label: 'Basic',   desc: 'Functional, on-budget delivery' },
+  { value: 'Premium',       label: 'Mid',     desc: 'Elevated experience, quality focus' },
+  { value: 'Ultra Premium', label: 'Premium', desc: 'No-compromise benchmark event' },
 ]
 
 const TOTAL_STEPS = 12
@@ -136,6 +137,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   const [showMore, setShowMore] = useState(false)
   const [cityInput, setCityInput] = useState('')
   const [error, setError] = useState('')
+  const [stepError, setStepError] = useState('')
 
   const [a, setA] = useState({
     eventName: '',
@@ -175,11 +177,44 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   }
   const removeCity = (c) => set('cities', a.cities.filter(x => x !== c))
 
+  const validateStep = (currentStep) => {
+    if (currentStep === 3) {
+      const email = a.clientSpocEmail.trim()
+      const phone = a.clientSpocPhone.trim()
+      if (email) {
+        const atIdx = email.indexOf('@')
+        if (atIdx < 1 || !email.slice(atIdx + 1).includes('.')) {
+          return 'Enter a valid email address (e.g. rahul@client.com).'
+        }
+      }
+      if (phone) {
+        if (!/^\d{10}$/.test(phone)) {
+          return 'Mobile number must be exactly 10 digits, numbers only.'
+        }
+      }
+    }
+    if (currentStep === 5) {
+      if (a.startDate && a.endDate && a.endDate < a.startDate) {
+        return 'End date cannot be before start date.'
+      }
+    }
+    return ''
+  }
+
   const handleCreate = async () => {
     if (!a.eventName.trim()) { setError('Event name is required.'); return }
+    if (a.startDate && a.endDate && a.endDate < a.startDate) {
+      setError('End date cannot be before start date.')
+      return
+    }
     setLoading(true)
     setError('')
     try {
+      // Resolve auth UUID → users table UUID (auth_id ≠ users.id in this schema)
+      const { data: userData } = await supabase
+        .from('users').select('id').eq('auth_id', session?.user?.id).single()
+      const resolvedUserId = userData?.id ?? session?.user?.id
+
       const cityDates = {}
       a.cities.forEach(c => {
         cityDates[c] = { start: a.startDate || null, end: a.endDate || null }
@@ -187,7 +222,6 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
       const payload = {
         name: a.eventName.trim(),
-        event_name: a.eventName.trim(),
         client_name: a.clientName || null,
         brand_name: a.brandName || null,
         client_spoc_name: a.clientSpocName || null,
@@ -209,19 +243,36 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         sub_events: a.hasSubEvents ? { count: a.subEventCount } : null,
         status: 'active',
         proposal_status: 'draft',
-        created_by: session?.user?.id,
+        created_by: resolvedUserId,
         created_by_role: userRole,
         review_status: userRole === 'event_lead' ? 'pending' : 'approved',
       }
 
+      console.log('budget_tier value being sent:', a.budgetTier)
+      console.log('FULL PAYLOAD:', JSON.stringify(payload, null, 2))
       const { data: event, error: dbErr } = await supabase
         .from('events').insert(payload).select().single()
       if (dbErr) throw dbErr
+
+      // Fire-and-forget: notify admins that an event_lead created an event pending approval
+      if (userRole === 'event_lead') {
+        supabase.from('users').select('id').eq('role', 'admin').then(({ data: admins }) => {
+          notifyApprovalRequired({
+            adminIds: admins?.map(u => u.id) ?? [],
+            actorId: session?.user?.id,
+            eventName: event.name,
+            eventId: event.id,
+          })
+        })
+      }
+
       onCreated(event)
       onClose()
     } catch (err) {
-      console.error('Create event error:', JSON.stringify(err))
-      setError('Something went wrong. Please try again.')
+      console.log('RAW CREATE EVENT ERROR:', err)
+      console.error('Create event error:', err)
+      const detail = err?.message || err?.details || err?.hint || JSON.stringify(err)
+      setError(detail || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -230,7 +281,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   // ── ENTRY ─────────────────────────────────────────────────────────────────
   if (flowMode === 'entry') {
     return (
-      <div style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={S.overlay} onClick={(e) => e.stopPropagation()}>
         <div style={S.modal}>
           <div style={S.header}>
             <div>
@@ -273,7 +324,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
     const canAdvance = step !== 2 || a.eventName.trim().length > 0
 
     return (
-      <div style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={S.overlay} onClick={(e) => e.stopPropagation()}>
         <div style={S.modal}>
           <div style={{ ...S.header, alignItems: 'center' }}>
             <span style={{
@@ -297,21 +348,27 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
               step={step} a={a} set={set}
               cityInput={cityInput} setCityInput={setCityInput}
               addCity={addCity} removeCity={removeCity}
-              users={users}
+              users={users} setStep={setStep} stepError={stepError}
             />
           </div>
 
           <div style={S.footer}>
             <button
               style={{ ...S.btn, ...S.btnGhost }}
-              onClick={() => step === 1 ? setFlowMode('entry') : setStep(step - 1)}
+              onClick={() => { setStepError(''); step === 1 ? setFlowMode('entry') : setStep(step - 1) }}
             >
               ← Back
             </button>
             <button
               id="nef-next"
               style={{ ...S.btn, ...(canAdvance ? S.btnDark : { ...S.btnDark, opacity: 0.4, cursor: 'not-allowed' }) }}
-              onClick={() => canAdvance && (isLastStep ? setStep('preview') : setStep(step + 1))}
+              onClick={() => {
+                if (!canAdvance) return
+                const err = validateStep(step)
+                if (err) { setStepError(err); return }
+                setStepError('')
+                isLastStep ? setStep('preview') : setStep(step + 1)
+              }}
             >
               {isLastStep ? 'Review →' : 'Next →'}
             </button>
@@ -324,7 +381,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   // ── GUIDED — PREVIEW ──────────────────────────────────────────────────────
   if (flowMode === 'guided' && step === 'preview') {
     return (
-      <div style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={S.overlay} onClick={(e) => e.stopPropagation()}>
         <div style={{ ...S.modal, maxWidth: '620px' }}>
           <div style={S.header}>
             <div>
@@ -424,7 +481,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   // ── CLASSIC FORM ──────────────────────────────────────────────────────────
   if (flowMode === 'classic') {
     return (
-      <div style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={S.overlay} onClick={(e) => e.stopPropagation()}>
         <div style={S.modal}>
           <div style={S.header}>
             <div>
@@ -645,7 +702,7 @@ function EntryTile({ icon, title, desc, onClick, accent, disabled, badge }) {
 
 // ─── Guided Step Content ──────────────────────────────────────────────────────
 
-function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, removeCity, users }) {
+function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, removeCity, users, setStep, stepError }) {
   const inputRef = useRef(null)
   const selectedType = EVENT_TYPES.find(t => t.value === a.eventType)
 
@@ -1044,7 +1101,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
           ))}
           <button
             style={{ ...S.tile, color: '#7a7060', fontSize: '13px', textAlign: 'center', padding: '10px' }}
-            onClick={() => set('agencyPocId', '')}
+            onClick={() => { set('agencyPocId', ''); setStep('preview') }}
           >
             Skip — assign later
           </button>
@@ -1061,6 +1118,15 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
       <h2 style={{ ...S.title, fontSize: '22px', marginBottom: '4px' }}>{q.title}</h2>
       <p style={{ ...S.sub, marginBottom: '22px' }}>{q.hint}</p>
       {q.content}
+      {stepError && (
+        <div style={{
+          marginTop: '12px', padding: '10px 14px', background: '#fde8ea',
+          border: '1px solid #f5b5ba', borderRadius: '6px',
+          fontSize: '13px', color: '#8a1119',
+        }}>
+          {stepError}
+        </div>
+      )}
     </div>
   )
 }
