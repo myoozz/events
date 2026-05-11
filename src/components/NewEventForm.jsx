@@ -261,7 +261,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
           notifyApprovalRequired({
             adminIds: admins?.map(u => u.id) ?? [],
             actorId: session?.user?.id,
-            eventName: event.name,
+            eventName: event.event_name,
             eventId: event.id,
           })
         })

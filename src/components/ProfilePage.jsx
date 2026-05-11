@@ -439,7 +439,7 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
                     <div style={S.eventLeft}>
                       <span style={{ ...S.statusDot, background: sm.color }} />
                       <div>
-                        <div style={S.eventName}>{ev.name}</div>
+                        <div style={S.eventName}>{ev.event_name}</div>
                         {cities && <div style={S.eventCities}>{cities}</div>}
                       </div>
                     </div>
