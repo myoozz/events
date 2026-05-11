@@ -319,19 +319,6 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
     setEvents(prev => prev.map(e => e.id === ev.id ? { ...e, is_test: newVal } : e))
   }
 
-  if (openEvent) {
-    return (
-      <EventPage
-        event={openEvent}
-        userRole={userRole}
-        session={session}
-        onBack={() => { setOpenEvent(null); setInitialTab('elements') }}
-        onUpdated={handleUpdated}
-        initialTab={initialTab}
-      />
-    )
-  }
-
   function getGreeting() {
     const hour = new Date().getHours()
     const name = userName?.split(' ')[0] || 'there'
@@ -424,6 +411,19 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
     }
     return filtered
   }, [events, archivedEvents, view, search, filterStatus, filterType, filterClient, filterCity, filterSort, showTestEvents])
+
+  if (openEvent) {
+    return (
+      <EventPage
+        event={openEvent}
+        userRole={userRole}
+        session={session}
+        onBack={() => { setOpenEvent(null); setInitialTab('elements') }}
+        onUpdated={handleUpdated}
+        initialTab={initialTab}
+      />
+    )
+  }
 
   const { greeting, message, urgent } = getGreeting()
 
