@@ -786,55 +786,58 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
                   gap: '16px',
                 }}
               >
-                {displayEvents.map(ev => {
-                  const assignedUsers = (ev.assigned_to || [])
-                    .map(email => teamUsers.find(u => u.email === email))
-                    .filter(Boolean)
-                  return view === 'active' ? (
-                    <EventCard
-                      key={`active-${ev.id}`}
-                      event={ev}
-                      userRole={userRole}
-                      currentUserEmail={session?.user?.email}
-                      assignedUsers={assignedUsers}
-                      hasOverdueTasks={false}
-                      isPendingApproval={ev.review_status === 'pending_review'}
-                      onOpen={setOpenEvent}
-                      onArchive={setConfirmArchive}
-                      onUnarchive={handleRestore}
-                      onDelete={handleDeleteEvent}
-                      onMarkTest={handleMarkTest}
-                    />
-                  ) : (
-                    <motion.div key={`archived-${ev.id}`} variants={itemVariants} style={{
-                      border: '1px solid #d8d2c8', borderRadius: '12px',
-                      padding: '16px 20px', background: '#faf8f5',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      opacity: 0.75,
-                    }}>
-                      <div>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1008', marginBottom: '3px' }}>{ev.event_name}</div>
-                        <div style={{ fontSize: '12px', color: '#7a7060' }}>
-                          {ev.clients?.group_name}{ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : ''}
-                          {ev.archived_at ? ` · archived ${new Date(ev.archived_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                {view === 'active'
+                  ? displayEvents.map(ev => {
+                      const assignedUsers = (ev.assigned_to || [])
+                        .map(email => teamUsers.find(u => u.email === email))
+                        .filter(Boolean)
+                      return (
+                        <EventCard
+                          key={`active-${ev.id}`}
+                          event={ev}
+                          userRole={userRole}
+                          currentUserEmail={session?.user?.email}
+                          assignedUsers={assignedUsers}
+                          hasOverdueTasks={false}
+                          isPendingApproval={ev.review_status === 'pending_review'}
+                          onOpen={setOpenEvent}
+                          onArchive={setConfirmArchive}
+                          onUnarchive={handleRestore}
+                          onDelete={handleDeleteEvent}
+                          onMarkTest={handleMarkTest}
+                        />
+                      )
+                    })
+                  : displayEvents.map(ev => (
+                      <motion.div key={`archived-${ev.id}`} variants={itemVariants} style={{
+                        border: '1px solid #d8d2c8', borderRadius: '12px',
+                        padding: '16px 20px', background: '#faf8f5',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        opacity: 0.75,
+                      }}>
+                        <div>
+                          <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1008', marginBottom: '3px' }}>{ev.event_name}</div>
+                          <div style={{ fontSize: '12px', color: '#7a7060' }}>
+                            {ev.clients?.group_name}{ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : ''}
+                            {ev.archived_at ? ` · archived ${new Date(ev.archived_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                          </div>
                         </div>
-                      </div>
-                      {(userRole === 'admin' || userRole === 'manager') && (
-                        <button
-                          onClick={() => handleRestore(ev)}
-                          style={{
-                            padding: '7px 14px', fontSize: '12px', fontWeight: 500,
-                            fontFamily: 'var(--font-body)', background: 'none',
-                            border: '1px solid #c8c2b8', flexShrink: 0,
-                            borderRadius: '8px', cursor: 'pointer', color: '#1a1008',
-                          }}
-                        >
-                          Restore
-                        </button>
-                      )}
-                    </motion.div>
-                  )
-                })}
+                        {(userRole === 'admin' || userRole === 'manager') && (
+                          <button
+                            onClick={() => handleRestore(ev)}
+                            style={{
+                              padding: '7px 14px', fontSize: '12px', fontWeight: 500,
+                              fontFamily: 'var(--font-body)', background: 'none',
+                              border: '1px solid #c8c2b8', flexShrink: 0,
+                              borderRadius: '8px', cursor: 'pointer', color: '#1a1008',
+                            }}
+                          >
+                            Restore
+                          </button>
+                        )}
+                      </motion.div>
+                    ))
+                }
               </motion.div>
             )}
           </motion.div>
