@@ -229,6 +229,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         client_spoc_email: a.clientSpocEmail || null,
         event_type: a.eventType || null,
         event_subtype: a.subCategory || null,
+        primary_city: a.cities[0] || null,
         cities: a.cities,
         city_dates: Object.keys(cityDates).length ? cityDates : null,
         start_date: a.startDate || null,
