@@ -806,7 +806,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
                       onMarkTest={handleMarkTest}
                     />
                   ) : (
-                    <motion.div key={ev.id} variants={itemVariants} style={{
+                    <motion.div key={`archived-${ev.id}`} variants={itemVariants} style={{
                       border: '1px solid #d8d2c8', borderRadius: '12px',
                       padding: '16px 20px', background: '#faf8f5',
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
