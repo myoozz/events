@@ -792,7 +792,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
                     .filter(Boolean)
                   return view === 'active' ? (
                     <EventCard
-                      key={ev.id}
+                      key={`active-${ev.id}`}
                       event={ev}
                       userRole={userRole}
                       currentUserEmail={session?.user?.email}
