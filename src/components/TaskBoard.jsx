@@ -244,7 +244,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
           recipientId: assignTo,
           actorId:     session.user.id,
           taskTitle:   modal.taskTitle,
-          eventName:   event?.name,
+          eventName:   event?.event_name,
           eventId,
           taskId:      modal.taskId,
         });
@@ -278,7 +278,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
           actorId,
           taskTitle,
           newStatus:   status,
-          eventName:   event?.name,
+          eventName:   event?.event_name,
           eventId,
           taskId,
         });
@@ -296,7 +296,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
               actorId,
               taskTitle,
               newStatus:   status,
-              eventName:   event?.name,
+              eventName:   event?.event_name,
               eventId,
               taskId,
             })

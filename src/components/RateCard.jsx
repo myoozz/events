@@ -1158,7 +1158,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                     onChange={e => { setTargetEvent(e.target.value); setTargetCity(''); setAddWarnings([]) }}
                     style={{ fontFamily: 'var(--font-body)', width: '100%', padding: '8px 10px', fontSize: '13px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', color: 'var(--text)', outline: 'none' }}>
                     <option value="">Select event</option>
-                    {events.map(ev => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
+                    {events.map(ev => <option key={ev.id} value={ev.id}>{ev.event_name}</option>)}
                   </select>
                 </div>
                 {targetEvent && (
