@@ -138,6 +138,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   const [users, setUsers] = useState([])
   const [showMore, setShowMore] = useState(false)
   const [cityInput, setCityInput] = useState('')
+  const [guidedCityDates, setGuidedCityDates] = useState({})
   const [error, setError] = useState('')
   const [stepError, setStepError] = useState('')
 
@@ -172,7 +173,10 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
   const set = (key, val) => setA(prev => ({ ...prev, [key]: val }))
 
-  const removeCity = (c) => set('cities', a.cities.filter(x => x !== c))
+  const removeCity = (c) => {
+    set('cities', a.cities.filter(x => x !== c))
+    setGuidedCityDates(prev => { const next = { ...prev }; delete next[c]; return next })
+  }
 
   const validateStep = (currentStep) => {
     if (currentStep === 3) {
@@ -214,7 +218,11 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
       const cityDates = {}
       a.cities.forEach(c => {
-        cityDates[c] = { start: a.startDate || null, end: a.endDate || null }
+        if (flowMode === 'guided') {
+          cityDates[c] = { start: guidedCityDates[c]?.start || null, end: guidedCityDates[c]?.end || null }
+        } else {
+          cityDates[c] = { start: a.startDate || null, end: a.endDate || null }
+        }
       })
 
       const payload = {
@@ -884,6 +892,46 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                       color: 'rgba(232,228,220,0.7)', padding: 0, fontSize: '16px',
                       lineHeight: 1, fontFamily: 'inherit' }}>×</button>
                 </span>
+              ))}
+            </div>
+          )}
+          {a.cities.length > 0 && (
+            <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {a.cities.map(c => (
+                <div key={c} style={{ background: '#ede8dd', borderRadius: '6px', padding: '10px 12px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#1a1008', marginBottom: '8px',
+                    textTransform: 'capitalize' }}>
+                    {c}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <label style={{ fontSize: '11px', color: '#7a7060', display: 'block', marginBottom: '4px' }}>
+                        Start Date
+                      </label>
+                      <input
+                        style={S.input}
+                        type="date"
+                        value={guidedCityDates[c]?.start || ''}
+                        onChange={e => setGuidedCityDates(prev => ({
+                          ...prev, [c]: { ...prev[c], start: e.target.value }
+                        }))}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '11px', color: '#7a7060', display: 'block', marginBottom: '4px' }}>
+                        End Date
+                      </label>
+                      <input
+                        style={S.input}
+                        type="date"
+                        value={guidedCityDates[c]?.end || ''}
+                        onChange={e => setGuidedCityDates(prev => ({
+                          ...prev, [c]: { ...prev[c], end: e.target.value }
+                        }))}
+                      />
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           )}
