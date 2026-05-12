@@ -86,6 +86,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
   const [openEvent, setOpenEvent] = useState(null)
   const [assignEvent, setAssignEvent] = useState(null)
   const [confirmArchive, setConfirmArchive] = useState(null)
+  const [archiveTyped, setArchiveTyped] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [deleteTyped, setDeleteTyped] = useState('')
   const [toast, setToast] = useState(null)
@@ -252,6 +253,7 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
   async function confirmAndArchive() {
     const ev = confirmArchive
     setConfirmArchive(null)
+    setArchiveTyped('')
     const archivedAt = new Date().toISOString()
     await supabase.from('events').update({
       archived: true,
@@ -434,11 +436,61 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       {confirmArchive && (
-        <ConfirmDialog
-          message={`Archive "${confirmArchive.event_name}"? It will move to your archive and can be restored anytime.`}
-          onConfirm={confirmAndArchive}
-          onCancel={() => setConfirmArchive(null)}
-        />
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(26,25,21,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 300, padding: '24px',
+        }}>
+          <div style={{
+            background: '#faf8f5', border: '1px solid #d8d2c8',
+            borderRadius: '12px', padding: '28px 32px',
+            maxWidth: '400px', width: '100%',
+          }}>
+            <p style={{ fontSize: '15px', fontWeight: 600, color: '#1a1008', marginBottom: '6px', fontFamily: 'var(--font-body)' }}>
+              Archive "{confirmArchive.event_name}"?
+            </p>
+            <p style={{ fontSize: '13px', color: '#7a7060', marginBottom: '18px', lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
+              Type <strong>delete it</strong> below to archive this event. This cannot be undone.
+            </p>
+            <input
+              value={archiveTyped}
+              onChange={e => setArchiveTyped(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && archiveTyped.trim().toLowerCase() === 'delete it') confirmAndArchive() }}
+              placeholder='Type "delete it" to confirm'
+              style={{
+                width: '100%', padding: '9px 12px', fontSize: '13px',
+                border: '1px solid #c8c2b8', borderRadius: '8px',
+                background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)',
+                outline: 'none', boxSizing: 'border-box', marginBottom: '16px',
+              }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={() => { setConfirmArchive(null); setArchiveTyped('') }} style={{
+                padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
+                background: 'none', border: '1px solid #c8c2b8',
+                borderRadius: '8px', cursor: 'pointer', color: '#1a1008',
+              }}>
+                Cancel
+              </button>
+              <button
+                onClick={confirmAndArchive}
+                disabled={archiveTyped.trim().toLowerCase() !== 'delete it'}
+                style={{
+                  padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
+                  fontWeight: 500,
+                  background: archiveTyped.trim().toLowerCase() === 'delete it' ? '#A32D2D' : '#e0d8d0',
+                  color: archiveTyped.trim().toLowerCase() === 'delete it' ? '#fff' : '#a09080',
+                  border: 'none', borderRadius: '8px',
+                  cursor: archiveTyped.trim().toLowerCase() === 'delete it' ? 'pointer' : 'not-allowed',
+                  transition: 'background 0.15s',
+                }}
+              >
+                Archive event
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {assignEvent && (

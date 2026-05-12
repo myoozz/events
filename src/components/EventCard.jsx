@@ -82,7 +82,7 @@ function MenuItem({ item }) {
     <button
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      onClick={item.action}
+      onClick={(e) => { e.stopPropagation(); item.action(e) }}
       style={{
         display: 'block',
         width: '100%',
