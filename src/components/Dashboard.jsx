@@ -86,7 +86,6 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
   const [openEvent, setOpenEvent] = useState(null)
   const [assignEvent, setAssignEvent] = useState(null)
   const [confirmArchive, setConfirmArchive] = useState(null)
-  const [archiveTyped, setArchiveTyped] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [deleteTyped, setDeleteTyped] = useState('')
   const [toast, setToast] = useState(null)
@@ -253,7 +252,6 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
   async function confirmAndArchive() {
     const ev = confirmArchive
     setConfirmArchive(null)
-    setArchiveTyped('')
     const archivedAt = new Date().toISOString()
     await supabase.from('events').update({
       archived: true,
@@ -449,24 +447,11 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
             <p style={{ fontSize: '15px', fontWeight: 600, color: '#1a1008', marginBottom: '6px', fontFamily: 'var(--font-body)' }}>
               Archive "{confirmArchive.event_name}"?
             </p>
-            <p style={{ fontSize: '13px', color: '#7a7060', marginBottom: '18px', lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
-              Type <strong>delete it</strong> below to archive this event. This cannot be undone.
+            <p style={{ fontSize: '13px', color: '#7a7060', marginBottom: '24px', lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
+              This event will be moved to Archived. You can restore it at any time.
             </p>
-            <input
-              value={archiveTyped}
-              onChange={e => setArchiveTyped(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && archiveTyped.trim().toLowerCase() === 'delete it') confirmAndArchive() }}
-              placeholder='Type "delete it" to confirm'
-              style={{
-                width: '100%', padding: '9px 12px', fontSize: '13px',
-                border: '1px solid #c8c2b8', borderRadius: '8px',
-                background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)',
-                outline: 'none', boxSizing: 'border-box', marginBottom: '16px',
-              }}
-              autoFocus
-            />
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button onClick={() => { setConfirmArchive(null); setArchiveTyped('') }} style={{
+              <button onClick={() => setConfirmArchive(null)} style={{
                 padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
                 background: 'none', border: '1px solid #c8c2b8',
                 borderRadius: '8px', cursor: 'pointer', color: '#1a1008',
@@ -475,18 +460,14 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
               </button>
               <button
                 onClick={confirmAndArchive}
-                disabled={archiveTyped.trim().toLowerCase() !== 'delete it'}
                 style={{
                   padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
-                  fontWeight: 500,
-                  background: archiveTyped.trim().toLowerCase() === 'delete it' ? '#A32D2D' : '#e0d8d0',
-                  color: archiveTyped.trim().toLowerCase() === 'delete it' ? '#fff' : '#a09080',
-                  border: 'none', borderRadius: '8px',
-                  cursor: archiveTyped.trim().toLowerCase() === 'delete it' ? 'pointer' : 'not-allowed',
+                  fontWeight: 500, background: '#A32D2D', color: '#fff',
+                  border: 'none', borderRadius: '8px', cursor: 'pointer',
                   transition: 'background 0.15s',
                 }}
               >
-                Archive event
+                Archive Event
               </button>
             </div>
           </div>
@@ -516,13 +497,13 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
               Delete "{confirmDelete.event_name}"?
             </p>
             <p style={{ fontSize: '13px', color: '#7a7060', marginBottom: '18px', lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
-              This permanently deletes all elements, tasks, travel, and activity data. Type the event name to confirm.
+              This will permanently delete the event and cannot be undone.
             </p>
             <input
               value={deleteTyped}
               onChange={e => setDeleteTyped(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && deleteTyped === confirmDelete.event_name) executeDelete() }}
-              placeholder={confirmDelete.event_name}
+              onKeyDown={e => { if (e.key === 'Enter' && deleteTyped.trim().toLowerCase() === 'delete it') executeDelete() }}
+              placeholder='Type "delete it" to confirm'
               style={{
                 width: '100%', padding: '9px 12px', fontSize: '13px',
                 border: '1px solid #c8c2b8', borderRadius: '8px',
@@ -541,17 +522,18 @@ export default function Dashboard({ userRole, session, userName, resetKey }) {
               </button>
               <button
                 onClick={executeDelete}
-                disabled={deleteTyped !== confirmDelete.event_name}
+                disabled={deleteTyped.trim().toLowerCase() !== 'delete it'}
                 style={{
                   padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
-                  fontWeight: 500, background: deleteTyped === confirmDelete.event_name ? '#bc1723' : '#e0d8d0',
-                  color: deleteTyped === confirmDelete.event_name ? '#fff' : '#a09080',
+                  fontWeight: 500,
+                  background: deleteTyped.trim().toLowerCase() === 'delete it' ? '#bc1723' : '#e0d8d0',
+                  color: deleteTyped.trim().toLowerCase() === 'delete it' ? '#fff' : '#a09080',
                   border: 'none', borderRadius: '8px',
-                  cursor: deleteTyped === confirmDelete.event_name ? 'pointer' : 'not-allowed',
+                  cursor: deleteTyped.trim().toLowerCase() === 'delete it' ? 'pointer' : 'not-allowed',
                   transition: 'background 0.15s',
                 }}
               >
-                Delete permanently
+                Delete Permanently
               </button>
             </div>
           </div>
