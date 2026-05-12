@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase'
 import { notifyApprovalRequired } from '../utils/notificationService'
+import CityAutocomplete from './CityAutocomplete'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -578,18 +579,18 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
             </div>
             <div style={{ marginBottom: '14px' }}>
               <label style={S.label}>Cities</label>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                <input style={ci} value={cityInput}
-                  onChange={e => setCityInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addCity()}
-                  placeholder="Type city and press Add" />
-                <button style={{ ...S.btn, ...S.btnDark, padding: '6px 14px', whiteSpace: 'nowrap', flexShrink: 0 }}
-                  onClick={addCity}>
-                  + Add
-                </button>
-              </div>
+              <CityAutocomplete
+                value={cityInput}
+                onChange={setCityInput}
+                onSelect={({ city }) => {
+                  const normalised = city.trim().toLowerCase()
+                  if (!a.cities.includes(normalised)) set('cities', [...a.cities, normalised])
+                  setCityInput('')
+                }}
+                placeholder="Search and add a city…"
+              />
               {a.cities.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
                   {a.cities.map(c => (
                     <span key={c} style={S.pill}>
                       {c}
