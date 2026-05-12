@@ -66,6 +66,7 @@ export default function CityAutocomplete({
   onSelect,
   placeholder = 'Search city...',
   disabled = false,
+  inputStyle: inputStyleOverride = {},
 }) {
   const [ready, setReady] = useState(false)
   const [results, setResults] = useState([])
@@ -164,6 +165,7 @@ export default function CityAutocomplete({
     ...S.input,
     ...(focused ? S.inputFocus : {}),
     ...(disabled ? S.inputDisabled : {}),
+    ...inputStyleOverride,
   }
 
   return (

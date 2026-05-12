@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase'
+import CityAutocomplete from './CityAutocomplete'
 import { generateAgentTemplate, exportTravelPlan, exportMICEItinerary } from '../utils/excelExport'
 import {
   Plane, Building2, Car, Plus, Trash2, ChevronDown, ChevronRight,
@@ -68,7 +69,7 @@ function FieldRow({ children }) {
   )
 }
 
-function Field({ label, value, onChange, type = 'text', options, half, third, full, placeholder }) {
+function Field({ label, value, onChange, type = 'text', options, half, third, full, placeholder, city }) {
   const width = full ? '100%' : third ? 'calc(33% - 6px)' : half ? 'calc(50% - 4px)' : 'calc(25% - 6px)'
   const inputStyle = {
     width: '100%', padding: '6px 10px', border: '0.5px solid var(--border-strong)',
@@ -81,7 +82,15 @@ function Field({ label, value, onChange, type = 'text', options, half, third, fu
       <label style={{ display: 'block', fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 3, fontWeight: 500 }}>
         {label}
       </label>
-      {options ? (
+      {city ? (
+        <CityAutocomplete
+          value={value}
+          onChange={onChange}
+          onSelect={({ city: c }) => onChange(c)}
+          placeholder={placeholder}
+          inputStyle={inputStyle}
+        />
+      ) : options ? (
         <select value={value} onChange={e => onChange(e.target.value)} style={inputStyle}>
           <option value="">— select —</option>
           {Object.entries(options).map(([k, v]) => (
@@ -107,8 +116,8 @@ function FlightForm({ form, setForm, onSave, onCancel, saving }) {
       borderRadius: 'var(--radius)', padding: 16, display: 'flex', flexDirection: 'column', gap: 10
     }}>
       <FieldRow>
-        <Field label="From" value={form.from_location} onChange={s('from_location')} placeholder="Delhi (DEL)" third />
-        <Field label="To" value={form.to_location} onChange={s('to_location')} placeholder="Mumbai (BOM)" third />
+        <Field label="From" value={form.from_location} onChange={s('from_location')} placeholder="Delhi (DEL)" third city />
+        <Field label="To" value={form.to_location} onChange={s('to_location')} placeholder="Mumbai (BOM)" third city />
         <Field label="Date" value={form.travel_date} onChange={s('travel_date')} type="date" third />
       </FieldRow>
       <FieldRow>
@@ -729,7 +738,7 @@ function ItineraryHeader({ itinerary, onSave, saving }) {
       </FieldRow>
       <FieldRow>
         <Field label="Purpose" value={form.purpose} onChange={s('purpose')} options={PURPOSE_LABELS} half />
-        <Field label="Origin City" value={form.origin_city} onChange={s('origin_city')} placeholder="Delhi" half />
+        <Field label="Origin City" value={form.origin_city} onChange={s('origin_city')} placeholder="Delhi" half city />
       </FieldRow>
       <FieldRow>
         <Field label="Start Date" value={form.start_date} onChange={s('start_date')} type="date" />
