@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase'
 import { notifyApprovalRequired } from '../utils/notificationService'
+import CityAutocomplete from './CityAutocomplete'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -148,6 +149,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
     seatingFormat: '',
     budgetTier: '', perPaxBudget: '',
     hasSubEvents: false, subEventCount: 2,
+    sub_events: '',
     clientName: '', brandName: '',
     clientSpocName: '', clientSpocPhone: '', clientSpocEmail: '',
     agencyPocId: '',
@@ -241,7 +243,9 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         seating_format: a.seatingFormat || null,
         budget_tier: a.budgetTier || null,
         per_pax_budget: a.perPaxBudget ? parseInt(a.perPaxBudget) : null,
-        sub_events: a.hasSubEvents ? { count: a.subEventCount } : null,
+        sub_events: a.hasSubEvents
+          ? { count: a.subEventCount }
+          : (a.sub_events ? { count: parseInt(a.sub_events) } : null),
         status: 'active',
         proposal_status: 'draft',
         created_by: resolvedUserId,
@@ -481,9 +485,10 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
   // ── CLASSIC FORM ──────────────────────────────────────────────────────────
   if (flowMode === 'classic') {
+    const ci = { ...S.input, padding: '6px 12px' }
     return (
       <div style={S.overlay} onClick={(e) => e.stopPropagation()}>
-        <div style={S.modal}>
+        <div style={{ ...S.modal, maxWidth: '896px' }}>
           <div style={S.header}>
             <div>
               <h2 style={S.title}>New event</h2>
@@ -492,37 +497,38 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
             <button style={S.closeBtn} onClick={onClose}>×</button>
           </div>
 
-          <div style={{ ...S.body, paddingTop: '20px' }}>
-            {/* CLIENT & BRAND */}
-            <div style={S.sectionLabel}>Client & Brand</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+          <div style={{ ...S.body, paddingTop: '18px' }}>
+
+            {/* ── CLIENT & BRAND ── */}
+            <div style={S.sectionLabel}>Client &amp; Brand</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
               <div>
-                <label style={S.label}>Client / Group <span style={{ color: '#bc1723' }}>*</span></label>
-                <input style={S.input} value={a.clientName}
+                <label style={S.label}>Client / Group</label>
+                <input style={ci} value={a.clientName}
                   onChange={e => set('clientName', e.target.value)}
                   placeholder="e.g. Aditya Birla Group" />
               </div>
               <div>
                 <label style={S.label}>Brand / Division</label>
-                <input style={S.input} value={a.brandName}
+                <input style={ci} value={a.brandName}
                   onChange={e => set('brandName', e.target.value)}
                   placeholder="e.g. Birla Opus" />
               </div>
               <div>
                 <label style={S.label}>Contact Person</label>
-                <input style={S.input} value={a.clientSpocName}
+                <input style={ci} value={a.clientSpocName}
                   onChange={e => set('clientSpocName', e.target.value)}
                   placeholder="Name" />
               </div>
               <div>
                 <label style={S.label}>Phone</label>
-                <input style={S.input} value={a.clientSpocPhone}
+                <input style={ci} value={a.clientSpocPhone}
                   onChange={e => set('clientSpocPhone', e.target.value)}
-                  placeholder="e.g. +91 98765 43210" />
+                  placeholder="e.g. 9876543210" />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={S.label}>Email</label>
-                <input style={S.input} type="email" value={a.clientSpocEmail}
+                <input style={ci} type="email" value={a.clientSpocEmail}
                   onChange={e => set('clientSpocEmail', e.target.value)}
                   placeholder="e.g. rahul@client.com" />
               </div>
@@ -530,18 +536,18 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
             <hr style={S.divider} />
 
-            {/* EVENT DETAILS */}
+            {/* ── EVENT DETAILS ── */}
             <div style={S.sectionLabel}>Event Details</div>
             <div style={{ marginBottom: '10px' }}>
               <label style={S.label}>Event Name <span style={{ color: '#bc1723' }}>*</span></label>
-              <input style={S.input} value={a.eventName}
+              <input style={ci} value={a.eventName}
                 onChange={e => set('eventName', e.target.value)}
                 placeholder="e.g. Udaan Contractor Meet 2026" />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
               <div>
-                <label style={S.label}>Event Type <span style={{ color: '#bc1723' }}>*</span></label>
-                <select style={S.input} value={a.eventType}
+                <label style={S.label}>Event Type</label>
+                <select style={ci} value={a.eventType}
                   onChange={e => { set('eventType', e.target.value); set('subCategory', '') }}>
                   <option value="">Select type</option>
                   {EVENT_TYPES.map(t => (
@@ -551,7 +557,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
               </div>
               <div>
                 <label style={S.label}>Sub-category</label>
-                <select style={S.input} value={a.subCategory}
+                <select style={ci} value={a.subCategory}
                   onChange={e => set('subCategory', e.target.value)}
                   disabled={!a.eventType}>
                   <option value="">Select sub-category</option>
@@ -562,69 +568,69 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
               </div>
               <div>
                 <label style={S.label}>Start Date</label>
-                <input style={S.input} type="date" value={a.startDate}
+                <input style={ci} type="date" value={a.startDate}
                   onChange={e => set('startDate', e.target.value)} />
               </div>
               <div>
                 <label style={S.label}>End Date</label>
-                <input style={S.input} type="date" value={a.endDate}
+                <input style={ci} type="date" value={a.endDate}
                   onChange={e => set('endDate', e.target.value)} />
               </div>
             </div>
-
-            <div style={{ marginBottom: '10px' }}>
+            <div style={{ marginBottom: '14px' }}>
               <label style={S.label}>Cities</label>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                <input style={S.input} value={cityInput}
-                  onChange={e => setCityInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addCity()}
-                  placeholder="Type city and press Add" />
-                <button style={{ ...S.btn, ...S.btnDark, whiteSpace: 'nowrap', flexShrink: 0 }}
-                  onClick={addCity}>
-                  + Add
-                </button>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {a.cities.map(c => (
-                  <span key={c} style={S.pill}>
-                    {c}
-                    <button onClick={() => removeCity(c)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'rgba(232,228,220,0.7)', padding: 0, fontSize: '15px',
-                        lineHeight: 1, fontFamily: 'inherit' }}>×</button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '10px' }}>
-              <label style={S.label}>Proposal Due Date</label>
-              <input style={{ ...S.input, maxWidth: '200px' }} type="date"
-                value={a.proposalDueDate}
-                onChange={e => set('proposalDueDate', e.target.value)} />
+              <CityAutocomplete
+                value={cityInput}
+                onChange={setCityInput}
+                onSelect={({ city }) => {
+                  const normalised = city.trim().toLowerCase()
+                  if (!a.cities.includes(normalised)) set('cities', [...a.cities, normalised])
+                  setCityInput('')
+                }}
+                placeholder="Search and add a city…"
+              />
+              {a.cities.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                  {a.cities.map(c => (
+                    <span key={c} style={S.pill}>
+                      {c}
+                      <button onClick={() => removeCity(c)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer',
+                          color: 'rgba(232,228,220,0.7)', padding: 0, fontSize: '15px',
+                          lineHeight: 1, fontFamily: 'inherit' }}>×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <hr style={S.divider} />
 
-            {/* COMMERCIAL */}
-            <div style={S.sectionLabel}>Commercial</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            {/* ── EVENT BRIEF ── */}
+            <div style={S.sectionLabel}>Event Brief</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '4px' }}>
               <div>
-                <label style={S.label}>Agency Fee — {a.agencyFee}%</label>
-                <input type="range" min="0" max="30" step="0.5"
-                  value={a.agencyFee}
-                  onChange={e => set('agencyFee', parseFloat(e.target.value))}
-                  style={{ width: '100%', accentColor: '#bc1723', marginTop: '6px' }} />
+                <label style={S.label}>PAX</label>
+                <input style={ci} type="number" min="0" value={a.paxCount}
+                  onChange={e => set('paxCount', e.target.value)}
+                  placeholder="Estimated attendees" />
               </div>
               <div>
-                <label style={S.label}>GST</label>
-                <select style={S.input} value={a.gst}
-                  onChange={e => set('gst', parseFloat(e.target.value))}>
-                  <option value={5}>5%</option>
-                  <option value={12}>12%</option>
-                  <option value={18}>18%</option>
-                  <option value={28}>28%</option>
+                <label style={S.label}>Budget Tier</label>
+                <select style={ci} value={a.budgetTier}
+                  onChange={e => set('budgetTier', e.target.value)}>
+                  <option value="">Select tier</option>
+                  <option value="Budget">Budget</option>
+                  <option value="Standard">Standard</option>
+                  <option value="Premium">Premium</option>
+                  <option value="Luxury">Luxury</option>
                 </select>
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>Sub-events</label>
+                <input style={{ ...ci, maxWidth: '240px' }} type="number" min="0" value={a.sub_events}
+                  onChange={e => set('sub_events', e.target.value)}
+                  placeholder="No. of sub-events, if any" />
               </div>
             </div>
 

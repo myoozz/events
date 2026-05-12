@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../supabase'
 import { logActivity } from '../utils/activityLogger'
+import CityAutocomplete from './CityAutocomplete'
 
 const db = (table) => supabase.from(table);
 
@@ -58,6 +59,8 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
   const [nameVal,     setNameVal]     = useState('')
   const [photoHover,  setPhotoHover]  = useState(false)
 
+  const pendingBaseState = useRef('')
+
   const isOwn   = session?.user?.id === profileUserId
   const canEdit = isOwn || userRole === 'admin' || userRole === 'manager'
 
@@ -103,6 +106,28 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
       })
       await fetchProfile()
       setOpenField(null)
+      flashSaved()
+    }
+    setSaving(false)
+  }
+
+  async function saveBaseCity(city) {
+    if (!canEdit) return
+    setSaving(true)
+    const { error } = await db('users').update({
+      base_city: city || null,
+      base_state: pendingBaseState.current || null,
+    }).eq('id', profileUserId)
+    if (!error) {
+      await logActivity({
+        action: 'profile_updated', entity_type: 'user',
+        entity_name: profile.full_name,
+        details: { field: 'base_city', updated_by: session?.user?.email },
+        session,
+      })
+      await fetchProfile()
+      setOpenField(null)
+      pendingBaseState.current = ''
       flashSaved()
     }
     setSaving(false)
@@ -279,12 +304,31 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
                 {!val && !isOpen && !canEdit && <span style={S.emptyVal}>—</span>}
 
                 {/* inline edit */}
-                {isOpen && (
+                {isOpen && nf.key === 'base_city' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <CityAutocomplete
+                      value={fieldVal}
+                      onChange={setFieldVal}
+                      onSelect={({ city, state }) => {
+                        setFieldVal(city)
+                        pendingBaseState.current = state
+                      }}
+                      placeholder="Search city…"
+                    />
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                      <button style={S.inlineCancelBtn} onClick={() => { setOpenField(null); pendingBaseState.current = '' }}>Cancel</button>
+                      <button style={S.inlineSaveBtn} onClick={() => saveBaseCity(fieldVal)} disabled={saving}>
+                        {saving ? 'Saving…' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {isOpen && nf.key !== 'base_city' && (
                   <InlineEdit
                     multiline={nf.key === 'bio'}
                     value={fieldVal}
                     onChange={setFieldVal}
-                    placeholder={nf.key === 'phone' ? '+91 XXXXX XXXXX' : nf.key === 'base_city' ? 'e.g. Mumbai' : 'Write a short note about yourself…'}
+                    placeholder={nf.key === 'phone' ? '+91 XXXXX XXXXX' : 'Write a short note about yourself…'}
                     type={nf.key === 'phone' ? 'tel' : 'text'}
                     saving={saving}
                     onSave={() => saveField(nf.key, fieldVal)}
