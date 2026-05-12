@@ -34,9 +34,10 @@ const SEATING = [
 ]
 
 const TIERS = [
-  { value: 'Standard',      label: 'Basic',   desc: 'Functional, on-budget delivery' },
-  { value: 'Premium',       label: 'Mid',     desc: 'Elevated experience, quality focus' },
-  { value: 'Ultra Premium', label: 'Premium', desc: 'No-compromise benchmark event' },
+  { value: 'budget',   label: 'Budget',   desc: 'Cost-conscious, essentials-first delivery' },
+  { value: 'standard', label: 'Standard', desc: 'Functional, on-budget delivery' },
+  { value: 'premium',  label: 'Premium',  desc: 'Elevated experience, quality focus' },
+  { value: 'luxury',   label: 'Luxury',   desc: 'No-compromise benchmark event' },
 ]
 
 const TOTAL_STEPS = 12
@@ -171,12 +172,6 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
   const set = (key, val) => setA(prev => ({ ...prev, [key]: val }))
 
-  const addCity = () => {
-    if (!cityInput.trim()) return
-    const city = cityInput.trim().toLowerCase()
-    if (!a.cities.includes(city)) set('cities', [...a.cities, city])
-    setCityInput('')
-  }
   const removeCity = (c) => set('cities', a.cities.filter(x => x !== c))
 
   const validateStep = (currentStep) => {
@@ -352,7 +347,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
             <GuidedStepContent
               step={step} a={a} set={set}
               cityInput={cityInput} setCityInput={setCityInput}
-              addCity={addCity} removeCity={removeCity}
+              removeCity={removeCity}
               users={users} setStep={setStep} stepError={stepError}
             />
           </div>
@@ -620,10 +615,10 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                 <select style={ci} value={a.budgetTier}
                   onChange={e => set('budgetTier', e.target.value)}>
                   <option value="">Select tier</option>
-                  <option value="Budget">Budget</option>
-                  <option value="Standard">Standard</option>
-                  <option value="Premium">Premium</option>
-                  <option value="Luxury">Luxury</option>
+                  <option value="budget">Budget</option>
+                  <option value="standard">Standard</option>
+                  <option value="premium">Premium</option>
+                  <option value="luxury">Luxury</option>
                 </select>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
@@ -709,7 +704,7 @@ function EntryTile({ icon, title, desc, onClick, accent, disabled, badge }) {
 
 // ─── Guided Step Content ──────────────────────────────────────────────────────
 
-function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, removeCity, users, setStep, stepError }) {
+function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, users, setStep, stepError }) {
   const inputRef = useRef(null)
   const selectedType = EVENT_TYPES.find(t => t.value === a.eventType)
 
@@ -869,31 +864,29 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, addCity, rem
       hint: "One city or ten — ME plans them simultaneously, each with its own elements, costs, and team.",
       content: (
         <div>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-            <input
-              ref={inputRef}
-              style={S.input}
-              value={cityInput}
-              onChange={e => setCityInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addCity()}
-              placeholder="Type a city and press Add"
-            />
-            <button style={{ ...S.btn, ...S.btnDark, whiteSpace: 'nowrap', flexShrink: 0 }}
-              onClick={addCity}>
-              + Add
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
-            {a.cities.map(c => (
-              <span key={c} style={S.pill}>
-                {c}
-                <button onClick={() => removeCity(c)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer',
-                    color: 'rgba(232,228,220,0.7)', padding: 0, fontSize: '16px',
-                    lineHeight: 1, fontFamily: 'inherit' }}>×</button>
-              </span>
-            ))}
-          </div>
+          <CityAutocomplete
+            value={cityInput}
+            onChange={setCityInput}
+            onSelect={({ city }) => {
+              const normalised = city.trim().toLowerCase()
+              if (!a.cities.includes(normalised)) set('cities', [...a.cities, normalised])
+              setCityInput('')
+            }}
+            placeholder="Search and add a city…"
+          />
+          {a.cities.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginTop: '10px' }}>
+              {a.cities.map(c => (
+                <span key={c} style={S.pill}>
+                  {c}
+                  <button onClick={() => removeCity(c)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'rgba(232,228,220,0.7)', padding: 0, fontSize: '16px',
+                      lineHeight: 1, fontFamily: 'inherit' }}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       ),
     },
