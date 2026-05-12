@@ -34,9 +34,10 @@ const SEATING = [
 ]
 
 const TIERS = [
-  { value: 'Standard',      label: 'Basic',   desc: 'Functional, on-budget delivery' },
-  { value: 'Premium',       label: 'Mid',     desc: 'Elevated experience, quality focus' },
-  { value: 'Ultra Premium', label: 'Premium', desc: 'No-compromise benchmark event' },
+  { value: 'budget',   label: 'Budget',   desc: 'Cost-conscious, essentials-first delivery' },
+  { value: 'standard', label: 'Standard', desc: 'Functional, on-budget delivery' },
+  { value: 'premium',  label: 'Premium',  desc: 'Elevated experience, quality focus' },
+  { value: 'luxury',   label: 'Luxury',   desc: 'No-compromise benchmark event' },
 ]
 
 const TOTAL_STEPS = 12
@@ -620,10 +621,10 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                 <select style={ci} value={a.budgetTier}
                   onChange={e => set('budgetTier', e.target.value)}>
                   <option value="">Select tier</option>
-                  <option value="Budget">Budget</option>
-                  <option value="Standard">Standard</option>
-                  <option value="Premium">Premium</option>
-                  <option value="Luxury">Luxury</option>
+                  <option value="budget">Budget</option>
+                  <option value="standard">Standard</option>
+                  <option value="premium">Premium</option>
+                  <option value="luxury">Luxury</option>
                 </select>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
