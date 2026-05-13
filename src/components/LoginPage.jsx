@@ -64,15 +64,19 @@ function SuccessBox({ message }) {
   )
 }
 
-// ── Detect invite / recovery token in URL hash ──────────────
+// ── Detect invite / recovery token in URL query params (Supabase PKCE flow) ──
 function getUrlTokenType() {
   if (typeof window === 'undefined') return null
-  const hash = window.location.hash
-  if (!hash) return null
-  const params = new URLSearchParams(hash.replace('#', ''))
+  const params = new URLSearchParams(window.location.search)
   const type = params.get('type')
   if (type === 'invite' || type === 'recovery') return type
   return null
+}
+
+function getUrlTokenHash() {
+  if (typeof window === 'undefined') return null
+  const params = new URLSearchParams(window.location.search)
+  return params.get('token_hash') || null
 }
 
 export default function LoginPage() {
@@ -87,10 +91,16 @@ export default function LoginPage() {
   // On mount — check if this is an invite or recovery link
   useEffect(() => {
     const tokenType = getUrlTokenType()
-    if (tokenType === 'invite' || tokenType === 'recovery') {
+    const tokenHash = getUrlTokenHash()
+    if ((tokenType === 'invite' || tokenType === 'recovery') && tokenHash) {
       setMode('setpassword')
-      // Clear the hash from URL so it's not visible
+      // Clear query params from URL so token isn't visible or accidentally reused
       window.history.replaceState(null, '', window.location.pathname)
+      // Exchange the PKCE token for a session — required before updateUser can run
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: tokenType })
+        .then(({ error }) => {
+          if (error) setError('This invite link has expired or already been used. Ask an admin to resend it.')
+        })
     }
   }, [])
 

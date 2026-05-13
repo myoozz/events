@@ -83,7 +83,7 @@ export default function App() {
   // before the user has set their password.
   const [isPasswordSetupFlow] = useState(() => {
     if (typeof window === 'undefined') return false
-    const params = new URLSearchParams(window.location.hash.replace('#', ''))
+    const params = new URLSearchParams(window.location.search)
     const type = params.get('type')
     return type === 'invite' || type === 'recovery'
   })
