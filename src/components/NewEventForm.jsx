@@ -333,7 +333,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
     return (
       <div style={S.overlay} onClick={(e) => e.stopPropagation()}>
-        <div style={S.modal}>
+        <div style={{ ...S.modal, ...(step === 6 ? { overflow: 'visible' } : {}) }}>
           <div style={{ ...S.header, alignItems: 'center' }}>
             <span style={{
               fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#7a7060',
@@ -351,12 +351,13 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
             }} />
           </div>
 
-          <div style={{ ...S.body, paddingTop: '24px' }}>
+          <div style={{ ...S.body, paddingTop: '24px', ...(step === 6 ? { overflowY: 'visible' } : {}) }}>
             <GuidedStepContent
               step={step} a={a} set={set}
               cityInput={cityInput} setCityInput={setCityInput}
               removeCity={removeCity}
               users={users} setStep={setStep} stepError={stepError}
+              guidedCityDates={guidedCityDates} setGuidedCityDates={setGuidedCityDates}
             />
           </div>
 
@@ -712,7 +713,7 @@ function EntryTile({ icon, title, desc, onClick, accent, disabled, badge }) {
 
 // ─── Guided Step Content ──────────────────────────────────────────────────────
 
-function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, users, setStep, stepError }) {
+function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, users, setStep, stepError, guidedCityDates, setGuidedCityDates }) {
   const inputRef = useRef(null)
   const selectedType = EVENT_TYPES.find(t => t.value === a.eventType)
 
