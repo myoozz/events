@@ -244,7 +244,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         gst_percent: a.gst,
         pax_count: a.paxCount ? parseInt(a.paxCount) : null,
         seating_format: a.seatingFormat || null,
-        budget_tier: a.budgetTier || null,
+        budget_tier: a.budgetTier || 'standard',
         per_pax_budget: a.perPaxBudget ? parseInt(a.perPaxBudget) : null,
         sub_events: a.hasSubEvents
           ? { count: a.subEventCount }
