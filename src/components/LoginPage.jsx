@@ -452,11 +452,14 @@ export default function LoginPage() {
               }}>
                 ⏳
               </div>
-              <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '10px' }}>
-                Your request is under review
+              <p style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
+                Welcome to Myoozz Events. OS for your events
+              </p>
+              <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '14px' }}>
+                We're glad you're here.
               </p>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '24px' }}>
-                We've received your registration. Our team will review your details and send your login credentials to <strong>{email}</strong> within 1–2 business days.
+                We are preparing your workspace. We'll reach out to <strong>{email}</strong> personally — no auto-emails, no bots. Expect to hear from us soon.
               </p>
               <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess('') }}
                 style={{
