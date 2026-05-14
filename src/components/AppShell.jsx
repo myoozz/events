@@ -135,10 +135,11 @@ export default function AppShell({ session }) {
   // Bug 10 — increment this to tell Dashboard to go back to events list
   const [dashboardResetKey, setDashboardResetKey] = useState(0)
 
-  const [tenantInfo,   setTenantInfo]   = useState(null)
-  const [tenantId,     setTenantId]     = useState(null)
-  const [platformRole, setPlatformRole] = useState(null)
-  const [welcomedAt,   setWelcomedAt]   = useState(undefined)  // undefined = not yet fetched
+  const [tenantInfo,    setTenantInfo]    = useState(null)
+  const [tenantId,      setTenantId]      = useState(null)
+  const [tenantLoading, setTenantLoading] = useState(true)
+  const [platformRole,  setPlatformRole]  = useState(null)
+  const [welcomedAt,    setWelcomedAt]    = useState(undefined)  // undefined = not yet fetched
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -205,6 +206,8 @@ export default function AppShell({ session }) {
         if (data) setTenantInfo(data)
       } catch (err) {
         console.error('fetchTenant error:', err)
+      } finally {
+        setTenantLoading(false)
       }
     }
     fetchTenant()
@@ -277,7 +280,7 @@ export default function AppShell({ session }) {
   const visibleItems  = NAV_ITEMS.filter(item => item.roles.includes(userRole))
   const ini           = userInitials(userName)
 
-  if (userLoading) return (
+  if (userLoading || tenantLoading) return (
     <div style={{
       minHeight: '100vh', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
@@ -291,6 +294,129 @@ export default function AppShell({ session }) {
       <p style={{ fontSize: '13px', color: '#9C9488' }}>Loading your workspace...</p>
     </div>
   )
+
+  // ── Tenant gate: pending_review / waitlisted ──────────────────────────────
+  if (tenantInfo?.status === 'pending_review' || tenantInfo?.status === 'waitlisted') {
+    const caps = [
+      { icon: '📋', title: 'Event budgets', body: 'Build full budgets with categories, elements, and real-time margins.' },
+      { icon: '✅', title: 'Task boards', body: 'Kanban-style task tracking with assignees, deadlines, and priorities.' },
+      { icon: '✈️', title: 'Travel planning', body: 'Flights, hotels, and rooming lists — all in one itinerary view.' },
+      { icon: '🎬', title: 'Production & cue sheets', body: 'Run-of-show timelines and cue sheets, export-ready in seconds.' },
+    ]
+    return (
+      <div style={{
+        minHeight: '100vh', background: 'var(--bg)', display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'var(--font-body)', padding: '32px 16px',
+      }}>
+        <div style={{ maxWidth: '480px', width: '100%', textAlign: 'center' }}>
+          <div style={{
+            width: '48px', height: '48px', borderRadius: '12px',
+            background: '#F28F3B', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: '18px', fontWeight: 800,
+            color: '#fff', margin: '0 auto 24px',
+          }}>ME</div>
+          <p style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
+            Welcome to Myoozz Events.
+          </p>
+          <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '12px' }}>
+            We're glad you're here.
+          </p>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '32px' }}>
+            We're reviewing your registration and preparing your workspace.
+            No auto-emails, no bots — you'll hear from us personally soon.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '32px' }}>
+            {caps.map(c => (
+              <div key={c.title} style={{
+                background: 'var(--bg-secondary)', borderRadius: 'var(--radius)',
+                border: '0.5px solid var(--border)', padding: '16px', textAlign: 'left',
+              }}>
+                <div style={{ fontSize: '22px', marginBottom: '8px' }}>{c.icon}</div>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>{c.title}</p>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{c.body}</p>
+              </div>
+            ))}
+          </div>
+          <a
+            href="https://demo.myoozz.events"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-block', marginBottom: '24px',
+              fontSize: '13px', color: '#F28F3B', textDecoration: 'none',
+              borderBottom: '1px solid rgba(242,143,59,0.4)',
+              paddingBottom: '1px',
+            }}
+          >
+            Explore demo data while you wait →
+          </a>
+          <br />
+          <button
+            onClick={handleSignOut}
+            style={{
+              padding: '10px 20px', fontSize: '13px', fontFamily: 'var(--font-body)',
+              background: 'none', border: '0.5px solid var(--border-strong)',
+              borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-secondary)',
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Tenant gate: suspended / expired ─────────────────────────────────────
+  if (tenantInfo?.status === 'suspended' || tenantInfo?.status === 'expired') {
+    return (
+      <div style={{
+        minHeight: '100vh', background: 'var(--bg)', display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'var(--font-body)', padding: '32px 16px',
+      }}>
+        <div style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
+          <div style={{
+            width: '48px', height: '48px', borderRadius: '12px',
+            background: 'var(--bg-secondary)', border: '1.5px solid var(--border-strong)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '22px', margin: '0 auto 24px',
+          }}>⏸</div>
+          <p style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
+            Your workspace is paused.
+          </p>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '32px' }}>
+            Access to this workspace has been suspended. If you believe this is
+            an error, or to reactivate your account, reach out to us.
+          </p>
+          <a
+            href="mailto:hello@myoozz.events"
+            style={{
+              display: 'inline-block', marginBottom: '16px',
+              padding: '10px 24px', fontSize: '13px', fontWeight: 600,
+              fontFamily: 'var(--font-body)', color: '#fff',
+              background: '#F28F3B', border: 'none',
+              borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+              textDecoration: 'none',
+            }}
+          >
+            Contact us
+          </a>
+          <br />
+          <button
+            onClick={handleSignOut}
+            style={{
+              padding: '10px 20px', fontSize: '13px', fontFamily: 'var(--font-body)',
+              background: 'none', border: '0.5px solid var(--border-strong)',
+              borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-secondary)',
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', fontFamily: 'var(--font-body)' }}>
