@@ -16,6 +16,8 @@ import ActivityLog from './ActivityLog'
 import ProfilePage from './ProfilePage'
 import NotificationBell from './NotificationBell'
 import { fetchUnreadCount, subscribeToNotifications } from '../utils/notificationService'
+import { ShieldCheck } from 'lucide-react'
+import SuperAdminPanel from './SuperAdminPanel'
 
 const NAV_ITEMS = [
   {
@@ -132,6 +134,9 @@ export default function AppShell({ session }) {
   // Bug 10 — increment this to tell Dashboard to go back to events list
   const [dashboardResetKey, setDashboardResetKey] = useState(0)
 
+  const [tenantInfo,   setTenantInfo]   = useState(null)
+  const [platformRole, setPlatformRole] = useState(null)
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
@@ -175,6 +180,30 @@ export default function AppShell({ session }) {
     }
     fetchUser()
   }, [session])
+
+  // Tenant info + platform role — decoded from JWT on mount
+  useEffect(() => {
+    async function fetchTenant() {
+      try {
+        const { data: s } = await supabase.auth.getSession()
+        const token = s?.session?.access_token
+        if (!token) return
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        if (payload.platform_role) setPlatformRole(payload.platform_role)
+        const tenantId = payload.tenant_id
+        if (!tenantId) return
+        const { data } = await supabase
+          .from('tenants')
+          .select('name, trial_ends_at, status, plan')
+          .eq('id', tenantId)
+          .single()
+        if (data) setTenantInfo(data)
+      } catch (err) {
+        console.error('fetchTenant error:', err)
+      }
+    }
+    fetchTenant()
+  }, [])
 
   // Phase C — fetch initial unread count + subscribe to realtime once userId is known
   useEffect(() => {
@@ -337,6 +366,40 @@ export default function AppShell({ session }) {
             )}
           </div>
 
+          {/* Tenant + Trial strip */}
+          {!collapsed && tenantInfo && (
+            <div style={{
+              padding: '8px 16px',
+              borderBottom: '0.5px solid var(--border)',
+              flexShrink: 0,
+            }}>
+              <div style={{
+                fontSize: '11px', color: 'var(--text-tertiary)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                marginBottom: (tenantInfo.plan === 'trial' && tenantInfo.status === 'active') ? '5px' : 0,
+              }}>
+                {tenantInfo.name}
+              </div>
+              {tenantInfo.plan === 'trial' && tenantInfo.status === 'active' && (() => {
+                const daysLeft = Math.ceil((new Date(tenantInfo.trial_ends_at) - Date.now()) / 86400000)
+                if (daysLeft <= 0) return (
+                  <div style={{ fontSize: '11px', color: '#f87171', fontWeight: 500 }}>Trial expired</div>
+                )
+                const color = daysLeft > 7 ? '#4ade80' : daysLeft >= 4 ? '#fbbf24' : '#f87171'
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '11px', color, whiteSpace: 'nowrap', flexShrink: 0, fontWeight: 500 }}>
+                      {daysLeft}d left
+                    </span>
+                    <div style={{ flex: 1, height: '3px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ width: `${Math.min(100, (daysLeft / 14) * 100)}%`, height: '100%', background: color, borderRadius: '2px' }} />
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
           {/* Nav items */}
           <div style={{ flex: 1, padding: '12px 8px', overflowY: 'auto' }}>
             {visibleItems.map(item => {
@@ -377,6 +440,43 @@ export default function AppShell({ session }) {
                 </button>
               )
             })}
+
+            {/* Platform Admin — super_admin only */}
+            {platformRole === 'super_admin' && (
+              <div style={{ marginTop: '8px', borderTop: '0.5px solid var(--border)', paddingTop: '8px' }}>
+                <button
+                  onClick={() => handleNavClick('super-admin')}
+                  title={collapsed ? 'Platform Admin' : ''}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    width: '100%',
+                    padding: collapsed ? '10px 0' : '10px 12px',
+                    justifyContent: collapsed ? 'center' : 'flex-start',
+                    background: activeTab === 'super-admin' ? 'var(--bg-secondary)' : 'none',
+                    border: 'none',
+                    borderRadius: 'var(--radius-sm)',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseOver={e => { if (activeTab !== 'super-admin') e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                  onMouseOut={e => { if (activeTab !== 'super-admin') e.currentTarget.style.background = 'none' }}
+                >
+                  <ShieldCheck size={16} color={activeTab === 'super-admin' ? 'var(--text)' : 'var(--text-tertiary)'} />
+                  {!collapsed && (
+                    <span style={{
+                      fontSize: '13px',
+                      fontWeight: activeTab === 'super-admin' ? 500 : 400,
+                      color: activeTab === 'super-admin' ? 'var(--text)' : 'var(--text-tertiary)',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      Platform Admin
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Bottom section */}
@@ -675,6 +775,9 @@ export default function AppShell({ session }) {
               userRole={userRole}
               onBack={closeProfile}
             />
+          )}
+          {activeTab === 'super-admin' && (
+            <SuperAdminPanel userId={userId} userRole={userRole} />
           )}
         </main>
 
