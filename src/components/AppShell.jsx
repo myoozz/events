@@ -18,6 +18,7 @@ import NotificationBell from './NotificationBell'
 import { fetchUnreadCount, subscribeToNotifications } from '../utils/notificationService'
 import { ShieldCheck } from 'lucide-react'
 import SuperAdminPanel from './SuperAdminPanel'
+import OnboardingModal from './OnboardingModal'
 
 const NAV_ITEMS = [
   {
@@ -135,7 +136,9 @@ export default function AppShell({ session }) {
   const [dashboardResetKey, setDashboardResetKey] = useState(0)
 
   const [tenantInfo,   setTenantInfo]   = useState(null)
+  const [tenantId,     setTenantId]     = useState(null)
   const [platformRole, setPlatformRole] = useState(null)
+  const [welcomedAt,   setWelcomedAt]   = useState(undefined)  // undefined = not yet fetched
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -154,7 +157,7 @@ export default function AppShell({ session }) {
       try {
         const { data } = await supabase
           .from('users')
-          .select('id, role, full_name, can_manage_rate_cards')
+          .select('id, role, full_name, can_manage_rate_cards, welcomed_at')
           .eq('email', session.user.email)
           .single()
         clearTimeout(timeout)
@@ -163,6 +166,7 @@ export default function AppShell({ session }) {
           setUserName(data.full_name || session.user.email)
           setUserId(data.id)
           setCanManageRateCards(data.can_manage_rate_cards === true)
+          setWelcomedAt(data.welcomed_at ?? null)
         } else {
           setUserRole('admin')
           setUserName(session.user.email)
@@ -190,12 +194,13 @@ export default function AppShell({ session }) {
         if (!token) return
         const payload = JSON.parse(atob(token.split('.')[1]))
         if (payload.platform_role) setPlatformRole(payload.platform_role)
-        const tenantId = payload.tenant_id
-        if (!tenantId) return
+        const tid = payload.tenant_id
+        if (!tid) return
+        setTenantId(tid)
         const { data } = await supabase
           .from('tenants')
           .select('name, trial_ends_at, status, plan')
-          .eq('id', tenantId)
+          .eq('id', tid)
           .single()
         if (data) setTenantInfo(data)
       } catch (err) {
@@ -226,6 +231,11 @@ export default function AppShell({ session }) {
   async function handleSignOut() {
     await supabase.auth.signOut()
     navigate('/')
+  }
+
+  function handleOnboardingComplete(action) {
+    setWelcomedAt(new Date().toISOString())
+    if (action === 'invite-team') setActiveTab('team')
   }
 
   // Phase C — called by NotificationBell when user marks read
@@ -801,6 +811,16 @@ export default function AppShell({ session }) {
 
       {/* Feedback button — always visible */}
       <FeedbackButton session={session} />
+
+      {/* Onboarding — first login, admin only, welcomed_at IS NULL, tenant active */}
+      {!userLoading && welcomedAt === null && tenantInfo?.status === 'active' && userRole === 'admin' && tenantId && userId && (
+        <OnboardingModal
+          userId={userId}
+          tenantId={tenantId}
+          tenantName={tenantInfo?.name}
+          onComplete={handleOnboardingComplete}
+        />
+      )}
     </div>
   )
 }
