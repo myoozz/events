@@ -44,14 +44,23 @@ function Field({ label, value, mono }) {
   )
 }
 
-export default function SuperAdminPanel({ session }) {
-  const platformRole = (() => {
-    try {
-      const token = session?.access_token
-      if (!token) return null
-      return JSON.parse(atob(token.split('.')[1])).platform_role || null
-    } catch { return null }
-  })()
+export default function SuperAdminPanel() {
+  const [platformRole,  setPlatformRole]  = useState(null)
+  const [roleChecked,   setRoleChecked]   = useState(false)
+
+  useEffect(() => {
+    async function checkRole() {
+      try {
+        const { data: s } = await supabase.auth.getSession()
+        const token = s?.session?.access_token
+        if (!token) { setRoleChecked(true); return }
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        if (payload.platform_role) setPlatformRole(payload.platform_role)
+      } catch { /* silent */ }
+      setRoleChecked(true)
+    }
+    checkRole()
+  }, [])
 
   const [activeTab,    setActiveTab]    = useState('pending')
   const [loading,      setLoading]      = useState(true)
@@ -182,6 +191,8 @@ export default function SuperAdminPanel({ session }) {
     }
     setModalLoading(false)
   }
+
+  if (!roleChecked) return null
 
   if (platformRole !== 'super_admin') {
     return (
