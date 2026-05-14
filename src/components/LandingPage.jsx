@@ -1,12 +1,4 @@
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-// ─── Supabase (same client as app) ───────────────────────────────────────────
-let supabase = null;
-try {
-  const { supabaseUrl, supabaseKey } = window.__MYOOZZ_ENV__ || {};
-  if (supabaseUrl && supabaseKey) supabase = createClient(supabaseUrl, supabaseKey);
-} catch (_) {}
 
 // ─── Logo mark ───────────────────────────────────────────────────────────────
 function MeLogo({ size = 36 }) {
@@ -233,30 +225,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .btn-red-outline { border: 1px solid var(--red); color: var(--red); background: transparent; padding: 12px 24px; border-radius: 4px; font-family: var(--font-body); font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s, color 0.2s; align-self: flex-start; }
 .btn-red-outline:hover { background: var(--red); color: #fff; }
 
-/* ── MODAL OVERLAY ── */
-.modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn 0.2s ease; }
-.modal-box { background: var(--bg); border-radius: 8px; width: 100%; max-width: 520px; padding: 48px 44px; position: relative; animation: scaleIn 0.25s ease; box-shadow: 0 32px 80px rgba(0,0,0,0.22); }
-.modal-close { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1; transition: color 0.2s; }
-.modal-close:hover { color: var(--text); }
-.modal-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-bottom: 12px; }
-.modal-title { font-family: var(--font-display); font-size: 34px; font-weight: 400; line-height: 1.15; margin-bottom: 8px; }
-.modal-sub { font-size: 14px; font-weight: 300; color: var(--text-muted); margin-bottom: 32px; line-height: 1.6; }
-.modal-fields { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
-.modal-field { display: flex; flex-direction: column; gap: 6px; }
-.modal-field label { font-size: 12px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.03em; }
-.modal-field input, .modal-field select { border: 0.5px solid var(--border-strong); border-radius: 4px; padding: 11px 14px; font-family: var(--font-body); font-size: 14px; font-weight: 300; color: var(--text); background: #fff; transition: border-color 0.2s; outline: none; }
-.modal-field input:focus, .modal-field select:focus, .modal-field textarea:focus { border-color: var(--red); }
-.modal-field input::placeholder { color: var(--text-light); }
-.modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.modal-submit { width: 100%; background: var(--red); color: #fff; border: none; padding: 13px 20px; border-radius: 4px; font-family: var(--font-body); font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
-.modal-submit:hover { background: var(--red-dark); }
-.modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-.modal-fine { font-size: 11.5px; color: var(--text-light); text-align: center; margin-top: 12px; line-height: 1.5; }
-.modal-success { text-align: center; padding: 20px 0; }
-.modal-success-icon { font-size: 40px; margin-bottom: 16px; }
-.modal-success h3 { font-family: var(--font-display); font-size: 28px; font-weight: 400; margin-bottom: 10px; }
-.modal-success p { font-size: 14px; font-weight: 300; color: var(--text-muted); line-height: 1.65; }
-
 /* ── FOOTER ── */
 .lp-footer { padding: 52px 5% 36px; border-top: 0.5px solid var(--border); background: var(--bg); }
 .lp-footer-inner { max-width: 1200px; margin: 0 auto; }
@@ -309,8 +277,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
   .col-arrow { display: none; }
   .col-before { font-size: 12px; }
   .col-after { padding-left: 0; font-size: 13px; }
-  .modal-box { padding: 36px 24px; }
-  .modal-row { grid-template-columns: 1fr; }
   .footer-cols { flex-direction: column; gap: 28px; }
   .footer-bottom { flex-direction: column; align-items: flex-start; }
   .btn-demo { display: none; }
@@ -319,13 +285,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 
 export default function LandingPage() {
   const [barVisible, setBarVisible] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ fullName: "", email: "", company: "", city: "", message: "" });
-  const [formErrors, setFormErrors] = useState({});
-  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -367,40 +327,6 @@ export default function LandingPage() {
     };
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = modalOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [modalOpen]);
-
-  async function handleSubmit() {
-    const errors = {};
-    if (!form.fullName.trim()) errors.fullName = "Full name is required";
-    if (!form.email.trim()) errors.email = "Email is required";
-    if (Object.keys(errors).length) { setFormErrors(errors); return; }
-    setFormErrors({});
-    setSubmitError("");
-    setSubmitting(true);
-    try {
-      if (supabase) {
-        const { error } = await supabase.from("access_requests").insert([{
-          full_name: form.fullName.trim(),
-          email: form.email.trim(),
-          company: form.company.trim() || null,
-          city: form.city.trim() || null,
-          message: form.message.trim() || null,
-        }]);
-        if (error) throw error;
-      }
-      setSubmitted(true);
-      setTimeout(() => setModalOpen(false), 2000);
-    } catch (err) {
-      console.error(err);
-      setSubmitError("Something went wrong. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   const comparisons = [
     ["3 hours to format a proposal", "20 minutes, done"],
     ["Vendor contacts in 12 WhatsApps", "Vendor sheet, one click"],
@@ -413,73 +339,6 @@ export default function LandingPage() {
     <>
       <style>{css}</style>
 
-      {/* MODAL */}
-      {modalOpen && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setModalOpen(false)}>
-          <div className="modal-box">
-            <button className="modal-close" onClick={() => setModalOpen(false)}>×</button>
-            {submitted ? (
-              <div className="modal-success">
-                <div className="modal-success-icon">✓</div>
-                <h3>We'll be in touch soon.</h3>
-                <p>Our team will reach out personally within 24 hours to walk you through ME.</p>
-              </div>
-            ) : (
-              <>
-                <div className="modal-label">By Invite Only</div>
-                <div className="modal-title">Request your invite</div>
-                <div className="modal-sub">ME is not open for self-registration. We onboard every user personally — no handbooks, no tutorials. Submit your details and we'll reach out within 24 hours.</div>
-                <div className="modal-fields">
-                  <div className="modal-row">
-                    <div className="modal-field">
-                      <input
-                        placeholder="Full name *"
-                        value={form.fullName}
-                        onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                        style={formErrors.fullName ? { borderColor: "#F28F3B" } : {}}
-                      />
-                      {formErrors.fullName && <span style={{ fontSize: "12px", color: "#F28F3B" }}>{formErrors.fullName}</span>}
-                    </div>
-                    <div className="modal-field">
-                      <input
-                        type="email"
-                        placeholder="Work email *"
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        style={formErrors.email ? { borderColor: "#F28F3B" } : {}}
-                      />
-                      {formErrors.email && <span style={{ fontSize: "12px", color: "#F28F3B" }}>{formErrors.email}</span>}
-                    </div>
-                  </div>
-                  <div className="modal-row">
-                    <div className="modal-field">
-                      <input placeholder="Company / Agency name" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
-                    </div>
-                    <div className="modal-field">
-                      <input placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-                    </div>
-                  </div>
-                  <div className="modal-field">
-                    <textarea
-                      placeholder="What do you want to solve? (optional)"
-                      rows={3}
-                      value={form.message}
-                      onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      style={{ border: "0.5px solid #d8d2c8", borderRadius: "4px", padding: "11px 14px", fontFamily: "var(--font-body)", fontSize: "14px", fontWeight: 300, color: "#2c2518", background: "#fff", outline: "none", resize: "vertical", width: "100%" }}
-                    />
-                  </div>
-                </div>
-                {submitError && <p style={{ fontSize: "13px", color: "#F28F3B", marginBottom: "12px" }}>{submitError}</p>}
-                <button className="modal-submit" disabled={submitting} onClick={handleSubmit}>
-                  {submitting ? "Sending..." : "Request Access"}
-                </button>
-                <p className="modal-fine">No billing. No commitment. We'll reach out personally within 24 hours.</p>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* ANNOUNCEMENT BAR */}
       {barVisible && (
         <div className="lp-bar">
@@ -489,7 +348,7 @@ export default function LandingPage() {
               <span className="lp-bar-text">Early adopters get personal onboarding. No billing. No commitment.</span>
             </div>
             <div className="lp-bar-right">
-              <button className="lp-bar-cta" style={{ border: "none", cursor: "pointer" }} onClick={() => setModalOpen(true)}>Request invite →</button>
+              <button className="lp-bar-cta" style={{ border: "none", cursor: "pointer" }} onClick={() => window.location.href = '/login'}>Request access →</button>
               <button className="lp-bar-close" onClick={() => setBarVisible(false)} aria-label="Dismiss">×</button>
             </div>
           </div>
@@ -512,8 +371,8 @@ export default function LandingPage() {
             <div className="lp-header-right">
               <a href="/app" className="btn-login">Login</a>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                <button className="btn-primary" onClick={() => setModalOpen(true)}>Get Invite →</button>
-                <span className="invite-only-hint">Registration by invite only</span>
+                <button className="btn-primary" onClick={() => window.location.href = '/login'}>Get access →</button>
+                <span className="invite-only-hint">Registration open · approval required</span>
               </div>
               <button className="lp-hamburger" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
                 <svg width="22" height="16" viewBox="0 0 22 16" fill="none"><rect y="0" width="22" height="1.5" rx="1" fill="currentColor"/><rect y="7" width="22" height="1.5" rx="1" fill="currentColor"/><rect y="14" width="22" height="1.5" rx="1" fill="currentColor"/></svg>
@@ -530,7 +389,7 @@ export default function LandingPage() {
         <a href="#credibility" onClick={() => setMobileMenuOpen(false)}>Why ME</a>
         <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
         <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)}>Try demo ↗</a>
-        <button onClick={() => { setMobileMenuOpen(false); setModalOpen(true); }}>Get Invite →</button>
+        <button onClick={() => { setMobileMenuOpen(false); window.location.href = '/login'; }}>Get access →</button>
         <a href="/app" className="mobile-login">Already have access? Login →</a>
         <span className="mobile-invite-hint">Registration is by invite only</span>
       </div>
@@ -549,7 +408,7 @@ export default function LandingPage() {
               </h1>
               <p className="hero-sub">ME is your events operating system — your process, structured. Your team, accountable. Your business, visible.</p>
               <div className="hero-ctas">
-                <button className="btn-primary" onClick={() => setModalOpen(true)}>Get Invite →</button>
+                <button className="btn-primary" onClick={() => window.location.href = '/login'}>Get access →</button>
                 <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer" className="btn-ghost">Try demo ↗</a>
               </div>
             </div>
@@ -743,7 +602,7 @@ export default function LandingPage() {
             <span className="pricing-cta-eyebrow lp-reveal">Early Adopter Program</span>
             <h3 className="lp-reveal">Lock your rate.<br />Forever.</h3>
             <p className="lp-reveal">Early adopters get real pricing with a meaningful discount — locked in for life. As ME grows, your rate doesn't. Be among the first agencies to run on ME.</p>
-            <button className="btn-red-outline lp-reveal" onClick={() => setModalOpen(true)}>Request Invite →</button>
+            <button className="btn-red-outline lp-reveal" onClick={() => window.location.href = '/login'}>Request access →</button>
             <p style={{ fontSize: "12px", color: "rgba(250,250,248,0.3)", lineHeight: "1.5" }} className="lp-reveal">No commitment. We'll reach out personally within 24 hours.</p>
           </div>
         </div>
@@ -773,8 +632,8 @@ export default function LandingPage() {
                 <a href="https://myoozzevents.com" target="_blank" rel="noopener noreferrer">myoozzevents.com</a>
               </div>
               <div className="footer-col">
-                <h4>Get Invite</h4>
-                <a href="#" onClick={(e) => { e.preventDefault(); setModalOpen(true); }}>Request Access</a>
+                <h4>Get Access</h4>
+                <a href="/login">Request Access</a>
                 <a href="mailto:hello@myoozz.events">hello@myoozz.events</a>
               </div>
             </div>
