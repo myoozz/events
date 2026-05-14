@@ -80,10 +80,14 @@ function getUrlTokenHash() {
 }
 
 export default function LoginPage() {
-  const [mode, setMode] = useState('login') // 'login' | 'forgot' | 'setpassword'
+  const [mode, setMode] = useState('login') // 'login' | 'forgot' | 'setpassword' | 'register' | 'pending'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [contactName, setContactName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [designation, setDesignation] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -187,6 +191,57 @@ export default function LoginPage() {
     }, 1500)
   }
 
+  // ── Register new tenant ────────────────────────────────────
+  async function handleRegister(e) {
+    e.preventDefault()
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
+      return
+    }
+    setLoading(true)
+    setError('')
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/register-tenant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({
+          company_name: companyName.trim(),
+          contact_name: contactName.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          password,
+          ...(designation.trim() && { designation: designation.trim() }),
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setError(res.status === 409
+          ? 'This email is already registered. Try signing in instead.'
+          : (data.error || 'Registration failed. Please try again.'))
+        setLoading(false)
+        return
+      }
+
+      setLoading(false)
+      setMode('pending')
+    } catch {
+      setError('Something went wrong. Please try again.')
+      setLoading(false)
+    }
+  }
+
   // ── Logo / header ───────────────────────────────────────────
   const Header = () => (
     <div style={{ textAlign: 'center', marginBottom: '40px' }}>
@@ -200,6 +255,8 @@ export default function LoginPage() {
         {mode === 'login' && 'Sign in to your account'}
         {mode === 'forgot' && 'Reset your password'}
         {mode === 'setpassword' && 'Set your password'}
+        {mode === 'register' && 'Create your organisation account'}
+        {mode === 'pending' && 'Registration received'}
       </p>
     </div>
   )
@@ -321,44 +378,136 @@ export default function LoginPage() {
             </form>
           )}
 
+          {/* ── REGISTER FORM ── */}
+          {mode === 'register' && (
+            <form onSubmit={handleRegister}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>Company / Organisation name</label>
+                <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
+                  placeholder="Acme Events Pvt Ltd" required style={inputStyle} />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>Your name</label>
+                <input type="text" value={contactName} onChange={e => setContactName(e.target.value)}
+                  placeholder="Full name" required style={inputStyle} />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>Designation (optional)</label>
+                <input type="text" value={designation} onChange={e => setDesignation(e.target.value)}
+                  placeholder="e.g. Director, Production Head" style={inputStyle} />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>Work email</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="you@company.com" required style={inputStyle} />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>Phone</label>
+                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                  placeholder="+91 98765 43210" required style={inputStyle} />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>Password</label>
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="At least 8 characters" required style={inputStyle} />
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={labelStyle}>Confirm password</label>
+                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Same password again" required style={inputStyle} />
+              </div>
+
+              {error && <ErrorBox message={error} />}
+
+              <button type="submit" disabled={loading} style={primaryBtn(loading)}>
+                {loading ? 'Submitting...' : 'Request access'}
+              </button>
+
+              <button type="button" onClick={() => { setMode('login'); setError('') }}
+                style={{
+                  width: '100%', marginTop: '10px', padding: '10px',
+                  fontSize: '13px', fontFamily: 'var(--font-body)',
+                  background: 'none', border: '0.5px solid var(--border-strong)',
+                  borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)',
+                }}>
+                ← Back to sign in
+              </button>
+            </form>
+          )}
+
+          {/* ── PENDING STATE (post-registration) ── */}
+          {mode === 'pending' && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '48px', height: '48px', borderRadius: '50%',
+                background: 'rgba(242,143,59,0.12)', border: '1.5px solid rgba(242,143,59,0.35)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 20px', fontSize: '22px',
+              }}>
+                ⏳
+              </div>
+              <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '10px' }}>
+                Your request is under review
+              </p>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '24px' }}>
+                We've received your registration. Our team will review your details and send your login credentials to <strong>{email}</strong> within 1–2 business days.
+              </p>
+              <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess('') }}
+                style={{
+                  width: '100%', padding: '10px',
+                  fontSize: '13px', fontFamily: 'var(--font-body)',
+                  background: 'none', border: '0.5px solid var(--border-strong)',
+                  borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)',
+                }}>
+                ← Back to sign in
+              </button>
+            </div>
+          )}
+
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '24px' }}>
-          <p style={{
-            fontSize: '12px', color: 'var(--text-tertiary)',
-            lineHeight: 1.6, marginBottom: '16px',
-          }}>
-            Access is by invitation only.<br />
-            Contact your admin to get access.
-          </p>
-          <a
-            href="https://myoozz.events/#earlyaccess"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '10px 20px',
-              fontSize: '13px', fontWeight: 500,
-              fontFamily: 'var(--font-body)',
-              color: '#F28F3B',
-              background: 'rgba(188,23,35,0.06)',
-              border: '0.5px solid rgba(188,23,35,0.2)',
-              borderRadius: 'var(--radius-sm)',
-              textDecoration: 'none',
-              transition: 'all 0.18s',
-            }}
-            onMouseOver={e => {
-              e.currentTarget.style.background = 'rgba(188,23,35,0.1)'
-              e.currentTarget.style.borderColor = 'rgba(188,23,35,0.35)'
-            }}
-            onMouseOut={e => {
-              e.currentTarget.style.background = 'rgba(188,23,35,0.06)'
-              e.currentTarget.style.borderColor = 'rgba(188,23,35,0.2)'
-            }}
-          >
-            Request credentials →
-          </a>
-        </div>
+        {(mode === 'login' || mode === 'forgot') && (
+          <div style={{ textAlign: 'center', marginTop: '24px' }}>
+            <p style={{
+              fontSize: '12px', color: 'var(--text-tertiary)',
+              lineHeight: 1.6, marginBottom: '16px',
+            }}>
+              New to Myoozz Events?
+            </p>
+            <button
+              type="button"
+              onClick={() => { setMode('register'); setError(''); setSuccess('') }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                padding: '10px 20px',
+                fontSize: '13px', fontWeight: 500,
+                fontFamily: 'var(--font-body)',
+                color: '#F28F3B',
+                background: 'rgba(242,143,59,0.08)',
+                border: '0.5px solid rgba(242,143,59,0.3)',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                transition: 'all 0.18s',
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.background = 'rgba(242,143,59,0.14)'
+                e.currentTarget.style.borderColor = 'rgba(242,143,59,0.5)'
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = 'rgba(242,143,59,0.08)'
+                e.currentTarget.style.borderColor = 'rgba(242,143,59,0.3)'
+              }}
+            >
+              Request access →
+            </button>
+          </div>
+        )}
 
       </div>
     </div>
