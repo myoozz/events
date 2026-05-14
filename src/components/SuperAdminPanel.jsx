@@ -124,13 +124,16 @@ export default function SuperAdminPanel() {
     if (!approveModal) return
     setModalLoading(true)
     try {
+      const { data: { session: s } } = await supabase.auth.getSession()
+      const { data: { user } } = await supabase.auth.getUser()
+      const approvedByEmail = user?.email
       const res = await fetch(EF_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${s?.access_token}` },
         body: JSON.stringify({
           tenant_id: approveModal.id,
           trial_days: Number(trialDays),
-          approved_by_email: session?.user?.email,
+          approved_by_email: approvedByEmail,
           action: 'approve',
         }),
       })
@@ -151,9 +154,10 @@ export default function SuperAdminPanel() {
     if (!waitlistModal) return
     setModalLoading(true)
     try {
+      const { data: { session: s } } = await supabase.auth.getSession()
       const res = await fetch(EF_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${s?.access_token}` },
         body: JSON.stringify({
           tenant_id: waitlistModal.id,
           action: 'waitlist',
