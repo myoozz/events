@@ -13,6 +13,12 @@ function generateSlug(name) {
 
 export default function CategoryManager({ userRole }) {
   const [categories, setCategories] = useState([]);
+  const [aliases, setAliases] = useState({});
+  const [customCats, setCustomCats] = useState([]);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [myTenantId, setMyTenantId] = useState(null);
+  const [editingAlias, setEditingAlias] = useState(null);
+  const [pendingSuggestions, setPendingSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
@@ -27,13 +33,88 @@ export default function CategoryManager({ userRole }) {
 
   async function fetchCategories() {
     setLoading(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    const payload = session?.access_token
+      ? JSON.parse(atob(session.access_token.split('.')[1])) : {};
+    const sa = payload.platform_role === 'super_admin';
+    const tenantId = payload.tenant_id;
+    setIsSuperAdmin(sa);
+    setMyTenantId(tenantId);
     const { data, error } = await supabase
       .from('event_categories')
       .select('*')
       .order('sort_order');
     if (!error) setCategories(data || []);
+    if (sa) {
+      const { data: pending } = await supabase
+        .from('tenant_category_config')
+        .select('*, tenants(name)')
+        .eq('sa_status', 'pending')
+        .eq('is_custom', true);
+      setPendingSuggestions(pending || []);
+    } else {
+      const { data: tenantConfig } = await supabase
+        .from('tenant_category_config')
+        .select('*')
+        .eq('tenant_id', tenantId);
+      const aliasMap = {};
+      const customs = [];
+      (tenantConfig || []).forEach(row => {
+        if (!row.is_custom && row.alias) aliasMap[row.category_id] = { id: row.id, alias: row.alias };
+        if (row.is_custom) customs.push(row);
+      });
+      setAliases(aliasMap);
+      setCustomCats(customs);
+    }
     setLoading(false);
   }
+
+  const saveAlias = async (categoryId, aliasText) => {
+    const existing = aliases[categoryId];
+    if (!aliasText.trim()) { removeAlias(categoryId); return; }
+    if (existing) {
+      await supabase.from('tenant_category_config')
+        .update({ alias: aliasText.trim() })
+        .eq('id', existing.id);
+    } else {
+      await supabase.from('tenant_category_config')
+        .insert({ tenant_id: myTenantId, category_id: categoryId, alias: aliasText.trim(), is_custom: false, sa_status: 'accepted' });
+    }
+    setEditingAlias(null);
+    await fetchCategories();
+  };
+
+  const removeAlias = async (categoryId) => {
+    const existing = aliases[categoryId];
+    if (existing) {
+      await supabase.from('tenant_category_config').delete().eq('id', existing.id);
+      await fetchCategories();
+    }
+  };
+
+  const addCustomCategory = async (name) => {
+    if (!name.trim()) return;
+    await supabase.from('tenant_category_config').insert({
+      tenant_id: myTenantId, category_id: null,
+      custom_name: name.trim(), is_custom: true, sa_status: 'pending',
+    });
+    await fetchCategories();
+  };
+
+  const handleSASuggestion = async (id, accept, customName) => {
+    if (accept) {
+      const maxOrder = categories.length > 0 ? Math.max(...categories.map(c => c.sort_order)) : 0;
+      const slug = customName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      await supabase.from('event_categories')
+        .insert({ name: customName, slug, sort_order: maxOrder + 1, is_active: true });
+      await supabase.from('tenant_category_config')
+        .update({ sa_status: 'accepted' }).eq('id', id);
+    } else {
+      await supabase.from('tenant_category_config')
+        .update({ sa_status: 'rejected' }).eq('id', id);
+    }
+    await fetchCategories();
+  };
 
   const CATEGORY_TYPES = [
     { value: 'rental',           label: 'Rental' },
@@ -52,8 +133,6 @@ export default function CategoryManager({ userRole }) {
   const [stageLoading, setStageLoading] = useState(false);
   const [editingStage, setEditingStage] = useState(null);
   const [isCustomised, setIsCustomised] = useState({});
-  const [myTenantId, setMyTenantId] = useState(null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [openPanels, setOpenPanels] = useState({});
 
   useEffect(() => {
@@ -114,6 +193,7 @@ export default function CategoryManager({ userRole }) {
   };
 
   const updateCategoryType = async (categoryId, newType) => {
+    if (!isSuperAdmin) return;
     const { error } = await supabase
       .from('event_categories')
       .update({ category_type: newType || null })
@@ -201,6 +281,7 @@ export default function CategoryManager({ userRole }) {
   };
 
   async function handleAdd() {
+    if (!isSuperAdmin) return;
     if (!newName.trim()) return;
     const slug = generateSlug(newName.trim());
     const maxOrder = categories.length > 0
@@ -214,28 +295,29 @@ export default function CategoryManager({ userRole }) {
     setAdding(false);
   }
 
-  async function handleRename(cat) {
-    if (!editingName.trim() || editingName.trim() === cat.name) {
-      setEditingId(null);
-      return;
-    }
-    const newSlug = generateSlug(editingName.trim());
+  async function handleRename(catId, newName) {
+    if (!isSuperAdmin) return;
+    if (!newName?.trim()) { setEditingName(null); return; }
+    const cat = categories.find(c => c.id === catId);
+    if (!cat || newName.trim() === cat.name) { setEditingName(null); return; }
+    const newSlug = generateSlug(newName.trim());
     const oldName = cat.name;
-    const newNameTrimmed = editingName.trim();
+    const newNameTrimmed = newName.trim();
     setSaving(true);
     const { error: e1 } = await supabase
       .from('event_categories')
       .update({ name: newNameTrimmed, slug: newSlug })
-      .eq('id', cat.id);
+      .eq('id', catId);
     if (e1) { setError(e1.message); setSaving(false); return; }
     await supabase.from('rate_cards').update({ category: newNameTrimmed }).eq('category', oldName);
     await supabase.from('elements').update({ category: newNameTrimmed }).eq('category', oldName);
-    setEditingId(null);
+    setEditingName(null);
     await fetchCategories();
     setSaving(false);
   }
 
   async function handleToggleActive(cat) {
+    if (!isSuperAdmin) return;
     await supabase
       .from('event_categories')
       .update({ is_active: !cat.is_active })
@@ -244,6 +326,7 @@ export default function CategoryManager({ userRole }) {
   }
 
   async function handleMove(index, direction) {
+    if (!isSuperAdmin) return;
     const swapIndex = index + direction;
     if (swapIndex < 0 || swapIndex >= categories.length) return;
     const aOrder = categories[index].sort_order;
@@ -305,6 +388,7 @@ export default function CategoryManager({ userRole }) {
       {activeTab === 'categories' && (loading ? (
         <div style={{ color: '#7a7060', fontSize: 13 }}>Loading categories...</div>
       ) : (
+        <>
         <div style={{ background: '#fff', border: '1px solid #d8d2c8', borderRadius: 8 }}>
           {categories.map((cat, index) => (
             <div key={cat.id} style={{
@@ -326,22 +410,36 @@ export default function CategoryManager({ userRole }) {
               </div>
 
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {editingId === cat.id ? (
-                  <input
-                    autoFocus
-                    value={editingName}
-                    onChange={e => setEditingName(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleRename(cat); if (e.key === 'Escape') setEditingId(null); }}
-                    onBlur={() => handleRename(cat)}
-                    style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, border: '1px solid #F28F3B', borderRadius: 4, padding: '4px 8px', outline: 'none', color: '#1a1008' }}
-                  />
+                {isSuperAdmin ? (
+                  editingName?.id === cat.id ? (
+                    <input autoFocus defaultValue={cat.name}
+                      onBlur={e => handleRename(cat.id, e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleRename(cat.id, e.target.value); if (e.key === 'Escape') setEditingName(null); }}
+                      style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, border: '1px solid #F28F3B', borderRadius: 4, padding: '4px 8px', outline: 'none', color: '#1a1008' }} />
+                  ) : (
+                    <span onDoubleClick={() => setEditingName({ id: cat.id })}
+                      style={{ fontWeight: 500, fontSize: 14, cursor: 'text', color: '#1a1008' }}>{cat.name}</span>
+                  )
                 ) : (
-                  <div
-                    style={{ fontSize: 14, color: '#1a1008', cursor: 'text' }}
-                    onDoubleClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
-                  >
-                    {cat.name}
-                  </div>
+                  editingAlias === cat.id ? (
+                    <input autoFocus defaultValue={aliases[cat.id]?.alias || cat.name}
+                      onBlur={e => saveAlias(cat.id, e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveAlias(cat.id, e.target.value); if (e.key === 'Escape') setEditingAlias(null); }}
+                      style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, border: '1px solid #bc1723', borderRadius: 4, padding: '4px 8px', outline: 'none', color: '#1a1008' }} />
+                  ) : (
+                    <span onDoubleClick={() => setEditingAlias(cat.id)} style={{ cursor: 'text' }}>
+                      <span style={{ fontWeight: 500, fontSize: 14, color: '#1a1008' }}>
+                        {aliases[cat.id]?.alias || cat.name}
+                      </span>
+                      {aliases[cat.id] && (
+                        <>
+                          <span style={{ fontSize: 11, color: '#7a7060', marginLeft: 6 }}>({cat.name})</span>
+                          <button onClick={() => removeAlias(cat.id)}
+                            style={{ marginLeft: 4, fontSize: 10, color: '#7a7060', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+                        </>
+                      )}
+                    </span>
+                  )
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#b8b0a0' }}>
@@ -381,12 +479,14 @@ export default function CategoryManager({ userRole }) {
                   {cat.is_active ? 'Active' : 'Inactive'}
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <button
-                    onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
-                    style={{ fontSize: 11, color: '#1a4b8a', background: '#e8eef8', border: 'none', borderRadius: 3, padding: '3px 8px', cursor: 'pointer' }}
-                  >
-                    Rename
-                  </button>
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => setEditingName({ id: cat.id })}
+                      style={{ fontSize: 11, color: '#1a4b8a', background: '#e8eef8', border: 'none', borderRadius: 3, padding: '3px 8px', cursor: 'pointer' }}
+                    >
+                      Rename
+                    </button>
+                  )}
                   <button
                     onClick={() => handleToggleActive(cat)}
                     style={{ fontSize: 11, color: '#7a7060', background: '#f2efe9', border: 'none', borderRadius: 3, padding: '3px 8px', cursor: 'pointer' }}
@@ -398,34 +498,77 @@ export default function CategoryManager({ userRole }) {
             </div>
           ))}
 
-          <div style={{ padding: '12px 16px', background: '#faf8f5', borderTop: '1px solid #e8e4dc', display: 'flex', gap: 10, alignItems: 'center', borderRadius: '0 0 8px 8px' }}>
-            <input
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }}
-              placeholder="New category name"
-              style={{ flex: 1, fontFamily: 'DM Sans, sans-serif', fontSize: 13, border: '1px solid #d8d2c8', borderRadius: 4, padding: '6px 10px', outline: 'none', color: '#1a1008', background: '#fff' }}
-            />
-            {newName && (
-              <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#b8b0a0' }}>
-                {generateSlug(newName)}
-              </div>
-            )}
-            <button
-              onClick={handleAdd}
-              disabled={!newName.trim() || adding}
-              style={{
-                background: newName.trim() ? '#F28F3B' : '#e8e4dc',
-                color: newName.trim() ? '#fff' : '#b8b0a0',
-                border: 'none', borderRadius: 4, padding: '6px 14px',
-                fontSize: 13, cursor: newName.trim() ? 'pointer' : 'default',
-                fontFamily: 'DM Sans, sans-serif', fontWeight: 500
-              }}
-            >
-              {adding ? 'Adding...' : '+ Add Category'}
-            </button>
-          </div>
+          {isSuperAdmin && (
+            <div style={{ padding: '12px 16px', background: '#faf8f5', borderTop: '1px solid #e8e4dc', display: 'flex', gap: 10, alignItems: 'center', borderRadius: '0 0 8px 8px' }}>
+              <input
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }}
+                placeholder="New category name"
+                style={{ flex: 1, fontFamily: 'DM Sans, sans-serif', fontSize: 13, border: '1px solid #d8d2c8', borderRadius: 4, padding: '6px 10px', outline: 'none', color: '#1a1008', background: '#fff' }}
+              />
+              {newName && (
+                <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#b8b0a0' }}>
+                  {generateSlug(newName)}
+                </div>
+              )}
+              <button
+                onClick={handleAdd}
+                disabled={!newName.trim() || adding}
+                style={{
+                  background: newName.trim() ? '#F28F3B' : '#e8e4dc',
+                  color: newName.trim() ? '#fff' : '#b8b0a0',
+                  border: 'none', borderRadius: 4, padding: '6px 14px',
+                  fontSize: 13, cursor: newName.trim() ? 'pointer' : 'default',
+                  fontFamily: 'DM Sans, sans-serif', fontWeight: 500
+                }}
+              >
+                {adding ? 'Adding...' : '+ Add Category'}
+              </button>
+            </div>
+          )}
         </div>
+
+        {!isSuperAdmin && customCats.length > 0 && (
+          <div style={{ marginTop: 16, borderTop: '1px solid #d8d2c8', paddingTop: 12 }}>
+            <p style={{ fontSize: 11, color: '#7a7060', marginBottom: 8 }}>Your custom categories</p>
+            {customCats.map(c => (
+              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #f2efe9' }}>
+                <span style={{ fontSize: 14, fontWeight: 500 }}>{c.custom_name}</span>
+                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10,
+                  background: c.sa_status === 'pending' ? '#fef3c7' : c.sa_status === 'accepted' ? '#dcfce7' : '#fee2e2',
+                  color: c.sa_status === 'pending' ? '#92400e' : c.sa_status === 'accepted' ? '#166534' : '#991b1b' }}>
+                  {c.sa_status === 'pending' ? 'Pending review' : c.sa_status === 'accepted' ? 'Added to master' : 'Not added to master'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        {!isSuperAdmin && (
+          <button onClick={() => { const n = prompt('New category name:'); if (n) addCustomCategory(n); }}
+            style={{ marginTop: 12, fontSize: 12, color: '#bc1723', background: 'none', border: '1px dashed #bc1723', borderRadius: 6, padding: '4px 12px', cursor: 'pointer' }}>
+            + Add custom category
+          </button>
+        )}
+
+        {isSuperAdmin && pendingSuggestions.length > 0 && (
+          <div style={{ marginTop: 24, borderTop: '1px solid #d8d2c8', paddingTop: 16 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: '#1a1008', marginBottom: 10 }}>
+              Category suggestions from agencies ({pendingSuggestions.length})
+            </p>
+            {pendingSuggestions.map(s => (
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f2efe9' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>{s.custom_name}</span>
+                <span style={{ fontSize: 11, color: '#7a7060' }}>{s.tenants?.name}</span>
+                <button onClick={() => handleSASuggestion(s.id, true, s.custom_name)}
+                  style={{ fontSize: 11, background: '#dcfce7', color: '#166534', border: 'none', borderRadius: 4, padding: '3px 10px', cursor: 'pointer' }}>Accept</button>
+                <button onClick={() => handleSASuggestion(s.id, false, s.custom_name)}
+                  style={{ fontSize: 11, background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: 4, padding: '3px 10px', cursor: 'pointer' }}>Reject</button>
+              </div>
+            ))}
+          </div>
+        )}
+        </>
       ))}
 
       {activeTab === 'stages' && (
