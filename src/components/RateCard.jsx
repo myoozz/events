@@ -351,10 +351,15 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
       created_by: session?.user?.email,
       last_updated: new Date().toISOString().split('T')[0],
     }))
+    const { data: { session: importSession } } = await supabase.auth.getSession()
+    const importPayload = importSession?.access_token
+      ? JSON.parse(atob(importSession.access_token.split('.')[1])) : {}
+    const importTenantId = importPayload.tenant_id || null
     const batchSize = 50
     for (let i = 0; i < rows.length; i += batchSize) {
       setProgress(`Saving ${Math.min(i + batchSize, rows.length)} of ${rows.length}...`)
-      await supabase.from('rate_cards').insert(rows.slice(i, i + batchSize))
+      const taggedRows = rows.slice(i, i + batchSize).map(r => ({ ...r, tenant_id: importTenantId }))
+      await supabase.from('rate_cards').insert(taggedRows)
     }
     setProgress('Done!')
     setTimeout(() => { onImported(); onClose() }, 800)
@@ -683,10 +688,39 @@ export default function RateCard({ session, userRole, canManageRateCards = false
   const [adding,       setAdding]       = useState(false)
   const [addDone,      setAddDone]      = useState(false)
 
+  // ── Super-admin / tenant identity ─────────────────────────────────────────
+  const [isSuperAdmin,     setIsSuperAdmin]     = useState(false)
+  const [myTenantId,       setMyTenantId]       = useState(null)
+  const [masterRates,      setMasterRates]      = useState([])
+  const [selectedBenchCat, setSelectedBenchCat] = useState(null)
+  const [benchFilter,      setBenchFilter]      = useState('')
+
   async function loadRates() {
     setLoading(true)
-    const { data } = await supabase.from('rate_cards').select('*').order('category').order('element_name')
-    setRates(data || [])
+    const { data: { session } } = await supabase.auth.getSession()
+    const payload = session?.access_token
+      ? JSON.parse(atob(session.access_token.split('.')[1])) : {}
+    const sa = payload.platform_role === 'super_admin'
+    const tenantId = payload.tenant_id
+    if (sa) {
+      const { data } = await supabase.from('rate_cards')
+        .select('*')
+        .is('tenant_id', null)
+        .order('category').order('element_name')
+      setRates(data || [])
+      setMasterRates([])
+    } else {
+      const [{ data: own }, { data: master }] = await Promise.all([
+        supabase.from('rate_cards').select('*')
+          .eq('tenant_id', tenantId)
+          .order('category').order('element_name'),
+        supabase.from('rate_cards').select('*')
+          .is('tenant_id', null)
+          .order('category').order('element_name'),
+      ])
+      setRates(own || [])
+      setMasterRates(master || [])
+    }
     setLoading(false)
   }
 
@@ -701,6 +735,15 @@ export default function RateCard({ session, userRole, canManageRateCards = false
 
   useEffect(() => { loadRates(); loadEvents() }, [])
   useEffect(() => { setLocationFilter(''); setSelectedItem(null); setSelected(new Set()) }, [selectedCat])
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const payload = session?.access_token
+        ? JSON.parse(atob(session.access_token.split('.')[1])) : {}
+      setIsSuperAdmin(payload.platform_role === 'super_admin')
+      setMyTenantId(payload.tenant_id || null)
+    })()
+  }, [])
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const categories = [...new Set(rates.map(r => r.category).filter(Boolean))].sort()
@@ -782,6 +825,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
   }
 
   async function saveRow(row) {
+    if (!isSuperAdmin && !row.tenant_id) return
     const { id, ...fields } = row
     await supabase.from('rate_cards').update(fields).eq('id', id)
     setEditingRow(null)
@@ -790,6 +834,8 @@ export default function RateCard({ session, userRole, canManageRateCards = false
   }
 
   async function deleteRow(id) {
+    const rowToDelete = rates.find(r => r.id === id)
+    if (!isSuperAdmin && !rowToDelete?.tenant_id) return
     await supabase.from('rate_cards').delete().eq('id', id)
     setDeleteConfirm(null)
     if (selectedItem?.id === id) setSelectedItem(null)
@@ -882,6 +928,11 @@ export default function RateCard({ session, userRole, canManageRateCards = false
       {/* ── Main content ── */}
       {!loading && rates.length > 0 && (
         <>
+          {!isSuperAdmin && (
+            <p style={{ ...s, fontSize: '13px', fontWeight: 600, color: D.text, marginBottom: '10px' }}>
+              My Agency Rates
+            </p>
+          )}
           {/* Category chips */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
             {categories.map(cat => {
@@ -1094,8 +1145,8 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                           ↗ View source
                         </a>
                       )}
-                      {/* Admin actions */}
-                      {canEdit && (
+                      {/* Admin actions — hidden for master (benchmark) rows */}
+                      {canEdit && (isSuperAdmin || selectedItem.tenant_id) && (
                         <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
                           <button onClick={() => setEditingRow({ ...selectedItem })}
                             style={{ ...s, padding: '7px 18px', fontSize: '12px', background: 'transparent', border: `0.5px solid ${D.borderAct}`, borderRadius: '6px', cursor: 'pointer', color: D.text }}>
@@ -1126,6 +1177,104 @@ export default function RateCard({ session, userRole, canManageRateCards = false
             </>
           )}
         </>
+      )}
+
+      {/* ── Platform Benchmark Rates (tenant users only) ── */}
+      {!isSuperAdmin && masterRates.length > 0 && (
+        <div style={{ marginTop: '32px', borderTop: `2px solid ${D.border}`, paddingTop: '20px', opacity: 0.75 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <span style={{ ...s, fontSize: '13px', fontWeight: 600, color: D.text }}>
+              Platform Benchmark Rates
+            </span>
+            <span style={{ ...s, fontSize: '10px', background: D.card, color: D.sub,
+              padding: '2px 8px', borderRadius: '10px', border: `0.5px solid ${D.border}` }}>
+              Read only · Set by Myoozz
+            </span>
+          </div>
+
+          {/* Benchmark category chips */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+            {[...new Set(masterRates.map(r => r.category).filter(Boolean))].sort().map(cat => {
+              const count = masterRates.filter(r => r.category === cat).length
+              const active = selectedBenchCat === cat
+              return (
+                <span key={cat}
+                  onClick={() => { setSelectedBenchCat(active ? null : cat); setBenchFilter('') }}
+                  style={chipSt(active)}>
+                  {cat}
+                  <span style={{ marginLeft: '7px', fontSize: '10px', opacity: 0.55 }}>{count}</span>
+                </span>
+              )
+            })}
+          </div>
+
+          {!selectedBenchCat && (
+            <div style={{ padding: '40px 0', textAlign: 'center', color: D.dim, fontSize: '13px' }}>
+              Select a category above to browse benchmark rates
+            </div>
+          )}
+
+          {selectedBenchCat && (() => {
+            const inCat = masterRates.filter(r => r.category === selectedBenchCat)
+            const cities = ['All', ...[...new Set(inCat.map(r => r.city).filter(Boolean))].sort((a, b) =>
+              a === 'Pan-India' ? 1 : b === 'Pan-India' ? -1 : a.localeCompare(b))]
+            const filtered = benchFilter && benchFilter !== 'All'
+              ? inCat.filter(r => r.city === benchFilter || r.city === 'Pan-India')
+              : inCat
+            const grouped = {}
+            filtered.forEach(r => {
+              const src = r.vendor_name || r.source || 'Other'
+              if (!grouped[src]) grouped[src] = []
+              grouped[src].push(r)
+            })
+            return (
+              <>
+                {cities.length > 2 && (
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', color: D.dim, marginRight: '4px' }}>City</span>
+                    {cities.map(loc => (
+                      <span key={loc}
+                        onClick={() => setBenchFilter(loc === 'All' ? '' : loc)}
+                        style={chipSt(loc === 'All' ? !benchFilter : benchFilter === loc, true)}>
+                        {loc}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div style={{ maxWidth: '360px' }}>
+                  {Object.entries(grouped).map(([src, items]) => (
+                    <div key={src} style={{ marginBottom: '22px' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 600, color: D.dim, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', paddingLeft: '2px' }}>
+                        {src}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {items.map(item => (
+                          <div key={item.id} style={{
+                            background: D.card, border: `0.5px solid ${D.border}`,
+                            borderRadius: '10px', padding: '12px 14px',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px',
+                          }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '13px', fontWeight: 600, color: D.text, marginBottom: '3px', lineHeight: 1.3, userSelect: 'none' }}>
+                                {item.element_name}
+                              </div>
+                              <div style={{ fontSize: '11px', color: D.sub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {item.specification || (item.city && item.city !== 'Pan-India' ? item.city : 'Pan-India')}
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '12px', fontWeight: 500, color: D.text, flexShrink: 0, userSelect: 'none' }}>
+                              {fmtRange(item.rate_min, item.rate_max)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )
+          })()}
+        </div>
       )}
 
       {/* ── Add to event modal ── */}

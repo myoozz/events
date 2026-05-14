@@ -752,7 +752,7 @@ export default function AppShell({ session }) {
             { key: 'events', icon: '📋', label: 'Events' },
             ...((userRole === 'admin' || userRole === 'manager') ? [{ key: 'team', icon: '👥', label: 'Team' }] : []),
             ...(userRole === 'admin' ? [{ key: 'activitylog', icon: '📋', label: 'Log' }] : []),
-            ...((userRole === 'admin' || canManageRateCards) ? [{ key: 'ratecard', icon: '₹', label: 'Rates' }] : []),
+            ...((userRole === 'admin' || canManageRateCards || platformRole === 'super_admin') ? [{ key: 'ratecard', icon: '₹', label: 'Rates' }] : []),
           ].map(item => (
             <button
               key={item.key}
@@ -879,7 +879,7 @@ export default function AppShell({ session }) {
           {activeTab === 'activitylog' && userRole === 'admin' && (
             <ActivityLog />
           )}
-          {activeTab === 'ratecard' && (userRole === 'admin' || canManageRateCards) && (
+          {activeTab === 'ratecard' && (userRole === 'admin' || canManageRateCards || platformRole === 'super_admin') && (
             <RateCard session={session} userRole={userRole} canManageRateCards={canManageRateCards} />
           )}
           {activeTab === 'categories' && userRole === 'admin' && (
