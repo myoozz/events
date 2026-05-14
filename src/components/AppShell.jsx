@@ -7,7 +7,6 @@ import Dashboard from './Dashboard'
 import UserManagement from './UserManagement'
 import TeamView from './TeamView'
 import AnalyticsDashboard from './AnalyticsDashboard'
-import EarlyAccess from './EarlyAccess'
 import RateCard from './RateCard'
 import CategoryManager from './CategoryManager'
 import FeedbackButton from './FeedbackButton'
@@ -55,16 +54,6 @@ const NAV_ITEMS = [
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <rect x="3" y="2" width="12" height="14" rx="1.5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none"/>
         <path d="M6 6h6M6 9h6M6 12h4" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" strokeLinecap="round" opacity={active ? 1 : 0.6}/>
-      </svg>
-    ),
-  },
-  {
-    key: 'earlyaccess',
-    label: 'Early access',
-    roles: ['admin'],
-    icon: (active) => (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <path d="M9 2L11 7H16L12 10.5L13.5 16L9 13L4.5 16L6 10.5L2 7H7L9 2Z" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} />
       </svg>
     ),
   },
@@ -889,9 +878,6 @@ export default function AppShell({ session }) {
           )}
           {activeTab === 'activitylog' && userRole === 'admin' && (
             <ActivityLog />
-          )}
-          {activeTab === 'earlyaccess' && userRole === 'admin' && (
-            <EarlyAccess />
           )}
           {activeTab === 'ratecard' && (userRole === 'admin' || canManageRateCards) && (
             <RateCard session={session} userRole={userRole} canManageRateCards={canManageRateCards} />
