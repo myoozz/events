@@ -6,16 +6,40 @@ export default function ActivityLog() {
   const [loading, setLoading] = useState(true)
   const [filterUser, setFilterUser] = useState('')
   const [filterType, setFilterType] = useState('')
+  const [tenantId, setTenantId] = useState(null)
+  const [platformRole, setPlatformRole] = useState(null)
+  const [jwtReady, setJwtReady] = useState(false)
 
-  useEffect(() => { loadLogs() }, [])
+  useEffect(() => {
+    async function decodeJwt() {
+      try {
+        const { data: s } = await supabase.auth.getSession()
+        const token = s?.session?.access_token
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]))
+          if (payload.platform_role) setPlatformRole(payload.platform_role)
+          if (payload.tenant_id) setTenantId(payload.tenant_id)
+        }
+      } finally {
+        setJwtReady(true)
+      }
+    }
+    decodeJwt()
+  }, [])
+
+  useEffect(() => { if (jwtReady) loadLogs() }, [jwtReady])
 
   async function loadLogs() {
     setLoading(true)
-    const { data } = await supabase
+    let query = supabase
       .from('activity_log')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(500)
+    if (platformRole !== 'super_admin' && tenantId) {
+      query = query.eq('tenant_id', tenantId)
+    }
+    const { data } = await query
     setLogs(data || [])
     setLoading(false)
   }

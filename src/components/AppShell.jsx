@@ -266,7 +266,10 @@ export default function AppShell({ session }) {
   }
 
   const sidebarWidth  = collapsed ? '60px' : '220px'
-  const visibleItems  = NAV_ITEMS.filter(item => item.roles.includes(userRole))
+  const visibleItems  = NAV_ITEMS.filter(item =>
+    item.roles.includes(userRole) &&
+    !(platformRole === 'super_admin' && (item.key === 'events' || item.key === 'team'))
+  )
   const ini           = userInitials(userName)
 
   if (userLoading || tenantLoading) return (
@@ -749,8 +752,8 @@ export default function AppShell({ session }) {
           zIndex: 100, paddingBottom: 'env(safe-area-inset-bottom)',
         }}>
           {[
-            { key: 'events', icon: '📋', label: 'Events' },
-            ...((userRole === 'admin' || userRole === 'manager') ? [{ key: 'team', icon: '👥', label: 'Team' }] : []),
+            ...(platformRole !== 'super_admin' ? [{ key: 'events', icon: '📋', label: 'Events' }] : []),
+            ...((userRole === 'admin' || userRole === 'manager') && platformRole !== 'super_admin' ? [{ key: 'team', icon: '👥', label: 'Team' }] : []),
             ...(userRole === 'admin' ? [{ key: 'activitylog', icon: '📋', label: 'Log' }] : []),
             ...((userRole === 'admin' || canManageRateCards || platformRole === 'super_admin') ? [{ key: 'ratecard', icon: '₹', label: 'Rates' }] : []),
           ].map(item => (
@@ -851,7 +854,7 @@ export default function AppShell({ session }) {
           maxWidth: '960px', margin: '0 auto', width: '100%',
           padding: isMobile ? '16px' : '40px 32px',
         }}>
-          {activeTab === 'events' && (
+          {activeTab === 'events' && platformRole !== 'super_admin' && (
             <Dashboard
               userRole={userRole}
               session={session}
@@ -862,7 +865,7 @@ export default function AppShell({ session }) {
           {activeTab === 'analytics' && (
         <AnalyticsDashboard userId={userId} userRole={userRole} />
       )}
-      {activeTab === 'team' && (userRole === 'admin' || userRole === 'manager') && (
+      {activeTab === 'team' && (userRole === 'admin' || userRole === 'manager') && platformRole !== 'super_admin' && (
             <div>
               <TeamView
                 userId={session?.user?.id}
