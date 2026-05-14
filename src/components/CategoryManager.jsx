@@ -51,6 +51,9 @@ export default function CategoryManager({ userRole }) {
   const [stageConfig, setStageConfig] = useState({});
   const [stageLoading, setStageLoading] = useState(false);
   const [editingStage, setEditingStage] = useState(null);
+  const [isCustomised, setIsCustomised] = useState({});
+  const [myTenantId, setMyTenantId] = useState(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [openPanels, setOpenPanels] = useState({});
 
   useEffect(() => {
@@ -59,18 +62,53 @@ export default function CategoryManager({ userRole }) {
 
   const fetchStageConfig = async () => {
     setStageLoading(true);
-    const { data, error } = await supabase
-      .from('category_stage_config')
-      .select('*')
-      .order('category_type')
-      .order('sort_order');
-    if (!error && data) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const payload = session?.access_token
+      ? JSON.parse(atob(session.access_token.split('.')[1])) : {};
+    const tenantId = payload.tenant_id;
+    const sa = payload.platform_role === 'super_admin';
+    setMyTenantId(tenantId);
+    setIsSuperAdmin(sa);
+    if (sa) {
+      const { data } = await supabase
+        .from('category_stage_config')
+        .select('*')
+        .is('tenant_id', null)
+        .order('sort_order');
       const grouped = {};
-      CATEGORY_TYPES.forEach(t => { grouped[t.value] = []; });
-      data.forEach(row => {
-        if (grouped[row.category_type]) grouped[row.category_type].push(row);
+      (data || []).forEach(r => {
+        if (!grouped[r.category_type]) grouped[r.category_type] = [];
+        grouped[r.category_type].push(r);
       });
       setStageConfig(grouped);
+      setIsCustomised({});
+    } else {
+      const [{ data: defaults }, { data: overrides }] = await Promise.all([
+        supabase.from('category_stage_config').select('*').is('tenant_id', null).order('sort_order'),
+        supabase.from('category_stage_config').select('*').eq('tenant_id', tenantId).order('sort_order'),
+      ]);
+      const defaultMap = {}, overrideMap = {}, customised = {};
+      (defaults || []).forEach(r => {
+        if (!defaultMap[r.category_type]) defaultMap[r.category_type] = [];
+        defaultMap[r.category_type].push(r);
+      });
+      (overrides || []).forEach(r => {
+        if (!overrideMap[r.category_type]) overrideMap[r.category_type] = [];
+        overrideMap[r.category_type].push(r);
+      });
+      const merged = {};
+      const allKeys = new Set([...Object.keys(defaultMap), ...Object.keys(overrideMap)]);
+      allKeys.forEach(key => {
+        if (overrideMap[key]?.length > 0) {
+          merged[key] = overrideMap[key];
+          customised[key] = true;
+        } else {
+          merged[key] = (defaultMap[key] || []).map(r => ({ ...r, _isDefault: true }));
+          customised[key] = false;
+        }
+      });
+      setStageConfig(merged);
+      setIsCustomised(customised);
     }
     setStageLoading(false);
   };
@@ -89,28 +127,25 @@ export default function CategoryManager({ userRole }) {
 
   const updateStageName = async (stageId, newName) => {
     if (!newName.trim()) return;
-    const { error } = await supabase
-      .from('category_stage_config')
-      .update({ stage_name: newName.trim() })
-      .eq('id', stageId);
+    let query = supabase.from('category_stage_config').update({ stage_name: newName.trim() }).eq('id', stageId);
+    if (!isSuperAdmin) query = query.eq('tenant_id', myTenantId);
+    const { error } = await query;
     if (!error) fetchStageConfig();
   };
 
   const updateStageDays = async (stageId, newDays) => {
     const parsed = parseInt(newDays, 10);
     if (isNaN(parsed) || parsed < 0) return;
-    const { error } = await supabase
-      .from('category_stage_config')
-      .update({ days_before_event: parsed })
-      .eq('id', stageId);
+    let query = supabase.from('category_stage_config').update({ days_before_event: parsed }).eq('id', stageId);
+    if (!isSuperAdmin) query = query.eq('tenant_id', myTenantId);
+    const { error } = await query;
     if (!error) fetchStageConfig();
   };
 
   const toggleStageTerminal = async (stageId, current) => {
-    const { error } = await supabase
-      .from('category_stage_config')
-      .update({ is_terminal: !current })
-      .eq('id', stageId);
+    let query = supabase.from('category_stage_config').update({ is_terminal: !current }).eq('id', stageId);
+    if (!isSuperAdmin) query = query.eq('tenant_id', myTenantId);
+    const { error } = await query;
     if (!error) fetchStageConfig();
   };
 
@@ -133,16 +168,32 @@ export default function CategoryManager({ userRole }) {
     const maxOrder = stages.length > 0 ? Math.max(...stages.map(s => s.sort_order)) : 0;
     const { error } = await supabase
       .from('category_stage_config')
-      .insert({ category_type: typeKey, stage_name: 'New Stage', sort_order: maxOrder + 1, days_before_event: 0 });
+      .insert({ category_type: typeKey, stage_name: 'New Stage', sort_order: maxOrder + 1, days_before_event: 0, tenant_id: isSuperAdmin ? null : myTenantId });
     if (!error) fetchStageConfig();
   };
 
   const deleteStage = async (stageId) => {
-    const { error } = await supabase
-      .from('category_stage_config')
-      .delete()
-      .eq('id', stageId);
+    let query = supabase.from('category_stage_config').delete().eq('id', stageId);
+    if (!isSuperAdmin) query = query.eq('tenant_id', myTenantId);
+    const { error } = await query;
     if (!error) fetchStageConfig();
+  };
+
+  const customiseCategory = async (typeKey) => {
+    const rows = stageConfig[typeKey] || [];
+    const inserts = rows.map(({ id, created_at, tenant_id, _isDefault, ...rest }) => ({
+      ...rest, tenant_id: myTenantId,
+    }));
+    await supabase.from('category_stage_config').insert(inserts);
+    fetchStageConfig();
+  };
+
+  const resetToDefault = async (typeKey) => {
+    await supabase.from('category_stage_config')
+      .delete()
+      .eq('category_type', typeKey)
+      .eq('tenant_id', myTenantId);
+    fetchStageConfig();
   };
 
   const togglePanel = (typeKey) => {
@@ -416,6 +467,17 @@ export default function CategoryManager({ userRole }) {
                       <span style={{ fontSize: 11, color: '#7a7060', marginLeft: 10 }}>
                         {stages.length} stage{stages.length !== 1 ? 's' : ''}
                       </span>
+                      {!isSuperAdmin && (
+                        isCustomised[type.value]
+                          ? <button onClick={e => { e.stopPropagation(); resetToDefault(type.value); }}
+                              style={{ fontSize: 11, color: '#7a7060', marginLeft: 12, cursor: 'pointer', background: 'none', border: 'none' }}>
+                              Reset to default
+                            </button>
+                          : <button onClick={e => { e.stopPropagation(); customiseCategory(type.value); }}
+                              style={{ fontSize: 11, color: '#bc1723', marginLeft: 12, cursor: 'pointer', background: 'none', border: 'none' }}>
+                              Customise for my agency
+                            </button>
+                      )}
                     </div>
                     <span style={{ fontSize: 12, color: '#7a7060' }}>
                       {isOpen ? '▲' : '▼'}
@@ -460,9 +522,9 @@ export default function CategoryManager({ userRole }) {
                                   />
                                 ) : (
                                   <span
-                                    onDoubleClick={() => setEditingStage({ id: stage.id, field: 'name' })}
-                                    style={{ cursor: 'text', color: stage.is_terminal ? '#1a6b3a' : '#1a1008' }}
-                                    title="Double-click to edit"
+                                    onDoubleClick={() => !stage._isDefault && setEditingStage({ id: stage.id, field: 'name' })}
+                                    style={{ cursor: stage._isDefault ? 'default' : 'text', color: stage.is_terminal ? '#1a6b3a' : '#1a1008', opacity: stage._isDefault ? 0.6 : 1 }}
+                                    title={stage._isDefault ? 'Customise this category to edit stages' : 'Double-click to edit'}
                                   >
                                     {stage.stage_name}
                                     {stage.is_terminal && (
