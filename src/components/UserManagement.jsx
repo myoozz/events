@@ -27,17 +27,22 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [activeTab, setActiveTab] = useState('active')
+  const [suspendedUsers, setSuspendedUsers] = useState([])
+  const [expiredUsers, setExpiredUsers] = useState([])
 
   useEffect(() => { fetchUsers() }, [])
 
   async function fetchUsers() {
     setLoading(true)
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .neq('status', 'inactive')
-      .order('created_at', { ascending: false })
-    setUsers(data || [])
+    const [{ data: active }, { data: suspended }, { data: expired }] = await Promise.all([
+      supabase.from('users').select('*').eq('status', 'active').not('auth_id', 'is', null).order('created_at', { ascending: false }),
+      supabase.from('users').select('*').eq('status', 'suspended').order('created_at', { ascending: false }),
+      supabase.from('users').select('*').eq('status', 'active').is('auth_id', null).order('created_at', { ascending: false }),
+    ])
+    setUsers(active || [])
+    setSuspendedUsers(suspended || [])
+    setExpiredUsers(expired || [])
     setLoading(false)
   }
 
@@ -107,10 +112,30 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, can_manage_rate_cards: !current } : u))
   }
 
-  async function handleRemove(userId, email) {
-    if (!window.confirm(`Deactivate ${email}? They will no longer be able to access the system. You can restore them anytime from Supabase.`)) return
-    await supabase.from('users').update({ status: 'inactive' }).eq('id', userId)
-    setUsers(prev => prev.filter(u => u.id !== userId))
+  async function suspendUser(userId, email) {
+    if (!window.confirm(`Suspend ${email}? They will lose access until reinstated.`)) return
+    await supabase.from('users').update({ status: 'suspended' }).eq('id', userId)
+    fetchUsers()
+  }
+
+  async function reinstateUser(userId, email) {
+    if (!window.confirm(`Reinstate ${email}? They will regain full access.`)) return
+    await supabase.from('users').update({ status: 'active' }).eq('id', userId)
+    fetchUsers()
+  }
+
+  async function hardDeleteUser(userId, email) {
+    if (!window.confirm(`Permanently delete ${email}? This cannot be undone.`)) return
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
+      body: JSON.stringify({ user_id: userId }),
+    })
+    const json = await res.json()
+    if (!res.ok || json.error) { alert(`Delete failed: ${json.error || 'unknown error'}`); return }
+    fetchUsers()
   }
 
   const [resending, setResending] = useState(null) // userId being resent
@@ -349,160 +374,311 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
         </div>
       )}
 
+      {/* Tab strip — Active / Suspended / Expired Invites */}
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid var(--border)' }}>
+        {[
+          { key: 'active',    label: 'Active',          count: users.length },
+          { key: 'suspended', label: 'Suspended',        count: suspendedUsers.length },
+          { key: 'expired',   label: 'Expired Invites',  count: expiredUsers.length },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            style={{
+              padding: '8px 16px', fontSize: '13px', fontFamily: 'var(--font-body)',
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: activeTab === tab.key ? 'var(--text)' : 'var(--text-secondary)',
+              fontWeight: activeTab === tab.key ? 600 : 400,
+              borderBottom: activeTab === tab.key ? '2px solid #F28F3B' : '2px solid transparent',
+              marginBottom: '-1px', transition: 'all 0.15s',
+            }}
+          >
+            {tab.label}
+            {tab.count > 0 && (
+              <span style={{
+                marginLeft: '6px', fontSize: '11px', fontWeight: 500,
+                background: activeTab === tab.key ? '#F28F3B' : 'var(--bg-surface-2)',
+                color: activeTab === tab.key ? '#fff' : 'var(--text-secondary)',
+                padding: '1px 6px', borderRadius: '10px',
+              }}>
+                {tab.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <p style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>Loading team...</p>
-      ) : users.length === 0 ? (
-        <div style={{
-          border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius)',
-          padding: '48px 40px', textAlign: 'center',
-        }}>
-          <p style={{ fontFamily: 'var(--font-display)', fontSize: '20px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-            No team members yet.
-          </p>
-          <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginTop: '6px' }}>
-            Invite someone to start collaborating on events.
-          </p>
-        </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {users.map(u => (
-            <div
-              key={u.id}
-              style={{
-                border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
-                padding: '16px 24px', background: 'var(--bg)',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div
-                  onClick={() => onViewProfile && onViewProfile(u.id)}
-                  title="View profile"
-                  style={{
-                    width: '36px', height: '36px', borderRadius: '8px',
-                    background: '#F28F3B',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '13px', fontWeight: 700, color: '#fff',
-                    flexShrink: 0,
-                    cursor: onViewProfile ? 'pointer' : 'default',
-                    transition: 'opacity 0.15s',
-                  }}
-                  onMouseOver={e => { if (onViewProfile) e.currentTarget.style.opacity = '0.8' }}
-                  onMouseOut={e => e.currentTarget.style.opacity = '1'}
-                >
-                  {(u.full_name || u.email).trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').slice(0,2).join('')}
-                </div>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>
-                    {u.full_name || '—'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{u.email}</span>
-                    {u.base_city && (
-                      <span style={{
-                        fontSize: '11px', color: 'var(--text-tertiary)',
-                        display: 'flex', alignItems: 'center', gap: '3px',
-                      }}>
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                          <path d="M5 1C3.34 1 2 2.34 2 4c0 2.25 3 5.5 3 5.5S8 6.25 8 4c0-1.66-1.34-3-3-3z" stroke="#9CA3AF" strokeWidth="1" fill="none"/>
-                          <circle cx="5" cy="4" r="1" fill="#9CA3AF"/>
-                        </svg>
-                        {u.base_city}
-                      </span>
-                    )}
-                  </div>
-                </div>
+        <>
+          {activeTab === 'active' && (
+            users.length === 0 ? (
+              <div style={{ border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius)', padding: '48px 40px', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '20px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No active members yet.</p>
+                <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginTop: '6px' }}>Invite someone to start collaborating on events.</p>
               </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                {/* View profile */}
-                {onViewProfile && (
-                  <button
-                    onClick={() => onViewProfile(u.id)}
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {users.map(u => (
+                  <div
+                    key={u.id}
                     style={{
-                      padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
-                      background: 'none', border: '0.5px solid var(--border-strong)',
-                      borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                      color: 'var(--text-secondary)', transition: 'all 0.15s',
+                      border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
+                      padding: '16px 24px', background: 'var(--bg)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
                     }}
-                    onMouseOver={e => { e.currentTarget.style.borderColor = '#F28F3B'; e.currentTarget.style.color = '#F28F3B' }}
-                    onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
                   >
-                    View profile
-                  </button>
-                )}
-                {/* Inline resend message */}
-                {resendMsg[u.id] && (
-                  <span style={{
-                    fontSize: '11px',
-                    color: resendMsg[u.id].startsWith('✓') ? 'var(--green)' : '#A32D2D',
-                    fontFamily: 'var(--font-body)',
-                  }}>
-                    {resendMsg[u.id]}
-                  </span>
-                )}
-                <select
-                  value={u.role}
-                  onChange={e => handleRoleChange(u.id, e.target.value)}
-                  style={{
-                    padding: '5px 10px', fontSize: '12px', fontFamily: 'var(--font-body)',
-                    background: u.role === 'admin' ? 'var(--green-light)'
-                      : u.role === 'manager' ? '#EFF6FF'
-                      : u.role === 'event_lead' ? '#FEF3C7'
-                      : 'var(--bg-secondary)',
-                    color: u.role === 'admin' ? 'var(--green)'
-                      : u.role === 'manager' ? '#1D4ED8'
-                      : u.role === 'event_lead' ? '#92400E'
-                      : 'var(--text-secondary)',
-                    border: '0.5px solid var(--border)', borderRadius: '20px',
-                    cursor: 'pointer', outline: 'none', fontWeight: 500,
-                  }}
-                >
-                  {inviteableRoles.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
-                </select>
-                {userRole === 'admin' && (
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', userSelect: 'none' }}>
-                    <input
-                      type='checkbox'
-                      checked={!!u.can_manage_rate_cards}
-                      onChange={() => handleRateCardToggle(u.id, !!u.can_manage_rate_cards)}
-                      style={{ accentColor: '#F28F3B', width: '14px', height: '14px', cursor: 'pointer' }}
-                    />
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>Rate Cards Access</span>
-                  </label>
-                )}
-                <button
-                  onClick={() => handleResend(u.id, u.email)}
-                  disabled={resending === u.id}
-                  title="Resend invite email"
-                  style={{
-                    padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
-                    background: 'none', border: '0.5px solid var(--border-strong)',
-                    borderRadius: 'var(--radius-sm)', cursor: resending === u.id ? 'wait' : 'pointer',
-                    color: 'var(--text-secondary)', opacity: resending === u.id ? 0.5 : 1,
-                    transition: 'all 0.15s',
-                  }}
-                  onMouseOver={e => { if (resending !== u.id) e.currentTarget.style.borderColor = 'var(--text)' }}
-                  onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
-                >
-                  {resending === u.id ? 'Sending...' : '↻ Resend invite'}
-                </button>
-                <button
-                  onClick={() => handleRemove(u.id, u.email)}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    fontSize: '13px', color: 'var(--text-tertiary)',
-                    fontFamily: 'var(--font-body)', padding: '4px 8px',
-                  }}
-                  onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
-                  onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
-                >
-                  Remove
-                </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div
+                        onClick={() => onViewProfile && onViewProfile(u.id)}
+                        title="View profile"
+                        style={{
+                          width: '36px', height: '36px', borderRadius: '8px',
+                          background: '#F28F3B',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '13px', fontWeight: 700, color: '#fff',
+                          flexShrink: 0,
+                          cursor: onViewProfile ? 'pointer' : 'default',
+                          transition: 'opacity 0.15s',
+                        }}
+                        onMouseOver={e => { if (onViewProfile) e.currentTarget.style.opacity = '0.8' }}
+                        onMouseOut={e => e.currentTarget.style.opacity = '1'}
+                      >
+                        {(u.full_name || u.email).trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').slice(0,2).join('')}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>
+                          {u.full_name || '—'}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{u.email}</span>
+                          {u.base_city && (
+                            <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                <path d="M5 1C3.34 1 2 2.34 2 4c0 2.25 3 5.5 3 5.5S8 6.25 8 4c0-1.66-1.34-3-3-3z" stroke="#9CA3AF" strokeWidth="1" fill="none"/>
+                                <circle cx="5" cy="4" r="1" fill="#9CA3AF"/>
+                              </svg>
+                              {u.base_city}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      {onViewProfile && (
+                        <button
+                          onClick={() => onViewProfile(u.id)}
+                          style={{
+                            padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
+                            background: 'none', border: '0.5px solid var(--border-strong)',
+                            borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                            color: 'var(--text-secondary)', transition: 'all 0.15s',
+                          }}
+                          onMouseOver={e => { e.currentTarget.style.borderColor = '#F28F3B'; e.currentTarget.style.color = '#F28F3B' }}
+                          onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                        >
+                          View profile
+                        </button>
+                      )}
+                      {resendMsg[u.id] && (
+                        <span style={{ fontSize: '11px', color: resendMsg[u.id].startsWith('✓') ? 'var(--green)' : '#A32D2D', fontFamily: 'var(--font-body)' }}>
+                          {resendMsg[u.id]}
+                        </span>
+                      )}
+                      <select
+                        value={u.role}
+                        onChange={e => handleRoleChange(u.id, e.target.value)}
+                        style={{
+                          padding: '5px 10px', fontSize: '12px', fontFamily: 'var(--font-body)',
+                          background: u.role === 'admin' ? 'var(--green-light)' : u.role === 'manager' ? '#EFF6FF' : u.role === 'event_lead' ? '#FEF3C7' : 'var(--bg-secondary)',
+                          color: u.role === 'admin' ? 'var(--green)' : u.role === 'manager' ? '#1D4ED8' : u.role === 'event_lead' ? '#92400E' : 'var(--text-secondary)',
+                          border: '0.5px solid var(--border)', borderRadius: '20px',
+                          cursor: 'pointer', outline: 'none', fontWeight: 500,
+                        }}
+                      >
+                        {inviteableRoles.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                      </select>
+                      {userRole === 'admin' && (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', userSelect: 'none' }}>
+                          <input
+                            type='checkbox'
+                            checked={!!u.can_manage_rate_cards}
+                            onChange={() => handleRateCardToggle(u.id, !!u.can_manage_rate_cards)}
+                            style={{ accentColor: '#F28F3B', width: '14px', height: '14px', cursor: 'pointer' }}
+                          />
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>Rate Cards Access</span>
+                        </label>
+                      )}
+                      <button
+                        onClick={() => handleResend(u.id, u.email)}
+                        disabled={resending === u.id}
+                        title="Resend invite email"
+                        style={{
+                          padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
+                          background: 'none', border: '0.5px solid var(--border-strong)',
+                          borderRadius: 'var(--radius-sm)', cursor: resending === u.id ? 'wait' : 'pointer',
+                          color: 'var(--text-secondary)', opacity: resending === u.id ? 0.5 : 1,
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseOver={e => { if (resending !== u.id) e.currentTarget.style.borderColor = 'var(--text)' }}
+                        onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+                      >
+                        {resending === u.id ? 'Sending...' : '↻ Resend invite'}
+                      </button>
+                      <button
+                        onClick={() => suspendUser(u.id, u.email)}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          fontSize: '13px', color: 'var(--text-tertiary)',
+                          fontFamily: 'var(--font-body)', padding: '4px 8px',
+                        }}
+                        onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
+                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                      >
+                        Suspend
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
-        </div>
+            )
+          )}
+
+          {activeTab === 'suspended' && (
+            suspendedUsers.length === 0 ? (
+              <div style={{ border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius)', padding: '48px 40px', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '20px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No suspended members.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {suspendedUsers.map(u => (
+                  <div
+                    key={u.id}
+                    style={{
+                      border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
+                      padding: '16px 24px', background: 'var(--bg)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
+                      opacity: 0.7,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{
+                        width: '36px', height: '36px', borderRadius: '8px',
+                        background: 'var(--bg-surface-2)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', flexShrink: 0,
+                      }}>
+                        {(u.full_name || u.email).trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').slice(0,2).join('')}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>{u.full_name || '—'}</div>
+                        <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{u.email}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-surface-2)', padding: '3px 8px', borderRadius: '10px' }}>
+                        {ROLE_LABELS[u.role] || u.role}
+                      </span>
+                      <button
+                        onClick={() => reinstateUser(u.id, u.email)}
+                        style={{
+                          padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
+                          background: 'none', border: '0.5px solid var(--border-strong)',
+                          borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-secondary)',
+                        }}
+                        onMouseOver={e => { e.currentTarget.style.borderColor = '#F28F3B'; e.currentTarget.style.color = '#F28F3B' }}
+                        onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                      >
+                        Reinstate
+                      </button>
+                      <button
+                        onClick={() => hardDeleteUser(u.id, u.email)}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          fontSize: '13px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', padding: '4px 8px',
+                        }}
+                        onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
+                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+
+          {activeTab === 'expired' && (
+            expiredUsers.length === 0 ? (
+              <div style={{ border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius)', padding: '48px 40px', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '20px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No expired invites.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {expiredUsers.map(u => (
+                  <div
+                    key={u.id}
+                    style={{
+                      border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
+                      padding: '16px 24px', background: 'var(--bg)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{
+                        width: '36px', height: '36px', borderRadius: '8px',
+                        background: '#F5DFC0',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '13px', fontWeight: 700, color: '#92400E', flexShrink: 0,
+                      }}>
+                        {(u.full_name || u.email).trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').slice(0,2).join('')}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>{u.full_name || '(no name yet)'}</div>
+                        <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{u.email}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {resendMsg[u.id] && (
+                        <span style={{ fontSize: '11px', color: resendMsg[u.id].startsWith('✓') ? 'var(--green)' : '#A32D2D', fontFamily: 'var(--font-body)' }}>
+                          {resendMsg[u.id]}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleResend(u.id, u.email)}
+                        disabled={resending === u.id}
+                        style={{
+                          padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
+                          background: 'none', border: '0.5px solid var(--border-strong)',
+                          borderRadius: 'var(--radius-sm)', cursor: resending === u.id ? 'wait' : 'pointer',
+                          color: 'var(--text-secondary)', opacity: resending === u.id ? 0.5 : 1,
+                        }}
+                        onMouseOver={e => { if (resending !== u.id) e.currentTarget.style.borderColor = 'var(--text)' }}
+                        onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+                      >
+                        {resending === u.id ? 'Sending...' : '↻ Resend invite'}
+                      </button>
+                      <button
+                        onClick={() => hardDeleteUser(u.id, u.email)}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          fontSize: '13px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', padding: '4px 8px',
+                        }}
+                        onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
+                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+        </>
       )}
     </div>
   )
