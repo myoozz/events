@@ -202,6 +202,13 @@ export default function AppShell({ session }) {
     fetchTenant()
   }, [])
 
+  // Redirect super_admin to their tab once platformRole resolves from JWT
+  useEffect(() => {
+    if (platformRole === 'super_admin' && activeTab === 'events') {
+      setActiveTab('super-admin')
+    }
+  }, [platformRole])
+
   // Phase C — fetch initial unread count + subscribe to realtime once userId is known
   useEffect(() => {
     if (!userId) return
