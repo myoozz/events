@@ -12,8 +12,13 @@ serve(async (req) => {
   try {
     const { email, tenant_id, role, full_name, resend_only } = await req.json()
 
-    if (!email || !tenant_id || !role) {
-      return new Response(JSON.stringify({ error: 'email, tenant_id and role are required' }), {
+    if (!email) {
+      return new Response(JSON.stringify({ error: 'email is required' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+    if (!resend_only && (!tenant_id || !role)) {
+      return new Response(JSON.stringify({ error: 'tenant_id and role are required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
