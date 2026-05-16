@@ -494,8 +494,22 @@ function TenantDetail({ tenant, onBack, showToast }) {
 
   async function handleDelete() {
     setDeleting(true)
-    const { error } = await supabase.from('tenants').delete().eq('id', tenant.id)
-    if (error) { alert(error.message); setDeleting(false) } else { showToast('Tenant deleted'); onBack() }
+    try {
+      await supabase.from('elements').delete().eq('tenant_id', tenant.id)
+      await supabase.from('tasks').delete().eq('tenant_id', tenant.id)
+      await supabase.from('notifications').delete().eq('tenant_id', tenant.id)
+      await supabase.from('activity_log').delete().eq('tenant_id', tenant.id)
+      await supabase.from('rate_cards').delete().eq('tenant_id', tenant.id)
+      await supabase.from('users').delete().eq('tenant_id', tenant.id)
+      await supabase.from('tenant_subscriptions').delete().eq('tenant_id', tenant.id)
+      await supabase.from('tenants').delete().eq('id', tenant.id)
+      showToast('Tenant deleted successfully')
+      onBack()
+    } catch (err) {
+      alert('Delete failed: ' + err.message)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   async function handleTopUp() {
@@ -982,9 +996,9 @@ function SectionCredits({ showToast }) {
 
   return (
     <div>
-      <SectionHeader title="Credits & Billing" subtitle="Manage plans and event credits across all tenants." />
+      <SectionHeader title="AI Credits & Billing" subtitle="Manage AI usage allowances per tenant. Credits are consumed when tenants use AI-powered features." />
 
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '28px' }}>
+      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '20px' }}>
         {[
           { label: 'Active Subscriptions', value: total, accent: '#065F46' },
           { label: 'On Trial', value: onTrial, accent: '#92400E' },
@@ -995,6 +1009,10 @@ function SectionCredits({ showToast }) {
             <div style={{ fontSize: '12px', fontFamily: F, color: '#7a7060', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '4px' }}>{c.label}</div>
           </div>
         ))}
+      </div>
+
+      <div style={{ background: '#FEF3C7', border: '0.5px solid #F59E0B', borderRadius: '8px', padding: '12px 16px', fontSize: '13px', color: '#92400E', marginBottom: '16px', fontFamily: F }}>
+        💡 Credits will power AI features — element suggestions, brief analysis, and smart imports. Assign allowances now and activate when AI goes live.
       </div>
 
       <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'hidden' }}>
@@ -1062,73 +1080,113 @@ function SectionCredits({ showToast }) {
 
 // ── Section 6: Rate Cards ─────────────────────────────────────────────────────
 
+const SOURCE_TAGS = [
+  { value: 'AI_RESEARCH',     label: 'AI Research',     color: '#7C3AED' },
+  { value: 'VENDOR_QUOTE',    label: 'Vendor Quote',    color: '#065F46' },
+  { value: 'INTERNAL',        label: 'Internal',        color: '#1E40AF' },
+  { value: 'MARKET_SURVEY',   label: 'Market Survey',   color: '#92400E' },
+  { value: 'CLIENT_PROVIDED', label: 'Client Provided', color: '#6B7280' },
+]
+
 function SectionRateCards({ showToast }) {
+  const [rcTab, setRcTab] = useState('browse')
   const [rows, setRows] = useState([])
+  const [filteredRows, setFilteredRows] = useState([])
   const [loading, setLoading] = useState(true)
-  const [tenantFilter, setTenantFilter] = useState('all')
-  const [catFilter, setCatFilter] = useState('all')
-  const [cityFilter, setCityFilter] = useState('all')
+  const [filterTenant, setFilterTenant] = useState('all')
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterCity, setFilterCity] = useState('all')
+  const [filterMaster, setFilterMaster] = useState('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [editingId, setEditingId] = useState(null)
-  const [editVals, setEditVals] = useState({})
+  const [editBuffer, setEditBuffer] = useState({})
   const [addModal, setAddModal] = useState(false)
-  const [addForm, setAddForm] = useState({ element_name: '', category: '', city: '', rate_min: '', rate_max: '', rate_type: 'user_entered', unit: '', notes: '', is_platform_master: false, tenant_id: '' })
+  const [addForm, setAddForm] = useState({ category: '', element_name: '', city: '', rate_min: '', rate_max: '', rate_type: 'per_unit', unit: '', notes: '', source_tag: 'AI_RESEARCH', source_ref: '', is_platform_master: true, tenant_id: '' })
   const [tenants, setTenants] = useState([])
   const [categories, setCategories] = useState([])
+  const [saTenantId, setSaTenantId] = useState(null)
+  const [importTab, setImportTab] = useState('upload')
+  const [importFile, setImportFile] = useState(null)
+  const [importPaste, setImportPaste] = useState('')
+  const [importRows, setImportRows] = useState([])
+  const [importTenantId, setImportTenantId] = useState(null)
+  const [importing, setImporting] = useState(false)
   const [mLoading, setMLoading] = useState(false)
   const PAGE_SIZE = 50
 
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const [r1, r2, r3] = await Promise.all([
+      const [r1, r2, r3, sess] = await Promise.all([
         supabase.from('rate_cards').select('*, tenants(name)').order('category').order('element_name'),
-        supabase.from('tenants').select('id,name').order('name'),
-        supabase.from('event_categories').select('name').order('sort_order'),
+        supabase.from('tenants').select('id, name').eq('status', 'active').order('name'),
+        supabase.from('event_categories').select('name').eq('is_active', true).order('sort_order'),
+        supabase.auth.getSession(),
       ])
       setRows(r1.data || [])
       setTenants(r2.data || [])
       setCategories(r3.data || [])
+      try {
+        const token = sess.data.session?.access_token
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]))
+          const tid = payload.tenant_id || null
+          setSaTenantId(tid)
+          setImportTenantId(tid)
+          setAddForm(f => ({ ...f, tenant_id: tid || '' }))
+        }
+      } catch { /* silent */ }
       setLoading(false)
     }
     load()
   }, [])
 
-  const tenantNames = [...new Set(rows.map(r => r.tenants?.name).filter(Boolean))]
+  useEffect(() => {
+    let f = rows
+    if (filterMaster === 'master') f = f.filter(r => r.is_platform_master)
+    else if (filterMaster === 'tenant') f = f.filter(r => !r.is_platform_master)
+    if (filterTenant !== 'all') {
+      if (filterTenant === '__master__') f = f.filter(r => r.is_platform_master)
+      else f = f.filter(r => r.tenants?.name === filterTenant)
+    }
+    if (filterCategory !== 'all') f = f.filter(r => r.category === filterCategory)
+    if (filterCity !== 'all') f = f.filter(r => r.city === filterCity)
+    if (search) f = f.filter(r => r.element_name?.toLowerCase().includes(search.toLowerCase()))
+    setFilteredRows(f)
+    setPage(0)
+  }, [rows, filterTenant, filterCategory, filterCity, filterMaster, search])
+
+  const tenantNames = [...new Set(rows.filter(r => !r.is_platform_master).map(r => r.tenants?.name).filter(Boolean))]
   const allCats = [...new Set(rows.map(r => r.category).filter(Boolean))]
   const allCities = [...new Set(rows.map(r => r.city).filter(Boolean))]
 
-  const filtered = rows.filter(r => {
-    if (tenantFilter === 'master' && !r.is_platform_master) return false
-    if (tenantFilter !== 'all' && tenantFilter !== 'master' && r.tenants?.name !== tenantFilter) return false
-    if (catFilter !== 'all' && r.category !== catFilter) return false
-    if (cityFilter !== 'all' && r.city !== cityFilter) return false
-    if (search && !r.element_name?.toLowerCase().includes(search.toLowerCase())) return false
-    return true
-  })
+  const paged = filteredRows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const totalPages = Math.ceil(filteredRows.length / PAGE_SIZE)
 
-  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-
-  function startEdit(row) {
-    setEditingId(row.id)
-    setEditVals({ element_name: row.element_name, city: row.city || '', rate_min: row.rate_min || '', rate_max: row.rate_max || '', rate_type: row.rate_type || '' })
+  async function refetch() {
+    const { data } = await supabase.from('rate_cards').select('*, tenants(name)').order('category').order('element_name')
+    setRows(data || [])
   }
 
   async function saveEdit(id) {
-    const { error } = await supabase.from('rate_cards').update(editVals).eq('id', id)
-    if (error) { alert(error.message) } else {
-      setRows(p => p.map(r => r.id === id ? { ...r, ...editVals } : r))
-      showToast('Rate card updated ✓')
-      setEditingId(null)
-    }
+    const { error } = await supabase.from('rate_cards').update({
+      element_name: editBuffer.element_name,
+      rate_min: editBuffer.rate_min !== '' ? Number(editBuffer.rate_min) : null,
+      rate_max: editBuffer.rate_max !== '' ? Number(editBuffer.rate_max) : null,
+      city: editBuffer.city,
+      rate_type: editBuffer.rate_type,
+    }).eq('id', id)
+    if (error) { showToast('Update failed: ' + error.message); return }
+    setEditingId(null)
+    refetch()
+    showToast('Rate card updated ✓')
   }
 
-  async function handleDelete(id) {
+  async function handleDeleteRow(id) {
     if (!window.confirm('Delete this rate card row?')) return
     const { error } = await supabase.from('rate_cards').delete().eq('id', id)
-    if (error) { alert(error.message) } else { setRows(p => p.filter(r => r.id !== id)); showToast('Deleted ✓') }
+    if (error) { showToast('Delete failed: ' + error.message) } else { refetch(); showToast('Deleted ✓') }
   }
 
   async function handleAdd() {
@@ -1138,105 +1196,328 @@ function SectionRateCards({ showToast }) {
       rate_min: addForm.rate_min ? Number(addForm.rate_min) : null,
       rate_max: addForm.rate_max ? Number(addForm.rate_max) : null,
       is_platform_master: addForm.is_platform_master,
-      tenant_id: addForm.is_platform_master ? null : (addForm.tenant_id || null),
+      tenant_id: addForm.is_platform_master ? saTenantId : (addForm.tenant_id || null),
     }
     const { error } = await supabase.from('rate_cards').insert(payload)
-    if (error) { alert(error.message) } else {
-      const { data } = await supabase.from('rate_cards').select('*, tenants(name)').order('created_at', { ascending: false }).limit(1)
-      if (data?.[0]) setRows(p => [data[0], ...p])
+    if (error) { showToast('Add failed: ' + error.message) } else {
       showToast('Rate card added ✓')
       setAddModal(false)
-      setAddForm({ element_name: '', category: '', city: '', rate_min: '', rate_max: '', rate_type: 'user_entered', unit: '', notes: '', is_platform_master: false, tenant_id: '' })
+      setAddForm({ category: '', element_name: '', city: '', rate_min: '', rate_max: '', rate_type: 'per_unit', unit: '', notes: '', source_tag: 'AI_RESEARCH', source_ref: '', is_platform_master: true, tenant_id: saTenantId || '' })
+      refetch()
     }
     setMLoading(false)
   }
 
+  function parseRows(data2d) {
+    const body = data2d.slice(1)
+    return body.map(row => ({
+      category: row[0] || '',
+      element_name: row[1] || '',
+      city: row[2] || '',
+      rate_min: row[3] !== undefined && row[3] !== '' ? Number(row[3]) : null,
+      rate_max: row[4] !== undefined && row[4] !== '' ? Number(row[4]) : null,
+      rate_type: row[5] || 'per_unit',
+      unit: row[6] || '',
+      notes: row[7] || '',
+      source_tag: row[8] || 'AI_RESEARCH',
+    }))
+  }
+
+  function validateRow(r) {
+    const missing = []
+    if (!r.category) missing.push('Category')
+    if (!r.element_name) missing.push('Element Name')
+    if (r.rate_min === null || isNaN(r.rate_min)) missing.push('Rate Min')
+    return missing
+  }
+
+  async function handleFileUpload(file) {
+    if (!file) return
+    setImportFile(file)
+    const XLSX = await import('xlsx')
+    const ab = await file.arrayBuffer()
+    const wb = XLSX.read(ab, { type: 'array' })
+    const ws = wb.Sheets[wb.SheetNames[0]]
+    const data = XLSX.utils.sheet_to_json(ws, { header: 1 })
+    setImportRows(parseRows(data))
+  }
+
+  function handlePasteParse() {
+    const lines = importPaste.trim().split('\n')
+    const data2d = lines.map(l => l.split('\t'))
+    setImportRows(parseRows(data2d))
+  }
+
+  async function handleImport() {
+    const valid = importRows.filter(r => validateRow(r).length === 0)
+    if (valid.length === 0) return
+    setImporting(true)
+    const isMaster = importTenantId === saTenantId
+    const payload = valid.map(r => ({
+      ...r,
+      is_platform_master: isMaster,
+      tenant_id: importTenantId,
+      source_tag: r.source_tag || 'AI_RESEARCH',
+    }))
+    const { error } = await supabase.from('rate_cards').insert(payload)
+    if (error) { showToast('Import failed: ' + error.message) } else {
+      showToast(`${valid.length} rows imported successfully`)
+      setImportRows([])
+      setImportFile(null)
+      setImportPaste('')
+      setRcTab('browse')
+      refetch()
+    }
+    setImporting(false)
+  }
+
+  async function handleDownloadTemplate() {
+    const XLSX = await import('xlsx')
+    const ws = XLSX.utils.aoa_to_sheet([['Category', 'Element Name', 'City', 'Rate Min', 'Rate Max', 'Rate Type', 'Unit', 'Notes', 'Source']])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Rate Card Template')
+    XLSX.writeFile(wb, 'rate_card_template.xlsx')
+  }
+
   const miniInput = { fontSize: '12px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5', color: '#1a1008', outline: 'none', width: '100%' }
+  const tabStyle = (active) => ({ padding: '8px 16px', fontSize: '13px', fontFamily: F, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', borderBottom: active ? '2px solid #bc1723' : '2px solid transparent', color: active ? '#1a1008' : '#7a7060', marginBottom: '-0.5px' })
+
+  const validCount = importRows.filter(r => validateRow(r).length === 0).length
+  const errorCount = importRows.length - validCount
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px' }}>
-        <SectionHeader title="Rate Cards" subtitle="Platform master rates and all tenant rate cards." />
-        <button onClick={() => setAddModal(true)} style={{ ...btnPrimary, flexShrink: 0, marginTop: '4px' }}>+ Add Row</button>
+      <SectionHeader title="Rate Cards" subtitle="Platform master rates and all tenant rate cards." />
+
+      <div style={{ display: 'flex', borderBottom: '0.5px solid #d8d2c8', marginBottom: '24px' }}>
+        {[['browse', 'Browse & Edit'], ['import', 'Bulk Import'], ['templates', 'Templates']].map(([key, label]) => (
+          <button key={key} onClick={() => setRcTab(key)} style={tabStyle(rcTab === key)}>{label}</button>
+        ))}
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        <select value={tenantFilter} onChange={e => { setTenantFilter(e.target.value); setPage(0) }} style={{ ...inputStyle, width: 'auto' }}>
-          <option value="all">All Tenants</option>
-          <option value="master">Platform Master</option>
-          {tenantNames.map(n => <option key={n} value={n}>{n}</option>)}
-        </select>
-        <select value={catFilter} onChange={e => { setCatFilter(e.target.value); setPage(0) }} style={{ ...inputStyle, width: 'auto' }}>
-          <option value="all">All Categories</option>
-          {allCats.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select value={cityFilter} onChange={e => { setCityFilter(e.target.value); setPage(0) }} style={{ ...inputStyle, width: 'auto' }}>
-          <option value="all">All Cities</option>
-          {allCities.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <input value={search} onChange={e => { setSearch(e.target.value); setPage(0) }} placeholder="Search element name…" style={{ ...inputStyle, flex: 1, minWidth: '160px' }} />
-      </div>
+      {rcTab === 'browse' && (
+        <div>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search elements..." style={{ ...inputStyle, flex: 1, minWidth: '160px' }} />
+            <select value={filterTenant} onChange={e => setFilterTenant(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+              <option value="all">All Tenants</option>
+              <option value="__master__">Platform Master</option>
+              {tenantNames.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+              <option value="all">All Categories</option>
+              {allCats.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={filterCity} onChange={e => setFilterCity(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+              <option value="all">All Cities</option>
+              {allCities.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={filterMaster} onChange={e => setFilterMaster(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+              <option value="all">All</option>
+              <option value="master">Master Only</option>
+              <option value="tenant">Tenant Only</option>
+            </select>
+            <button onClick={() => setAddModal(true)} style={btnPrimary}>+ Add Row</button>
+          </div>
 
-      <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
-          <thead><tr>{['Element', 'Category', 'City', 'Min', 'Max', 'Type', 'Tenant', 'Master', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
-          <tbody>
-            {loading
-              ? <tr><td colSpan={9} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
-              : paged.length === 0
-                ? <tr><td colSpan={9} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No rows match</td></tr>
-                : paged.map(r => {
-                  const isEditing = editingId === r.id
-                  return (
-                    <tr key={r.id}>
-                      <td style={tdStyle}>{isEditing ? <input value={editVals.element_name} onChange={e => setEditVals(p => ({ ...p, element_name: e.target.value }))} onBlur={() => saveEdit(r.id)} style={miniInput} autoFocus /> : r.element_name}</td>
-                      <td style={tdStyle}>{r.category}</td>
-                      <td style={tdStyle}>{isEditing ? <input value={editVals.city} onChange={e => setEditVals(p => ({ ...p, city: e.target.value }))} style={miniInput} /> : (r.city || '—')}</td>
-                      <td style={tdStyle}>{isEditing ? <input type="number" value={editVals.rate_min} onChange={e => setEditVals(p => ({ ...p, rate_min: e.target.value }))} style={{ ...miniInput, width: '80px' }} /> : (r.rate_min ?? '—')}</td>
-                      <td style={tdStyle}>{isEditing ? <input type="number" value={editVals.rate_max} onChange={e => setEditVals(p => ({ ...p, rate_max: e.target.value }))} style={{ ...miniInput, width: '80px' }} /> : (r.rate_max ?? '—')}</td>
-                      <td style={tdStyle}>{isEditing ? <select value={editVals.rate_type} onChange={e => setEditVals(p => ({ ...p, rate_type: e.target.value }))} style={miniInput}>{['ai_research','vendor_quoted','user_entered','system_captured'].map(t => <option key={t} value={t}>{t}</option>)}</select> : <span style={{ fontSize: '11px', background: r.rate_type === 'vendor_quoted' ? '#D1FAE5' : r.rate_type === 'ai_research' ? '#DBEAFE' : '#F3F4F6', color: r.rate_type === 'vendor_quoted' ? '#065F46' : r.rate_type === 'ai_research' ? '#1E40AF' : '#6B7280', padding: '2px 7px', borderRadius: '5px', fontFamily: F }}>{r.rate_type}</span>}</td>
-                      <td style={{ ...tdStyle, color: '#7a7060', fontSize: '12px' }}>{r.is_platform_master ? 'Platform Master' : (r.tenants?.name || '—')}</td>
-                      <td style={{ ...tdStyle, textAlign: 'center' }}>{r.is_platform_master ? <span style={{ color: '#D97A28', fontSize: '14px' }}>✦</span> : ''}</td>
-                      <td style={tdStyle}>
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          {isEditing
-                            ? <button onClick={() => saveEdit(r.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#D1FAE5', color: '#065F46', fontFamily: F }}>Save</button>
-                            : <button onClick={() => startEdit(r)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#f2efe9', color: '#1a1008', fontFamily: F }}>Edit</button>
-                          }
-                          <button onClick={() => handleDelete(r.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#FEE2E2', color: '#991B1B', fontFamily: F }}>Del</button>
-                        </div>
-                      </td>
+          <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
+              <thead><tr>{['Element Name', 'Category', 'City', 'Rate Min', 'Rate Max', 'Rate Type', 'Source', 'Tenant', '✦', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
+              <tbody>
+                {loading
+                  ? <tr><td colSpan={10} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
+                  : paged.length === 0
+                    ? <tr><td colSpan={10} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No rows match</td></tr>
+                    : paged.map(r => {
+                      const isEditing = editingId === r.id
+                      const srcTag = SOURCE_TAGS.find(s => s.value === r.source_tag)
+                      return (
+                        <tr key={r.id}>
+                          <td style={tdStyle}>{isEditing ? <input value={editBuffer.element_name} onChange={e => setEditBuffer(p => ({ ...p, element_name: e.target.value }))} style={miniInput} autoFocus /> : r.element_name}</td>
+                          <td style={tdStyle}>{r.category}</td>
+                          <td style={tdStyle}>{isEditing ? <input value={editBuffer.city} onChange={e => setEditBuffer(p => ({ ...p, city: e.target.value }))} style={miniInput} /> : (r.city || '—')}</td>
+                          <td style={tdStyle}>{isEditing ? <input type="number" value={editBuffer.rate_min} onChange={e => setEditBuffer(p => ({ ...p, rate_min: e.target.value }))} style={{ ...miniInput, width: '80px' }} /> : (r.rate_min != null ? `₹${r.rate_min.toLocaleString('en-IN')}` : '—')}</td>
+                          <td style={tdStyle}>{isEditing ? <input type="number" value={editBuffer.rate_max} onChange={e => setEditBuffer(p => ({ ...p, rate_max: e.target.value }))} style={{ ...miniInput, width: '80px' }} /> : (r.rate_max != null ? `₹${r.rate_max.toLocaleString('en-IN')}` : '—')}</td>
+                          <td style={tdStyle}>{isEditing ? <select value={editBuffer.rate_type} onChange={e => setEditBuffer(p => ({ ...p, rate_type: e.target.value }))} style={miniInput}>{['per_unit','per_day','lump_sum','per_person','per_sqft'].map(t => <option key={t} value={t}>{t}</option>)}</select> : <span style={{ fontSize: '11px', background: '#f2efe9', color: '#7a7060', padding: '2px 7px', borderRadius: '5px', fontFamily: F }}>{r.rate_type || '—'}</span>}</td>
+                          <td style={tdStyle}>{srcTag ? <span style={{ fontSize: '11px', background: srcTag.color + '20', color: srcTag.color, padding: '2px 8px', borderRadius: '5px', fontWeight: 600, fontFamily: F }}>{srcTag.label}</span> : <span style={{ color: '#7a7060' }}>—</span>}</td>
+                          <td style={{ ...tdStyle, fontSize: '12px', color: '#7a7060' }}>{r.is_platform_master ? 'Platform Master' : (r.tenants?.name || '—')}</td>
+                          <td style={{ ...tdStyle, textAlign: 'center' }}>{r.is_platform_master ? <span style={{ color: '#D97A28' }}>✦</span> : '—'}</td>
+                          <td style={tdStyle}>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              {isEditing ? (
+                                <>
+                                  <button onClick={() => saveEdit(r.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#D1FAE5', color: '#065F46', fontFamily: F }}>Save</button>
+                                  <button onClick={() => setEditingId(null)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#f2efe9', color: '#7a7060', fontFamily: F }}>Cancel</button>
+                                </>
+                              ) : (
+                                <>
+                                  <button onClick={() => { setEditingId(r.id); setEditBuffer({ element_name: r.element_name, city: r.city || '', rate_min: r.rate_min ?? '', rate_max: r.rate_max ?? '', rate_type: r.rate_type || '' }) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#f2efe9', color: '#1a1008', fontFamily: F }}>✏</button>
+                                  <button onClick={() => handleDeleteRow(r.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#FEE2E2', color: '#991B1B', fontFamily: F }}>🗑</button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                }
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', fontFamily: F, fontSize: '13px', color: '#7a7060' }}>
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ ...btnSecondary, opacity: page === 0 ? 0.4 : 1 }}>← Prev</button>
+              <span>Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredRows.length)} of {filteredRows.length} rows</span>
+              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ ...btnSecondary, opacity: page >= totalPages - 1 ? 0.4 : 1 }}>Next →</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {rcTab === 'import' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 600, fontFamily: F, color: '#1a1008', whiteSpace: 'nowrap' }}>Import to:</label>
+            <select value={importTenantId || ''} onChange={e => setImportTenantId(e.target.value || saTenantId)} style={{ ...inputStyle, width: 'auto', minWidth: '220px' }}>
+              <option value={saTenantId || ''}>Platform Master (Benchmark)</option>
+              {tenants.filter(t => t.id !== saTenantId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', borderBottom: '0.5px solid #d8d2c8', marginBottom: '20px' }}>
+            {[['upload', 'Upload File'], ['paste', 'Paste Data']].map(([k, l]) => (
+              <button key={k} onClick={() => setImportTab(k)} style={tabStyle(importTab === k)}>{l}</button>
+            ))}
+          </div>
+
+          {importTab === 'upload' && (
+            <div>
+              <div
+                onClick={() => document.getElementById('rc-file-input').click()}
+                style={{ border: '1.5px dashed #d8d2c8', borderRadius: '12px', padding: '40px', textAlign: 'center', cursor: 'pointer', background: '#faf8f5', marginBottom: '16px' }}
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFileUpload(f) }}
+              >
+                <div style={{ fontSize: '14px', fontFamily: F, color: '#1a1008', marginBottom: '6px' }}>Drop your Excel file here or click to browse</div>
+                <div style={{ fontSize: '12px', fontFamily: F, color: '#7a7060' }}>Accepted format: .xlsx · Download the template from the Templates tab</div>
+                {importFile && <div style={{ marginTop: '10px', fontSize: '12px', color: '#065F46', fontFamily: F }}>📄 {importFile.name}</div>}
+              </div>
+              <input id="rc-file-input" type="file" accept=".xlsx" style={{ display: 'none' }} onChange={e => { if (e.target.files[0]) handleFileUpload(e.target.files[0]) }} />
+            </div>
+          )}
+
+          {importTab === 'paste' && (
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, fontFamily: F, color: '#7a7060', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Paste tab-separated data (copy from Excel):</label>
+              <textarea
+                rows={10}
+                value={importPaste}
+                onChange={e => setImportPaste(e.target.value)}
+                style={{ width: '100%', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', padding: '10px 12px', border: '0.5px solid #d8d2c8', borderRadius: '8px', background: '#faf8f5', color: '#1a1008', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                placeholder={'Category\tElement Name\tCity\tRate Min\tRate Max\tRate Type\tUnit\tNotes\tSource\n...'}
+              />
+              <button onClick={handlePasteParse} style={{ ...btnSecondary, marginTop: '10px' }}>Parse</button>
+            </div>
+          )}
+
+          {importRows.length > 0 && (
+            <div style={{ marginTop: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '13px', fontFamily: F, color: '#1a1008' }}>
+                  <strong>{validCount}</strong> rows ready to import
+                  {errorCount > 0 && <> · <span style={{ color: '#991B1B' }}>{errorCount} have errors</span></>}
+                </span>
+                <button onClick={() => { setImportRows([]); setImportFile(null); setImportPaste('') }} style={{ ...btnSecondary, fontSize: '12px', padding: '6px 12px' }}>Clear</button>
+              </div>
+              <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'auto', maxHeight: '360px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+                  <thead><tr>{['#', 'Category', 'Element Name', 'City', 'Rate Min', 'Rate Max', 'Rate Type', 'Status'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {importRows.map((r, i) => {
+                      const missing = validateRow(r)
+                      const ok = missing.length === 0
+                      return (
+                        <tr key={i} style={{ background: ok ? undefined : '#FEE2E2' }}>
+                          <td style={{ ...tdStyle, color: '#7a7060', fontSize: '12px' }}>{i + 1}</td>
+                          <td style={tdStyle}>{r.category || '—'}</td>
+                          <td style={tdStyle}>{r.element_name || '—'}</td>
+                          <td style={tdStyle}>{r.city || '—'}</td>
+                          <td style={tdStyle}>{r.rate_min ?? '—'}</td>
+                          <td style={tdStyle}>{r.rate_max ?? '—'}</td>
+                          <td style={tdStyle}>{r.rate_type || '—'}</td>
+                          <td style={tdStyle}>
+                            {ok
+                              ? <span style={{ color: '#065F46', fontSize: '12px', fontWeight: 600 }}>✓ Valid</span>
+                              : <span style={{ color: '#991B1B', fontSize: '12px', fontWeight: 600 }}>✗ Missing: {missing.join(', ')}</span>}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <button onClick={handleImport} disabled={importing || validCount === 0} style={{ ...btnPrimary, marginTop: '12px', opacity: (importing || validCount === 0) ? 0.5 : 1 }}>
+                {importing ? 'Importing...' : `Import ${validCount} valid rows`}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {rcTab === 'templates' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '24px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: F, color: '#1a1008', marginBottom: '8px' }}>Rate Card Excel Template</div>
+            <p style={{ fontSize: '13px', fontFamily: F, color: '#7a7060', marginBottom: '16px' }}>Download this template, fill it in Excel or Google Sheets, then import it in the Bulk Import tab.</p>
+            <div style={{ background: '#faf8f5', border: '0.5px solid #d8d2c8', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead><tr>{['Column', 'Expected Values'].map(h => <th key={h} style={{ ...thStyle, fontSize: '11px' }}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {[
+                    ['Category', 'Must match an active category name exactly'],
+                    ['Element Name', 'Any text'],
+                    ['City', 'City name (e.g. Mumbai, Delhi)'],
+                    ['Rate Min', 'Number only, no ₹ symbol'],
+                    ['Rate Max', 'Number only'],
+                    ['Rate Type', 'per_unit / per_day / lump_sum / per_person / per_sqft'],
+                    ['Unit', 'e.g. per day, per piece, per sqft'],
+                    ['Notes', 'Optional'],
+                    ['Source', 'AI_RESEARCH / VENDOR_QUOTE / INTERNAL / MARKET_SURVEY / CLIENT_PROVIDED'],
+                  ].map(([col, val]) => (
+                    <tr key={col}>
+                      <td style={{ ...tdStyle, fontWeight: 600, whiteSpace: 'nowrap', width: '180px' }}>{col}</td>
+                      <td style={{ ...tdStyle, color: '#7a7060' }}>{val}</td>
                     </tr>
-                  )
-                })
-            }
-          </tbody>
-        </table>
-      </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <button onClick={handleDownloadTemplate} style={btnPrimary}>Download Template</button>
+          </div>
 
-      {totalPages > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', fontFamily: F, fontSize: '13px', color: '#7a7060' }}>
-          <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ ...btnSecondary, opacity: page === 0 ? 0.4 : 1 }}>← Prev</button>
-          <span>Page {page + 1} of {totalPages} · {filtered.length} rows</span>
-          <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ ...btnSecondary, opacity: page >= totalPages - 1 ? 0.4 : 1 }}>Next →</button>
+          <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '24px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: F, color: '#1a1008', marginBottom: '16px' }}>Source Tags</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[
+                { ...SOURCE_TAGS[0], desc: 'Rates sourced from AI research or public data' },
+                { ...SOURCE_TAGS[1], desc: 'Direct quote received from a vendor' },
+                { ...SOURCE_TAGS[2], desc: "Based on Myoozz's own past experience" },
+                { ...SOURCE_TAGS[3], desc: 'Collected through market research' },
+                { ...SOURCE_TAGS[4], desc: 'Rate shared by the client' },
+              ].map(st => (
+                <div key={st.value} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '12px', background: st.color + '20', color: st.color, padding: '3px 10px', borderRadius: '6px', fontWeight: 600, fontFamily: F, whiteSpace: 'nowrap' }}>{st.label}</span>
+                  <span style={{ fontSize: '13px', fontFamily: F, color: '#7a7060' }}>{st.desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
       <SAModal open={addModal} onClose={() => setAddModal(false)} title="Add Rate Card Row">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-          {[
-            { key: 'element_name', label: 'Element Name', full: true },
-            { key: 'city', label: 'City' },
-            { key: 'rate_min', label: 'Rate Min', type: 'number' },
-            { key: 'rate_max', label: 'Rate Max', type: 'number' },
-            { key: 'unit', label: 'Unit' },
-            { key: 'notes', label: 'Notes', full: true },
-          ].map(f => (
-            <div key={f.key} style={{ gridColumn: f.full ? '1 / -1' : undefined }}>
-              <ModalLabel>{f.label}</ModalLabel>
-              <input type={f.type || 'text'} value={addForm[f.key]} onChange={e => setAddForm(p => ({ ...p, [f.key]: e.target.value }))} style={inputStyle} />
-            </div>
-          ))}
           <div>
             <ModalLabel>Category</ModalLabel>
             <select value={addForm.category} onChange={e => setAddForm(p => ({ ...p, category: e.target.value }))} style={inputStyle}>
@@ -1245,22 +1526,58 @@ function SectionRateCards({ showToast }) {
             </select>
           </div>
           <div>
+            <ModalLabel>Element Name</ModalLabel>
+            <input value={addForm.element_name} onChange={e => setAddForm(p => ({ ...p, element_name: e.target.value }))} style={inputStyle} />
+          </div>
+          <div>
+            <ModalLabel>City</ModalLabel>
+            <input value={addForm.city} onChange={e => setAddForm(p => ({ ...p, city: e.target.value }))} style={inputStyle} />
+          </div>
+          <div>
             <ModalLabel>Rate Type</ModalLabel>
             <select value={addForm.rate_type} onChange={e => setAddForm(p => ({ ...p, rate_type: e.target.value }))} style={inputStyle}>
-              {['ai_research','vendor_quoted','user_entered','system_captured'].map(t => <option key={t} value={t}>{t}</option>)}
+              {['per_unit','per_day','lump_sum','per_person','per_sqft'].map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <ModalLabel>Tenant</ModalLabel>
-            <select value={addForm.tenant_id} onChange={e => setAddForm(p => ({ ...p, tenant_id: e.target.value, is_platform_master: false }))} disabled={addForm.is_platform_master} style={inputStyle}>
-              <option value="">Select tenant…</option>
-              {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          <div>
+            <ModalLabel>Rate Min</ModalLabel>
+            <input type="number" value={addForm.rate_min} onChange={e => setAddForm(p => ({ ...p, rate_min: e.target.value }))} style={inputStyle} />
+          </div>
+          <div>
+            <ModalLabel>Rate Max</ModalLabel>
+            <input type="number" value={addForm.rate_max} onChange={e => setAddForm(p => ({ ...p, rate_max: e.target.value }))} style={inputStyle} />
+          </div>
+          <div>
+            <ModalLabel>Unit</ModalLabel>
+            <input value={addForm.unit} onChange={e => setAddForm(p => ({ ...p, unit: e.target.value }))} style={inputStyle} />
+          </div>
+          <div>
+            <ModalLabel>Notes</ModalLabel>
+            <input value={addForm.notes} onChange={e => setAddForm(p => ({ ...p, notes: e.target.value }))} style={inputStyle} />
+          </div>
+          <div>
+            <ModalLabel>Source Tag</ModalLabel>
+            <select value={addForm.source_tag} onChange={e => setAddForm(p => ({ ...p, source_tag: e.target.value }))} style={inputStyle}>
+              {SOURCE_TAGS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
+          </div>
+          <div>
+            <ModalLabel>Source Ref</ModalLabel>
+            <input value={addForm.source_ref} onChange={e => setAddForm(p => ({ ...p, source_ref: e.target.value }))} style={inputStyle} placeholder="vendor name / URL" />
           </div>
           <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input type="checkbox" id="is_master" checked={addForm.is_platform_master} onChange={e => setAddForm(p => ({ ...p, is_platform_master: e.target.checked, tenant_id: e.target.checked ? '' : p.tenant_id }))} />
-            <label htmlFor="is_master" style={{ fontSize: '13px', fontFamily: F, color: '#1a1008', cursor: 'pointer' }}>Platform Master row (✦)</label>
+            <input type="checkbox" id="add-is-master" checked={addForm.is_platform_master} onChange={e => setAddForm(p => ({ ...p, is_platform_master: e.target.checked }))} />
+            <label htmlFor="add-is-master" style={{ fontSize: '13px', fontFamily: F, color: '#1a1008', cursor: 'pointer' }}>Platform Master row (✦)</label>
           </div>
+          {!addForm.is_platform_master && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              <ModalLabel>Tenant</ModalLabel>
+              <select value={addForm.tenant_id} onChange={e => setAddForm(p => ({ ...p, tenant_id: e.target.value }))} style={inputStyle}>
+                <option value="">Select tenant…</option>
+                {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={handleAdd} disabled={mLoading || !addForm.element_name} style={{ ...btnPrimary, flex: 1, opacity: (mLoading || !addForm.element_name) ? 0.6 : 1 }}>{mLoading ? 'Adding...' : 'Add Row'}</button>
@@ -1274,6 +1591,7 @@ function SectionRateCards({ showToast }) {
 // ── Section 7: Categories ─────────────────────────────────────────────────────
 
 function SectionCategories({ showToast }) {
+  const [catTab, setCatTab] = useState('registry')
   const [cats, setCats] = useState([])
   const [loading, setLoading] = useState(true)
   const [usageMap, setUsageMap] = useState({})
@@ -1282,10 +1600,22 @@ function SectionCategories({ showToast }) {
   const [addModal, setAddModal] = useState(false)
   const [newCatName, setNewCatName] = useState('')
   const [mLoading, setMLoading] = useState(false)
+  const [stageData, setStageData] = useState({})
+  const [stageTypes, setStageTypes] = useState([])
+  const [expandedType, setExpandedType] = useState(null)
+  const [editingStage, setEditingStage] = useState(null)
+  const [stageEditBuffer, setStageEditBuffer] = useState({})
+  const [addStageModal, setAddStageModal] = useState(false)
+  const [addStageForm, setAddStageForm] = useState({ category_type: '', stage_name: '', days_before_event: 0, is_terminal: false })
+  const [addTypeModal, setAddTypeModal] = useState(false)
+  const [newTypeName, setNewTypeName] = useState('')
+  const [stageLoading, setStageLoading] = useState(false)
+
+  useEffect(() => { load() }, [])
 
   useEffect(() => {
-    load()
-  }, [])
+    if (catTab === 'stageconfig' && stageTypes.length === 0) loadStages()
+  }, [catTab])
 
   async function load() {
     setLoading(true)
@@ -1298,6 +1628,18 @@ function SectionCategories({ showToast }) {
     }))
     setUsageMap(Object.fromEntries(usages))
     setLoading(false)
+  }
+
+  async function loadStages() {
+    setStageLoading(true)
+    const { data } = await supabase.from('category_stage_config').select('*').order('category_type').order('sort_order')
+    const rows = data || []
+    const types = [...new Set(rows.map(r => r.category_type))]
+    const grouped = {}
+    types.forEach(t => { grouped[t] = rows.filter(r => r.category_type === t) })
+    setStageTypes(types)
+    setStageData(grouped)
+    setStageLoading(false)
   }
 
   async function handleRename(cat) {
@@ -1358,87 +1700,285 @@ function SectionCategories({ showToast }) {
     setMLoading(false)
   }
 
+  const TYPE_DISPLAY = {
+    rental: 'Rental', booking: 'Booking', creative_print: 'Creative & Print',
+    design_digital: 'Design & Digital', permissions: 'Permissions',
+    print_fabrication: 'Print & Fabrication', print_only: 'Print Only',
+    purchase_procurement: 'Purchase & Procurement', service: 'Service',
+  }
+  function formatType(t) { return TYPE_DISPLAY[t] || t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) }
+
+  async function handleSaveStage(stage) {
+    const { error } = await supabase.from('category_stage_config').update({
+      stage_name: stageEditBuffer.stage_name,
+      days_before_event: Number(stageEditBuffer.days_before_event) || 0,
+      is_terminal: stageEditBuffer.is_terminal,
+    }).eq('id', stage.id)
+    if (error) { showToast('Save failed: ' + error.message); return }
+    setEditingStage(null)
+    loadStages()
+    showToast('Stage saved ✓')
+  }
+
+  async function handleDeleteStage(id) {
+    if (!window.confirm('Delete this stage?')) return
+    const { error } = await supabase.from('category_stage_config').delete().eq('id', id)
+    if (error) { showToast('Delete failed: ' + error.message) } else { loadStages(); showToast('Stage deleted') }
+  }
+
+  async function handleSwapStages(stages, idx, dir) {
+    const swapIdx = idx + dir
+    if (swapIdx < 0 || swapIdx >= stages.length) return
+    const a = stages[idx], b = stages[swapIdx]
+    await Promise.all([
+      supabase.from('category_stage_config').update({ sort_order: b.sort_order }).eq('id', a.id),
+      supabase.from('category_stage_config').update({ sort_order: a.sort_order }).eq('id', b.id),
+    ])
+    loadStages()
+  }
+
+  async function handleAddStage() {
+    setMLoading(true)
+    const typedStages = stageData[addStageForm.category_type] || []
+    const maxOrder = typedStages.reduce((m, s) => Math.max(m, s.sort_order || 0), 0)
+    const { error } = await supabase.from('category_stage_config').insert({
+      category_type: addStageForm.category_type,
+      stage_name: addStageForm.stage_name,
+      days_before_event: Number(addStageForm.days_before_event) || 0,
+      is_terminal: addStageForm.is_terminal,
+      sort_order: maxOrder + 1,
+    })
+    if (error) { showToast('Failed: ' + error.message) } else {
+      setAddStageModal(false)
+      setAddStageForm({ category_type: '', stage_name: '', days_before_event: 0, is_terminal: false })
+      loadStages()
+      showToast('Stage added ✓')
+    }
+    setMLoading(false)
+  }
+
+  async function handleAddType() {
+    if (!newTypeName.trim()) return
+    setMLoading(true)
+    const typeSlug = newTypeName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
+    const { error } = await supabase.from('category_stage_config').insert({
+      category_type: typeSlug, stage_name: 'Stage 1', sort_order: 1, days_before_event: 0, is_terminal: false,
+    })
+    if (error) { showToast('Failed: ' + error.message) } else {
+      setAddTypeModal(false)
+      setNewTypeName('')
+      loadStages()
+      showToast('Category type added ✓')
+    }
+    setMLoading(false)
+  }
+
   const totalCats = cats.length
   const activeCats = cats.filter(c => c.is_active).length
   const unusedCats = cats.filter(c => (usageMap[c.name] || 0) === 0).length
 
+  const tabStyle = (active) => ({ padding: '8px 16px', fontSize: '13px', fontFamily: F, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', borderBottom: active ? '2px solid #bc1723' : '2px solid transparent', color: active ? '#1a1008' : '#7a7060', marginBottom: '-0.5px' })
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px' }}>
-        <SectionHeader title="Category Registry" subtitle="Global category list used by all tenants. Changes apply platform-wide." />
-        <button onClick={() => setAddModal(true)} style={{ ...btnPrimary, flexShrink: 0, marginTop: '4px' }}>+ Add Category</button>
+      <SectionHeader title="Categories" subtitle="Global category registry and production stage configuration." />
+
+      <div style={{ display: 'flex', borderBottom: '0.5px solid #d8d2c8', marginBottom: '24px' }}>
+        <button onClick={() => setCatTab('registry')} style={tabStyle(catTab === 'registry')}>Category Registry</button>
+        <button onClick={() => setCatTab('stageconfig')} style={tabStyle(catTab === 'stageconfig')}>Stage Config</button>
       </div>
 
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
-        {[
-          { label: 'Total Categories', value: totalCats, accent: '#1E40AF' },
-          { label: 'Active', value: activeCats, accent: '#065F46' },
-          { label: 'Unused (cleanup)', value: unusedCats, accent: '#92400E' },
-        ].map(c => (
-          <div key={c.label} style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '10px', padding: '16px 20px', minWidth: '130px', flex: 1 }}>
-            <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: FD, color: c.accent }}>{loading ? '—' : c.value}</div>
-            <div style={{ fontSize: '11px', fontFamily: F, color: '#7a7060', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '3px' }}>{c.label}</div>
+      {catTab === 'registry' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+            <button onClick={() => setAddModal(true)} style={btnPrimary}>+ Add Category</button>
           </div>
-        ))}
-      </div>
 
-      <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead><tr>{['Sort', 'Name', 'Slug', 'Usage', 'Status', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
-          <tbody>
-            {loading
-              ? <tr><td colSpan={6} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
-              : cats.map((c, idx) => {
-                const usage = usageMap[c.name] || 0
-                const isEdit = editingId === c.id
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
+            {[
+              { label: 'Total Categories', value: totalCats, accent: '#1E40AF' },
+              { label: 'Active', value: activeCats, accent: '#065F46' },
+              { label: 'Unused (cleanup)', value: unusedCats, accent: '#92400E' },
+            ].map(c => (
+              <div key={c.label} style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '10px', padding: '16px 20px', minWidth: '130px', flex: 1 }}>
+                <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: FD, color: c.accent }}>{loading ? '—' : c.value}</div>
+                <div style={{ fontSize: '11px', fontFamily: F, color: '#7a7060', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '3px' }}>{c.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr>{['Sort', 'Name', 'Slug', 'Usage', 'Status', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
+              <tbody>
+                {loading
+                  ? <tr><td colSpan={6} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
+                  : cats.map((c, idx) => {
+                    const usage = usageMap[c.name] || 0
+                    const isEdit = editingId === c.id
+                    return (
+                      <tr key={c.id}>
+                        <td style={tdStyle}>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button onClick={() => handleMove(idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? '#d8d2c8' : '#7a7060', fontSize: '12px', padding: '2px 4px' }}>▲</button>
+                            <button onClick={() => handleMove(idx, 1)} disabled={idx === cats.length - 1} style={{ background: 'none', border: 'none', cursor: idx === cats.length - 1 ? 'default' : 'pointer', color: idx === cats.length - 1 ? '#d8d2c8' : '#7a7060', fontSize: '12px', padding: '2px 4px' }}>▼</button>
+                          </div>
+                        </td>
+                        <td style={tdStyle}>
+                          {isEdit
+                            ? <input value={editName} onChange={e => setEditName(e.target.value)} onBlur={() => handleRename(c)} onKeyDown={e => e.key === 'Enter' && handleRename(c)} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5', color: '#1a1008', outline: 'none' }} autoFocus />
+                            : <span onClick={() => { setEditingId(c.id); setEditName(c.name) }} style={{ cursor: 'pointer', color: '#1a1008', fontWeight: 500 }} title="Click to rename">{c.name}</span>
+                          }
+                          {isEdit && <div style={{ fontSize: '11px', color: '#92400E', fontFamily: F, marginTop: '3px' }}>⚠ Renaming cascades to elements and rate cards</div>}
+                        </td>
+                        <td style={{ ...tdStyle, fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: '#7a7060' }}>{c.slug}</td>
+                        <td style={tdStyle}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, background: usage > 0 ? '#D1FAE5' : '#F3F4F6', color: usage > 0 ? '#065F46' : '#6B7280', padding: '2px 8px', borderRadius: '5px', fontFamily: F }}>{usage}</span>
+                        </td>
+                        <td style={tdStyle}>
+                          <button onClick={() => handleToggleActive(c)} style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: c.is_active ? '#D1FAE5' : '#F3F4F6', color: c.is_active ? '#065F46' : '#6B7280', fontFamily: F, fontWeight: 600 }}>
+                            {c.is_active ? 'Active' : 'Inactive'}
+                          </button>
+                        </td>
+                        <td style={tdStyle}>
+                          <button onClick={() => handleDelete(c)} disabled={usage > 0} title={usage > 0 ? `Cannot delete — ${usage} elements use this category` : 'Delete'}
+                            style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: usage > 0 ? 'not-allowed' : 'pointer', background: usage > 0 ? '#F3F4F6' : '#FEE2E2', color: usage > 0 ? '#d8d2c8' : '#991B1B', fontFamily: F }}
+                          >Delete</button>
+                        </td>
+                      </tr>
+                    )
+                  })
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <SAModal open={addModal} onClose={() => setAddModal(false)} title="Add Category">
+            <div style={{ marginBottom: '16px' }}><ModalLabel>Category Name</ModalLabel><input value={newCatName} onChange={e => setNewCatName(e.target.value)} style={inputStyle} placeholder="e.g. Lighting" /></div>
+            {newCatName && <p style={{ fontSize: '12px', color: '#7a7060', fontFamily: F, marginBottom: '16px' }}>Slug: {slugify(newCatName)}</p>}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={handleAdd} disabled={mLoading || !newCatName.trim()} style={{ ...btnPrimary, flex: 1, opacity: (mLoading || !newCatName.trim()) ? 0.6 : 1 }}>{mLoading ? 'Adding...' : 'Add Category'}</button>
+              <button onClick={() => setAddModal(false)} style={btnSecondary}>Cancel</button>
+            </div>
+          </SAModal>
+        </div>
+      )}
+
+      {catTab === 'stageconfig' && (
+        <div>
+          <p style={{ fontSize: '14px', color: '#7a7060', fontFamily: F, marginBottom: '20px' }}>Define the production stage sequences for each category type. These stages drive the Production tab workflow for all tenants.</p>
+
+          {stageLoading
+            ? <p style={{ color: '#7a7060', fontFamily: F }}>Loading...</p>
+            : stageTypes.length === 0
+              ? <p style={{ color: '#7a7060', fontFamily: F }}>No stage types configured yet.</p>
+              : stageTypes.map(type => {
+                const stages = stageData[type] || []
+                const isExpanded = expandedType === type
                 return (
-                  <tr key={c.id}>
-                    <td style={tdStyle}>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <button onClick={() => handleMove(idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? '#d8d2c8' : '#7a7060', fontSize: '12px', padding: '2px 4px' }}>▲</button>
-                        <button onClick={() => handleMove(idx, 1)} disabled={idx === cats.length - 1} style={{ background: 'none', border: 'none', cursor: idx === cats.length - 1 ? 'default' : 'pointer', color: idx === cats.length - 1 ? '#d8d2c8' : '#7a7060', fontSize: '12px', padding: '2px 4px' }}>▼</button>
+                  <div key={type} style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '10px', marginBottom: '10px', overflow: 'hidden' }}>
+                    <div onClick={() => setExpandedType(isExpanded ? null : type)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', cursor: 'pointer' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 600, fontFamily: F, color: '#1a1008' }}>{formatType(type)}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '12px', background: '#f2efe9', color: '#7a7060', padding: '2px 10px', borderRadius: '10px', fontFamily: F }}>{stages.length} stages</span>
+                        <span style={{ color: '#7a7060', fontSize: '12px' }}>{isExpanded ? '▲' : '▼'}</span>
                       </div>
-                    </td>
-                    <td style={tdStyle}>
-                      {isEdit
-                        ? <input value={editName} onChange={e => setEditName(e.target.value)} onBlur={() => handleRename(c)} onKeyDown={e => e.key === 'Enter' && handleRename(c)} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5', color: '#1a1008', outline: 'none' }} autoFocus />
-                        : <span onClick={() => { setEditingId(c.id); setEditName(c.name) }} style={{ cursor: 'pointer', color: '#1a1008', fontWeight: 500 }} title="Click to rename">{c.name}</span>
-                      }
-                      {isEdit && <div style={{ fontSize: '11px', color: '#92400E', fontFamily: F, marginTop: '3px' }}>⚠ Renaming cascades to elements and rate cards</div>}
-                    </td>
-                    <td style={{ ...tdStyle, fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: '#7a7060' }}>{c.slug}</td>
-                    <td style={tdStyle}>
-                      <span style={{ fontSize: '12px', fontWeight: 600, background: usage > 0 ? '#D1FAE5' : '#F3F4F6', color: usage > 0 ? '#065F46' : '#6B7280', padding: '2px 8px', borderRadius: '5px', fontFamily: F }}>{usage}</span>
-                    </td>
-                    <td style={tdStyle}>
-                      <button onClick={() => handleToggleActive(c)} style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: c.is_active ? '#D1FAE5' : '#F3F4F6', color: c.is_active ? '#065F46' : '#6B7280', fontFamily: F, fontWeight: 600 }}>
-                        {c.is_active ? 'Active' : 'Inactive'}
-                      </button>
-                    </td>
-                    <td style={tdStyle}>
-                      <button
-                        onClick={() => handleDelete(c)}
-                        disabled={usage > 0}
-                        title={usage > 0 ? `Cannot delete — ${usage} elements use this category` : 'Delete'}
-                        style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: usage > 0 ? 'not-allowed' : 'pointer', background: usage > 0 ? '#F3F4F6' : '#FEE2E2', color: usage > 0 ? '#d8d2c8' : '#991B1B', fontFamily: F }}
-                      >Delete</button>
-                    </td>
-                  </tr>
+                    </div>
+                    {isExpanded && (
+                      <div style={{ borderTop: '0.5px solid #d8d2c8' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead><tr>{['Sort', 'Stage Name', 'Days Before Event', 'Terminal?', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
+                          <tbody>
+                            {stages.map((s, idx) => {
+                              const isEditingS = editingStage === s.id
+                              return (
+                                <tr key={s.id}>
+                                  <td style={tdStyle}>
+                                    <div style={{ display: 'flex', gap: '4px' }}>
+                                      <button onClick={() => handleSwapStages(stages, idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? '#d8d2c8' : '#7a7060', fontSize: '12px', padding: '2px 4px' }}>▲</button>
+                                      <button onClick={() => handleSwapStages(stages, idx, 1)} disabled={idx === stages.length - 1} style={{ background: 'none', border: 'none', cursor: idx === stages.length - 1 ? 'default' : 'pointer', color: idx === stages.length - 1 ? '#d8d2c8' : '#7a7060', fontSize: '12px', padding: '2px 4px' }}>▼</button>
+                                    </div>
+                                  </td>
+                                  <td style={tdStyle}>{isEditingS ? <input value={stageEditBuffer.stage_name} onChange={e => setStageEditBuffer(p => ({ ...p, stage_name: e.target.value }))} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5', outline: 'none', width: '100%' }} autoFocus /> : s.stage_name}</td>
+                                  <td style={tdStyle}>{isEditingS ? <input type="number" value={stageEditBuffer.days_before_event} onChange={e => setStageEditBuffer(p => ({ ...p, days_before_event: e.target.value }))} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5', outline: 'none', width: '80px' }} /> : `${s.days_before_event} days before`}</td>
+                                  <td style={tdStyle}>
+                                    {isEditingS
+                                      ? <input type="checkbox" checked={stageEditBuffer.is_terminal} onChange={e => setStageEditBuffer(p => ({ ...p, is_terminal: e.target.checked }))} />
+                                      : s.is_terminal
+                                        ? <span style={{ fontSize: '11px', background: '#D1FAE5', color: '#065F46', padding: '2px 8px', borderRadius: '5px', fontWeight: 600, fontFamily: F }}>Terminal</span>
+                                        : <span style={{ color: '#7a7060' }}>—</span>
+                                    }
+                                  </td>
+                                  <td style={tdStyle}>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                      {isEditingS ? (
+                                        <>
+                                          <button onClick={() => handleSaveStage(s)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#D1FAE5', color: '#065F46', fontFamily: F }}>Save</button>
+                                          <button onClick={() => setEditingStage(null)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#f2efe9', color: '#7a7060', fontFamily: F }}>Cancel</button>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <button onClick={() => { setEditingStage(s.id); setStageEditBuffer({ stage_name: s.stage_name, days_before_event: s.days_before_event, is_terminal: s.is_terminal }) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#f2efe9', color: '#1a1008', fontFamily: F }}>✏</button>
+                                          <button onClick={() => handleDeleteStage(s.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#FEE2E2', color: '#991B1B', fontFamily: F }}>🗑</button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                        <div style={{ padding: '12px 20px', borderTop: '0.5px solid #d8d2c8' }}>
+                          <button onClick={() => { setAddStageForm(f => ({ ...f, category_type: type })); setAddStageModal(true) }} style={{ ...btnSecondary, border: '0.5px solid #bc1723', color: '#bc1723', fontSize: '12px' }}>+ Add Stage</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )
               })
-            }
-          </tbody>
-        </table>
-      </div>
+          }
 
-      <SAModal open={addModal} onClose={() => setAddModal(false)} title="Add Category">
-        <div style={{ marginBottom: '16px' }}><ModalLabel>Category Name</ModalLabel><input value={newCatName} onChange={e => setNewCatName(e.target.value)} style={inputStyle} placeholder="e.g. Lighting" /></div>
-        {newCatName && <p style={{ fontSize: '12px', color: '#7a7060', fontFamily: F, marginBottom: '16px' }}>Slug: {slugify(newCatName)}</p>}
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={handleAdd} disabled={mLoading || !newCatName.trim()} style={{ ...btnPrimary, flex: 1, opacity: (mLoading || !newCatName.trim()) ? 0.6 : 1 }}>{mLoading ? 'Adding...' : 'Add Category'}</button>
-          <button onClick={() => setAddModal(false)} style={btnSecondary}>Cancel</button>
+          <div style={{ marginTop: '16px' }}>
+            <button onClick={() => setAddTypeModal(true)} style={{ ...btnSecondary, border: '0.5px solid #bc1723', color: '#bc1723' }}>+ Add New Category Type</button>
+          </div>
+
+          <SAModal open={addStageModal} onClose={() => setAddStageModal(false)} title="Add Stage" subtitle={addStageForm.category_type ? formatType(addStageForm.category_type) : ''}>
+            <div style={{ marginBottom: '12px' }}>
+              <ModalLabel>Category Type</ModalLabel>
+              <div style={{ fontSize: '13px', fontFamily: F, color: '#7a7060', padding: '9px 0' }}>{formatType(addStageForm.category_type)}</div>
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <ModalLabel>Stage Name</ModalLabel>
+              <input value={addStageForm.stage_name} onChange={e => setAddStageForm(p => ({ ...p, stage_name: e.target.value }))} style={inputStyle} />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <ModalLabel>Days Before Event</ModalLabel>
+              <input type="number" value={addStageForm.days_before_event} onChange={e => setAddStageForm(p => ({ ...p, days_before_event: e.target.value }))} style={inputStyle} />
+            </div>
+            <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input type="checkbox" id="stage-terminal" checked={addStageForm.is_terminal} onChange={e => setAddStageForm(p => ({ ...p, is_terminal: e.target.checked }))} />
+              <label htmlFor="stage-terminal" style={{ fontSize: '13px', fontFamily: F, color: '#1a1008', cursor: 'pointer' }}>Is Terminal</label>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={handleAddStage} disabled={mLoading || !addStageForm.stage_name} style={{ ...btnPrimary, flex: 1, opacity: (mLoading || !addStageForm.stage_name) ? 0.6 : 1 }}>{mLoading ? 'Adding...' : 'Add Stage'}</button>
+              <button onClick={() => setAddStageModal(false)} style={btnSecondary}>Cancel</button>
+            </div>
+          </SAModal>
+
+          <SAModal open={addTypeModal} onClose={() => setAddTypeModal(false)} title="Add New Category Type">
+            <div style={{ marginBottom: '16px' }}>
+              <ModalLabel>Type Name</ModalLabel>
+              <input value={newTypeName} onChange={e => setNewTypeName(e.target.value)} style={inputStyle} placeholder="e.g. Logistics" />
+              {newTypeName && <p style={{ fontSize: '12px', color: '#7a7060', fontFamily: F, marginTop: '6px' }}>Slug: {newTypeName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}</p>}
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={handleAddType} disabled={mLoading || !newTypeName.trim()} style={{ ...btnPrimary, flex: 1, opacity: (mLoading || !newTypeName.trim()) ? 0.6 : 1 }}>{mLoading ? 'Adding...' : 'Add Type'}</button>
+              <button onClick={() => setAddTypeModal(false)} style={btnSecondary}>Cancel</button>
+            </div>
+          </SAModal>
         </div>
-      </SAModal>
+      )}
     </div>
   )
 }
@@ -1581,7 +2121,7 @@ function SectionAnalytics() {
 export default function SuperAdminPanel({ onClose }) {
   const [roleChecked, setRoleChecked] = useState(false)
   const [platformRole, setPlatformRole] = useState(null)
-  const [activeSection, setActiveSection] = useState('overview')
+  const [activeSection, setActiveSection] = useState('analytics')
   const [pendingCount, setPendingCount] = useState(0)
   const [toast, setToast] = useState('')
 
