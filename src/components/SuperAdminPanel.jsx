@@ -735,6 +735,7 @@ function SectionTenants({ showToast }) {
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [countMap, setCountMap] = useState({})
+  const [tenantLastActive, setTenantLastActive] = useState({})
 
   useEffect(() => {
     async function load() {
@@ -742,14 +743,24 @@ function SectionTenants({ showToast }) {
       const { data } = await supabase.from('tenants').select('*, tenant_subscriptions(*)').order('created_at', { ascending: false })
       const list = data || []
       setTenants(list)
-      const counts = await Promise.all(list.map(async t => {
-        const [ev, us] = await Promise.all([
-          supabase.from('events').select('*', { count: 'exact', head: true }).eq('tenant_id', t.id),
-          supabase.from('users').select('*', { count: 'exact', head: true }).eq('tenant_id', t.id),
-        ])
-        return [t.id, { events: ev.count || 0, users: us.count || 0 }]
-      }))
+      const [counts, usersActivity] = await Promise.all([
+        Promise.all(list.map(async t => {
+          const [ev, us] = await Promise.all([
+            supabase.from('events').select('*', { count: 'exact', head: true }).eq('tenant_id', t.id),
+            supabase.from('users').select('*', { count: 'exact', head: true }).eq('tenant_id', t.id),
+          ])
+          return [t.id, { events: ev.count || 0, users: us.count || 0 }]
+        })),
+        supabase.from('users').select('tenant_id,created_at'),
+      ])
       setCountMap(Object.fromEntries(counts))
+      const lastActive = {}
+      ;(usersActivity.data || []).forEach(u => {
+        if (!lastActive[u.tenant_id] || u.created_at > lastActive[u.tenant_id]) {
+          lastActive[u.tenant_id] = u.created_at
+        }
+      })
+      setTenantLastActive(lastActive)
       setLoading(false)
     }
     load()
@@ -775,12 +786,12 @@ function SectionTenants({ showToast }) {
       </div>
       <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead><tr>{['Company', 'Status', 'Plan', 'Trial Ends', 'Events', 'Users', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
+          <thead><tr>{['Company', 'Status', 'Plan', 'Trial Ends', 'Events', 'Users', 'Last User Added', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
           <tbody>
             {loading
-              ? <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
+              ? <tr><td colSpan={8} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
               : filtered.length === 0
-                ? <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No tenants match</td></tr>
+                ? <tr><td colSpan={8} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No tenants match</td></tr>
                 : filtered.map(t => {
                   const dl = daysLeft(t.trial_ends_at)
                   const c = countMap[t.id]
@@ -794,6 +805,11 @@ function SectionTenants({ showToast }) {
                       </td>
                       <td style={tdStyle}>{c?.events ?? '—'}</td>
                       <td style={tdStyle}>{c?.users ?? '—'}</td>
+                      <td style={{ ...tdStyle, color: '#7a7060' }}>
+                        {tenantLastActive[t.id]
+                          ? new Date(tenantLastActive[t.id]).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })
+                          : '—'}
+                      </td>
                       <td style={tdStyle}>
                         <button onClick={() => setSelected(t)} style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '6px', border: '0.5px solid #d8d2c8', background: '#faf8f5', color: '#1a1008', cursor: 'pointer', fontFamily: F }}>View →</button>
                       </td>
@@ -823,7 +839,7 @@ function SectionUsers({ showToast }) {
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const { data } = await supabase.from('users').select('id,full_name,email,role,status,created_at,tenant_id,tenants(name)').order('created_at', { ascending: false })
+      const { data } = await supabase.from('users').select('id,full_name,email,role,status,invite_status,invited_at,created_at,tenant_id,tenants(name)').order('created_at', { ascending: false })
       setUsers(data || [])
       setLoading(false)
     }
@@ -898,7 +914,18 @@ function SectionUsers({ showToast }) {
                       </select>
                     </td>
                     <td style={{ ...tdStyle, color: '#7a7060' }}>{u.tenants?.name || '—'}</td>
-                    <td style={tdStyle}><StatusPill status={u.status || 'active'} /></td>
+                    <td style={tdStyle}>
+                      {u.invite_status === 'invited' ? (() => {
+                        const hoursLeft = (new Date(u.invited_at).getTime() + 86400000 - Date.now()) / 3600000
+                        return hoursLeft > 0
+                          ? <span style={{background:'#fef3c7',color:'#92400e',padding:'2px 8px',borderRadius:4,fontSize:12,fontFamily:'DM Sans'}}>
+                              Invited · {Math.floor(hoursLeft)}h {Math.floor((hoursLeft % 1) * 60)}m left
+                            </span>
+                          : <span style={{background:'#fee2e2',color:'#991b1b',padding:'2px 8px',borderRadius:4,fontSize:12,fontFamily:'DM Sans'}}>
+                              Expired
+                            </span>
+                      })() : <StatusPill status={u.status || 'active'} />}
+                    </td>
                     <td style={{ ...tdStyle, color: '#7a7060' }}>{fmtDate(u.created_at)}</td>
                     <td style={tdStyle}>
                       <div style={{ display: 'flex', gap: '6px' }}>
@@ -1988,6 +2015,7 @@ function SectionCategories({ showToast }) {
 function SectionAnalytics() {
   const [stats, setStats] = useState({ events: 0, tasks: 0, elements: 0, users: 0, rateCards: 0 })
   const [chartData, setChartData] = useState([])
+  const [eventsChartData, setEventsChartData] = useState([])
   const [topCats, setTopCats] = useState([])
   const [statusDist, setStatusDist] = useState([])
   const [loading, setLoading] = useState(true)
@@ -1995,7 +2023,7 @@ function SectionAnalytics() {
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const [r1, r2, r3, r4, r5, r6, r7, r8] = await Promise.all([
+      const [r1, r2, r3, r4, r5, r6, r7, r8, r9] = await Promise.all([
         supabase.from('events').select('*', { count: 'exact', head: true }),
         supabase.from('tasks').select('*', { count: 'exact', head: true }),
         supabase.from('elements').select('*', { count: 'exact', head: true }),
@@ -2004,6 +2032,7 @@ function SectionAnalytics() {
         supabase.from('tenants').select('created_at').order('created_at'),
         supabase.from('elements').select('category'),
         supabase.from('tenants').select('status'),
+        supabase.from('events').select('created_at').order('created_at', { ascending: true }),
       ])
       setStats({ events: r1.count || 0, tasks: r2.count || 0, elements: r3.count || 0, users: r4.count || 0, rateCards: r5.count || 0 })
 
@@ -2021,6 +2050,20 @@ function SectionAnalytics() {
         if (key in monthCounts) monthCounts[key]++
       })
       setChartData(Object.entries(monthCounts).map(([month, count]) => ({ month, count })))
+
+      // Chart: events per month (last 12)
+      const eventDates = (r9.data || []).map(e => new Date(e.created_at))
+      const evMonthCounts = {}
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        const key = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
+        evMonthCounts[key] = 0
+      }
+      eventDates.forEach(d => {
+        const key = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
+        if (key in evMonthCounts) evMonthCounts[key]++
+      })
+      setEventsChartData(Object.entries(evMonthCounts).map(([month, count]) => ({ month, count })))
 
       // Top categories
       const catCount = {}
@@ -2098,6 +2141,25 @@ function SectionAnalytics() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Events per month chart */}
+      <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '20px 24px', marginBottom: '28px' }}>
+        <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: '#1a1008', marginBottom: '16px' }}>Events Created Per Month</p>
+        {BarChart && !loading ? (
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={eventsChartData}>
+              <XAxis dataKey="month" tick={{ fontSize: 11, fontFamily: F, fill: '#7a7060' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fontFamily: F, fill: '#7a7060' }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip contentStyle={{ fontFamily: F, fontSize: 12, borderRadius: 8, border: '0.5px solid #d8d2c8' }} />
+              <Bar dataKey="count" fill="#bc1723" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ color: '#7a7060', fontFamily: F, fontSize: '13px' }}>{loading ? 'Loading...' : 'Install recharts to view chart'}</p>
+          </div>
+        )}
       </div>
 
       {/* Tenant status distribution */}

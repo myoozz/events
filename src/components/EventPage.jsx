@@ -317,7 +317,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
   useEffect(() => {
     async function fetchTeam() {
-      const { data } = await supabase.from('users').select('id, email, full_name').neq('status','inactive')
+      const { data } = await supabase.from('users').select('id, email, full_name, role').neq('status','inactive')
       setTeamUsers(data || [])
     }
     fetchTeam()
@@ -349,6 +349,12 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   const [reminderTargets, setReminderTargets] = useState('all')
   const [reminderSelected, setReminderSelected] = useState([])
   const [elementAssignees, setElementAssignees] = useState([])
+  const [editingField,      setEditingField]      = useState(null)
+  const [editValue,         setEditValue]         = useState('')
+  const [savingField,       setSavingField]       = useState(false)
+  const [pendingEdits,      setPendingEdits]      = useState(currentEvent.pending_edits || null)
+  const [showCitiesPopover, setShowCitiesPopover] = useState(false)
+  const [showTeamPopover,   setShowTeamPopover]   = useState(false)
 
   useEffect(() => {
     if (proposalStatus !== 'won') return
@@ -383,6 +389,43 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     setSavingStatus(true)
     await supabase.from('events').update({ status: 'lost', loss_reason: reason }).eq('id', event.id)
     setSavingStatus(false)
+  }
+
+  const FIELD_LABELS = {
+    event_name: 'Event name', sub_category: 'Sub-category', pax_count: 'PAX',
+    budget_tier: 'Budget tier', seating_format: 'Seating format',
+    proposal_due_date: 'Proposal due', agency_fee_percent: 'Agency fee', gst_percent: 'GST',
+  }
+  const ROLE_LABELS_MAP = { admin: 'Admin', manager: 'Project Head', event_lead: 'Manager', team: 'Project Team', staff: 'Staff' }
+
+  function startEdit(field, value) { setEditingField(field); setEditValue(value ?? '') }
+
+  async function saveField(field) {
+    setSavingField(true)
+    const val = editValue
+    if (isAdmin) {
+      await supabase.from('events').update({ [field]: val }).eq('id', currentEvent.id)
+      setCurrentEvent(prev => ({ ...prev, [field]: val }))
+    } else if (isManager) {
+      const newPending = { ...(pendingEdits || {}), [field]: val }
+      await supabase.from('events').update({ pending_edits: newPending }).eq('id', currentEvent.id)
+      setCurrentEvent(prev => ({ ...prev, pending_edits: newPending }))
+      setPendingEdits(newPending)
+    }
+    setEditingField(null)
+    setSavingField(false)
+  }
+
+  async function approvePendingEdits() {
+    await supabase.from('events').update({ ...pendingEdits, pending_edits: null }).eq('id', currentEvent.id)
+    setCurrentEvent(prev => ({ ...prev, ...pendingEdits, pending_edits: null }))
+    setPendingEdits(null)
+  }
+
+  async function rejectPendingEdits() {
+    await supabase.from('events').update({ pending_edits: null }).eq('id', currentEvent.id)
+    setCurrentEvent(prev => ({ ...prev, pending_edits: null }))
+    setPendingEdits(null)
   }
 
   async function handleSubmitProposal() {
@@ -455,6 +498,41 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     return u?.full_name || email.split('@')[0]
   }
 
+  function FieldCell({ label, field, value, display, type }) {
+    const isEditing = editingField === field
+    const canEdit = isAdmin || isManager
+    const empty = value === null || value === undefined || value === ''
+    return (
+      <div>
+        <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>{label}</div>
+        {isEditing ? (
+          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+            <input
+              type={type || 'text'}
+              value={editValue}
+              onChange={e => setEditValue(e.target.value)}
+              autoFocus
+              onKeyDown={e => { if (e.key === 'Enter') saveField(field); if (e.key === 'Escape') setEditingField(null) }}
+              style={{ fontSize: '13px', padding: '3px 8px', border: '1px solid var(--accent)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', outline: 'none', fontFamily: 'var(--font-body)', width: 110 }}
+            />
+            <button onClick={() => saveField(field)} disabled={savingField} style={{ padding: '3px 8px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '11px' }}>
+              {savingField ? '…' : '✓'}
+            </button>
+            <button onClick={() => setEditingField(null)} style={{ padding: '3px 8px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '11px', color: 'var(--text-tertiary)' }}>✕</button>
+          </div>
+        ) : (
+          <div
+            onClick={canEdit ? () => startEdit(field, String(value ?? '')) : undefined}
+            title={canEdit ? 'Click to edit' : undefined}
+            style={{ fontSize: '13px', color: empty ? 'var(--text-tertiary)' : 'var(--text)', cursor: canEdit ? 'pointer' : 'default', minHeight: 20 }}
+          >
+            {display || (!empty ? String(value) : '—')}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div>
       {/* ← Back */}
@@ -470,101 +548,95 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
         ← All events
       </button>
 
+      {/* ── Pending edits banner — admin sees + approves/rejects manager changes ── */}
+      {isAdmin && pendingEdits && Object.keys(pendingEdits).length > 0 && (
+        <div style={{ marginBottom: 16, padding: '12px 16px', background: '#FFF8EC', border: '0.5px solid #F5A623', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: '13px', color: 'var(--text)', fontFamily: 'var(--font-body)', lineHeight: 1.7 }}>
+            <span style={{ fontWeight: 600, marginRight: 6 }}>Pending changes:</span>
+            {Object.entries(pendingEdits).map(([field, val], i) => (
+              <span key={field}>
+                {i > 0 && <span style={{ color: 'var(--text-tertiary)', margin: '0 5px' }}>·</span>}
+                <span style={{ fontWeight: 500 }}>{FIELD_LABELS[field] || field}</span>
+                {': '}
+                <span style={{ color: 'var(--text-tertiary)' }}>{String(currentEvent[field] ?? '—')}</span>
+                {' → '}
+                <span style={{ color: '#92400E' }}>{String(val)}</span>
+              </span>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <button onClick={approvePendingEdits} style={{ padding: '6px 14px', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500, background: '#065F46', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Approve</button>
+            <button onClick={rejectPendingEdits} style={{ padding: '6px 14px', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500, background: 'none', color: 'var(--red)', border: '0.5px solid var(--red)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Reject</button>
+          </div>
+        </div>
+      )}
+
       {/* ── Event header ── */}
       <div style={{ marginBottom: '32px', paddingBottom: '24px', borderBottom: '0.5px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
-              {event.event_subtype && (
-                <span style={{
-                  fontSize: '11px', color: 'var(--text-tertiary)',
-                  padding: '3px 10px', borderRadius: '20px',
-                  background: 'var(--bg-secondary)', border: '0.5px solid var(--border)',
-                }}>
-                  {event.event_subtype}
+          <div style={{ flex: 1 }}>
+            {currentEvent.event_subtype && (
+              <div style={{ marginBottom: 8 }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', padding: '3px 10px', borderRadius: '20px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border)' }}>
+                  {currentEvent.event_subtype}
                 </span>
-              )}
-            </div>
-            <h1 style={{
-              fontFamily: 'var(--font-display)', fontSize: '32px',
-              fontWeight: 500, color: 'var(--text)',
-              letterSpacing: '-0.5px', marginBottom: '6px', lineHeight: 1.2,
-            }}>
-              {event.event_name}
-            </h1>
+              </div>
+            )}
+
+            {editingField === 'event_name' ? (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                <input
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  autoFocus
+                  onKeyDown={e => { if (e.key === 'Enter') saveField('event_name'); if (e.key === 'Escape') setEditingField(null) }}
+                  style={{ fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: 500, letterSpacing: '-0.5px', border: '1px solid var(--accent)', borderRadius: 'var(--radius-sm)', padding: '4px 10px', background: 'var(--bg)', outline: 'none', flex: 1, maxWidth: 480 }}
+                />
+                <button onClick={() => saveField('event_name')} disabled={savingField} style={{ padding: '6px 14px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', fontWeight: 500 }}>
+                  {savingField ? '…' : 'Save'}
+                </button>
+                <button onClick={() => setEditingField(null)} style={{ padding: '6px 10px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-tertiary)' }}>✕</button>
+              </div>
+            ) : (
+              <h1
+                onClick={(isAdmin || isManager) ? () => startEdit('event_name', currentEvent.event_name) : undefined}
+                title={(isAdmin || isManager) ? 'Click to edit' : undefined}
+                style={{ fontFamily: 'var(--font-display)', fontSize: '32px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.5px', marginBottom: '6px', lineHeight: 1.2, cursor: (isAdmin || isManager) ? 'pointer' : 'default' }}
+              >
+                {currentEvent.event_name}
+              </h1>
+            )}
+
             <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-              {event.clients?.group_name}
-              {event.clients?.brand_name ? ` · ${event.clients.brand_name}` : ''}
+              {currentEvent.clients?.group_name}
+              {currentEvent.clients?.brand_name ? ` · ${currentEvent.clients.brand_name}` : ''}
             </p>
           </div>
 
           {/* Status control — Admin only */}
           {isAdmin && (
             <div style={{ minWidth: '200px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
-                Pitch status
-              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Pitch status</div>
               <select
                 value={status}
                 onChange={e => handleStatusChange(e.target.value)}
-                style={{
-                  width: '100%', padding: '8px 12px', fontSize: '13px',
-                  fontFamily: 'var(--font-body)', fontWeight: 500,
-                  background: sc.bg, color: sc.color,
-                  border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer', outline: 'none',
-                }}
+                style={{ width: '100%', padding: '8px 12px', fontSize: '13px', fontFamily: 'var(--font-body)', fontWeight: 500, background: sc.bg, color: sc.color, border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', outline: 'none' }}
               >
-                {STATUS_OPTIONS.map(s => (
-                  <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                ))}
+                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
               </select>
               {savingStatus && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px' }}>Saving...</div>}
-
               {status === 'lost' && (
                 <div style={{ marginTop: '10px' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
-                    Reason for loss
-                  </div>
-                  <select
-                    value={lossReason}
-                    onChange={e => setLossReason(e.target.value)}
-                    style={{
-                      width: '100%', padding: '8px 12px', fontSize: '13px',
-                      fontFamily: 'var(--font-body)', background: 'var(--bg)',
-                      border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer', outline: 'none', color: 'var(--text)',
-                    }}
-                  >
+                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Reason for loss</div>
+                  <select value={lossReason} onChange={e => setLossReason(e.target.value)} style={{ width: '100%', padding: '8px 12px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', outline: 'none', color: 'var(--text)' }}>
                     <option value="">Select reason</option>
                     {LOSS_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                   {lossReason === 'Other' && (
-                    <input
-                      placeholder="Describe the reason..."
-                      value={customReason}
-                      onChange={e => setCustomReason(e.target.value)}
-                      style={{
-                        width: '100%', marginTop: '6px', padding: '8px 12px',
-                        fontSize: '13px', fontFamily: 'var(--font-body)',
-                        border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)',
-                        background: 'var(--bg)', color: 'var(--text)', outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
-                    />
+                    <input placeholder="Describe the reason..." value={customReason} onChange={e => setCustomReason(e.target.value)} style={{ width: '100%', marginTop: '6px', padding: '8px 12px', fontSize: '13px', fontFamily: 'var(--font-body)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }} />
                   )}
                   {lossReason && (
-                    <button
-                      onClick={saveLossReason}
-                      style={{
-                        marginTop: '8px', padding: '7px 14px', fontSize: '12px',
-                        fontFamily: 'var(--font-body)', fontWeight: 500,
-                        background: 'var(--text)', color: 'var(--bg)',
-                        border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                      }}
-                    >
-                      Save reason
-                    </button>
+                    <button onClick={saveLossReason} style={{ marginTop: '8px', padding: '7px 14px', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500, background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Save reason</button>
                   )}
                 </div>
               )}
@@ -573,127 +645,123 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
           {/* Non-admin badge */}
           {!isAdmin && (
-            <span style={{
-              fontSize: '11px', fontWeight: 500,
-              textTransform: 'uppercase', letterSpacing: '0.5px',
-              padding: '4px 12px', borderRadius: '20px',
-              background: sc.bg, color: sc.color,
-            }}>
+            <span style={{ fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '4px 12px', borderRadius: '20px', background: sc.bg, color: sc.color }}>
               {STATUS_LABELS[status]}
             </span>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', marginTop: '20px', gap: '0' }}>
+        {/* ── Field grid ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))', gap: '20px 24px', marginTop: '24px' }}>
 
-          {event.cities?.length > 0 && (() => {
-            const hasDates = event.city_dates && Object.keys(event.city_dates).length > 0
-            return (
-              <>
-                <div style={{ paddingRight: 20 }}>
-                  <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>
-                    {hasDates ? 'Cities · Dates' : 'Cities'}
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                    {event.cities.map(city => {
-                      const cd = event.city_dates?.[city]
-                      const dateStr = cd?.start
-                        ? (cd.end && cd.end !== cd.start
+          {/* Cities — first city chip + +N more popover */}
+          <div>
+            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Cities</div>
+            <div style={{ position: 'relative' }}>
+              {currentEvent.cities?.length > 0 ? (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {(() => {
+                    const city = currentEvent.cities[0]
+                    const cd = currentEvent.city_dates?.[city]
+                    const dateStr = cd?.start ? ' · ' + new Date(cd.start).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''
+                    return (
+                      <span style={{ fontSize: '12px', color: 'var(--text)', padding: '3px 10px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border)', borderRadius: 20, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
+                        {city}{dateStr}
+                      </span>
+                    )
+                  })()}
+                  {currentEvent.cities.length > 1 && (
+                    <button onClick={() => setShowCitiesPopover(p => !p)} style={{ fontSize: '12px', color: 'var(--accent)', background: 'none', border: '0.5px solid var(--accent)', borderRadius: 20, padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                      +{currentEvent.cities.length - 1} more
+                    </button>
+                  )}
+                  {showCitiesPopover && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: 12, zIndex: 50, boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 200 }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {currentEvent.cities.slice(1).map(city => {
+                          const cd = currentEvent.city_dates?.[city]
+                          const dateStr = cd?.start ? ' · ' + (cd.end && cd.end !== cd.start
                             ? `${new Date(cd.start).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} – ${new Date(cd.end).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}`
-                            : new Date(cd.start).toLocaleDateString('en-IN',{day:'numeric',month:'short'}))
-                        : null
-                      return (
-                        <span key={city} style={{
-                          fontSize: '12px', color: 'var(--text)',
-                          padding: '3px 10px', borderRadius: '20px',
-                          background: 'var(--bg-secondary)', border: '0.5px solid var(--border)',
-                          fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
-                        }}>
-                          {city}{dateStr ? ` · ${dateStr}` : ''}
-                        </span>
-                      )
-                    })}
-                  </div>
+                            : new Date(cd.start).toLocaleDateString('en-IN',{day:'numeric',month:'short'})) : ''
+                          return (
+                            <span key={city} style={{ fontSize: '12px', color: 'var(--text)', padding: '3px 10px', borderRadius: 20, background: 'var(--bg-secondary)', border: '0.5px solid var(--border)', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
+                              {city}{dateStr}
+                            </span>
+                          )
+                        })}
+                      </div>
+                      <button onClick={() => setShowCitiesPopover(false)} style={{ marginTop: 8, fontSize: '11px', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Close</button>
+                    </div>
+                  )}
                 </div>
-                <div style={{ width: 1, background: 'var(--border)', alignSelf: 'stretch', margin: '0 16px', flexShrink: 0 }} />
-              </>
-            )
-          })()}
-
-          {!event.cities?.length && event.event_date && (
-            <>
-              <div style={{ paddingRight: 20 }}>
-                <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>Event date</div>
-                <div style={{ fontSize: '13px', color: 'var(--text)' }}>
-                  {new Date(event.event_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
-                </div>
-              </div>
-              <div style={{ width: 1, background: 'var(--border)', alignSelf: 'stretch', margin: '0 16px', flexShrink: 0 }} />
-            </>
-          )}
-
-          {event.proposal_due_date && (
-            <>
-              <div style={{ paddingRight: 20 }}>
-                <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>Proposal due</div>
-                <div style={{ fontSize: '13px', color: 'var(--text)' }}>
-                  {new Date(event.proposal_due_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
-                </div>
-              </div>
-              <div style={{ width: 1, background: 'var(--border)', alignSelf: 'stretch', margin: '0 16px', flexShrink: 0 }} />
-            </>
-          )}
-
-          <div style={{ display: 'flex', gap: 20, paddingRight: 20 }}>
-            <div>
-              <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>Agency fee</div>
-              <div style={{ fontSize: '13px', color: 'var(--text)' }}>{event.agency_fee_percent}%</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>GST</div>
-              <div style={{ fontSize: '13px', color: 'var(--text)' }}>{event.gst_percent}%</div>
+              ) : (
+                <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>—</span>
+              )}
             </div>
           </div>
 
+          {FieldCell({ label: 'Sub-category', field: 'sub_category', value: currentEvent.sub_category })}
+          {FieldCell({ label: 'PAX', field: 'pax_count', value: currentEvent.pax_count, type: 'number' })}
+          {FieldCell({ label: 'Budget tier', field: 'budget_tier', value: currentEvent.budget_tier })}
+          {FieldCell({ label: 'Seating format', field: 'seating_format', value: currentEvent.seating_format })}
+          {FieldCell({
+            label: 'Proposal due', field: 'proposal_due_date', value: currentEvent.proposal_due_date, type: 'date',
+            display: currentEvent.proposal_due_date ? new Date(currentEvent.proposal_due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null,
+          })}
+          {FieldCell({ label: 'Agency fee', field: 'agency_fee_percent', value: currentEvent.agency_fee_percent, type: 'number', display: currentEvent.agency_fee_percent != null ? `${currentEvent.agency_fee_percent}%` : null })}
+          {FieldCell({ label: 'GST', field: 'gst_percent', value: currentEvent.gst_percent, type: 'number', display: currentEvent.gst_percent != null ? `${currentEvent.gst_percent}%` : null })}
+
+          {/* Assigned team — stacked initials + popover */}
           {(assignedTo.length > 0 || canAssign) && (
-            <>
-              <div style={{ width: 1, background: 'var(--border)', alignSelf: 'stretch', margin: '0 16px', flexShrink: 0 }} />
-              <div>
-                <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Assigned</div>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  {assignedTo.map(email => (
-                    <span key={email} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '5px',
-                      fontSize: '12px', color: 'var(--text)',
-                      padding: '3px 8px 3px 10px', borderRadius: '20px',
-                      background: 'var(--bg-secondary)', border: '0.5px solid var(--border)',
-                      fontFamily: 'var(--font-body)',
-                    }}>
-                      {getName(email)}
-                      {canAssign && (
-                        <button
-                          onClick={() => setRevokeConfirm(email)}
-                          title={`Remove ${getName(email)} from this event`}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 0, lineHeight: 1, fontSize: '11px', display: 'flex', alignItems: 'center' }}
-                          onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
-                          onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
-                        >✕</button>
-                      )}
-                    </span>
-                  ))}
+            <div>
+              <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Team</div>
+              <div style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {assignedTo.length > 0 && (
+                    <div style={{ display: 'flex' }}>
+                      {assignedTo.slice(0, 4).map((email, i) => {
+                        const u = teamUsers.find(u => u.email === email)
+                        const initials = (u?.full_name || email).split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+                        return (
+                          <div key={email} style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--bg-surface-2)', border: '1.5px solid var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-body)', marginLeft: i > 0 ? -8 : 0, position: 'relative', zIndex: 4 - i }}>
+                            {initials}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                  <button onClick={() => setShowTeamPopover(p => !p)} style={{ fontSize: '12px', color: 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', padding: 0 }}>
+                    {assignedTo.length === 0 ? '—' : `${assignedTo.length} member${assignedTo.length > 1 ? 's' : ''}`}
+                  </button>
                   {canAssign && (
-                    <button
-                      onClick={() => setShowAssignModal(true)}
-                      style={{ fontSize: '12px', color: 'var(--text-tertiary)', background: 'none', border: '0.5px dashed var(--border-strong)', borderRadius: '20px', padding: '3px 10px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
-                      onMouseOver={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--text)' }}
-                      onMouseOut={e => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-strong)' }}
-                    >
-                      {assignedTo.length === 0 ? '+ Assign team' : '+ Manage'}
+                    <button onClick={() => setShowAssignModal(true)} style={{ fontSize: '11px', color: 'var(--text-tertiary)', background: 'none', border: '0.5px dashed var(--border-strong)', borderRadius: 20, padding: '2px 8px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                      {assignedTo.length === 0 ? '+ Assign' : '+ Manage'}
                     </button>
                   )}
                 </div>
+                {showTeamPopover && assignedTo.length > 0 && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: 12, zIndex: 50, boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 220 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {assignedTo.map(email => {
+                        const u = teamUsers.find(u => u.email === email)
+                        return (
+                          <div key={email} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                            <div>
+                              <div style={{ fontSize: '13px', color: 'var(--text)', fontFamily: 'var(--font-body)' }}>{getName(email)}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>{ROLE_LABELS_MAP[u?.role] || u?.role || ''}</div>
+                            </div>
+                            {canAssign && (
+                              <button onClick={() => { setShowTeamPopover(false); setRevokeConfirm(email) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: '11px', fontFamily: 'var(--font-body)' }} onMouseOver={e => e.currentTarget.style.color = 'var(--red)'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}>Remove</button>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <button onClick={() => setShowTeamPopover(false)} style={{ marginTop: 10, fontSize: '11px', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Close</button>
+                  </div>
+                )}
               </div>
-            </>
+            </div>
           )}
 
         </div>
