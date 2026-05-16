@@ -11,7 +11,7 @@ const ROLE_DESC = {
   team: 'Task execution only — assigned tasks, notes, no event-level access',
 }
 
-export default function UserManagement({ session, userRole = 'admin', onViewProfile }) {
+export default function UserManagement({ session, userRole = 'admin', tenantId, onViewProfile }) {
   // Roles this user is allowed to create
   const inviteableRoles = userRole === 'admin'
     ? ['admin', 'manager', 'event_lead', 'team']
@@ -53,45 +53,18 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
     setSuccess('')
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      // Step 1 — always save user record first
-      const { error: dbError } = await supabase.from('users').upsert({
-        email: form.email,
-        full_name: form.fullName,
-        role: form.role,
-        status: 'active',
-        created_by: session.user.id,
-        ...(form.base_city ? { base_city: form.base_city } : {}),
-        ...(form.phone     ? { phone: form.phone }         : {}),
-      }, { onConflict: 'email' })
-
-      if (dbError) throw new Error(`Could not save user: ${dbError.message}`)
-
-      // Step 2 — call Edge Function (service key stays server-side, never in browser)
-      const res = await fetch(`${supabaseUrl}/functions/v1/invite-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${anonKey}`,
-        },
-        body: JSON.stringify({ email: form.email }),
-      })
-
-      const json = await res.json()
-
-      if (!res.ok || json.error) {
-        const msg = (json.error || '').toLowerCase()
-        if (msg.includes('already registered') || msg.includes('already been registered')) {
-          setError(`${form.email} is already registered. They can log in directly.`)
-        } else {
-          setError(`Email invite failed — ${json.error || 'unknown error'}. Invite manually from Supabase dashboard → Auth → Users.`)
+      const { error: inviteError } = await supabase.functions.invoke('invite-user', {
+        body: {
+          email: form.email,
+          tenant_id: tenantId,
+          role: form.role,
+          full_name: form.fullName,
         }
-      } else {
-        setSuccess(`✓ Invite sent to ${form.email}. They'll be guided to complete their profile when they first log in.`)
-        await logUserInvited(form.email, form.role)
-      }
+      })
+      if (inviteError) throw inviteError
+
+      setSuccess(`✓ Invite sent to ${form.email}. They'll be guided to complete their profile when they first log in.`)
+      await logUserInvited(form.email, form.role)
 
       setForm({ fullName: '', email: '', role: 'team', base_city: '', phone: '' })
       setShowForm(false)
@@ -153,7 +126,7 @@ export default function UserManagement({ session, userRole = 'admin', onViewProf
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${anonKey}`,
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, resend_only: true }),
       })
       const json = await res.json()
       if (!res.ok || json.error) {

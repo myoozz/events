@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { email, tenant_id, role, full_name } = await req.json()
+    const { email, tenant_id, role, full_name, resend_only } = await req.json()
 
     if (!email || !tenant_id || !role) {
       return new Response(JSON.stringify({ error: 'email, tenant_id and role are required' }), {
@@ -31,6 +31,13 @@ serve(async (req) => {
 
     const authUserId = inviteData?.user?.id
     if (!authUserId) throw new Error('No auth user ID returned from invite')
+
+    // Resend path — skip users insert, auth invite already re-fired
+    if (resend_only) {
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
 
     // Step 2 — insert users row
     const { error: userError } = await supabaseAdmin

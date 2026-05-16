@@ -882,6 +882,7 @@ export default function AppShell({ session }) {
               <UserManagement
                 session={session}
                 userRole={userRole}
+                tenantId={tenantId}
                 onViewProfile={openProfile}
               />
             </div>
