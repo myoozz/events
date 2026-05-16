@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { version } from '../../package.json'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
@@ -598,12 +598,12 @@ export default function AppShell({ session }) {
                   onMouseOver={e => { if (activeTab !== 'super-admin') e.currentTarget.style.background = 'var(--bg-secondary)' }}
                   onMouseOut={e => { if (activeTab !== 'super-admin') e.currentTarget.style.background = 'none' }}
                 >
-                  <ShieldCheck size={16} color={activeTab === 'super-admin' ? 'var(--text)' : 'var(--text-tertiary)'} />
+                  <ShieldCheck size={16} color={activeTab === 'super-admin' ? 'var(--text)' : '#bc1723'} />
                   {!collapsed && (
                     <span style={{
                       fontSize: '13px',
                       fontWeight: activeTab === 'super-admin' ? 500 : 400,
-                      color: activeTab === 'super-admin' ? 'var(--text)' : 'var(--text-tertiary)',
+                      color: activeTab === 'super-admin' ? 'var(--text)' : '#bc1723',
                       whiteSpace: 'nowrap',
                     }}>
                       Platform Admin
@@ -908,9 +908,6 @@ export default function AppShell({ session }) {
               onBack={closeProfile}
             />
           )}
-          {activeTab === 'super-admin' && (
-            <SuperAdminPanel userId={userId} userRole={userRole} />
-          )}
         </main>
 
         {/* App footer */}
@@ -930,6 +927,33 @@ export default function AppShell({ session }) {
           </footer>
         )}
       </div>
+
+      {/* SuperAdminPanel — full-screen takeover overlay */}
+      <AnimatePresence>
+        {activeTab === 'super-admin' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'fixed',
+              top: 0, left: 0,
+              width: '100vw',
+              height: '100vh',
+              zIndex: 1000,
+              background: '#faf8f5',
+              overflow: 'hidden',
+            }}
+          >
+            <SuperAdminPanel
+              userId={userId}
+              userRole={userRole}
+              onClose={() => setActiveTab('dashboard')}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Feedback button — always visible */}
       <FeedbackButton session={session} />
