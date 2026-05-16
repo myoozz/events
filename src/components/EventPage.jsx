@@ -498,13 +498,13 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     return u?.full_name || email.split('@')[0]
   }
 
-  function FieldCell({ label, field, value, display, type }) {
+  function FieldCell({ label, field, value, display, type, cellStyle }) {
     const isEditing = editingField === field
     const canEdit = isAdmin || isManager
     const empty = value === null || value === undefined || value === ''
     return (
-      <div>
-        <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>{label}</div>
+      <div style={cellStyle}>
+        <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '5px', fontWeight: 500 }}>{label}</div>
         {isEditing ? (
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             <input
@@ -571,199 +571,199 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
         </div>
       )}
 
-      {/* ── Event header ── */}
-      <div style={{ marginBottom: '32px', paddingBottom: '24px', borderBottom: '0.5px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1 }}>
-            {currentEvent.event_subtype && (
-              <div style={{ marginBottom: 8 }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', padding: '3px 10px', borderRadius: '20px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border)' }}>
-                  {currentEvent.event_subtype}
-                </span>
-              </div>
-            )}
+      {/* ── Event header v2 ── */}
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
 
-            {editingField === 'event_name' ? (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
-                <input
-                  value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
-                  autoFocus
-                  onKeyDown={e => { if (e.key === 'Enter') saveField('event_name'); if (e.key === 'Escape') setEditingField(null) }}
-                  style={{ fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: 500, letterSpacing: '-0.5px', border: '1px solid var(--accent)', borderRadius: 'var(--radius-sm)', padding: '4px 10px', background: 'var(--bg)', outline: 'none', flex: 1, maxWidth: 480 }}
-                />
-                <button onClick={() => saveField('event_name')} disabled={savingField} style={{ padding: '6px 14px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', fontWeight: 500 }}>
-                  {savingField ? '…' : 'Save'}
-                </button>
-                <button onClick={() => setEditingField(null)} style={{ padding: '6px 10px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '13px', color: 'var(--text-tertiary)' }}>✕</button>
-              </div>
-            ) : (
-              <h1
-                onClick={(isAdmin || isManager) ? () => startEdit('event_name', currentEvent.event_name) : undefined}
-                title={(isAdmin || isManager) ? 'Click to edit' : undefined}
-                style={{ fontFamily: 'var(--font-display)', fontSize: '32px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.5px', marginBottom: '6px', lineHeight: 1.2, cursor: (isAdmin || isManager) ? 'pointer' : 'default' }}
-              >
-                {currentEvent.event_name}
-              </h1>
-            )}
-
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-              {currentEvent.clients?.group_name}
-              {currentEvent.clients?.brand_name ? ` · ${currentEvent.clients.brand_name}` : ''}
-            </p>
+          {/* Event logo */}
+          <div style={{ width: 88, height: 88, borderRadius: 10, border: '0.5px dashed var(--border-strong)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer', background: 'var(--bg-secondary)', flexShrink: 0 }}>
+            <span style={{ fontSize: '22px', opacity: 0.3 }}>🏢</span>
+            <span style={{ fontSize: '9px', color: 'var(--text-tertiary)', textAlign: 'center', lineHeight: 1.4 }}>Event<br/>logo</span>
           </div>
 
-          {/* Status control — Admin only */}
-          {isAdmin && (
-            <div style={{ minWidth: '200px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Pitch status</div>
-              <select
-                value={status}
-                onChange={e => handleStatusChange(e.target.value)}
-                style={{ width: '100%', padding: '8px 12px', fontSize: '13px', fontFamily: 'var(--font-body)', fontWeight: 500, background: sc.bg, color: sc.color, border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', outline: 'none' }}
-              >
-                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
-              </select>
-              {savingStatus && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px' }}>Saving...</div>}
-              {status === 'lost' && (
-                <div style={{ marginTop: '10px' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Reason for loss</div>
-                  <select value={lossReason} onChange={e => setLossReason(e.target.value)} style={{ width: '100%', padding: '8px 12px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', outline: 'none', color: 'var(--text)' }}>
-                    <option value="">Select reason</option>
-                    {LOSS_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                  {lossReason === 'Other' && (
-                    <input placeholder="Describe the reason..." value={customReason} onChange={e => setCustomReason(e.target.value)} style={{ width: '100%', marginTop: '6px', padding: '8px 12px', fontSize: '13px', fontFamily: 'var(--font-body)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }} />
-                  )}
-                  {lossReason && (
-                    <button onClick={saveLossReason} style={{ marginTop: '8px', padding: '7px 14px', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500, background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Save reason</button>
-                  )}
+          {/* Content */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+
+            {/* Chips */}
+            {(currentEvent.event_type || currentEvent.event_subtype) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5, flexWrap: 'wrap' }}>
+                {currentEvent.event_type && (
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', padding: '2px 9px', borderRadius: 99, background: 'var(--bg-secondary)', border: '0.5px solid var(--border)' }}>
+                    {currentEvent.event_type}
+                  </span>
+                )}
+                {currentEvent.event_subtype && (
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', padding: '2px 9px', borderRadius: 99, background: 'var(--bg-secondary)', border: '0.5px solid var(--border)' }}>
+                    {currentEvent.event_subtype}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Name + status row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+              {editingField === 'event_name' ? (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    autoFocus
+                    onKeyDown={e => { if (e.key === 'Enter') saveField('event_name'); if (e.key === 'Escape') setEditingField(null) }}
+                    style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 500, letterSpacing: '-0.3px', border: '1px solid var(--accent)', borderRadius: 'var(--radius-sm)', padding: '4px 10px', background: 'var(--bg)', outline: 'none', flex: 1, maxWidth: 400 }}
+                  />
+                  <button onClick={() => saveField('event_name')} disabled={savingField} style={{ padding: '5px 12px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500 }}>
+                    {savingField ? '…' : 'Save'}
+                  </button>
+                  <button onClick={() => setEditingField(null)} style={{ padding: '5px 9px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-tertiary)' }}>✕</button>
                 </div>
+              ) : (
+                <h1
+                  onClick={(isAdmin || isManager) ? () => startEdit('event_name', currentEvent.event_name) : undefined}
+                  title={(isAdmin || isManager) ? 'Click to edit' : undefined}
+                  style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.3px', margin: 0, lineHeight: 1.2, cursor: (isAdmin || isManager) ? 'pointer' : 'default' }}
+                >
+                  {currentEvent.event_name}
+                </h1>
+              )}
+
+              {/* Status pill */}
+              {isAdmin ? (
+                <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                  <select
+                    value={status}
+                    onChange={e => handleStatusChange(e.target.value)}
+                    style={{ fontSize: '11px', fontWeight: 500, fontFamily: 'var(--font-body)', padding: '3px 20px 3px 10px', borderRadius: 99, border: '0.5px solid var(--border)', background: sc.bg, color: sc.color, cursor: 'pointer', outline: 'none', appearance: 'none', WebkitAppearance: 'none' }}
+                  >
+                    {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+                  </select>
+                  <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 8, color: sc.color }}>▾</span>
+                  {savingStatus && <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: 6 }}>Saving...</span>}
+                </div>
+              ) : (
+                <span style={{ fontSize: '11px', fontWeight: 500, padding: '3px 10px', borderRadius: 99, background: sc.bg, color: sc.color, border: '0.5px solid var(--border)' }}>
+                  {STATUS_LABELS[status]}
+                </span>
               )}
             </div>
-          )}
 
-          {/* Non-admin badge */}
-          {!isAdmin && (
-            <span style={{ fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', padding: '4px 12px', borderRadius: '20px', background: sc.bg, color: sc.color }}>
-              {STATUS_LABELS[status]}
-            </span>
-          )}
-        </div>
+            {/* Loss reason row — admin, status=lost only */}
+            {isAdmin && status === 'lost' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Reason:</span>
+                <select value={lossReason} onChange={e => setLossReason(e.target.value)} style={{ fontSize: '12px', fontFamily: 'var(--font-body)', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: 6, background: 'var(--bg)', color: 'var(--text)', outline: 'none', cursor: 'pointer' }}>
+                  <option value="">Select reason</option>
+                  {LOSS_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+                {lossReason === 'Other' && (
+                  <input placeholder="Describe..." value={customReason} onChange={e => setCustomReason(e.target.value)} style={{ fontSize: '12px', fontFamily: 'var(--font-body)', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: 6, background: 'var(--bg)', color: 'var(--text)', outline: 'none' }} />
+                )}
+                {lossReason && (
+                  <button onClick={saveLossReason} style={{ padding: '3px 10px', fontSize: '11px', fontFamily: 'var(--font-body)', fontWeight: 500, background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Save</button>
+                )}
+              </div>
+            )}
 
-        {/* ── Field grid ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))', gap: '20px 24px', marginTop: '24px' }}>
+            {/* Field grid — bordered cells */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9, minmax(0, 1fr))', border: '0.5px solid var(--border)', borderRadius: 8 }}>
 
-          {/* Cities — first city chip + +N more popover */}
-          <div>
-            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Cities</div>
-            <div style={{ position: 'relative' }}>
-              {currentEvent.cities?.length > 0 ? (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  {(() => {
-                    const city = currentEvent.cities[0]
-                    const cd = currentEvent.city_dates?.[city]
-                    const dateStr = cd?.start ? ' · ' + new Date(cd.start).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''
-                    return (
-                      <span style={{ fontSize: '12px', color: 'var(--text)', padding: '3px 10px', background: 'var(--bg-secondary)', border: '0.5px solid var(--border)', borderRadius: 20, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
-                        {city}{dateStr}
-                      </span>
-                    )
-                  })()}
-                  {currentEvent.cities.length > 1 && (
-                    <button onClick={() => setShowCitiesPopover(p => !p)} style={{ fontSize: '12px', color: 'var(--accent)', background: 'none', border: '0.5px solid var(--accent)', borderRadius: 20, padding: '3px 8px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-                      +{currentEvent.cities.length - 1} more
-                    </button>
+              {/* Cities */}
+              <div style={{ padding: '9px 12px', borderRadius: '8px 0 0 8px', position: 'relative', background: 'var(--bg)' }}>
+                <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5, fontWeight: 500 }}>Cities</div>
+                <div style={{ position: 'relative' }}>
+                  {currentEvent.cities?.length > 0 ? (
+                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentEvent.cities[0]}</span>
+                      {currentEvent.cities.length > 1 && (
+                        <button onClick={() => setShowCitiesPopover(p => !p)} style={{ fontSize: '10px', color: 'var(--accent)', background: 'none', border: '0.5px solid var(--accent)', borderRadius: 99, padding: '1px 6px', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          +{currentEvent.cities.length - 1}
+                        </button>
+                      )}
+                      {showCitiesPopover && (
+                        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 8, padding: 12, zIndex: 50, boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 200 }}>
+                          <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>All cities</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {currentEvent.cities.map(city => {
+                              const cd = currentEvent.city_dates?.[city]
+                              const dateStr = cd?.start ? ' · ' + (cd.end && cd.end !== cd.start
+                                ? `${new Date(cd.start).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} – ${new Date(cd.end).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}`
+                                : new Date(cd.start).toLocaleDateString('en-IN',{day:'numeric',month:'short'})) : ''
+                              return (
+                                <span key={city} style={{ fontSize: '12px', color: 'var(--text)', padding: '3px 10px', borderRadius: 99, background: 'var(--bg-secondary)', border: '0.5px solid var(--border)', whiteSpace: 'nowrap' }}>
+                                  {city}{dateStr}
+                                </span>
+                              )
+                            })}
+                          </div>
+                          <button onClick={() => setShowCitiesPopover(false)} style={{ marginTop: 8, fontSize: '11px', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Close</button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>—</span>
                   )}
-                  {showCitiesPopover && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: 12, zIndex: 50, boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 200 }}>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {currentEvent.cities.slice(1).map(city => {
-                          const cd = currentEvent.city_dates?.[city]
-                          const dateStr = cd?.start ? ' · ' + (cd.end && cd.end !== cd.start
-                            ? `${new Date(cd.start).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} – ${new Date(cd.end).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}`
-                            : new Date(cd.start).toLocaleDateString('en-IN',{day:'numeric',month:'short'})) : ''
+                </div>
+              </div>
+
+              {FieldCell({ label: 'Sub-category', field: 'sub_category', value: currentEvent.sub_category, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
+              {FieldCell({ label: 'PAX', field: 'pax_count', value: currentEvent.pax_count, type: 'number', cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
+              {FieldCell({ label: 'Budget tier', field: 'budget_tier', value: currentEvent.budget_tier, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
+              {FieldCell({ label: 'Seating', field: 'seating_format', value: currentEvent.seating_format, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
+              {FieldCell({ label: 'Proposal due', field: 'proposal_due_date', value: currentEvent.proposal_due_date, type: 'date', display: currentEvent.proposal_due_date ? new Date(currentEvent.proposal_due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
+              {FieldCell({ label: 'Fee', field: 'agency_fee_percent', value: currentEvent.agency_fee_percent, type: 'number', display: currentEvent.agency_fee_percent != null ? `${currentEvent.agency_fee_percent}%` : null, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
+              {FieldCell({ label: 'GST', field: 'gst_percent', value: currentEvent.gst_percent, type: 'number', display: currentEvent.gst_percent != null ? `${currentEvent.gst_percent}%` : null, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
+
+              {/* Team */}
+              {(assignedTo.length > 0 || canAssign) && (
+                <div style={{ padding: '9px 12px', borderRadius: '0 8px 8px 0', borderLeft: '0.5px solid var(--border)', position: 'relative', background: 'var(--bg)' }}>
+                  <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5, fontWeight: 500 }}>Team</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    {assignedTo.length > 0 && (
+                      <div style={{ display: 'flex' }}>
+                        {assignedTo.slice(0, 3).map((email, i) => {
+                          const u = teamUsers.find(u => u.email === email)
+                          const initials = (u?.full_name || email).split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
                           return (
-                            <span key={city} style={{ fontSize: '12px', color: 'var(--text)', padding: '3px 10px', borderRadius: 20, background: 'var(--bg-secondary)', border: '0.5px solid var(--border)', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
-                              {city}{dateStr}
-                            </span>
+                            <div key={email} style={{ width: 20, height: 20, borderRadius: 4, background: 'var(--bg-surface-2)', border: '1.5px solid var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-body)', marginLeft: i > 0 ? -5 : 0, position: 'relative', zIndex: 3 - i }}>
+                              {initials}
+                            </div>
                           )
                         })}
                       </div>
-                      <button onClick={() => setShowCitiesPopover(false)} style={{ marginTop: 8, fontSize: '11px', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Close</button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>—</span>
-              )}
-            </div>
-          </div>
-
-          {FieldCell({ label: 'Sub-category', field: 'sub_category', value: currentEvent.sub_category })}
-          {FieldCell({ label: 'PAX', field: 'pax_count', value: currentEvent.pax_count, type: 'number' })}
-          {FieldCell({ label: 'Budget tier', field: 'budget_tier', value: currentEvent.budget_tier })}
-          {FieldCell({ label: 'Seating format', field: 'seating_format', value: currentEvent.seating_format })}
-          {FieldCell({
-            label: 'Proposal due', field: 'proposal_due_date', value: currentEvent.proposal_due_date, type: 'date',
-            display: currentEvent.proposal_due_date ? new Date(currentEvent.proposal_due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null,
-          })}
-          {FieldCell({ label: 'Agency fee', field: 'agency_fee_percent', value: currentEvent.agency_fee_percent, type: 'number', display: currentEvent.agency_fee_percent != null ? `${currentEvent.agency_fee_percent}%` : null })}
-          {FieldCell({ label: 'GST', field: 'gst_percent', value: currentEvent.gst_percent, type: 'number', display: currentEvent.gst_percent != null ? `${currentEvent.gst_percent}%` : null })}
-
-          {/* Assigned team — stacked initials + popover */}
-          {(assignedTo.length > 0 || canAssign) && (
-            <div>
-              <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '6px' }}>Team</div>
-              <div style={{ position: 'relative' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {assignedTo.length > 0 && (
-                    <div style={{ display: 'flex' }}>
-                      {assignedTo.slice(0, 4).map((email, i) => {
-                        const u = teamUsers.find(u => u.email === email)
-                        const initials = (u?.full_name || email).split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-                        return (
-                          <div key={email} style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--bg-surface-2)', border: '1.5px solid var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-body)', marginLeft: i > 0 ? -8 : 0, position: 'relative', zIndex: 4 - i }}>
-                            {initials}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                  <button onClick={() => setShowTeamPopover(p => !p)} style={{ fontSize: '12px', color: 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', padding: 0 }}>
-                    {assignedTo.length === 0 ? '—' : `${assignedTo.length} member${assignedTo.length > 1 ? 's' : ''}`}
-                  </button>
-                  {canAssign && (
-                    <button onClick={() => setShowAssignModal(true)} style={{ fontSize: '11px', color: 'var(--text-tertiary)', background: 'none', border: '0.5px dashed var(--border-strong)', borderRadius: 20, padding: '2px 8px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-                      {assignedTo.length === 0 ? '+ Assign' : '+ Manage'}
+                    )}
+                    <button onClick={() => setShowTeamPopover(p => !p)} style={{ fontSize: '11px', color: 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', padding: 0, whiteSpace: 'nowrap' }}>
+                      {assignedTo.length === 0 ? '—' : `${assignedTo.length}`}
                     </button>
-                  )}
-                </div>
-                {showTeamPopover && assignedTo.length > 0 && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: 12, zIndex: 50, boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 220 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {canAssign && (
+                      <button onClick={() => setShowAssignModal(true)} style={{ fontSize: '10px', color: 'var(--text-tertiary)', background: 'none', border: '0.5px dashed var(--border-strong)', borderRadius: 99, padding: '1px 6px', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
+                        {assignedTo.length === 0 ? '+' : '+ Manage'}
+                      </button>
+                    )}
+                  </div>
+                  {showTeamPopover && assignedTo.length > 0 && (
+                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, background: 'var(--bg)', border: '0.5px solid var(--border)', borderRadius: 8, padding: '8px 0', zIndex: 50, boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 220 }}>
+                      <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 14px 8px', borderBottom: '0.5px solid var(--border)', marginBottom: 4 }}>Assigned team</div>
                       {assignedTo.map(email => {
                         const u = teamUsers.find(u => u.email === email)
                         return (
-                          <div key={email} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                          <div key={email} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '7px 14px' }}>
                             <div>
                               <div style={{ fontSize: '13px', color: 'var(--text)', fontFamily: 'var(--font-body)' }}>{getName(email)}</div>
                               <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>{ROLE_LABELS_MAP[u?.role] || u?.role || ''}</div>
                             </div>
                             {canAssign && (
-                              <button onClick={() => { setShowTeamPopover(false); setRevokeConfirm(email) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: '11px', fontFamily: 'var(--font-body)' }} onMouseOver={e => e.currentTarget.style.color = 'var(--red)'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}>Remove</button>
+                              <button onClick={() => { setShowTeamPopover(false); setRevokeConfirm(email) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: '11px', fontFamily: 'var(--font-body)' }}>Remove</button>
                             )}
                           </div>
                         )
                       })}
+                      <button onClick={() => setShowTeamPopover(false)} style={{ margin: '6px 14px 2px', fontSize: '11px', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'block' }}>Close</button>
                     </div>
-                    <button onClick={() => setShowTeamPopover(false)} style={{ marginTop: 10, fontSize: '11px', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Close</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+                  )}
+                </div>
+              )}
 
+            </div>
+          </div>
         </div>
       </div>
 
