@@ -213,7 +213,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
     try {
       // Resolve auth UUID → users table UUID (auth_id ≠ users.id in this schema)
       const { data: userData } = await supabase
-        .from('users').select('id').eq('auth_id', session?.user?.id).single()
+        .from('users').select('id, tenant_id').eq('auth_id', session?.user?.id).single()
       const resolvedUserId = userData?.id ?? session?.user?.id
 
       const cityDates = {}
@@ -253,6 +253,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         proposal_status: 'draft',
         created_by: resolvedUserId,
         created_by_role: userRole,
+        tenant_id: userData?.tenant_id ?? null,
         review_status: userRole === 'event_lead' ? 'pending' : 'approved',
       }
 

@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,41 +7,53 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { email } = await req.json()
-    if (!email) throw new Error('Email is required')
+    const { email, tenant_id, role, full_name } = await req.json()
 
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-
-    const res = await fetch(`${supabaseUrl}/auth/v1/invite`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': serviceKey,
-        'Authorization': `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({ email }),
-    })
-
-    const json = await res.json()
-
-    if (!res.ok) {
-      throw new Error(json.msg || json.error_description || 'Invite failed')
+    if (!email || !tenant_id || !role) {
+      return new Response(JSON.stringify({ error: 'email, tenant_id and role are required' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
     }
 
+    // Service role client — needed for auth admin + users insert
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    // Step 1 — send auth invite email
+    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email)
+    if (inviteError) throw inviteError
+
+    const authUserId = inviteData?.user?.id
+    if (!authUserId) throw new Error('No auth user ID returned from invite')
+
+    // Step 2 — insert users row
+    const { error: userError } = await supabaseAdmin
+      .from('users')
+      .insert({
+        auth_id: authUserId,
+        email,
+        full_name: full_name ?? '',
+        role,
+        tenant_id,
+        invite_status: 'invited',
+        invited_at: new Date().toISOString(),
+      })
+
+    if (userError) throw userError
+
     return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
 
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }
 })
