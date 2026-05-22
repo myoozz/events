@@ -90,6 +90,13 @@ serve(async (req) => {
         )
       }
 
+      // Fetch tenant row for MSG91 notification
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('name, contact_name, contact_email, contact_phone')
+        .eq('id', tenant_id)
+        .single()
+
       const { error: updateError } = await supabase
         .from('tenants')
         .update({
@@ -108,6 +115,27 @@ serve(async (req) => {
         )
       }
 
+      // MSG91 — workspace approved (WA + email)
+      if (tenant) {
+        try {
+          const { sendWhatsApp, sendEmail } = await import('../_shared/msg91.ts')
+          const { workspaceApprovedHtml } = await import('../_shared/email-templates.ts')
+
+          await sendWhatsApp(tenant.contact_phone, 'me_workspace_approved', {
+            body_1: { type: 'text', value: tenant.contact_name },
+            body_2: { type: 'text', value: tenant.name },
+            body_3: { type: 'text', value: String(trial_days) },
+          })
+          await sendEmail(
+            tenant.contact_email,
+            `${tenant.name}, your ME workspace is ready`,
+            workspaceApprovedHtml(tenant.contact_name, tenant.name, trial_days)
+          )
+        } catch (err) {
+          console.error('MSG91 approve error:', err)
+        }
+      }
+
       return new Response(
         JSON.stringify({ success: true, action: 'approve', tenant_id }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -115,6 +143,13 @@ serve(async (req) => {
     }
 
     // action === 'waitlist'
+    // Fetch tenant row for MSG91 notification
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('name, contact_name, contact_email')
+      .eq('id', tenant_id)
+      .single()
+
     const { error: waitlistError } = await supabase
       .from('tenants')
       .update({
@@ -128,6 +163,22 @@ serve(async (req) => {
         JSON.stringify({ success: false, error: 'Waitlist update failed: ' + waitlistError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // MSG91 — waitlist notification (email only)
+    if (tenant) {
+      try {
+        const { sendEmail } = await import('../_shared/msg91.ts')
+        const { waitlistHtml } = await import('../_shared/email-templates.ts')
+
+        await sendEmail(
+          tenant.contact_email,
+          "You're on the ME waitlist",
+          waitlistHtml(tenant.contact_name, tenant.name)
+        )
+      } catch (err) {
+        console.error('MSG91 waitlist error:', err)
+      }
     }
 
     return new Response(
