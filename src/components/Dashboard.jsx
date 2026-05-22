@@ -75,13 +75,6 @@ function useIsMobile() {
 
 // Bug 10: Added userName and resetKey props
 export default function Dashboard({ userRole, session, userName, userId, resetKey }) {
-  // Role router — non-admin roles get specialised panels (Track B).
-  // Admin (and any unmapped role) falls through to the existing Dashboard view.
-  if (userRole === 'manager')    return <ProjectHeadPanel userId={userId} />
-  if (userRole === 'event_lead') return <ManagerPanel    userId={userId} />
-  if (userRole === 'team')       return <TeamPanel       userId={userId} />
-  if (userRole === 'staff')      return <StaffPanel      userId={userId} />
-
   const [events, setEvents] = useState([])
   const [archivedEvents, setArchivedEvents] = useState([])
   const [pendingEvents, setPendingEvents] = useState([])
@@ -95,6 +88,15 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
   const [showNewEvent, setShowNewEvent] = useState(false)
   const [editEvent, setEditEvent] = useState(null)
   const [openEvent, setOpenEvent] = useState(null)
+
+  // Role router — non-admin roles get specialised panels (Track B).
+  // Admin (and any unmapped role) falls through to the existing Dashboard view.
+  // Placed after openEvent useState so panels can call setOpenEvent via onOpenEvent.
+  if (userRole === 'manager')    return <ProjectHeadPanel userId={userId} onOpenEvent={setOpenEvent} />
+  if (userRole === 'event_lead') return <ManagerPanel    userId={userId} onOpenEvent={setOpenEvent} />
+  if (userRole === 'team')       return <TeamPanel       userId={userId} />
+  if (userRole === 'staff')      return <StaffPanel      userId={userId} />
+
   const [assignEvent, setAssignEvent] = useState(null)
   const [confirmArchive, setConfirmArchive] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)

@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase'
 
 // ── Inline helpers (kept inside this file per spec — 4 panel files only) ─────
@@ -59,8 +58,7 @@ function Section({ title, children }) {
 function fmtDate(iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) }
 
 // ── Panel ────────────────────────────────────────────────────────────────────
-export default function ManagerPanel({ userId }) {
-  const navigate = useNavigate()
+export default function ManagerPanel({ userId, onOpenEvent }) {
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState([])
   const [tasks, setTasks] = useState([])
@@ -161,7 +159,7 @@ export default function ManagerPanel({ userId }) {
             {events.map(ev => (
               <button
                 key={ev.id}
-                onClick={() => navigate(`/app/event/${ev.id}`)}
+                onClick={() => onOpenEvent && onOpenEvent(ev)}
                 style={{ textAlign: 'left', cursor: 'pointer', background: '#fff', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '16px', fontFamily: F }}
               >
                 <div style={{ fontWeight: 500, fontSize: '14px', color: '#1a1a1a', marginBottom: '4px' }}>{ev.event_name}</div>

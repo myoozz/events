@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase'
 
 // ── Inline helpers (kept inside this file per spec — 4 panel files only) ─────
@@ -58,8 +57,7 @@ function fmtDate(iso) { if (!iso) return '—'; return new Date(iso).toLocaleDat
 function initials(name='') { return name.trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').slice(0, 2).join('') }
 
 // ── Panel ────────────────────────────────────────────────────────────────────
-export default function ProjectHeadPanel({ userId }) {
-  const navigate = useNavigate()
+export default function ProjectHeadPanel({ userId, onOpenEvent }) {
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState([])
   const [dueSoon, setDueSoon] = useState([])
@@ -196,7 +194,7 @@ export default function ProjectHeadPanel({ userId }) {
             {events.map(ev => (
               <button
                 key={ev.id}
-                onClick={() => navigate(`/app/event/${ev.id}`)}
+                onClick={() => onOpenEvent && onOpenEvent(ev)}
                 style={{ textAlign: 'left', cursor: 'pointer', background: '#fff', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '16px', fontFamily: F }}
               >
                 <div style={{ fontWeight: 500, fontSize: '14px', color: '#1a1a1a', marginBottom: '4px' }}>{ev.event_name}</div>
