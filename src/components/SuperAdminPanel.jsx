@@ -186,16 +186,45 @@ function ConfirmDeleteModal({ open, onClose, onConfirm, name, loading }) {
   )
 }
 
-function GlobalToast({ message, onDone }) {
+// Shimmer skeleton row — matches DashboardWidgets.jsx pattern
+function SkeletonRow({ cols }) {
+  return (
+    <tr>
+      {Array.from({ length: cols }).map((_, i) => (
+        <td key={i} style={tdStyle}>
+          <span
+            className="sa-skel-cell"
+            style={{ width: i === 0 ? '70%' : '55%', display: 'block' }}
+          />
+        </td>
+      ))}
+    </tr>
+  )
+}
+
+function NotificationStrip({ message, type, onDone }) {
   useEffect(() => {
     if (!message) return
-    const t = setTimeout(onDone, 3500)
+    const t = setTimeout(onDone, type === 'success' ? 3000 : 4000)
     return () => clearTimeout(t)
-  }, [message, onDone])
+  }, [message, type, onDone])
   if (!message) return null
+  const isSuccess = type === 'success'
+  const accent = isSuccess ? '#4ade80' : '#f87171'
+  const bg     = isSuccess ? 'rgba(74, 222, 128, 0.12)' : 'rgba(248, 113, 113, 0.12)'
+  const fg     = isSuccess ? '#065F46' : '#991B1B'
   return (
-    <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, background: '#1a1008', color: '#fff', fontSize: '13px', fontFamily: F, padding: '12px 20px', borderRadius: '10px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
-      {message}
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+      padding: '10px 16px', marginBottom: '14px',
+      background: bg, border: `0.5px solid ${accent}`, borderLeft: `3px solid ${accent}`,
+      borderRadius: '8px', fontSize: '13px', fontFamily: F, color: fg,
+    }}>
+      <span style={{ flex: 1 }}>{message}</span>
+      <button onClick={onDone} aria-label="Dismiss" style={{
+        background: 'none', border: 'none', cursor: 'pointer', color: fg,
+        fontSize: '16px', padding: 0, lineHeight: 1,
+      }}>✕</button>
     </div>
   )
 }
@@ -260,7 +289,7 @@ function SectionOverview({ setActiveSection }) {
           <thead><tr>{['Company', 'Contact', 'Status', 'Plan', 'Registered'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
           <tbody>
             {loading
-              ? <tr><td colSpan={5} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
+              ? Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={`skel-${i}`} cols={5} />)
               : recent.length === 0
                 ? <tr><td colSpan={5} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No tenants yet</td></tr>
                 : recent.map((t, i) => (
@@ -284,7 +313,7 @@ function SectionOverview({ setActiveSection }) {
 
 // ── Section 2: Approvals ──────────────────────────────────────────────────────
 
-function SectionApprovals({ refreshBadge }) {
+function SectionApprovals({ refreshBadge, showToast, showError }) {
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(true)
   const [rowToasts, setRowToasts] = useState({})
@@ -327,9 +356,10 @@ function SectionApprovals({ refreshBadge }) {
       if (!res.ok) throw new Error(json.error || 'Approve failed')
       setList(p => p.filter(t => t.id !== approveModal.id))
       showRowToast(approveModal.id, 'Approved ✓')
+      showToast(`Tenant approved ✓`)
       setApproveModal(null)
       refreshBadge()
-    } catch (err) { alert(`Error: ${err.message}`) }
+    } catch (err) { showError(`Approve failed: ${err.message}`) }
     setMLoading(false)
   }
 
@@ -345,9 +375,10 @@ function SectionApprovals({ refreshBadge }) {
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Waitlist failed')
       setList(p => p.map(t => t.id === waitlistModal.id ? { ...t, status: 'waitlisted' } : t))
+      showToast('Moved to waitlist ✓')
       setWaitlistModal(null)
       refreshBadge()
-    } catch (err) { alert(`Error: ${err.message}`) }
+    } catch (err) { showError(`Waitlist failed: ${err.message}`) }
     setMLoading(false)
   }
 
@@ -433,7 +464,7 @@ function SectionApprovals({ refreshBadge }) {
 
 // ── Section 3: Tenants ────────────────────────────────────────────────────────
 
-function TenantDetail({ tenant, onBack, showToast }) {
+function TenantDetail({ tenant, onBack, showToast, showError }) {
   const [subTab, setSubTab] = useState('overview')
   const [form, setForm] = useState({ name: tenant.name || '', contact_name: tenant.contact_name || '', contact_email: tenant.contact_email || '', contact_phone: tenant.contact_phone || '', gst_number: tenant.gst_number || '', state: tenant.state || '', address: tenant.address || '', designation: tenant.designation || '' })
   const [saving, setSaving] = useState(false)
@@ -483,13 +514,13 @@ function TenantDetail({ tenant, onBack, showToast }) {
   async function handleSaveForm() {
     setSaving(true)
     const { error } = await supabase.from('tenants').update(form).eq('id', tenant.id)
-    if (error) { alert(error.message) } else { showToast('Saved ✓') }
+    if (error) { showError(error.message) } else { showToast('Saved ✓') }
     setSaving(false)
   }
 
   async function handleStatusChange(newStatus) {
     const { error } = await supabase.from('tenants').update({ status: newStatus }).eq('id', tenant.id)
-    if (error) { alert(error.message) } else { showToast(`Status → ${newStatus} ✓`) }
+    if (error) { showError(error.message) } else { showToast(`Status → ${newStatus} ✓`) }
   }
 
   async function handleDelete() {
@@ -506,7 +537,7 @@ function TenantDetail({ tenant, onBack, showToast }) {
       showToast('Tenant deleted successfully')
       onBack()
     } catch (err) {
-      alert('Delete failed: ' + err.message)
+      showError('Delete failed: ' + err.message)
     } finally {
       setDeleting(false)
     }
@@ -515,7 +546,7 @@ function TenantDetail({ tenant, onBack, showToast }) {
   async function handleTopUp() {
     setMLoading(true)
     const { error } = await supabase.from('tenant_subscriptions').update({ event_credits_total: (sub.event_credits_total || 0) + Number(topUpN) }).eq('id', sub.id)
-    if (error) { alert(error.message) } else { setSub(p => ({ ...p, event_credits_total: (p.event_credits_total || 0) + Number(topUpN) })); showToast(`+${topUpN} credits added ✓`); setTopUpModal(false) }
+    if (error) { showError(error.message) } else { setSub(p => ({ ...p, event_credits_total: (p.event_credits_total || 0) + Number(topUpN) })); showToast(`+${topUpN} credits added ✓`); setTopUpModal(false) }
     setMLoading(false)
   }
 
@@ -525,7 +556,7 @@ function TenantDetail({ tenant, onBack, showToast }) {
       supabase.from('tenant_subscriptions').update({ plan: newPlan }).eq('id', sub.id),
       supabase.from('tenants').update({ plan: newPlan }).eq('id', tenant.id),
     ])
-    if (r1.error || r2.error) { alert((r1.error || r2.error).message) } else { setSub(p => ({ ...p, plan: newPlan })); showToast('Plan updated ✓'); setChangePlanModal(false) }
+    if (r1.error || r2.error) { showError((r1.error || r2.error).message) } else { setSub(p => ({ ...p, plan: newPlan })); showToast('Plan updated ✓'); setChangePlanModal(false) }
     setMLoading(false)
   }
 
@@ -534,25 +565,25 @@ function TenantDetail({ tenant, onBack, showToast }) {
     const base = tenant.trial_ends_at ? new Date(tenant.trial_ends_at) : new Date()
     const newEnd = new Date(base.getTime() + Number(extendDays) * 86400000).toISOString()
     const { error } = await supabase.from('tenants').update({ trial_ends_at: newEnd }).eq('id', tenant.id)
-    if (error) { alert(error.message) } else { showToast(`Trial extended +${extendDays}d ✓`); setExtendModal(false) }
+    if (error) { showError(error.message) } else { showToast(`Trial extended +${extendDays}d ✓`); setExtendModal(false) }
     setMLoading(false)
   }
 
   async function handleUserRoleChange(userId, role) {
     const { error } = await supabase.from('users').update({ role }).eq('id', userId)
-    if (error) { alert(error.message) } else { setUsers(p => p.map(u => u.id === userId ? { ...u, role } : u)) }
+    if (error) { showError(error.message) } else { setUsers(p => p.map(u => u.id === userId ? { ...u, role } : u)); showToast('Role updated ✓') }
   }
 
   async function handleUserStatusToggle(user) {
     const newStatus = user.status === 'active' ? 'suspended' : 'active'
     const { error } = await supabase.from('users').update({ status: newStatus }).eq('id', user.id)
-    if (error) { alert(error.message) } else { setUsers(p => p.map(u => u.id === user.id ? { ...u, status: newStatus } : u)); showToast(`User ${newStatus} ✓`) }
+    if (error) { showError(error.message) } else { setUsers(p => p.map(u => u.id === user.id ? { ...u, status: newStatus } : u)); showToast(`User ${newStatus} ✓`) }
   }
 
   async function handleUserDelete(userId) {
     if (!window.confirm('Delete this user?')) return
     const { error } = await supabase.from('users').delete().eq('id', userId)
-    if (error) { alert(error.message) } else { setUsers(p => p.filter(u => u.id !== userId)); showToast('User deleted') }
+    if (error) { showError(error.message) } else { setUsers(p => p.filter(u => u.id !== userId)); showToast('User deleted') }
   }
 
   const subTabs = ['overview', 'team', 'events', 'credits']
@@ -728,7 +759,7 @@ function TenantDetail({ tenant, onBack, showToast }) {
   )
 }
 
-function SectionTenants({ showToast }) {
+function SectionTenants({ showToast, showError }) {
   const [tenants, setTenants] = useState([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
@@ -766,7 +797,7 @@ function SectionTenants({ showToast }) {
     load()
   }, [])
 
-  if (selected) return <TenantDetail tenant={selected} onBack={() => setSelected(null)} showToast={showToast} />
+  if (selected) return <TenantDetail tenant={selected} onBack={() => setSelected(null)} showToast={showToast} showError={showError} />
 
   const filtered = tenants.filter(t => {
     if (statusFilter !== 'all' && t.status !== statusFilter) return false
@@ -789,7 +820,7 @@ function SectionTenants({ showToast }) {
           <thead><tr>{['Company', 'Status', 'Plan', 'Trial Ends', 'Events', 'Users', 'Last User Added', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
           <tbody>
             {loading
-              ? <tr><td colSpan={8} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
+              ? Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={`skel-${i}`} cols={8} />)
               : filtered.length === 0
                 ? <tr><td colSpan={8} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No tenants match</td></tr>
                 : filtered.map(t => {
@@ -826,7 +857,7 @@ function SectionTenants({ showToast }) {
 
 // ── Section 4: Users ──────────────────────────────────────────────────────────
 
-function SectionUsers({ showToast }) {
+function SectionUsers({ showToast, showError }) {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [tenantFilter, setTenantFilter] = useState('all')
@@ -861,19 +892,19 @@ function SectionUsers({ showToast }) {
 
   async function handleRoleChange(userId, role) {
     const { error } = await supabase.from('users').update({ role }).eq('id', userId)
-    if (error) { alert(error.message) } else { setUsers(p => p.map(u => u.id === userId ? { ...u, role } : u)) }
+    if (error) { showError(error.message) } else { setUsers(p => p.map(u => u.id === userId ? { ...u, role } : u)); showToast('Role updated ✓') }
   }
 
   async function handleStatusToggle(user) {
     const newStatus = (user.status || 'active') === 'active' ? 'suspended' : 'active'
     const { error } = await supabase.from('users').update({ status: newStatus }).eq('id', user.id)
-    if (error) { alert(error.message) } else { setUsers(p => p.map(u => u.id === user.id ? { ...u, status: newStatus } : u)); showToast(`User ${newStatus} ✓`) }
+    if (error) { showError(error.message) } else { setUsers(p => p.map(u => u.id === user.id ? { ...u, status: newStatus } : u)); showToast(`User ${newStatus} ✓`) }
   }
 
   async function handleDelete(userId) {
     if (!window.confirm('Delete this user permanently?')) return
     const { error } = await supabase.from('users').delete().eq('id', userId)
-    if (error) { alert(error.message) } else { setUsers(p => p.filter(u => u.id !== userId)); showToast('User deleted') }
+    if (error) { showError(error.message) } else { setUsers(p => p.filter(u => u.id !== userId)); showToast('User deleted') }
   }
 
   return (
@@ -901,7 +932,7 @@ function SectionUsers({ showToast }) {
           <thead><tr>{['Name', 'Email', 'Role', 'Tenant', 'Status', 'Joined', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
           <tbody>
             {loading
-              ? <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
+              ? Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={`skel-${i}`} cols={7} />)
               : paged.length === 0
                 ? <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No users match</td></tr>
                 : paged.map(u => (
@@ -955,7 +986,7 @@ function SectionUsers({ showToast }) {
 
 // ── Section 5: Credits ────────────────────────────────────────────────────────
 
-function SectionCredits({ showToast }) {
+function SectionCredits({ showToast, showError }) {
   const [subs, setSubs] = useState([])
   const [loading, setLoading] = useState(true)
   const [topUpModal, setTopUpModal] = useState(null)
@@ -984,7 +1015,7 @@ function SectionCredits({ showToast }) {
     setMLoading(true)
     const s = topUpModal
     const { error } = await supabase.from('tenant_subscriptions').update({ event_credits_total: (s.event_credits_total || 0) + Number(topUpN) }).eq('id', s.id)
-    if (error) { alert(error.message) } else {
+    if (error) { showError(error.message) } else {
       setSubs(p => p.map(x => x.id === s.id ? { ...x, event_credits_total: (x.event_credits_total || 0) + Number(topUpN) } : x))
       showToast(`+${topUpN} credits added ✓`)
       setTopUpModal(null)
@@ -999,7 +1030,7 @@ function SectionCredits({ showToast }) {
       supabase.from('tenant_subscriptions').update({ plan: newPlan }).eq('id', s.id),
       supabase.from('tenants').update({ plan: newPlan }).eq('id', s.tenant_id),
     ])
-    if (r1.error || r2.error) { alert((r1.error || r2.error).message) } else {
+    if (r1.error || r2.error) { showError((r1.error || r2.error).message) } else {
       setSubs(p => p.map(x => x.id === s.id ? { ...x, plan: newPlan } : x))
       showToast('Plan updated ✓')
       setChangePlanModal(null)
@@ -1017,7 +1048,7 @@ function SectionCredits({ showToast }) {
     if (newSubEnd) ops.push(supabase.from('tenant_subscriptions').update({ ends_at: newSubEnd }).eq('id', s.id))
     const results = await Promise.all(ops)
     const err = results.find(r => r.error)
-    if (err) { alert(err.error.message) } else { showToast(`Extended +${extendDays}d ✓`); setExtendModal(null) }
+    if (err) { showError(err.error.message) } else { showToast(`Extended +${extendDays}d ✓`); setExtendModal(null) }
     setMLoading(false)
   }
 
@@ -2186,6 +2217,7 @@ export default function SuperAdminPanel({ onClose }) {
   const [activeSection, setActiveSection] = useState('analytics')
   const [pendingCount, setPendingCount] = useState(0)
   const [toast, setToast] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
     async function init() {
@@ -2209,6 +2241,7 @@ export default function SuperAdminPanel({ onClose }) {
   }
 
   const showToast = useCallback((msg) => setToast(msg), [])
+  const showError = useCallback((msg) => setErrorMsg(msg), [])
 
   if (!roleChecked) return null
 
@@ -2220,14 +2253,14 @@ export default function SuperAdminPanel({ onClose }) {
     )
   }
 
-  const sectionProps = { showToast, setActiveSection, refreshBadge: fetchBadge }
+  const sectionProps = { showToast, showError, setActiveSection, refreshBadge: fetchBadge }
 
   const sectionMap = {
     overview:   <SectionOverview setActiveSection={setActiveSection} />,
-    approvals:  <SectionApprovals refreshBadge={fetchBadge} />,
-    tenants:    <SectionTenants showToast={showToast} />,
-    users:      <SectionUsers showToast={showToast} />,
-    credits:    <SectionCredits showToast={showToast} />,
+    approvals:  <SectionApprovals refreshBadge={fetchBadge} showToast={showToast} showError={showError} />,
+    tenants:    <SectionTenants showToast={showToast} showError={showError} />,
+    users:      <SectionUsers showToast={showToast} showError={showError} />,
+    credits:    <SectionCredits showToast={showToast} showError={showError} />,
     ratecards:  <SectionRateCards showToast={showToast} />,
     categories: <SectionCategories showToast={showToast} />,
     analytics:  <SectionAnalytics />,
@@ -2235,6 +2268,16 @@ export default function SuperAdminPanel({ onClose }) {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#faf8f5', fontFamily: F }}>
+      <style>{`
+        @keyframes sa-shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+        .sa-skel-cell {
+          height: 12px;
+          border-radius: 4px;
+          background: linear-gradient(90deg, #f4f1ee 25%, #eae6e2 50%, #f4f1ee 75%);
+          background-size: 200% 100%;
+          animation: sa-shimmer 1.4s infinite;
+        }
+      `}</style>
       {/* Sidebar */}
       <div style={{ width: '220px', flexShrink: 0, height: '100vh', overflowY: 'auto', background: '#fff', borderRight: '0.5px solid #d8d2c8', display: 'flex', flexDirection: 'column', padding: '24px 0' }}>
         <div style={{ padding: '0 20px 20px' }}>
@@ -2288,10 +2331,10 @@ export default function SuperAdminPanel({ onClose }) {
 
       {/* Content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '32px 40px' }}>
+        <NotificationStrip message={toast}    type="success" onDone={() => setToast('')} />
+        <NotificationStrip message={errorMsg} type="error"   onDone={() => setErrorMsg('')} />
         {sectionMap[activeSection]}
       </div>
-
-      <GlobalToast message={toast} onDone={() => setToast('')} />
     </div>
   )
 }

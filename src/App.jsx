@@ -64,8 +64,18 @@ class ErrorBoundary extends Component {
 // ─── Protected route ──────────────────────────────────────
 function ProtectedRoute({ children, session, loading }) {
   if (loading) return <Splash message="Checking session..." />
-  if (!session) return <Navigate to="/login" replace />
+  if (!session) {
+    const callback = window.location.pathname + window.location.search
+    return <Navigate to={`/login?callbackUrl=${encodeURIComponent(callback)}`} replace />
+  }
   return children
+}
+
+// Post-login destination — honors ?callbackUrl=... when present
+function postLoginDestination() {
+  const params = new URLSearchParams(window.location.search)
+  const cb = params.get('callbackUrl')
+  return (cb && cb.startsWith('/')) ? cb : '/app'
 }
 
 // ─── App ──────────────────────────────────────────────────
@@ -124,7 +134,7 @@ export default function App() {
           {/* ── Public pages ── */}
           <Route path="/"            element={<LandingPage />} />
           <Route path="/login"       element={
-            (session && !isPasswordSetupFlow) ? <Navigate to="/app" replace /> : <LoginPage />
+            (session && !isPasswordSetupFlow) ? <Navigate to={postLoginDestination()} replace /> : <LoginPage />
           } />
           <Route path="/task/:token" element={<PublicTask />} />
 

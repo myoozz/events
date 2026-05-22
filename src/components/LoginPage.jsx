@@ -187,7 +187,9 @@ export default function LoginPage() {
 
     // Small delay so user sees the success message, then App.jsx handles redirect
     setTimeout(() => {
-      window.location.href = '/app'
+      const params = new URLSearchParams(window.location.search)
+      const callbackUrl = params.get('callbackUrl')
+      window.location.href = (callbackUrl && callbackUrl.startsWith('/')) ? callbackUrl : '/app'
     }, 1500)
   }
 
