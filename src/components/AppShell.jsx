@@ -202,9 +202,12 @@ export default function AppShell({ session }) {
     fetchTenant()
   }, [])
 
-  // Redirect super_admin to their tab once platformRole resolves from JWT
+  // Redirect super_admin to their tab once platformRole resolves from JWT — initial load only
+  const initialRedirectDoneRef = useRef(false)
   useEffect(() => {
+    if (initialRedirectDoneRef.current) return
     if (platformRole === 'super_admin' && activeTab === 'events') {
+      initialRedirectDoneRef.current = true
       setActiveTab('super-admin')
     }
   }, [platformRole])
@@ -950,7 +953,7 @@ export default function AppShell({ session }) {
             <SuperAdminPanel
               userId={userId}
               userRole={userRole}
-              onClose={() => setActiveTab('dashboard')}
+              onClose={() => setActiveTab('events')}
             />
           </motion.div>
         )}
