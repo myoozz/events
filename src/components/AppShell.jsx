@@ -869,6 +869,7 @@ export default function AppShell({ session }) {
               userRole={userRole}
               session={session}
               userName={userName}
+              userId={userId}
               resetKey={dashboardResetKey}
             />
           )}

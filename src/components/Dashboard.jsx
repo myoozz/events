@@ -11,6 +11,10 @@ import { logEventCreated, logEventArchived, logEventRestored, logEventAssigned, 
 import { notifyApprovalRequired, notifyEventCreated } from '../utils/notificationService'
 import DashboardWidgets from './DashboardWidgets'
 import EventCard from './EventCard'
+import ProjectHeadPanel from './panels/ProjectHeadPanel'
+import ManagerPanel from './panels/ManagerPanel'
+import TeamPanel from './panels/TeamPanel'
+import StaffPanel from './panels/StaffPanel'
 
 const containerVariants = {
   hidden: {},
@@ -70,7 +74,14 @@ function useIsMobile() {
 }
 
 // Bug 10: Added userName and resetKey props
-export default function Dashboard({ userRole, session, userName, resetKey }) {
+export default function Dashboard({ userRole, session, userName, userId, resetKey }) {
+  // Role router — non-admin roles get specialised panels (Track B).
+  // Admin (and any unmapped role) falls through to the existing Dashboard view.
+  if (userRole === 'manager')    return <ProjectHeadPanel userId={userId} />
+  if (userRole === 'event_lead') return <ManagerPanel    userId={userId} />
+  if (userRole === 'team')       return <TeamPanel       userId={userId} />
+  if (userRole === 'staff')      return <StaffPanel      userId={userId} />
+
   const [events, setEvents] = useState([])
   const [archivedEvents, setArchivedEvents] = useState([])
   const [pendingEvents, setPendingEvents] = useState([])
