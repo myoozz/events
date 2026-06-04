@@ -474,7 +474,7 @@ export default function Production({ event, teamUsers = [] }) {
           ).length
           const allDone = catDone === catTasks.length && catTasks.length > 0
           const inProgress = catDone > 0 && !allDone
-          const dotColor = allDone ? 'var(--state-success)' : inProgress ? 'var(--state-warning)' : '#9ca3af'
+          const dotColor = allDone ? 'var(--state-success)' : inProgress ? 'var(--state-warning)' : 'var(--app-text-dim-lg)'
           const done = catTasks.filter(t => t.status === 'done').length
           const pct = catTasks.length > 0 ? Math.round((done / catTasks.length) * 100) : 0
           const pctColor = pct === 100 ? 'var(--state-success)' : pct >= 70 ? 'var(--state-info)' : pct >= 30 ? 'var(--state-warning)' : 'var(--app-accent)'

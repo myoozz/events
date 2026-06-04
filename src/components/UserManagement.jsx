@@ -429,8 +429,8 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                           {u.base_city && (
                             <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                                <path d="M5 1C3.34 1 2 2.34 2 4c0 2.25 3 5.5 3 5.5S8 6.25 8 4c0-1.66-1.34-3-3-3z" stroke="#9CA3AF" strokeWidth="1" fill="none"/>
-                                <circle cx="5" cy="4" r="1" fill="#9CA3AF"/>
+                                <path d="M5 1C3.34 1 2 2.34 2 4c0 2.25 3 5.5 3 5.5S8 6.25 8 4c0-1.66-1.34-3-3-3z" stroke="var(--app-text-dim-lg)" strokeWidth="1" fill="none"/>
+                                <circle cx="5" cy="4" r="1" fill="var(--app-text-dim-lg)"/>
                               </svg>
                               {u.base_city}
                             </span>

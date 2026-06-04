@@ -46,7 +46,7 @@ function Initials({ name, size = 36 }) {
 }
 
 function RoleBadge({ role }) {
-  const cfg = ROLE_CONFIG[role] || { label: role, color: '#888', bg: '#f4f4f4' };
+  const cfg = ROLE_CONFIG[role] || { label: role, color: 'var(--app-text-dim-lg)', bg: '#f4f4f4' };
   return (
     <span style={{
       fontFamily: "'DM Sans', sans-serif",
@@ -84,7 +84,7 @@ function WorkloadBar({ open = 0, done = 0, overdue = 0 }) {
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {done > 0    && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: '#2e9e68' }}>{done} done</span>}
-        {open > 0    && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: '#999' }}>{open} open</span>}
+        {open > 0    && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: 'var(--app-text-dim-lg)' }}>{open} open</span>}
         {overdue > 0 && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: 'var(--app-accent)' }}>{overdue} overdue</span>}
       </div>
     </div>
@@ -224,7 +224,7 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
           font-family: 'DM Sans', sans-serif;
           font-size: 10px;
           font-weight: 600;
-          color: #aaa;
+          color: var(--app-text-dim-lg);
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
@@ -232,18 +232,18 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
           font-family: 'DM Sans', sans-serif;
           font-size: 13.5px;
           font-weight: 500;
-          color: #1a1a1a;
+          color: var(--app-ink);
         }
         .tv-sub {
           font-family: 'DM Sans', sans-serif;
           font-size: 11px;
-          color: #aaa;
+          color: var(--app-text-dim-lg);
           margin-top: 1px;
         }
         .tv-activity {
           font-family: 'DM Sans', sans-serif;
           font-size: 11.5px;
-          color: #999;
+          color: var(--app-text-dim-lg);
         }
         .tv-profile-btn {
           font-family: 'DM Sans', sans-serif;
@@ -275,8 +275,8 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
           padding: 4px 12px;
           border-radius: 100px;
           border: 1px solid #E0DBD6;
-          background: #fff;
-          color: #666;
+          background: var(--app-surface);
+          color: var(--app-text-dim);
           cursor: pointer;
           transition: all 0.12s;
         }
@@ -294,9 +294,9 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
           border-radius: 8px;
           font-family: 'DM Sans', sans-serif;
           font-size: 12px;
-          color: #333;
+          color: var(--app-ink);
           outline: none;
-          background: #fff;
+          background: var(--app-surface);
           transition: border-color 0.15s;
         }
         .tv-search:focus { border-color: var(--app-accent); }
@@ -305,7 +305,7 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
           padding: 40px 20px;
           font-family: 'DM Sans', sans-serif;
           font-size: 13px;
-          color: #bbb;
+          color: var(--app-text-dim-lg);
         }
         .tv-skeleton {
           height: 52px;
@@ -322,7 +322,7 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
       `}</style>
 
       <div style={{
-        background: '#fff',
+        background: 'var(--app-surface)',
         border: '1px solid #E8E4DF',
         borderRadius: 12,
         overflow: 'hidden',
@@ -341,14 +341,14 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
           <div>
             <span style={{
               fontFamily: "'Cormorant Garamond', serif",
-              fontSize: 20, fontWeight: 600, color: '#1a1a1a',
+              fontSize: 20, fontWeight: 600, color: 'var(--app-ink)',
             }}>
               {title}
             </span>
             {!loading && (
               <span style={{
                 fontFamily: "'DM Sans', sans-serif",
-                fontSize: 12, color: '#aaa', marginLeft: 8,
+                fontSize: 12, color: 'var(--app-text-dim-lg)', marginLeft: 8,
               }}>
                 {members.length} {members.length === 1 ? 'person' : 'people'}
               </span>

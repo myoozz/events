@@ -84,13 +84,13 @@ const S = {
   input: {
     width: '100%', padding: '10px 12px',
     border: '1px solid var(--app-border)', borderRadius: '6px',
-    fontSize: '14px', color: 'var(--app-ink)', background: '#fff',
+    fontSize: '14px', color: 'var(--app-ink)', background: 'var(--app-bg)',
     outline: 'none', fontFamily: "'DM Sans', sans-serif",
     boxSizing: 'border-box', transition: 'border-color 0.15s',
   },
   tile: {
     width: '100%', border: '1.5px solid var(--app-border)', borderRadius: '8px',
-    padding: '12px 14px', cursor: 'pointer', background: '#fff',
+    padding: '12px 14px', cursor: 'pointer', background: 'var(--app-surface)',
     transition: 'all 0.12s', textAlign: 'left',
     fontFamily: "'DM Sans', sans-serif",
   },
@@ -824,7 +824,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                       fontSize: '12px', fontFamily: "'DM Sans', sans-serif",
                       border: '1px solid',
                       borderColor: a.subCategory === sub ? 'var(--app-accent)' : 'var(--app-border)',
-                      background: a.subCategory === sub ? 'var(--state-danger-bg)' : '#fff',
+                      background: a.subCategory === sub ? 'var(--state-danger-bg)' : 'var(--app-surface)',
                       color: a.subCategory === sub ? 'var(--app-accent)' : '#2c2518',
                       transition: 'all 0.12s',
                     }}
@@ -1207,7 +1207,7 @@ function PreviewCard({ a, onEdit }) {
           display: 'flex', alignItems: 'center',
           padding: '9px 14px',
           borderBottom: i < rows.length - 1 ? '1px solid var(--app-surface)' : 'none',
-          background: i % 2 === 0 ? '#fff' : 'var(--app-bg)',
+          background: i % 2 === 0 ? 'var(--app-surface)' : 'var(--app-bg)',
         }}>
           <span style={{ fontSize: '11px', color: 'var(--app-text-dim-lg)', width: '100px', flexShrink: 0 }}>
             {row.label}

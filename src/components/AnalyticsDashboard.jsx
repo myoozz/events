@@ -80,7 +80,7 @@ function groupByBucket(tasks, bucketPeriod) {
 function SectionCard({ title, subtitle, children, loading }) {
   return (
     <div style={{
-      background: '#fff',
+      background: 'var(--app-surface)',
       border: '1px solid #e8e4df',
       borderRadius: 14,
       padding: '24px 24px 20px',
@@ -89,12 +89,12 @@ function SectionCard({ title, subtitle, children, loading }) {
       <div style={{ marginBottom: 18 }}>
         <h2 style={{
           fontFamily: FONT_HEAD, fontSize: 22, fontWeight: 600,
-          margin: 0, color: '#1a1a1a', letterSpacing: '-0.3px',
+          margin: 0, color: 'var(--app-ink)', letterSpacing: '-0.3px',
         }}>
           {title}
         </h2>
         {subtitle && (
-          <p style={{ fontSize: 12, color: '#999', margin: '3px 0 0', fontFamily: FONT_BODY }}>
+          <p style={{ fontSize: 12, color: 'var(--app-text-dim-lg)', margin: '3px 0 0', fontFamily: FONT_BODY }}>
             {subtitle}
           </p>
         )}
@@ -124,8 +124,8 @@ function StatPill({ label, value, color }) {
       background: color + '15', border: `1px solid ${color}28`,
     }}>
       <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
-      <span style={{ fontFamily: FONT_BODY, fontSize: 13, color: '#444', whiteSpace: 'nowrap' }}>
-        <strong style={{ color: '#1a1a1a' }}>{value}</strong> {label}
+      <span style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'var(--app-ink)', whiteSpace: 'nowrap' }}>
+        <strong style={{ color: 'var(--app-ink)' }}>{value}</strong> {label}
       </span>
     </div>
   )
@@ -135,11 +135,11 @@ function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
     <div style={{
-      background: '#fff', border: '1px solid #e8e4df', borderRadius: 8,
+      background: 'var(--app-surface)', border: '1px solid #e8e4df', borderRadius: 8,
       fontFamily: FONT_BODY, fontSize: 13, padding: '10px 14px',
       boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
     }}>
-      <p style={{ margin: '0 0 6px', fontWeight: 600, color: '#1a1a1a' }}>{label}</p>
+      <p style={{ margin: '0 0 6px', fontWeight: 600, color: 'var(--app-ink)' }}>{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ margin: '2px 0', color: p.color }}>
           {p.name}: <strong>{p.value}</strong>
@@ -182,7 +182,7 @@ export default function AnalyticsDashboard({ userId, userRole }) {
       setPipelineData([
         { label: 'Active',           count: active,   color: 'var(--state-success)'  },
         { label: 'Pending Approval', count: pending,  color: 'var(--state-warning)'  },
-        { label: 'Archived',         count: archived, color: '#94a3b8'  },
+        { label: 'Archived',         count: archived, color: 'var(--app-text-dim-lg)'  },
       ])
     } catch (err) {
       console.error('[Analytics] Pipeline error:', err)
@@ -272,11 +272,11 @@ export default function AnalyticsDashboard({ userId, userRole }) {
       <div style={{ marginBottom: 28, paddingBottom: 20, borderBottom: '1px solid #e8e4df' }}>
         <h1 style={{
           fontFamily: FONT_HEAD, fontSize: 34, fontWeight: 700,
-          margin: 0, color: '#1a1a1a', letterSpacing: '-0.6px',
+          margin: 0, color: 'var(--app-ink)', letterSpacing: '-0.6px',
         }}>
           Analytics
         </h1>
-        <p style={{ fontSize: 13, color: '#999', margin: '4px 0 0', fontFamily: FONT_BODY }}>
+        <p style={{ fontSize: 13, color: 'var(--app-text-dim-lg)', margin: '4px 0 0', fontFamily: FONT_BODY }}>
           Volume &amp; velocity — no financials shown here
         </p>
       </div>
@@ -293,8 +293,8 @@ export default function AnalyticsDashboard({ userId, userRole }) {
                 padding: '7px 20px',
                 borderRadius: 20,
                 border:      active ? `1.5px solid ${BRAND_RED}` : '1.5px solid #e8e4df',
-                background:  active ? BRAND_RED : '#fff',
-                color:       active ? '#fff' : '#666',
+                background:  active ? BRAND_RED : 'var(--app-surface)',
+                color:       active ? '#fff' : 'var(--app-text-dim)',
                 fontFamily:  FONT_BODY,
                 fontSize:    13,
                 fontWeight:  active ? 600 : 400,
@@ -318,11 +318,11 @@ export default function AnalyticsDashboard({ userId, userRole }) {
               style={{
                 padding: '6px 10px', borderRadius: 8,
                 border: '1.5px solid #e8e4df', fontFamily: FONT_BODY,
-                fontSize: 13, color: '#333', background: '#fff',
+                fontSize: 13, color: 'var(--app-ink)', background: 'var(--app-bg)',
                 outline: 'none',
               }}
             />
-            <span style={{ color: '#bbb', fontSize: 13 }}>→</span>
+            <span style={{ color: 'var(--app-text-dim-lg)', fontSize: 13 }}>→</span>
             <input
               type="date"
               value={customTo}
@@ -330,7 +330,7 @@ export default function AnalyticsDashboard({ userId, userRole }) {
               style={{
                 padding: '6px 10px', borderRadius: 8,
                 border: '1.5px solid #e8e4df', fontFamily: FONT_BODY,
-                fontSize: 13, color: '#333', background: '#fff',
+                fontSize: 13, color: 'var(--app-ink)', background: 'var(--app-bg)',
                 outline: 'none',
               }}
             />
@@ -357,11 +357,11 @@ export default function AnalyticsDashboard({ userId, userRole }) {
               <CartesianGrid strokeDasharray="3 3" stroke="#f0ede9" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: '#888' }}
+                tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: 'var(--app-text-dim-lg)' }}
                 axisLine={false} tickLine={false}
               />
               <YAxis
-                tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: '#888' }}
+                tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: 'var(--app-text-dim-lg)' }}
                 axisLine={false} tickLine={false} allowDecimals={false}
               />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f5f2ee' }} />
@@ -383,7 +383,7 @@ export default function AnalyticsDashboard({ userId, userRole }) {
           {!loadingTrends && trendData.length === 0 ? (
             <div style={{
               textAlign: 'center', padding: '44px 0',
-              color: '#bbb', fontFamily: FONT_BODY, fontSize: 14,
+              color: 'var(--app-text-dim-lg)', fontFamily: FONT_BODY, fontSize: 14,
             }}>
               No task data in this period
             </div>
@@ -393,11 +393,11 @@ export default function AnalyticsDashboard({ userId, userRole }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0ede9" vertical={false} />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: '#888' }}
+                  tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: 'var(--app-text-dim-lg)' }}
                   axisLine={false} tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: '#888' }}
+                  tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: 'var(--app-text-dim-lg)' }}
                   axisLine={false} tickLine={false} allowDecimals={false}
                 />
                 <Tooltip content={<ChartTooltip />} />
@@ -406,9 +406,9 @@ export default function AnalyticsDashboard({ userId, userRole }) {
                 />
                 <Line
                   type="monotone" dataKey="created" name="Created"
-                  stroke="#94a3b8" strokeWidth={2.5}
-                  dot={{ r: 3.5, fill: '#94a3b8', strokeWidth: 0 }}
-                  activeDot={{ r: 5.5, fill: '#94a3b8' }}
+                  stroke="var(--app-text-dim-lg)" strokeWidth={2.5}
+                  dot={{ r: 3.5, fill: 'var(--app-text-dim-lg)', strokeWidth: 0 }}
+                  activeDot={{ r: 5.5, fill: 'var(--app-text-dim-lg)' }}
                 />
                 <Line
                   type="monotone" dataKey="completed" name="Completed"
@@ -430,7 +430,7 @@ export default function AnalyticsDashboard({ userId, userRole }) {
           {!loadingWorkload && workloadData.length === 0 ? (
             <div style={{
               textAlign: 'center', padding: '44px 0',
-              color: '#bbb', fontFamily: FONT_BODY, fontSize: 14,
+              color: 'var(--app-text-dim-lg)', fontFamily: FONT_BODY, fontSize: 14,
             }}>
               No workload data found
             </div>
@@ -444,12 +444,12 @@ export default function AnalyticsDashboard({ userId, userRole }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0ede9" horizontal={false} />
                 <XAxis
                   type="number"
-                  tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: '#888' }}
+                  tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: 'var(--app-text-dim-lg)' }}
                   axisLine={false} tickLine={false} allowDecimals={false}
                 />
                 <YAxis
                   type="category" dataKey="name" width={105}
-                  tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: '#444' }}
+                  tick={{ fontFamily: FONT_BODY, fontSize: 12, fill: 'var(--app-ink)' }}
                   axisLine={false} tickLine={false}
                 />
                 <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f5f2ee' }} />

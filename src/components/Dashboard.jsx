@@ -520,7 +520,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
               style={{
                 width: '100%', padding: '9px 12px', fontSize: '13px',
                 border: '1px solid #c8c2b8', borderRadius: '8px',
-                background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)',
+                background: 'var(--app-bg)', color: 'var(--app-ink)', fontFamily: 'var(--font-body)',
                 outline: 'none', boxSizing: 'border-box', marginBottom: '16px',
               }}
               autoFocus
@@ -626,11 +626,11 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
           style={{
             flex: 1, minWidth: '200px', padding: '8px 12px', fontSize: '13px',
             border: '1px solid #c8c2b8', borderRadius: '8px',
-            background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none',
+            background: 'var(--app-bg)', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none',
           }}
         />
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: 'var(--app-bg)', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
           <option value="">All statuses</option>
           {['pitch','won','active','on hold','lost','completed'].map(s => (
             <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>
@@ -638,20 +638,20 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
         </select>
         {allClients.length > 0 && (
           <select value={filterClient} onChange={e => setFilterClient(e.target.value)}
-            style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+            style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: 'var(--app-bg)', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
             <option value="">All clients</option>
             {allClients.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         )}
         {allCities.length > 0 && (
           <select value={filterCity} onChange={e => setFilterCity(e.target.value)}
-            style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+            style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: 'var(--app-bg)', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
             <option value="">All cities</option>
             {allCities.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         )}
         <select value={filterSort} onChange={e => setFilterSort(e.target.value)}
-          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: 'var(--app-bg)', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
           <option value="smart">Default smart</option>
           <option value="recent_opened">Recently opened</option>
           <option value="recent_created">Recently created</option>

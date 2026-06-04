@@ -91,7 +91,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
         {/* Bell SVG */}
         <svg
           width="20" height="20" viewBox="0 0 24 24"
-          fill="none" stroke={hasUnread ? 'var(--app-accent)' : '#6b6b6b'}
+          fill="none" stroke={hasUnread ? 'var(--app-accent)' : 'var(--app-text-dim)'}
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         >
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -159,7 +159,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
               fontFamily: 'Cormorant Garamond, serif',
               fontSize:   '17px',
               fontWeight: '600',
-              color:      '#1a1a1a',
+              color:      'var(--app-ink)',
             }}>
               Notifications
             </span>
@@ -205,7 +205,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
             )}
 
             {!loading && notifications.map((notif) => {
-              const meta = NOTIF_META[notif.type] || { icon: '📌', colour: '#6b6b6b', label: '' };
+              const meta = NOTIF_META[notif.type] || { icon: '📌', colour: 'var(--app-text-dim)', label: '' };
               return (
                 <div
                   key={notif.id}
@@ -249,7 +249,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
                       fontFamily:  'DM Sans, sans-serif',
                       fontSize:    '13px',
                       fontWeight:  notif.is_read ? '400' : '600',
-                      color:       '#1a1a1a',
+                      color:       'var(--app-ink)',
                       lineHeight:  '1.35',
                       marginBottom:'2px',
                     }}>
@@ -259,7 +259,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
                       <div style={{
                         fontFamily:   'DM Sans, sans-serif',
                         fontSize:     '12px',
-                        color:        '#6b6b6b',
+                        color:        'var(--app-text-dim)',
                         whiteSpace:   'nowrap',
                         overflow:     'hidden',
                         textOverflow: 'ellipsis',
@@ -271,7 +271,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
                     <div style={{
                       fontFamily: 'DM Sans, sans-serif',
                       fontSize:   '11px',
-                      color:      '#aaa',
+                      color:      'var(--app-text-dim-lg)',
                     }}>
                       {timeAgo(notif.created_at)}
                     </div>
@@ -304,7 +304,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
               <span style={{
                 fontFamily: 'DM Sans, sans-serif',
                 fontSize:   '11px',
-                color:      '#bbb',
+                color:      'var(--app-text-dim-lg)',
               }}>
                 Showing last {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
               </span>

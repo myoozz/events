@@ -11,7 +11,7 @@ const STATUS_COLORS = {
   waitlisted:     { bg: '#E0E7FF', color: '#3730A3', label: 'Waitlisted' },
   active:         { bg: 'var(--state-success-bg)', color: 'var(--state-success)', label: 'Active' },
   suspended:      { bg: 'var(--state-danger-bg)', color: 'var(--state-danger)', label: 'Suspended' },
-  expired:        { bg: '#F3F4F6', color: '#6B7280', label: 'Expired' },
+  expired:        { bg: 'var(--app-surface)', color: 'var(--app-text-dim)', label: 'Expired' },
 }
 
 const PLAN_COLORS = {
@@ -97,7 +97,7 @@ const tdStyle = {
 // ── Shared components ─────────────────────────────────────────────────────────
 
 function StatusPill({ status }) {
-  const s = STATUS_COLORS[status] || { bg: '#F3F4F6', color: '#6B7280', label: status }
+  const s = STATUS_COLORS[status] || { bg: 'var(--app-surface)', color: 'var(--app-text-dim)', label: status }
   return (
     <span style={{ fontSize: '11px', fontWeight: 600, fontFamily: F, background: s.bg, color: s.color, padding: '3px 9px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
       {s.label}
@@ -106,7 +106,7 @@ function StatusPill({ status }) {
 }
 
 function PlanPill({ plan }) {
-  const p = PLAN_COLORS[plan] || { bg: '#F3F4F6', color: '#6B7280' }
+  const p = PLAN_COLORS[plan] || { bg: 'var(--app-surface)', color: 'var(--app-text-dim)' }
   return (
     <span style={{ fontSize: '11px', fontWeight: 600, fontFamily: F, background: p.bg, color: p.color, padding: '3px 9px', borderRadius: '6px', textTransform: 'capitalize' }}>
       {plan || '—'}
@@ -150,7 +150,7 @@ function SAModal({ open, onClose, title, subtitle, children }) {
           key="modal"
           initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.15 }}
-          style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', width: '100%', maxWidth: '480px', padding: '28px 32px', maxHeight: '90vh', overflowY: 'auto' }}
+          style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', width: '100%', maxWidth: '480px', padding: '28px 32px', maxHeight: '90vh', overflowY: 'auto' }}
           onClick={e => e.stopPropagation()}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
@@ -267,7 +267,7 @@ function SectionOverview({ setActiveSection }) {
       <SectionHeader title="Platform Overview" subtitle="Live platform health across all tenants." />
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
         {cards.map(c => (
-          <div key={c.label} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', minWidth: '160px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
+          <div key={c.label} style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', minWidth: '160px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
             <div style={{ fontSize: '28px', fontWeight: 700, fontFamily: FD, color: c.accent, letterSpacing: '-0.5px', marginBottom: '4px' }}>{loading ? '—' : c.value}</div>
             <div style={{ fontSize: '12px', fontWeight: 500, fontFamily: F, color: 'var(--app-text-dim-lg)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{c.label}</div>
           </div>
@@ -281,7 +281,7 @@ function SectionOverview({ setActiveSection }) {
         </div>
       )}
 
-      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--app-border)' }}>
           <span style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: 'var(--app-ink)' }}>Recent Tenants</span>
         </div>
@@ -293,9 +293,9 @@ function SectionOverview({ setActiveSection }) {
               : recent.length === 0
                 ? <tr><td colSpan={5} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>No tenants yet</td></tr>
                 : recent.map((t, i) => (
-                  <tr key={t.id} onClick={() => setActiveSection('tenants')} style={{ cursor: 'pointer', background: i % 2 === 0 ? '#fff' : 'var(--app-bg)' }}
+                  <tr key={t.id} onClick={() => setActiveSection('tenants')} style={{ cursor: 'pointer', background: i % 2 === 0 ? 'var(--app-surface)' : 'var(--app-bg)' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--app-surface)'}
-                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? '#fff' : 'var(--app-bg)'}>
+                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--app-surface)' : 'var(--app-bg)'}>
                     <td style={{ ...tdStyle, fontWeight: 500 }}>{t.name}</td>
                     <td style={tdStyle}>{t.contact_name || '—'}</td>
                     <td style={tdStyle}><StatusPill status={t.status} /></td>
@@ -396,7 +396,7 @@ function SectionApprovals({ refreshBadge, showToast, showError }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {list.map(t => (
-            <div key={t.id} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
+            <div key={t.id} style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
@@ -714,7 +714,7 @@ function TenantDetail({ tenant, onBack, showToast, showError }) {
                   { label: 'Starts At', value: fmtDate(sub.starts_at) },
                   { label: 'Ends At', value: fmtDate(sub.ends_at) },
                 ].map(f => (
-                  <div key={f.label} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '10px', padding: '14px 18px' }}>
+                  <div key={f.label} style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '10px', padding: '14px 18px' }}>
                     <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--app-text-dim-lg)', marginBottom: '6px', fontFamily: F }}>{f.label}</div>
                     <div style={{ fontSize: '15px', fontFamily: F, color: 'var(--app-ink)' }}>{f.value}</div>
                   </div>
@@ -815,7 +815,7 @@ function SectionTenants({ showToast, showError }) {
         </select>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email…" style={{ ...inputStyle, flex: 1, minWidth: '200px' }} />
       </div>
-      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>{['Company', 'Status', 'Plan', 'Trial Ends', 'Events', 'Users', 'Last User Added', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
           <tbody>
@@ -927,7 +927,7 @@ function SectionUsers({ showToast, showError }) {
         <input value={search} onChange={e => { setSearch(e.target.value); setPage(0) }} placeholder="Search name or email…" style={{ ...inputStyle, flex: 1, minWidth: '180px' }} />
       </div>
 
-      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>{['Name', 'Email', 'Role', 'Tenant', 'Status', 'Joined', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
           <tbody>
@@ -1062,7 +1062,7 @@ function SectionCredits({ showToast, showError }) {
           { label: 'On Trial', value: onTrial, accent: 'var(--state-warning)' },
           { label: '0 Credits Remaining', value: zeroCredits, accent: 'var(--state-danger)' },
         ].map(c => (
-          <div key={c.label} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', minWidth: '160px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
+          <div key={c.label} style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', minWidth: '160px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
             <div style={{ fontSize: '28px', fontWeight: 700, fontFamily: FD, color: c.accent }}>{loading ? '—' : c.value}</div>
             <div style={{ fontSize: '12px', fontFamily: F, color: 'var(--app-text-dim-lg)', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '4px' }}>{c.label}</div>
           </div>
@@ -1073,7 +1073,7 @@ function SectionCredits({ showToast, showError }) {
         💡 Credits will power AI features — element suggestions, brief analysis, and smart imports. Assign allowances now and activate when AI goes live.
       </div>
 
-      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>{['Tenant', 'Plan', 'Total', 'Used', 'Remaining', 'Trial Ends', 'Sub Status', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
           <tbody>
@@ -1143,7 +1143,7 @@ const SOURCE_TAGS = [
   { value: 'VENDOR_QUOTE',    label: 'Vendor Quote',    color: 'var(--state-success)' },
   { value: 'INTERNAL',        label: 'Internal',        color: 'var(--state-info)' },
   { value: 'MARKET_SURVEY',   label: 'Market Survey',   color: 'var(--state-warning)' },
-  { value: 'CLIENT_PROVIDED', label: 'Client Provided', color: '#6B7280' },
+  { value: 'CLIENT_PROVIDED', label: 'Client Provided', color: 'var(--app-text-dim)' },
 ]
 
 function SectionRateCards({ showToast }) {
@@ -1378,7 +1378,7 @@ function SectionRateCards({ showToast }) {
             <button onClick={() => setAddModal(true)} style={btnPrimary}>+ Add Row</button>
           </div>
 
-          <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'auto' }}>
+          <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
               <thead><tr>{['Element Name', 'Category', 'City', 'Rate Min', 'Rate Max', 'Rate Type', 'Source', 'Tenant', '✦', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
@@ -1488,7 +1488,7 @@ function SectionRateCards({ showToast }) {
                 </span>
                 <button onClick={() => { setImportRows([]); setImportFile(null); setImportPaste('') }} style={{ ...btnSecondary, fontSize: '12px', padding: '6px 12px' }}>Clear</button>
               </div>
-              <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'auto', maxHeight: '360px' }}>
+              <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'auto', maxHeight: '360px' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
                   <thead><tr>{['#', 'Category', 'Element Name', 'City', 'Rate Min', 'Rate Max', 'Rate Type', 'Status'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
                   <tbody>
@@ -1525,7 +1525,7 @@ function SectionRateCards({ showToast }) {
 
       {rcTab === 'templates' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '24px' }}>
             <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: F, color: 'var(--app-ink)', marginBottom: '8px' }}>Rate Card Excel Template</div>
             <p style={{ fontSize: '13px', fontFamily: F, color: 'var(--app-text-dim-lg)', marginBottom: '16px' }}>Download this template, fill it in Excel or Google Sheets, then import it in the Bulk Import tab.</p>
             <div style={{ background: 'var(--app-bg)', border: '0.5px solid var(--app-border)', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
@@ -1554,7 +1554,7 @@ function SectionRateCards({ showToast }) {
             <button onClick={handleDownloadTemplate} style={btnPrimary}>Download Template</button>
           </div>
 
-          <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '24px' }}>
             <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: F, color: 'var(--app-ink)', marginBottom: '16px' }}>Source Tags</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
@@ -1858,14 +1858,14 @@ function SectionCategories({ showToast }) {
               { label: 'Active', value: activeCats, accent: 'var(--state-success)' },
               { label: 'Unused (cleanup)', value: unusedCats, accent: 'var(--state-warning)' },
             ].map(c => (
-              <div key={c.label} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '10px', padding: '16px 20px', minWidth: '130px', flex: 1 }}>
+              <div key={c.label} style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '10px', padding: '16px 20px', minWidth: '130px', flex: 1 }}>
                 <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: FD, color: c.accent }}>{loading ? '—' : c.value}</div>
                 <div style={{ fontSize: '11px', fontFamily: F, color: 'var(--app-text-dim-lg)', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '3px' }}>{c.label}</div>
               </div>
             ))}
           </div>
 
-          <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr>{['Sort', 'Name', 'Slug', 'Usage', 'Status', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
@@ -1891,16 +1891,16 @@ function SectionCategories({ showToast }) {
                         </td>
                         <td style={{ ...tdStyle, fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: 'var(--app-text-dim-lg)' }}>{c.slug}</td>
                         <td style={tdStyle}>
-                          <span style={{ fontSize: '12px', fontWeight: 600, background: usage > 0 ? 'var(--state-success-bg)' : '#F3F4F6', color: usage > 0 ? 'var(--state-success)' : '#6B7280', padding: '2px 8px', borderRadius: '5px', fontFamily: F }}>{usage}</span>
+                          <span style={{ fontSize: '12px', fontWeight: 600, background: usage > 0 ? 'var(--state-success-bg)' : 'var(--app-surface)', color: usage > 0 ? 'var(--state-success)' : 'var(--app-text-dim)', padding: '2px 8px', borderRadius: '5px', fontFamily: F }}>{usage}</span>
                         </td>
                         <td style={tdStyle}>
-                          <button onClick={() => handleToggleActive(c)} style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: c.is_active ? 'var(--state-success-bg)' : '#F3F4F6', color: c.is_active ? 'var(--state-success)' : '#6B7280', fontFamily: F, fontWeight: 600 }}>
+                          <button onClick={() => handleToggleActive(c)} style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: c.is_active ? 'var(--state-success-bg)' : 'var(--app-surface)', color: c.is_active ? 'var(--state-success)' : 'var(--app-text-dim)', fontFamily: F, fontWeight: 600 }}>
                             {c.is_active ? 'Active' : 'Inactive'}
                           </button>
                         </td>
                         <td style={tdStyle}>
                           <button onClick={() => handleDelete(c)} disabled={usage > 0} title={usage > 0 ? `Cannot delete — ${usage} elements use this category` : 'Delete'}
-                            style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: usage > 0 ? 'not-allowed' : 'pointer', background: usage > 0 ? '#F3F4F6' : 'var(--state-danger-bg)', color: usage > 0 ? 'var(--app-border)' : 'var(--state-danger)', fontFamily: F }}
+                            style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: usage > 0 ? 'not-allowed' : 'pointer', background: usage > 0 ? 'var(--app-surface)' : 'var(--state-danger-bg)', color: usage > 0 ? 'var(--app-border)' : 'var(--state-danger)', fontFamily: F }}
                           >Delete</button>
                         </td>
                       </tr>
@@ -1934,7 +1934,7 @@ function SectionCategories({ showToast }) {
                 const stages = stageData[type] || []
                 const isExpanded = expandedType === type
                 return (
-                  <div key={type} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '10px', marginBottom: '10px', overflow: 'hidden' }}>
+                  <div key={type} style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '10px', marginBottom: '10px', overflow: 'hidden' }}>
                     <div onClick={() => setExpandedType(isExpanded ? null : type)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', cursor: 'pointer' }}>
                       <span style={{ fontSize: '14px', fontWeight: 600, fontFamily: F, color: 'var(--app-ink)' }}>{formatType(type)}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -2126,7 +2126,7 @@ function SectionAnalytics() {
           { label: 'Total Users', value: stats.users, accent: 'var(--state-success)' },
           { label: 'Rate Card Rows', value: stats.rateCards, accent: 'var(--state-warning)' },
         ].map(c => (
-          <div key={c.label} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', minWidth: '140px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
+          <div key={c.label} style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', minWidth: '140px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
             <div style={{ fontSize: '28px', fontWeight: 700, fontFamily: FD, color: c.accent }}>{loading ? '—' : c.value}</div>
             <div style={{ fontSize: '12px', fontFamily: F, color: 'var(--app-text-dim-lg)', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '4px' }}>{c.label}</div>
           </div>
@@ -2135,7 +2135,7 @@ function SectionAnalytics() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '28px' }}>
         {/* Bar chart */}
-        <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
+        <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
           <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '16px' }}>New Tenants Per Month</p>
           {BarChart && !loading ? (
             <ResponsiveContainer width="100%" height={220}>
@@ -2154,7 +2154,7 @@ function SectionAnalytics() {
         </div>
 
         {/* Top categories */}
-        <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
+        <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
           <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '16px' }}>Top Categories by Element Usage</p>
           {loading ? <p style={{ color: 'var(--app-text-dim-lg)', fontFamily: F, fontSize: '13px' }}>Loading...</p> : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -2175,7 +2175,7 @@ function SectionAnalytics() {
       </div>
 
       {/* Events per month chart */}
-      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', marginBottom: '28px' }}>
+      <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', marginBottom: '28px' }}>
         <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '16px' }}>Events Created Per Month</p>
         {BarChart && !loading ? (
           <ResponsiveContainer width="100%" height={220}>
@@ -2194,7 +2194,7 @@ function SectionAnalytics() {
       </div>
 
       {/* Tenant status distribution */}
-      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
+      <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
         <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '16px' }}>Tenant Status Distribution</p>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           {statusDist.map(s => (
@@ -2279,7 +2279,7 @@ export default function SuperAdminPanel({ onClose }) {
         }
       `}</style>
       {/* Sidebar */}
-      <div style={{ width: '220px', flexShrink: 0, height: '100vh', overflowY: 'auto', background: '#fff', borderRight: '0.5px solid var(--app-border)', display: 'flex', flexDirection: 'column', padding: '24px 0' }}>
+      <div style={{ width: '220px', flexShrink: 0, height: '100vh', overflowY: 'auto', background: 'var(--app-surface)', borderRight: '0.5px solid var(--app-border)', display: 'flex', flexDirection: 'column', padding: '24px 0' }}>
         <div style={{ padding: '0 20px 20px' }}>
           <div style={{ fontFamily: FD, fontSize: '18px', fontWeight: 700, color: 'var(--app-ink)', lineHeight: 1.2 }}>Platform Admin</div>
           <div style={{ fontFamily: F, fontSize: '11px', color: 'var(--app-text-dim-lg)', marginTop: '3px' }}>Myoozz Events</div>

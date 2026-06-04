@@ -844,7 +844,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
 
   // ── Dark theme tokens ─────────────────────────────────────────────────────
   const D = {
-    bg:        '#1a1a1a',
+    bg:        'var(--app-ink)',
     card:      '#252525',
     cardHov:   '#2e2e2e',
     border:    '#333333',
@@ -859,7 +859,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
 
   const inpSt = {
     ...s, padding: '6px 10px', fontSize: '12px',
-    border: '0.5px solid #444', borderRadius: '6px',
+    border: '0.5px solid var(--app-ink)', borderRadius: '6px',
     background: '#2a2a2a', color: '#fff',
     outline: 'none', width: '100%', boxSizing: 'border-box',
   }
@@ -870,8 +870,8 @@ export default function RateCard({ session, userRole, canManageRateCards = false
     padding: small ? '3px 10px' : '6px 16px',
     borderRadius: '20px', cursor: 'pointer', whiteSpace: 'nowrap',
     background: active ? '#ffffff' : 'transparent',
-    color: active ? '#1a1a1a' : D.text,
-    border: '0.5px solid ' + (active ? '#ffffff' : '#444'),
+    color: active ? 'var(--app-ink)' : D.text,
+    border: '0.5px solid ' + (active ? '#ffffff' : 'var(--app-ink)'),
     transition: 'all 0.1s',
   })
 
@@ -883,7 +883,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
   })
 
   const warningIcon  = { duplicate: '⚠️', city_mismatch: '🏙️', multi_city: '🔁', no_rate: '—', mandatory: '📋' }
-  const warningColor = { duplicate: 'var(--state-warning-bg)', city_mismatch: 'var(--state-warning-bg)', multi_city: 'var(--state-warning-bg)', no_rate: '#F3F4F6', mandatory: 'var(--state-info-bg)' }
+  const warningColor = { duplicate: 'var(--state-warning-bg)', city_mismatch: 'var(--state-warning-bg)', multi_city: 'var(--state-warning-bg)', no_rate: 'var(--app-surface)', mandatory: 'var(--state-info-bg)' }
   const selectedEvent = events.find(e => e.id === targetEvent)
   const eventCities   = selectedEvent?.cities || []
 
@@ -911,7 +911,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
 
       {/* ── Empty state ── */}
       {!loading && rates.length === 0 && (
-        <div style={{ border: '0.5px dashed #444', borderRadius: '14px', padding: '80px 32px', textAlign: 'center' }}>
+        <div style={{ border: '0.5px dashed var(--app-ink)', borderRadius: '14px', padding: '80px 32px', textAlign: 'center' }}>
           <p style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: D.text, marginBottom: '8px' }}>No rate cards yet</p>
           <p style={{ fontSize: '13px', color: D.sub, marginBottom: '24px', lineHeight: 1.6 }}>
             Upload vendor rate cards or paste AI research JSON.<br />Rates are suggested when your team enters internal costs.
@@ -1001,7 +1001,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                               onClick={() => { setSelectedItem(isActive ? null : item); setSelected(new Set(isActive ? [] : [item.id])) }}
                               style={{
                                 background: isActive ? '#2e2e2e' : D.card,
-                                border: `0.5px solid ${isActive ? '#666' : D.border}`,
+                                border: `0.5px solid ${isActive ? 'var(--app-text-dim)' : D.border}`,
                                 borderRadius: '10px', padding: '12px 14px',
                                 cursor: 'pointer', display: 'flex',
                                 justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px',
@@ -1113,7 +1113,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                       </div>
 
                       {/* Rate highlight box */}
-                      <div style={{ background: '#1a1a1a', borderRadius: '10px', padding: '18px', margin: '16px 0', textAlign: 'center' }}>
+                      <div style={{ background: 'var(--app-ink)', borderRadius: '10px', padding: '18px', margin: '16px 0', textAlign: 'center' }}>
                         <div style={{ fontSize: '24px', fontWeight: 600, color: D.text, marginBottom: '5px', userSelect: 'none' }}>
                           {fmtRange(selectedItem.rate_min, selectedItem.rate_max) || '—'}
                         </div>

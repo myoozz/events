@@ -62,7 +62,7 @@ const MODES = [
     desc: 'Manage the complete lifecycle — proposal, execution, production, delivery.',
     have: ['Everything — you\'re running the full show'],
     tab: 'elements',
-    color: '#374151',
+    color: 'var(--app-ink)',
     featured: true,
   },
 ]

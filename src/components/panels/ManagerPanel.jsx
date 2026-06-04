@@ -31,9 +31,9 @@ function DueDateChip({ deadline }) {
 }
 function StatCard({ label, value, hot }) {
   return (
-    <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '18px 20px 15px', borderTop: `3px solid ${hot ? C.accent : C.border}`, flex: 1, minWidth: '140px' }}>
+    <div style={{ background: 'var(--app-surface)', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '18px 20px 15px', borderTop: `3px solid ${hot ? C.accent : C.border}`, flex: 1, minWidth: '140px' }}>
       <div style={{ fontFamily: F, fontSize: '12px', color: C.dim }}>{label}</div>
-      <div style={{ fontFamily: FD, fontSize: '38px', fontWeight: 600, color: hot ? C.accent : '#1a1a1a', lineHeight: 1, margin: '6px 0 5px', letterSpacing: '-0.5px' }}>{value}</div>
+      <div style={{ fontFamily: FD, fontSize: '38px', fontWeight: 600, color: hot ? C.accent : 'var(--app-ink)', lineHeight: 1, margin: '6px 0 5px', letterSpacing: '-0.5px' }}>{value}</div>
     </div>
   )
 }
@@ -53,7 +53,7 @@ function PanelStyle() {
   `}</style>
 }
 function Section({ title, children }) {
-  return <section style={{ marginBottom: '28px' }}><h2 style={{ fontFamily: FD, fontSize: '20px', fontWeight: 600, color: '#1a1a1a', marginBottom: '12px', letterSpacing: '-0.2px' }}>{title}</h2>{children}</section>
+  return <section style={{ marginBottom: '28px' }}><h2 style={{ fontFamily: FD, fontSize: '20px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '12px', letterSpacing: '-0.2px' }}>{title}</h2>{children}</section>
 }
 function fmtDate(iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) }
 
@@ -136,7 +136,7 @@ export default function ManagerPanel({ userId, onOpenEvent }) {
   return (
     <div style={{ fontFamily: F }}>
       <PanelStyle />
-      <h1 style={{ fontFamily: FD, fontSize: '28px', fontWeight: 600, color: '#1a1a1a', marginBottom: '4px', letterSpacing: '-0.3px' }}>Manager</h1>
+      <h1 style={{ fontFamily: FD, fontSize: '28px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '4px', letterSpacing: '-0.3px' }}>Manager</h1>
       <p style={{ fontFamily: F, fontSize: '13px', color: C.dim, marginBottom: '24px' }}>The events you're driving and the tasks on your plate.</p>
 
       <StatStrip
@@ -160,9 +160,9 @@ export default function ManagerPanel({ userId, onOpenEvent }) {
               <button
                 key={ev.id}
                 onClick={() => onOpenEvent && onOpenEvent(ev)}
-                style={{ textAlign: 'left', cursor: 'pointer', background: '#fff', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '16px', fontFamily: F }}
+                style={{ textAlign: 'left', cursor: 'pointer', background: 'var(--app-surface)', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '16px', fontFamily: F }}
               >
-                <div style={{ fontWeight: 500, fontSize: '14px', color: '#1a1a1a', marginBottom: '4px' }}>{ev.event_name}</div>
+                <div style={{ fontWeight: 500, fontSize: '14px', color: 'var(--app-ink)', marginBottom: '4px' }}>{ev.event_name}</div>
                 {ev.clients?.group_name && (
                   <div style={{ fontSize: '12px', color: C.dim, marginBottom: '8px' }}>
                     {ev.clients.group_name}{ev.clients.brand_name ? ` · ${ev.clients.brand_name}` : ''}
@@ -203,9 +203,9 @@ export default function ManagerPanel({ userId, onOpenEvent }) {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {grouped[gk].map(t => (
-                    <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '12px', alignItems: 'center', background: '#fff', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 14px' }}>
+                    <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '12px', alignItems: 'center', background: 'var(--app-surface)', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 14px' }}>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title || 'Untitled'}</div>
+                        <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--app-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title || 'Untitled'}</div>
                         <div style={{ fontSize: '11px', color: C.dim, marginTop: '2px' }}>{t.eventName}{t.eventCity ? ` · ${t.eventCity}` : ''}</div>
                       </div>
                       <DueDateChip deadline={t.deadline} />

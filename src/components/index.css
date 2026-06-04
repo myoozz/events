@@ -23,7 +23,7 @@
   --bg-secondary:     #EDE8DD;
   --bg-surface-2:     #DDD7C7;
   --text:             #0A0A0A;
-  --text-2:           #1A1A1A;
+  --text-2:           var(--app-ink);
   --text-secondary:   rgba(10,10,10,0.55);
   --text-tertiary:    rgba(10,10,10,0.35);
   --border:           rgba(10,10,10,0.14);

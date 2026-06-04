@@ -67,7 +67,7 @@ export default function ActivityLog() {
     event:    { bg: 'var(--blue-light)',   color: 'var(--blue)' },
     element:  { bg: 'var(--green-light)',  color: 'var(--green)' },
     task:     { bg: 'var(--amber-light)',  color: 'var(--amber)' },
-    category: { bg: '#F3F4F6',             color: '#6B7280' },
+    category: { bg: 'var(--app-surface)',             color: 'var(--app-text-dim)' },
     user:     { bg: '#EDE9FE',             color: '#5B21B6' },
   }
 

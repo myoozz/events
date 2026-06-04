@@ -25,15 +25,15 @@ const S = {
   input: {
     width: '100%', padding: '6px 12px',
     border: '1px solid var(--app-border)', borderRadius: '6px',
-    fontSize: '14px', color: 'var(--app-ink)', background: '#fff',
+    fontSize: '14px', color: 'var(--app-ink)', background: 'var(--app-bg)',
     outline: 'none', fontFamily: "'DM Sans', sans-serif",
     boxSizing: 'border-box', transition: 'border-color 0.15s',
   },
   inputFocus: { borderColor: 'var(--app-accent)' },
-  inputDisabled: { background: 'var(--app-surface)', color: 'var(--app-text-dim-lg)', cursor: 'not-allowed' },
+  inputDisabled: { background: 'var(--app-bg)', color: 'var(--app-text-dim-lg)', cursor: 'not-allowed' },
   dropdown: {
     position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-    background: '#fff', border: '1px solid var(--app-border)', borderRadius: '8px',
+    background: 'var(--app-surface)', border: '1px solid var(--app-border)', borderRadius: '8px',
     boxShadow: '0 8px 24px rgba(26,16,8,0.12)',
     zIndex: 9999, overflow: 'hidden',
     maxHeight: `${MAX_RESULTS * 46}px`, overflowY: 'auto',

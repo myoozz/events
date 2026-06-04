@@ -249,10 +249,10 @@ function StayCard({ row, onDelete, isAdmin }) {
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 12,
       padding: '12px 14px', background: 'var(--bg)',
-      border: '0.5px solid var(--border)', borderLeftWidth: 3, borderLeftColor: '#6b7280',
+      border: '0.5px solid var(--border)', borderLeftWidth: 3, borderLeftColor: 'var(--app-text-dim)',
       borderRadius: 'var(--radius-sm)'
     }}>
-      <Building2 size={15} style={{ color: '#6b7280', marginTop: 2, flexShrink: 0 }} />
+      <Building2 size={15} style={{ color: 'var(--app-text-dim)', marginTop: 2, flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{row.hotel_name || '—'}</span>
@@ -625,7 +625,7 @@ function EventTravel({ event, userRole }) {
           </TravelSection>
 
           {/* Stay */}
-          <TravelSection title="Stay" icon={Building2} accent="#6b7280" count={stays.length}>
+          <TravelSection title="Stay" icon={Building2} accent="var(--app-text-dim)" count={stays.length}>
             {stays.map(r => <StayCard key={r.id} row={r} onDelete={() => deleteRow(r.id)} isAdmin={isAdmin} />)}
             {addingType === 'stay'
               ? <StayForm form={form} setForm={setForm} onSave={saveRow} onCancel={() => setAddingType(null)} saving={saving} />
@@ -886,8 +886,8 @@ function DayProgram({ itineraryId, userRole }) {
                     {sect.venue && <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{sect.venue}</span>}
                     <span style={{
                       fontSize: 11, padding: '2px 7px', borderRadius: 10,
-                      background: sect.responsibility === 'internal' ? 'var(--state-info-bg)' : sect.responsibility === 'local' ? 'var(--state-warning-bg)' : '#f3f4f6',
-                      color: sect.responsibility === 'internal' ? 'var(--state-info)' : sect.responsibility === 'local' ? 'var(--state-warning)' : '#374151'
+                      background: sect.responsibility === 'internal' ? 'var(--state-info-bg)' : sect.responsibility === 'local' ? 'var(--state-warning-bg)' : 'var(--app-surface)',
+                      color: sect.responsibility === 'internal' ? 'var(--state-info)' : sect.responsibility === 'local' ? 'var(--state-warning)' : 'var(--app-ink)'
                     }}>{RESPONSIBILITY_LABELS[sect.responsibility] || 'Internal'}</span>
                   </div>
 

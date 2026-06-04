@@ -34,9 +34,9 @@ function DueDateChip({ deadline }) {
 }
 function StatCard({ label, value, hot }) {
   return (
-    <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '18px 20px 15px', borderTop: `3px solid ${hot ? C.accent : C.border}`, flex: 1, minWidth: '140px' }}>
+    <div style={{ background: 'var(--app-surface)', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '18px 20px 15px', borderTop: `3px solid ${hot ? C.accent : C.border}`, flex: 1, minWidth: '140px' }}>
       <div style={{ fontFamily: F, fontSize: '12px', color: C.dim }}>{label}</div>
-      <div style={{ fontFamily: FD, fontSize: '38px', fontWeight: 600, color: hot ? C.accent : '#1a1a1a', lineHeight: 1, margin: '6px 0 5px', letterSpacing: '-0.5px' }}>{value}</div>
+      <div style={{ fontFamily: FD, fontSize: '38px', fontWeight: 600, color: hot ? C.accent : 'var(--app-ink)', lineHeight: 1, margin: '6px 0 5px', letterSpacing: '-0.5px' }}>{value}</div>
     </div>
   )
 }
@@ -148,7 +148,7 @@ export default function TeamPanel({ userId }) {
   return (
     <div style={{ fontFamily: F }}>
       <PanelStyle />
-      <h1 style={{ fontFamily: FD, fontSize: '28px', fontWeight: 600, color: '#1a1a1a', marginBottom: '4px', letterSpacing: '-0.3px' }}>Team</h1>
+      <h1 style={{ fontFamily: FD, fontSize: '28px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '4px', letterSpacing: '-0.3px' }}>Team</h1>
       <p style={{ fontFamily: F, fontSize: '13px', color: C.dim, marginBottom: '24px' }}>Everything assigned to you, in one place.</p>
 
       <StatStrip
@@ -169,9 +169,9 @@ export default function TeamPanel({ userId }) {
             style={{
               fontFamily: F, fontSize: '12px', fontWeight: filter === f ? 600 : 500,
               padding: '6px 12px', borderRadius: '20px', cursor: 'pointer',
-              background: filter === f ? '#1a1a1a' : 'transparent',
+              background: filter === f ? 'var(--app-ink)' : 'transparent',
               color: filter === f ? '#fff' : C.dim,
-              border: `1px solid ${filter === f ? '#1a1a1a' : C.border}`,
+              border: `1px solid ${filter === f ? 'var(--app-ink)' : C.border}`,
             }}
           >{FILTER_LABEL[f]}</button>
         ))}
@@ -187,10 +187,10 @@ export default function TeamPanel({ userId }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {filtered.map(t => (
-            <div key={t.id} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', gap: '12px', alignItems: 'center', background: '#fff', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 14px' }}>
+            <div key={t.id} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', gap: '12px', alignItems: 'center', background: 'var(--app-surface)', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 14px' }}>
               <StatusPill task={t} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title || 'Untitled'}</div>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--app-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title || 'Untitled'}</div>
                 <div style={{ fontSize: '11px', color: C.dim, marginTop: '2px' }}>
                   {t.eventName}{t.eventCity ? ` · ${t.eventCity}` : ''}
                 </div>

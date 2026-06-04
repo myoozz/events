@@ -133,8 +133,8 @@ export default function PrivacyPolicy() {
         :root {
           --red: var(--app-accent);
           --bg: #FAFAF8;
-          --ink: #1a1a1a;
-          --muted: #6b6b6b;
+          --ink: var(--app-ink);
+          --muted: var(--app-text-dim);
           --rule: #e8e4df;
           --card: #ffffff;
         }
@@ -296,7 +296,7 @@ export default function PrivacyPolicy() {
           font-size: 15px;
           font-weight: 300;
           line-height: 1.8;
-          color: #333;
+          color: var(--app-ink);
           margin-bottom: 14px;
         }
         .pp-section p:last-child { margin-bottom: 0; }
@@ -310,7 +310,7 @@ export default function PrivacyPolicy() {
           font-size: 14.5px;
           font-weight: 300;
           line-height: 1.75;
-          color: #444;
+          color: var(--app-ink);
           padding-left: 20px;
           position: relative;
           margin-bottom: 4px;

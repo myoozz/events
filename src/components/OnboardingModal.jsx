@@ -140,7 +140,7 @@ export default function OnboardingModal({ userId, tenantId, tenantName, onComple
         style={{
           width: '100%',
           maxWidth: '420px',
-          background: '#fff',
+          background: 'var(--app-surface)',
           borderRadius: '12px',
           padding: '24px',
           position: 'relative',

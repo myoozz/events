@@ -15,7 +15,7 @@ const STATUS_OPTIONS = ['Estimated','Confirmed','Actuals','Client scope']
 const STATUS_STYLES = {
   'Estimated':    { bg:'var(--state-warning-bg)', color:'var(--state-warning)' },
   'Confirmed':    { bg:'var(--state-success-bg)', color:'var(--state-success)' },
-  'Actuals':      { bg:'#F3F4F6', color:'#6B7280' },
+  'Actuals':      { bg:'var(--app-surface)', color:'var(--app-text-dim)' },
   'Client scope': { bg:'var(--state-info-bg)', color:'var(--state-info)' },
 }
 
@@ -157,10 +157,10 @@ function parsePaste(text){
 // ─────────────────────────────────────────────
 function LumpToggle({ isLump, onUnit, onLump, muted }){
   const activeBg   = muted ? '#D1D5DB' : 'white'
-  const activeClr  = muted ? '#374151' : 'var(--text)'
-  const inactiveClr= muted ? '#9CA3AF' : '#9CA3AF'
+  const activeClr  = muted ? 'var(--app-ink)' : 'var(--text)'
+  const inactiveClr= muted ? 'var(--app-text-dim-lg)' : 'var(--app-text-dim-lg)'
   return(
-    <div style={{display:'flex',gap:'0',marginTop:'2px',background:'#F3F4F6',borderRadius:'4px',padding:'2px',width:'fit-content'}}>
+    <div style={{display:'flex',gap:'0',marginTop:'2px',background:'var(--app-surface)',borderRadius:'4px',padding:'2px',width:'fit-content'}}>
       <button onClick={onUnit} style={{
         padding:'1px 7px',fontSize:'10px',fontFamily:'var(--font-body)',
         background:!isLump?activeBg:'none',
@@ -204,7 +204,7 @@ const ginp=(isInternal)=>({
   width:'100%',fontSize:'13px',padding:'5px 8px',
   border:'none',borderRadius:0,
   background:'transparent',
-  color:isInternal?'#6B7280':'var(--text)',
+  color:isInternal?'var(--app-text-dim)':'var(--text)',
   fontFamily:'var(--font-body)',outline:'none',
   boxSizing:'border-box',minWidth:0,height:'100%',
 })
@@ -365,9 +365,9 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
               muted={true}
             />
             {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success-bg)':'var(--state-info-bg)',color:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success)':'#1a4b8a',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
-            {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>}
+            {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'var(--app-text-dim-lg)',cursor:'pointer',display:'block'}}>Ask for rates</span>}
             {internalAmt>0&&(
-              <div style={{fontSize:'11px',color:'#6B7280',fontWeight:500,marginTop:'1px'}}>= {fmt(internalAmt)}</div>
+              <div style={{fontSize:'11px',color:'var(--app-text-dim)',fontWeight:500,marginTop:'1px'}}>= {fmt(internalAmt)}</div>
             )}
             {clientAmt>0&&internalAmt>0&&(
               <div style={{
@@ -547,7 +547,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             muted={true}
           />
           {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success-bg)':'var(--state-info-bg)',color:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success)':'#1a4b8a',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
-          {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>}
+          {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'var(--app-text-dim-lg)',cursor:'pointer',display:'block'}}>Ask for rates</span>}
           {!el.internal_lump&&internalAmt>0&&(
             <div style={{fontSize:'11px',color:'var(--state-warning)',marginTop:'2px',fontWeight:500}}>{fmt(internalAmt)}</div>
           )}
@@ -908,13 +908,13 @@ function CategoryBlock({
           <div style={{
             display:'grid',gridTemplateColumns:colsForHeaders,gap:'6px',
             padding:'4px 14px',
-            background:isGrid?'#F3F4F6':'var(--bg-secondary)',
+            background:isGrid?'var(--app-surface)':'var(--bg-secondary)',
             borderBottom:'0.5px solid var(--border)',
           }}>
             {headerLabels.map((h,i)=>(
               <div key={i} style={{
                 fontSize:'10px',
-                color:isGrid?'#6B7280':'var(--text-tertiary)',
+                color:isGrid?'var(--app-text-dim)':'var(--text-tertiary)',
                 fontWeight:isGrid?600:500,
                 textTransform:'uppercase',letterSpacing:'0.4px',
                 padding:'3px 0',

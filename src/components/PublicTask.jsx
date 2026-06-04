@@ -11,7 +11,7 @@ const STATUS_LABELS = {
   done: 'Done ✓',
 }
 const STATUS_COLORS = {
-  not_started: { bg:'#F3F4F6', color:'#6B7280' },
+  not_started: { bg:'var(--app-surface)', color:'var(--app-text-dim)' },
   in_progress:  { bg:'var(--state-info-bg)', color:'var(--state-info)' },
   arranged:     { bg:'var(--state-warning-bg)', color:'var(--state-warning)' },
   on_site:      { bg:'#EDE9FE', color:'#5B21B6' },
@@ -67,7 +67,7 @@ export default function PublicTask() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAF9F7', fontFamily: 'var(--font-body)' }}>
-      <p style={{ color: '#6B7280' }}>Loading...</p>
+      <p style={{ color: 'var(--app-text-dim)' }}>Loading...</p>
     </div>
   )
 
@@ -75,7 +75,7 @@ export default function PublicTask() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAF9F7', fontFamily: 'var(--font-body)' }}>
       <div style={{ textAlign: 'center' }}>
         <p style={{ fontSize: '20px', color: '#1A1917', marginBottom: '8px' }}>Task not found</p>
-        <p style={{ fontSize: '13px', color: '#6B7280' }}>This link may be invalid or expired.</p>
+        <p style={{ fontSize: '13px', color: 'var(--app-text-dim)' }}>This link may be invalid or expired.</p>
       </div>
     </div>
   )
@@ -88,13 +88,13 @@ export default function PublicTask() {
 
         {/* Header */}
         <div style={{ marginBottom: '24px' }}>
-          <p style={{ fontSize: '12px', color: '#6B7280', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <p style={{ fontSize: '12px', color: 'var(--app-text-dim)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             {event?.clients?.group_name || 'Myoozz Events'}
           </p>
           <h1 style={{ fontSize: '22px', fontWeight: 600, color: '#1A1917', marginBottom: '4px' }}>
             {event?.event_name || 'Event'}
           </h1>
-          <p style={{ fontSize: '13px', color: '#6B7280' }}>{task.category}</p>
+          <p style={{ fontSize: '13px', color: 'var(--app-text-dim)' }}>{task.category}</p>
         </div>
 
         {/* Task card */}
@@ -105,16 +105,16 @@ export default function PublicTask() {
             </h2>
             {/* Element details */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-              {task.size && <span style={{ fontSize: '12px', padding: '3px 10px', background: '#F3F4F6', borderRadius: '20px', color: '#374151' }}>📐 {task.size}{task.size_unit ? ' '+task.size_unit : ''}</span>}
-              {task.qty && <span style={{ fontSize: '12px', padding: '3px 10px', background: '#F3F4F6', borderRadius: '20px', color: '#374151' }}>× {task.qty} nos</span>}
-              {task.days && <span style={{ fontSize: '12px', padding: '3px 10px', background: '#F3F4F6', borderRadius: '20px', color: '#374151' }}>📅 {task.days} day{task.days > 1 ? 's' : ''}</span>}
-              {task.city && <span style={{ fontSize: '12px', padding: '3px 10px', background: '#F3F4F6', borderRadius: '20px', color: '#374151' }}>📍 {task.city}</span>}
+              {task.size && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}>📐 {task.size}{task.size_unit ? ' '+task.size_unit : ''}</span>}
+              {task.qty && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}>× {task.qty} nos</span>}
+              {task.days && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}>📅 {task.days} day{task.days > 1 ? 's' : ''}</span>}
+              {task.city && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}>📍 {task.city}</span>}
             </div>
-            {task.finish && <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px' }}>Spec: {task.finish}</p>}
-            {task.source && <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px' }}>Vendor: {task.source}</p>}
+            {task.finish && <p style={{ fontSize: '13px', color: 'var(--app-text-dim)', marginBottom: '8px' }}>Spec: {task.finish}</p>}
+            {task.source && <p style={{ fontSize: '13px', color: 'var(--app-text-dim)', marginBottom: '8px' }}>Vendor: {task.source}</p>}
 
             {task.deadline && (
-              <p style={{ fontSize: '13px', color: new Date(task.deadline) < new Date() && task.status !== 'done' ? 'var(--state-danger)' : '#6B7280', marginBottom: '16px' }}>
+              <p style={{ fontSize: '13px', color: new Date(task.deadline) < new Date() && task.status !== 'done' ? 'var(--state-danger)' : 'var(--app-text-dim)', marginBottom: '16px' }}>
                 {new Date(task.deadline) < new Date() && task.status !== 'done' ? '⚠️ ' : '📅 '}
                 Deadline: {new Date(task.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
@@ -122,14 +122,14 @@ export default function PublicTask() {
 
             {/* Current status */}
             <div style={{ marginBottom: '20px' }}>
-              <p style={{ fontSize: '11px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Current status</p>
+              <p style={{ fontSize: '11px', color: 'var(--app-text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Current status</p>
               <span style={{ padding: '6px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: 600, background: sc.bg, color: sc.color }}>
                 {STATUS_LABELS[task.status]}
               </span>
             </div>
 
             {/* Update status */}
-            <p style={{ fontSize: '11px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Update status</p>
+            <p style={{ fontSize: '11px', color: 'var(--app-text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Update status</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {STATUS_OPTIONS.map(s => {
                 const c = STATUS_COLORS[s]
@@ -140,7 +140,7 @@ export default function PublicTask() {
                       padding: '12px 16px', fontSize: '14px', fontWeight: isActive ? 600 : 400,
                       textAlign: 'left', borderRadius: '8px', cursor: isActive ? 'default' : 'pointer',
                       background: isActive ? c.bg : '#F9F9F7',
-                      color: isActive ? c.color : '#6B7280',
+                      color: isActive ? c.color : 'var(--app-text-dim)',
                       border: `1.5px solid ${isActive ? c.color : '#E0DDD8'}`,
                       transition: 'all 0.15s',
                     }}>
@@ -153,7 +153,7 @@ export default function PublicTask() {
 
           {/* Notes */}
           <div style={{ borderTop: '0.5px solid #E0DDD8', padding: '16px 20px', background: '#FAFAF8' }}>
-            <p style={{ fontSize: '11px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Notes / updates</p>
+            <p style={{ fontSize: '11px', color: 'var(--app-text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Notes / updates</p>
             <textarea
               value={notes} onChange={e => setNotes(e.target.value)}
               onBlur={saveNotes}

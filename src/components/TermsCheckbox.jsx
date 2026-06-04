@@ -48,7 +48,7 @@ const STYLES = `
     margin-top: 1px;
     border-radius: 4px;
     border: 1.5px solid #d0cbc5;
-    background: #fff;
+    background: var(--app-surface);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -89,7 +89,7 @@ const STYLES = `
   .tc-label {
     font-size: 13.5px;
     font-weight: 300;
-    color: #444;
+    color: var(--app-ink);
     line-height: 1.65;
     padding-top: 1px;
   }

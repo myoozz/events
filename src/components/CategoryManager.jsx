@@ -389,7 +389,7 @@ export default function CategoryManager({ userRole }) {
         <div style={{ color: 'var(--app-text-dim-lg)', fontSize: 13 }}>Loading categories...</div>
       ) : (
         <>
-        <div style={{ background: '#fff', border: '1px solid var(--app-border)', borderRadius: 8 }}>
+        <div style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', borderRadius: 8 }}>
           {categories.map((cat, index) => (
             <div key={cat.id} style={{
               display: 'flex', alignItems: 'center', gap: 12,
@@ -505,7 +505,7 @@ export default function CategoryManager({ userRole }) {
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }}
                 placeholder="New category name"
-                style={{ flex: 1, fontFamily: 'DM Sans, sans-serif', fontSize: 13, border: '1px solid var(--app-border)', borderRadius: 4, padding: '6px 10px', outline: 'none', color: 'var(--app-ink)', background: '#fff' }}
+                style={{ flex: 1, fontFamily: 'DM Sans, sans-serif', fontSize: 13, border: '1px solid var(--app-border)', borderRadius: 4, padding: '6px 10px', outline: 'none', color: 'var(--app-ink)', background: 'var(--app-bg)' }}
               />
               {newName && (
                 <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#b8b0a0' }}>
@@ -586,7 +586,7 @@ export default function CategoryManager({ userRole }) {
                     border: '1px solid var(--app-border)',
                     borderRadius: 8,
                     marginBottom: 12,
-                    background: '#fff',
+                    background: 'var(--app-surface)',
                     overflow: 'hidden',
                   }}
                 >
@@ -599,7 +599,7 @@ export default function CategoryManager({ userRole }) {
                       justifyContent: 'space-between',
                       padding: '12px 18px',
                       cursor: 'pointer',
-                      background: isOpen ? 'var(--app-surface)' : '#fff',
+                      background: isOpen ? 'var(--app-surface)' : 'var(--app-bg)',
                       borderBottom: isOpen ? '1px solid var(--app-border)' : 'none',
                     }}
                   >
