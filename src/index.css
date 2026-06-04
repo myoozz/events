@@ -16,7 +16,10 @@
   --brand-teal-mid: #007A8C;  --brand-teal-soft: #E0F2F7;  --brand-teal-dim: rgba(0,95,115,0.12);
   --myoozz-red: #922B21;  /* logo M only */
 
-  /* 2 · PRODUCT LAYER — warm, single red accent */
+  /* 2 · PRODUCT LAYER — warm, single red accent.
+     Teal is brand-layer only, with THREE sanctioned in-app anchors:
+     (1) the nav rail, (2) the EventPage client-quote callout, (3) the Rate Card
+     proprietary aqua. Nowhere else in product UI. */
   --app-accent: #BC1723;  --app-accent-hover: #A4131D;
   --app-ink: #1A1008;  --app-bg: #FAF8F5;  --app-surface: #F2EFE9;  --app-border: #D8D2C8;
   --app-text-dim: #5F564A;  --app-text-dim-lg: #7A7060;
