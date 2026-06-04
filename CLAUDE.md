@@ -111,6 +111,7 @@ Never change DB values. Display rename = find/replace in UI strings only.
 ### Other Rules
 - CSS radius tokens: `--radius` 10px · `--radius-sm` 6px
 - Warm cream theme throughout. No cold grays. Paper is warm, not white.
+- **Teal (`#005F73` / `#003D4D` / `#1B9AAA`) is brand-layer only — never in product UI**, EXCEPT three sanctioned in-app anchors: (1) the **nav rail** (AppShell sidebar = petrol-teal brand frame), (2) the **EventPage client-quote callout**, (3) the **Rate Card proprietary aqua**. Nowhere else. A pass that strips teal from these three is wrong.
 - FloatingHelp pattern only — never inline help text on page load.
 - Avatar style: rounded squares everywhere. Not circles.
 - Tab active: `#F28F3B` underline (Me accent). Not a filled pill.

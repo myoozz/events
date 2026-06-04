@@ -428,8 +428,15 @@ export default function AppShell({ session }) {
         <div style={{
           width: sidebarWidth,
           minHeight: '100vh',
-          background: 'var(--bg)',
-          borderRight: '0.5px solid var(--border)',
+          /* ── Sanctioned in-app brand anchor: petrol-teal nav rail (per design kit).
+             Scoped token overrides re-theme the var-based children for the dark surface. ── */
+          background: 'linear-gradient(180deg, #00485A 0%, #003D4D 50%, #00303E 100%)',
+          '--text': '#FFFFFF',
+          '--text-tertiary': 'rgba(255,255,255,0.55)',
+          '--border': 'rgba(255,255,255,0.10)',
+          '--border-strong': 'rgba(255,255,255,0.20)',
+          '--bg-secondary': 'rgba(255,255,255,0.05)',
+          borderRight: '1px solid rgba(0,0,0,0.2)',
           display: 'flex',
           flexDirection: 'column',
           transition: 'width 0.2s ease',
@@ -459,47 +466,32 @@ export default function AppShell({ session }) {
                 style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '3px' }}
                 onClick={() => handleNavClick('events')}
               >
-                <img
-                  src="/brand/myoozz-white.png"
-                  alt="Myoozz Events"
-                  style={{ height: '28px', objectFit: 'contain', display: 'block' }}
-                  onError={e => {
-                    e.target.style.display = 'none'
-                    if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline-block'
-                  }}
-                />
-                <span style={{
-                  display: 'none',
-                  background: 'var(--app-accent)', color: '#fff',
-                  fontFamily: "'Cormorant Garamond', serif",
-                  fontWeight: 700, fontSize: '18px',
-                  padding: '2px 10px', borderRadius: '3px', letterSpacing: '1px',
-                  lineHeight: 1.3,
-                }}>ME</span>
+                {/* Typeset Me mark (locked): M = Poppins 900 white, e = Fraunces italic 900 aqua. Not a PNG. */}
+                <span style={{ display: 'inline-flex', alignItems: 'baseline', lineHeight: 0.85 }}>
+                  <span style={{ fontFamily: 'var(--font-brand)', fontWeight: 900, fontSize: '26px', color: '#fff', letterSpacing: '-0.04em' }}>M</span>
+                  <span style={{ fontFamily: 'var(--font-sub)', fontStyle: 'italic', fontWeight: 900, fontSize: '26px', color: 'var(--brand-aqua)', marginLeft: '-3px' }}>e</span>
+                </span>
                 <span style={{
                   fontFamily: 'var(--font-body)', fontSize: '10px',
                   color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px',
                 }}>Myoozz Events</span>
                 <span style={{
                   fontFamily: "'DM Mono', monospace", fontSize: '10px',
-                  color: 'var(--app-accent)',
+                  color: 'var(--brand-aqua)',
                 }}>{version}</span>
               </motion.div>
             )}
             {collapsed && (
               <div
                 style={{
-                  width: '28px', height: '28px',
-                  background: 'var(--app-accent)', borderRadius: '7px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '11px', fontWeight: 700, color: '#fff',
+                  display: 'inline-flex', alignItems: 'baseline', lineHeight: 0.85,
                   cursor: 'pointer', flexShrink: 0,
-                  fontFamily: "'Poppins', sans-serif", letterSpacing: '-0.5px',
                 }}
                 onClick={() => handleNavClick('events')}
                 title="Myoozz Events"
               >
-                ME
+                <span style={{ fontFamily: 'var(--font-brand)', fontWeight: 900, fontSize: '20px', color: '#fff', letterSpacing: '-0.04em' }}>M</span>
+                <span style={{ fontFamily: 'var(--font-sub)', fontStyle: 'italic', fontWeight: 900, fontSize: '20px', color: 'var(--brand-aqua)', marginLeft: '-2px' }}>e</span>
               </div>
             )}
           </div>
@@ -521,15 +513,15 @@ export default function AppShell({ session }) {
               {tenantInfo.plan === 'trial' && tenantInfo.status === 'active' && (() => {
                 const daysLeft = Math.ceil((new Date(tenantInfo.trial_ends_at) - Date.now()) / 86400000)
                 if (daysLeft <= 0) return (
-                  <div style={{ fontSize: '11px', color: 'var(--state-danger)', fontWeight: 500 }}>Trial expired</div>
+                  <div style={{ fontSize: '11px', color: '#F08A7A', fontWeight: 500 }}>Trial expired</div>
                 )
-                const color = daysLeft > 7 ? 'var(--state-success)' : daysLeft >= 4 ? '#fbbf24' : 'var(--state-danger)'
+                const color = daysLeft > 7 ? '#5FD37F' : daysLeft >= 4 ? '#F0C040' : '#F08A7A'
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '11px', color, whiteSpace: 'nowrap', flexShrink: 0, fontWeight: 500 }}>
                       {daysLeft}d left
                     </span>
-                    <div style={{ flex: 1, height: '3px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, height: '3px', background: 'rgba(255,255,255,0.14)', borderRadius: '2px', overflow: 'hidden' }}>
                       <div style={{ width: `${Math.min(100, (daysLeft / 14) * 100)}%`, height: '100%', background: color, borderRadius: '2px' }} />
                     </div>
                   </div>
@@ -556,6 +548,7 @@ export default function AppShell({ session }) {
                     justifyContent: collapsed ? 'center' : 'flex-start',
                     background: active ? 'var(--bg-secondary)' : 'none',
                     border: 'none',
+                    borderLeft: active ? '2px solid var(--brand-aqua)' : '2px solid transparent',
                     borderRadius: 'var(--radius-sm)',
                     cursor: 'pointer',
                     marginBottom: '2px',
@@ -594,6 +587,7 @@ export default function AppShell({ session }) {
                     justifyContent: collapsed ? 'center' : 'flex-start',
                     background: activeTab === 'super-admin' ? 'var(--bg-secondary)' : 'none',
                     border: 'none',
+                    borderLeft: activeTab === 'super-admin' ? '2px solid var(--brand-aqua)' : '2px solid transparent',
                     borderRadius: 'var(--radius-sm)',
                     cursor: 'pointer',
                     transition: 'background 0.15s',
@@ -601,12 +595,12 @@ export default function AppShell({ session }) {
                   onMouseOver={e => { if (activeTab !== 'super-admin') e.currentTarget.style.background = 'var(--bg-secondary)' }}
                   onMouseOut={e => { if (activeTab !== 'super-admin') e.currentTarget.style.background = 'none' }}
                 >
-                  <ShieldCheck size={16} color={activeTab === 'super-admin' ? 'var(--text)' : 'var(--app-accent)'} />
+                  <ShieldCheck size={16} color={activeTab === 'super-admin' ? 'var(--text)' : 'var(--text-tertiary)'} />
                   {!collapsed && (
                     <span style={{
                       fontSize: '13px',
                       fontWeight: activeTab === 'super-admin' ? 500 : 400,
-                      color: activeTab === 'super-admin' ? 'var(--text)' : 'var(--app-accent)',
+                      color: activeTab === 'super-admin' ? 'var(--text)' : 'var(--text-tertiary)',
                       whiteSpace: 'nowrap',
                     }}>
                       Platform Admin
@@ -630,23 +624,23 @@ export default function AppShell({ session }) {
                   borderRadius: 'var(--radius-sm)', background: activeTab === 'profile' && profileUserId === userId
                     ? 'var(--bg-secondary)' : 'var(--bg-secondary)',
                   border: activeTab === 'profile' && profileUserId === userId
-                    ? '1px solid var(--app-accent)' : '1px solid transparent',
+                    ? '1px solid var(--border)' : '1px solid transparent',
                   cursor: 'pointer', textAlign: 'left',
                   transition: 'border-color 0.15s',
                 }}
-                onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--app-accent)' }}
+                onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
                 onMouseOut={e => {
                   e.currentTarget.style.borderColor =
-                    (activeTab === 'profile' && profileUserId === userId) ? 'var(--app-accent)' : 'transparent'
+                    (activeTab === 'profile' && profileUserId === userId) ? 'var(--border)' : 'transparent'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {/* initials circle */}
                   <div style={{
                     width: '28px', height: '28px', borderRadius: '7px',
-                    background: 'var(--app-accent)',
+                    background: '#fff',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '11px', fontWeight: 700, color: '#fff',
+                    fontSize: '11px', fontWeight: 700, color: 'var(--brand-teal-deep)',
                     flexShrink: 0,
                   }}>
                     {ini || userName.charAt(0).toUpperCase()}
@@ -676,10 +670,10 @@ export default function AppShell({ session }) {
               >
                 <div style={{
                   width: '28px', height: '28px', borderRadius: '7px',
-                  background: 'var(--app-accent)',
+                  background: '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '11px', fontWeight: 700, color: '#fff',
-                  outline: (activeTab === 'profile' && profileUserId === userId) ? '2px solid var(--app-accent)' : 'none',
+                  fontSize: '11px', fontWeight: 700, color: 'var(--brand-teal-deep)',
+                  outline: (activeTab === 'profile' && profileUserId === userId) ? '2px solid var(--border)' : 'none',
                   outlineOffset: '2px',
                 }}>
                   {ini || userName.charAt(0).toUpperCase()}
