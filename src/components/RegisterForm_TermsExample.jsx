@@ -55,7 +55,7 @@ const BUTTON_STYLES = `
     transition: border-color 0.15s ease;
     box-sizing: border-box;
   }
-  .reg-input:focus { border-color: #F28F3B; }
+  .reg-input:focus { border-color: var(--app-accent); }
 
   .reg-divider {
     border: none;
@@ -79,7 +79,7 @@ const BUTTON_STYLES = `
 
   /* Active — terms agreed */
   .reg-btn.active {
-    background: #F28F3B;
+    background: var(--app-accent);
     color: #fff;
   }
   .reg-btn.active:hover  { background: #a31420; }

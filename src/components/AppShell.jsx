@@ -96,8 +96,8 @@ const NAV_ITEMS = [
 const ROLE_LABELS = { admin: 'Admin', manager: 'Project Head', event_lead: 'Manager', team: 'Project Team' }
 const ROLE_COLORS = {
   admin:      { bg: 'var(--green-light)', color: 'var(--green)' },
-  manager:    { bg: '#EFF6FF',            color: '#1D4ED8'      },
-  event_lead: { bg: '#FEF3C7',            color: '#92400E'      },
+  manager:    { bg: 'var(--state-info-bg)',            color: 'var(--state-info)'      },
+  event_lead: { bg: 'var(--state-warning-bg)',            color: 'var(--state-warning)'      },
   team:       { bg: 'var(--bg)',          color: 'var(--text-secondary)' },
 }
 
@@ -289,7 +289,7 @@ export default function AppShell({ session }) {
       background: '#FAFAF8', fontFamily: 'sans-serif', gap: '12px',
     }}>
       <div style={{
-        width: '28px', height: '28px', background: '#F28F3B', borderRadius: '7px',
+        width: '28px', height: '28px', background: 'var(--app-accent)', borderRadius: '7px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: '11px', fontWeight: 700, color: '#fff',
       }}>ME</div>
@@ -314,7 +314,7 @@ export default function AppShell({ session }) {
         <div style={{ maxWidth: '480px', width: '100%', textAlign: 'center' }}>
           <div style={{
             width: '48px', height: '48px', borderRadius: '12px',
-            background: '#F28F3B', display: 'flex', alignItems: 'center',
+            background: 'var(--app-accent)', display: 'flex', alignItems: 'center',
             justifyContent: 'center', fontSize: '18px', fontWeight: 800,
             color: '#fff', margin: '0 auto 24px',
           }}>ME</div>
@@ -346,8 +346,8 @@ export default function AppShell({ session }) {
             rel="noopener noreferrer"
             style={{
               display: 'inline-block', marginBottom: '24px',
-              fontSize: '13px', color: '#F28F3B', textDecoration: 'none',
-              borderBottom: '1px solid rgba(242,143,59,0.4)',
+              fontSize: '13px', color: 'var(--app-accent)', textDecoration: 'none',
+              borderBottom: '1px solid rgba(188,23,35,0.4)',
               paddingBottom: '1px',
             }}
           >
@@ -397,7 +397,7 @@ export default function AppShell({ session }) {
               display: 'inline-block', marginBottom: '16px',
               padding: '10px 24px', fontSize: '13px', fontWeight: 600,
               fontFamily: 'var(--font-body)', color: '#fff',
-              background: '#F28F3B', border: 'none',
+              background: 'var(--app-accent)', border: 'none',
               borderRadius: 'var(--radius-sm)', cursor: 'pointer',
               textDecoration: 'none',
             }}
@@ -470,7 +470,7 @@ export default function AppShell({ session }) {
                 />
                 <span style={{
                   display: 'none',
-                  background: '#F28F3B', color: '#fff',
+                  background: 'var(--app-accent)', color: '#fff',
                   fontFamily: "'Cormorant Garamond', serif",
                   fontWeight: 700, fontSize: '18px',
                   padding: '2px 10px', borderRadius: '3px', letterSpacing: '1px',
@@ -482,7 +482,7 @@ export default function AppShell({ session }) {
                 }}>Myoozz Events</span>
                 <span style={{
                   fontFamily: "'DM Mono', monospace", fontSize: '10px',
-                  color: '#F28F3B',
+                  color: 'var(--app-accent)',
                 }}>{version}</span>
               </motion.div>
             )}
@@ -490,7 +490,7 @@ export default function AppShell({ session }) {
               <div
                 style={{
                   width: '28px', height: '28px',
-                  background: '#F28F3B', borderRadius: '7px',
+                  background: 'var(--app-accent)', borderRadius: '7px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '11px', fontWeight: 700, color: '#fff',
                   cursor: 'pointer', flexShrink: 0,
@@ -521,9 +521,9 @@ export default function AppShell({ session }) {
               {tenantInfo.plan === 'trial' && tenantInfo.status === 'active' && (() => {
                 const daysLeft = Math.ceil((new Date(tenantInfo.trial_ends_at) - Date.now()) / 86400000)
                 if (daysLeft <= 0) return (
-                  <div style={{ fontSize: '11px', color: '#f87171', fontWeight: 500 }}>Trial expired</div>
+                  <div style={{ fontSize: '11px', color: 'var(--state-danger)', fontWeight: 500 }}>Trial expired</div>
                 )
-                const color = daysLeft > 7 ? '#4ade80' : daysLeft >= 4 ? '#fbbf24' : '#f87171'
+                const color = daysLeft > 7 ? 'var(--state-success)' : daysLeft >= 4 ? '#fbbf24' : 'var(--state-danger)'
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '11px', color, whiteSpace: 'nowrap', flexShrink: 0, fontWeight: 500 }}>
@@ -601,12 +601,12 @@ export default function AppShell({ session }) {
                   onMouseOver={e => { if (activeTab !== 'super-admin') e.currentTarget.style.background = 'var(--bg-secondary)' }}
                   onMouseOut={e => { if (activeTab !== 'super-admin') e.currentTarget.style.background = 'none' }}
                 >
-                  <ShieldCheck size={16} color={activeTab === 'super-admin' ? 'var(--text)' : '#bc1723'} />
+                  <ShieldCheck size={16} color={activeTab === 'super-admin' ? 'var(--text)' : 'var(--app-accent)'} />
                   {!collapsed && (
                     <span style={{
                       fontSize: '13px',
                       fontWeight: activeTab === 'super-admin' ? 500 : 400,
-                      color: activeTab === 'super-admin' ? 'var(--text)' : '#bc1723',
+                      color: activeTab === 'super-admin' ? 'var(--text)' : 'var(--app-accent)',
                       whiteSpace: 'nowrap',
                     }}>
                       Platform Admin
@@ -630,21 +630,21 @@ export default function AppShell({ session }) {
                   borderRadius: 'var(--radius-sm)', background: activeTab === 'profile' && profileUserId === userId
                     ? 'var(--bg-secondary)' : 'var(--bg-secondary)',
                   border: activeTab === 'profile' && profileUserId === userId
-                    ? '1px solid #F28F3B' : '1px solid transparent',
+                    ? '1px solid var(--app-accent)' : '1px solid transparent',
                   cursor: 'pointer', textAlign: 'left',
                   transition: 'border-color 0.15s',
                 }}
-                onMouseOver={e => { e.currentTarget.style.borderColor = '#F28F3B' }}
+                onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--app-accent)' }}
                 onMouseOut={e => {
                   e.currentTarget.style.borderColor =
-                    (activeTab === 'profile' && profileUserId === userId) ? '#F28F3B' : 'transparent'
+                    (activeTab === 'profile' && profileUserId === userId) ? 'var(--app-accent)' : 'transparent'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {/* initials circle */}
                   <div style={{
                     width: '28px', height: '28px', borderRadius: '7px',
-                    background: '#F28F3B',
+                    background: 'var(--app-accent)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '11px', fontWeight: 700, color: '#fff',
                     flexShrink: 0,
@@ -676,10 +676,10 @@ export default function AppShell({ session }) {
               >
                 <div style={{
                   width: '28px', height: '28px', borderRadius: '7px',
-                  background: '#F28F3B',
+                  background: 'var(--app-accent)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '11px', fontWeight: 700, color: '#fff',
-                  outline: (activeTab === 'profile' && profileUserId === userId) ? '2px solid #F28F3B' : 'none',
+                  outline: (activeTab === 'profile' && profileUserId === userId) ? '2px solid var(--app-accent)' : 'none',
                   outlineOffset: '2px',
                 }}>
                   {ini || userName.charAt(0).toUpperCase()}
@@ -795,7 +795,7 @@ export default function AppShell({ session }) {
           >
             <div style={{
               width: '22px', height: '22px', borderRadius: '6px',
-              background: activeTab === 'profile' ? '#F28F3B' : 'var(--text-tertiary)',
+              background: activeTab === 'profile' ? 'var(--app-accent)' : 'var(--text-tertiary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '9px', fontWeight: 700, color: '#fff',
               position: 'relative',
@@ -806,7 +806,7 @@ export default function AppShell({ session }) {
                 <span style={{
                   position: 'absolute', top: '-3px', right: '-3px',
                   width: '8px', height: '8px', borderRadius: '50%',
-                  background: '#F28F3B', border: '1.5px solid var(--bg)',
+                  background: 'var(--app-accent)', border: '1.5px solid var(--bg)',
                 }} />
               )}
             </div>
@@ -947,7 +947,7 @@ export default function AppShell({ session }) {
               width: '100vw',
               height: '100vh',
               zIndex: 1000,
-              background: '#faf8f5',
+              background: 'var(--app-bg)',
               overflow: 'hidden',
             }}
           >

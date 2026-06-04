@@ -39,10 +39,10 @@ function getInitials(fullName) {
 
 const STATUS_STYLES = {
   pitch:     { bg: '#fff4e6', color: '#c2410c', border: '#fed7aa' },
-  won:       { bg: '#e6f4ea', color: '#166534', border: '#bbf7d0' },
-  active:    { bg: '#e0ecff', color: '#1e40af', border: '#bfdbfe' },
-  completed: { bg: '#fde8e8', color: '#991b1b', border: '#fecaca' },
-  archived:  { bg: '#f1efea', color: '#6b6258', border: '#d8d2c8' },
+  won:       { bg: '#e6f4ea', color: 'var(--state-success)', border: '#bbf7d0' },
+  active:    { bg: '#e0ecff', color: 'var(--state-info)', border: '#bfdbfe' },
+  completed: { bg: '#fde8e8', color: 'var(--state-danger)', border: '#fecaca' },
+  archived:  { bg: '#f1efea', color: '#6b6258', border: 'var(--app-border)' },
 }
 
 function StatusPill({ status, isTest }) {
@@ -66,7 +66,7 @@ function StatusPill({ status, isTest }) {
         {key.toUpperCase()}
       </span>
       {isTest && (
-        <span style={{ ...base, background: 'transparent', color: '#7a7060', border: '1px solid #d8d2c8' }}>
+        <span style={{ ...base, background: 'transparent', color: 'var(--app-text-dim-lg)', border: '1px solid var(--app-border)' }}>
           TEST
         </span>
       )}
@@ -89,9 +89,9 @@ function MenuItem({ item }) {
         padding: '8px 14px',
         fontSize: '13px',
         fontFamily: 'DM Sans, sans-serif',
-        color: item.danger ? '#bc1723' : '#1a1008',
+        color: item.danger ? 'var(--app-accent)' : 'var(--app-ink)',
         textAlign: 'left',
-        background: hov ? (item.danger ? '#fdeaea' : '#f2efe9') : 'transparent',
+        background: hov ? (item.danger ? '#fdeaea' : 'var(--app-surface)') : 'transparent',
         border: 'none',
         cursor: 'pointer',
       }}
@@ -167,7 +167,7 @@ export default function EventCard({
   const avatarShow  = users.slice(0, 3)
   const avatarExtra = users.length > 3 ? users.length - 3 : 0
 
-  const accentColor = isPendingApproval ? '#bc1723' : hasOverdueTasks ? '#991b1b' : null
+  const accentColor = isPendingApproval ? 'var(--app-accent)' : hasOverdueTasks ? 'var(--state-danger)' : null
 
   // ── Menu items ──────────────────────────────────────────────────────────────
 
@@ -213,8 +213,8 @@ export default function EventCard({
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       style={{
-        background: '#faf8f5',
-        border: `1px solid ${hovered ? '#c8c2b8' : '#d8d2c8'}`,
+        background: 'var(--app-bg)',
+        border: `1px solid ${hovered ? '#c8c2b8' : 'var(--app-border)'}`,
         borderRadius: '12px',
         padding: '16px 18px',
         cursor: 'pointer',
@@ -223,7 +223,7 @@ export default function EventCard({
         gap: '10px',
         position: 'relative',
         zIndex: menuOpen ? 100 : 'auto',
-        outline: focused ? '2px solid #bc1723' : 'none',
+        outline: focused ? '2px solid var(--app-accent)' : 'none',
         outlineOffset: '2px',
         boxShadow: hovered ? '0 2px 8px rgba(26,16,8,0.06)' : 'none',
         transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
@@ -255,7 +255,7 @@ export default function EventCard({
           fontFamily: 'Cormorant Garamond, serif',
           fontSize: '18px',
           fontWeight: 600,
-          color: '#1a1008',
+          color: 'var(--app-ink)',
           lineHeight: 1.25,
         }}>
           {event.event_name}
@@ -269,7 +269,7 @@ export default function EventCard({
           margin: 0,
           fontFamily: 'DM Sans, sans-serif',
           fontSize: '13px',
-          color: '#7a7060',
+          color: 'var(--app-text-dim-lg)',
         }}>
           {clientStr}
         </p>
@@ -284,7 +284,7 @@ export default function EventCard({
               fontSize: '11px',
               fontFamily: 'DM Sans, sans-serif',
               color: '#6b6258',
-              background: '#f2efe9',
+              background: 'var(--app-surface)',
               border: '1px solid #e8e3da',
               borderRadius: '6px',
             }}>
@@ -297,7 +297,7 @@ export default function EventCard({
               fontSize: '11px',
               fontFamily: 'DM Sans, sans-serif',
               color: '#6b6258',
-              background: '#f2efe9',
+              background: 'var(--app-surface)',
               border: '1px solid #e8e3da',
               borderRadius: '6px',
             }}>
@@ -313,7 +313,7 @@ export default function EventCard({
           margin: 0,
           fontFamily: 'DM Sans, sans-serif',
           fontSize: '12px',
-          color: '#7a7060',
+          color: 'var(--app-text-dim-lg)',
         }}>
           {dateStr}
         </p>
@@ -333,14 +333,14 @@ export default function EventCard({
                 width: '24px',
                 height: '24px',
                 borderRadius: '6px',
-                background: '#f2efe9',
+                background: 'var(--app-surface)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '10px',
                 fontWeight: 700,
                 fontFamily: 'DM Sans, sans-serif',
-                color: '#7a7060',
+                color: 'var(--app-text-dim-lg)',
                 border: '2px solid #ffffff',
                 marginLeft: i === 0 ? 0 : '-6px',
                 zIndex: avatarShow.length - i,
@@ -355,14 +355,14 @@ export default function EventCard({
                 width: '24px',
                 height: '24px',
                 borderRadius: '6px',
-                background: '#f2efe9',
+                background: 'var(--app-surface)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '10px',
                 fontWeight: 700,
                 fontFamily: 'DM Sans, sans-serif',
-                color: '#7a7060',
+                color: 'var(--app-text-dim-lg)',
                 border: '2px solid #ffffff',
                 marginLeft: '-6px',
                 position: 'relative',
@@ -379,7 +379,7 @@ export default function EventCard({
           <span style={{
             fontSize: '11px',
             fontFamily: 'DM Sans, sans-serif',
-            color: '#7a7060',
+            color: 'var(--app-text-dim-lg)',
           }}>
             {formatRelativeTime(event.updated_at)}
           </span>
@@ -405,7 +405,7 @@ export default function EventCard({
             cursor: 'pointer',
             borderRadius: '6px',
             fontSize: '18px',
-            color: hovered || menuOpen ? '#1a1008' : '#7a7060',
+            color: hovered || menuOpen ? 'var(--app-ink)' : 'var(--app-text-dim-lg)',
             lineHeight: 1,
           }}
         >
@@ -417,8 +417,8 @@ export default function EventCard({
             position: 'absolute',
             top: '36px',
             right: 0,
-            background: '#faf8f5',
-            border: '1px solid #d8d2c8',
+            background: 'var(--app-bg)',
+            border: '1px solid var(--app-border)',
             borderRadius: '8px',
             boxShadow: '0 4px 12px rgba(26,16,8,0.08)',
             minWidth: '180px',

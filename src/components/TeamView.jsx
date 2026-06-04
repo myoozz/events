@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 const ROLE_CONFIG = {
-  admin:       { label: 'Admin',       color: '#F28F3B', bg: '#fdf0f0' },
+  admin:       { label: 'Admin',       color: 'var(--app-accent)', bg: 'var(--state-danger-bg)' },
   manager:     { label: 'Manager',     color: '#1a6b4a', bg: '#edf7f2' },
   event_lead:  { label: 'Event Lead',  color: '#7a4f1e', bg: '#fdf4ea' },
   team:        { label: 'Team',        color: '#2c4a7c', bg: '#eef2fb' },
@@ -34,7 +34,7 @@ function Initials({ name, size = 36 }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '8px',
-      background: '#F28F3B', color: '#fff',
+      background: 'var(--app-accent)', color: '#fff',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'DM Sans', sans-serif",
       fontSize: size * 0.35, fontWeight: 600,
@@ -80,12 +80,12 @@ function WorkloadBar({ open = 0, done = 0, overdue = 0 }) {
       }}>
         {pDone > 0    && <div style={{ width: `${pDone}%`,    background: '#2e9e68', borderRadius: 100 }} />}
         {pOpen > 0    && <div style={{ width: `${pOpen}%`,    background: '#d6cfc8', borderRadius: 100 }} />}
-        {pOverdue > 0 && <div style={{ width: `${pOverdue}%`, background: '#F28F3B', borderRadius: 100 }} />}
+        {pOverdue > 0 && <div style={{ width: `${pOverdue}%`, background: 'var(--app-accent)', borderRadius: 100 }} />}
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {done > 0    && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: '#2e9e68' }}>{done} done</span>}
         {open > 0    && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: '#999' }}>{open} open</span>}
-        {overdue > 0 && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: '#F28F3B' }}>{overdue} overdue</span>}
+        {overdue > 0 && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: 'var(--app-accent)' }}>{overdue} overdue</span>}
       </div>
     </div>
   );
@@ -248,7 +248,7 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
         .tv-profile-btn {
           font-family: 'DM Sans', sans-serif;
           font-size: 11px;
-          color: #F28F3B;
+          color: var(--app-accent);
           background: none;
           border: 1px solid transparent;
           border-radius: 6px;
@@ -258,8 +258,8 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
           white-space: nowrap;
         }
         .tv-profile-btn:hover {
-          border-color: #F28F3B;
-          background: #fdf0f0;
+          border-color: var(--app-accent);
+          background: var(--state-danger-bg);
         }
         .tv-filter-bar {
           display: flex;
@@ -281,8 +281,8 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
           transition: all 0.12s;
         }
         .tv-filter-chip.active {
-          background: #F28F3B;
-          border-color: #F28F3B;
+          background: var(--app-accent);
+          border-color: var(--app-accent);
           color: #fff;
         }
         .tv-search {
@@ -299,7 +299,7 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
           background: #fff;
           transition: border-color 0.15s;
         }
-        .tv-search:focus { border-color: #F28F3B; }
+        .tv-search:focus { border-color: var(--app-accent); }
         .tv-empty {
           text-align: center;
           padding: 40px 20px;
@@ -358,8 +358,8 @@ export default function TeamView({ userId, userRole, onViewProfile }) {
             onClick={loadTeam}
             style={{
               fontFamily: "'DM Sans', sans-serif",
-              fontSize: 11, color: '#F28F3B', background: 'none',
-              border: '1px solid #f5c4c6', borderRadius: 8,
+              fontSize: 11, color: 'var(--app-accent)', background: 'none',
+              border: '1px solid var(--state-danger-bg)', borderRadius: 8,
               padding: '4px 12px', cursor: 'pointer',
             }}
           >

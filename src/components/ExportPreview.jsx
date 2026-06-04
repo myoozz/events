@@ -385,7 +385,7 @@ export default function ExportPreview({ event, userRole }) {
               </div>
             )}
             {allTnc.length === 0 && (
-              <div style={{ fontSize: '11px', color: '#92400E', marginTop: '8px', paddingTop: '8px', borderTop: '0.5px solid var(--border)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--state-warning)', marginTop: '8px', paddingTop: '8px', borderTop: '0.5px solid var(--border)' }}>
                 No T&C selected · Go to Cost Summary tab to add clauses
               </div>
             )}

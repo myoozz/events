@@ -17,7 +17,7 @@ const MODES = [
     desc: 'Fast estimate with elements and costs. Get totals with agency fee and GST.',
     have: ['List of elements with approximate costs', 'Agency fee and GST percentages'],
     tab: 'elements',
-    color: '#1E40AF',
+    color: 'var(--state-info)',
   },
   {
     key: 'elements',
@@ -26,7 +26,7 @@ const MODES = [
     desc: 'Build a clean scope of work by category — no costs, just what is needed.',
     have: ['List of elements or past Excel sheet', 'Category breakdown if available'],
     tab: 'elements',
-    color: '#065F46',
+    color: 'var(--state-success)',
   },
   {
     key: 'execution',
@@ -35,7 +35,7 @@ const MODES = [
     desc: 'Assign every element to your team, set deadlines, track to completion.',
     have: ['Approved element list', 'Team member names and contact details', 'Event date and deadlines'],
     tab: 'tasks',
-    color: '#92400E',
+    color: 'var(--state-warning)',
   },
   {
     key: 'production',

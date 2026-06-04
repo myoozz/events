@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabase'
 
-const RED = '#bc1723'
+const RED = 'var(--app-accent)'
 const RED_HOVER = '#8E0A1F'
 
 const inputStyle = {

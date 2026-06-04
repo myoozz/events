@@ -4,7 +4,7 @@ import { supabase } from '../supabase'
 const STATUS_STYLES = {
   pending: { bg: 'var(--amber-light)', color: 'var(--amber)' },
   accepted: { bg: 'var(--green-light)', color: 'var(--green)' },
-  declined: { bg: '#FCEBEB', color: '#A32D2D' },
+  declined: { bg: 'var(--state-danger-bg)', color: 'var(--state-danger)' },
 }
 
 export default function EarlyAccess() {
@@ -151,8 +151,8 @@ export default function EarlyAccess() {
                         onClick={() => { setResponding(r.id + '-decline'); setMessage('Thank you for your interest in Events by Myoozz. We are currently onboarding in limited batches and will keep you updated as we expand access.') }}
                         style={{
                           padding: '7px 14px', fontSize: '12px', fontWeight: 500,
-                          fontFamily: 'var(--font-body)', background: '#FCEBEB',
-                          color: '#A32D2D', border: '0.5px solid var(--border)',
+                          fontFamily: 'var(--font-body)', background: 'var(--state-danger-bg)',
+                          color: 'var(--state-danger)', border: '0.5px solid var(--border)',
                           borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                         }}
                       >
@@ -199,7 +199,7 @@ export default function EarlyAccess() {
                         style={{
                           padding: '7px 16px', fontSize: '12px', fontWeight: 500,
                           fontFamily: 'var(--font-body)',
-                          background: responding === r.id + '-decline' ? '#A32D2D' : 'var(--green)',
+                          background: responding === r.id + '-decline' ? 'var(--state-danger)' : 'var(--green)',
                           color: 'white', border: 'none',
                           borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                         }}

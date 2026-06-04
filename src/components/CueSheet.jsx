@@ -346,7 +346,7 @@ function CityCueSheet({ event, city, sheetData, onSave, saving }) {
                     {rows.length > 1 && (
                       <button onClick={() => deleteRow(idx)} title="Delete row"
                         style={{ padding: '2px 5px', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1 }}
-                        onMouseOver={e => e.currentTarget.style.color = '#DC2626'}
+                        onMouseOver={e => e.currentTarget.style.color = 'var(--state-danger)'}
                         onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}>
                         ✕
                       </button>

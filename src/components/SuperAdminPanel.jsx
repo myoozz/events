@@ -7,18 +7,18 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 const EF_BASE = 'https://rjscsnakkexunvsfhdut.supabase.co/functions/v1'
 
 const STATUS_COLORS = {
-  pending_review: { bg: '#FEF3C7', color: '#92400E', label: 'Pending' },
+  pending_review: { bg: 'var(--state-warning-bg)', color: 'var(--state-warning)', label: 'Pending' },
   waitlisted:     { bg: '#E0E7FF', color: '#3730A3', label: 'Waitlisted' },
-  active:         { bg: '#D1FAE5', color: '#065F46', label: 'Active' },
-  suspended:      { bg: '#FEE2E2', color: '#991B1B', label: 'Suspended' },
+  active:         { bg: 'var(--state-success-bg)', color: 'var(--state-success)', label: 'Active' },
+  suspended:      { bg: 'var(--state-danger-bg)', color: 'var(--state-danger)', label: 'Suspended' },
   expired:        { bg: '#F3F4F6', color: '#6B7280', label: 'Expired' },
 }
 
 const PLAN_COLORS = {
-  trial:     { bg: '#FEF3C7', color: '#92400E' },
-  starter:   { bg: '#DBEAFE', color: '#1E40AF' },
+  trial:     { bg: 'var(--state-warning-bg)', color: 'var(--state-warning)' },
+  starter:   { bg: 'var(--state-info-bg)', color: 'var(--state-info)' },
   growth:    { bg: '#E0E7FF', color: '#3730A3' },
-  unlimited: { bg: '#D1FAE5', color: '#065F46' },
+  unlimited: { bg: 'var(--state-success-bg)', color: 'var(--state-success)' },
 }
 
 const SECTIONS = [
@@ -64,34 +64,34 @@ const FD = "'Cormorant Garamond', serif"
 const inputStyle = {
   width: '100%', padding: '9px 12px', fontSize: '14px', fontFamily: F,
   outline: 'none', boxSizing: 'border-box',
-  background: '#faf8f5', border: '0.5px solid #d8d2c8', borderRadius: '8px', color: '#1a1008',
+  background: 'var(--app-bg)', border: '0.5px solid var(--app-border)', borderRadius: '8px', color: 'var(--app-ink)',
 }
 
 const btnPrimary = {
   padding: '9px 18px', fontSize: '13px', fontWeight: 600, fontFamily: F,
-  background: '#bc1723', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer',
+  background: 'var(--app-accent)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer',
 }
 
 const btnSecondary = {
   padding: '9px 16px', fontSize: '13px', fontWeight: 500, fontFamily: F,
-  background: '#f2efe9', color: '#1a1008', border: 'none', borderRadius: '8px', cursor: 'pointer',
+  background: 'var(--app-surface)', color: 'var(--app-ink)', border: 'none', borderRadius: '8px', cursor: 'pointer',
 }
 
 const btnDanger = {
   padding: '9px 16px', fontSize: '13px', fontWeight: 600, fontFamily: F,
-  background: '#FEE2E2', color: '#991B1B', border: 'none', borderRadius: '8px', cursor: 'pointer',
+  background: 'var(--state-danger-bg)', color: 'var(--state-danger)', border: 'none', borderRadius: '8px', cursor: 'pointer',
 }
 
 const thStyle = {
   padding: '10px 14px', fontSize: '11px', fontWeight: 600,
-  textTransform: 'uppercase', letterSpacing: '0.6px', color: '#7a7060',
-  background: '#f2efe9', fontFamily: F, borderBottom: '0.5px solid #d8d2c8',
+  textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--app-text-dim-lg)',
+  background: 'var(--app-surface)', fontFamily: F, borderBottom: '0.5px solid var(--app-border)',
   textAlign: 'left', whiteSpace: 'nowrap',
 }
 
 const tdStyle = {
-  padding: '11px 14px', fontSize: '13px', color: '#1a1008',
-  fontFamily: F, borderBottom: '0.5px solid #d8d2c8', verticalAlign: 'middle',
+  padding: '11px 14px', fontSize: '13px', color: 'var(--app-ink)',
+  fontFamily: F, borderBottom: '0.5px solid var(--app-border)', verticalAlign: 'middle',
 }
 
 // ── Shared components ─────────────────────────────────────────────────────────
@@ -117,8 +117,8 @@ function PlanPill({ plan }) {
 function FieldBlock({ label, value, mono }) {
   return (
     <div>
-      <div style={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#7a7060', marginBottom: '2px', fontFamily: F }}>{label}</div>
-      <div style={{ fontSize: '13px', color: value ? '#1a1008' : '#7a7060', fontFamily: mono ? 'JetBrains Mono, monospace' : F }}>{value || '—'}</div>
+      <div style={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--app-text-dim-lg)', marginBottom: '2px', fontFamily: F }}>{label}</div>
+      <div style={{ fontSize: '13px', color: value ? 'var(--app-ink)' : 'var(--app-text-dim-lg)', fontFamily: mono ? 'JetBrains Mono, monospace' : F }}>{value || '—'}</div>
     </div>
   )
 }
@@ -126,14 +126,14 @@ function FieldBlock({ label, value, mono }) {
 function SectionHeader({ title, subtitle }) {
   return (
     <div style={{ marginBottom: '28px' }}>
-      <h2 style={{ fontFamily: FD, fontSize: '28px', fontWeight: 700, color: '#1a1008', marginBottom: '6px', letterSpacing: '-0.3px' }}>{title}</h2>
-      <p style={{ fontSize: '14px', color: '#7a7060', fontFamily: F }}>{subtitle}</p>
+      <h2 style={{ fontFamily: FD, fontSize: '28px', fontWeight: 700, color: 'var(--app-ink)', marginBottom: '6px', letterSpacing: '-0.3px' }}>{title}</h2>
+      <p style={{ fontSize: '14px', color: 'var(--app-text-dim-lg)', fontFamily: F }}>{subtitle}</p>
     </div>
   )
 }
 
 function ModalLabel({ children }) {
-  return <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#7a7060', marginBottom: '6px', fontFamily: F }}>{children}</label>
+  return <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--app-text-dim-lg)', marginBottom: '6px', fontFamily: F }}>{children}</label>
 }
 
 function SAModal({ open, onClose, title, subtitle, children }) {
@@ -150,15 +150,15 @@ function SAModal({ open, onClose, title, subtitle, children }) {
           key="modal"
           initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.15 }}
-          style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', width: '100%', maxWidth: '480px', padding: '28px 32px', maxHeight: '90vh', overflowY: 'auto' }}
+          style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', width: '100%', maxWidth: '480px', padding: '28px 32px', maxHeight: '90vh', overflowY: 'auto' }}
           onClick={e => e.stopPropagation()}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
             <div>
-              <h3 style={{ fontFamily: FD, fontSize: '22px', fontWeight: 700, color: '#1a1008', marginBottom: '4px' }}>{title}</h3>
-              {subtitle && <p style={{ fontSize: '13px', color: '#7a7060', fontFamily: F }}>{subtitle}</p>}
+              <h3 style={{ fontFamily: FD, fontSize: '22px', fontWeight: 700, color: 'var(--app-ink)', marginBottom: '4px' }}>{title}</h3>
+              {subtitle && <p style={{ fontSize: '13px', color: 'var(--app-text-dim-lg)', fontFamily: F }}>{subtitle}</p>}
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7a7060', fontSize: '18px', padding: '2px', lineHeight: 1 }}>✕</button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--app-text-dim-lg)', fontSize: '18px', padding: '2px', lineHeight: 1 }}>✕</button>
           </div>
           {children}
         </motion.div>
@@ -210,9 +210,9 @@ function NotificationStrip({ message, type, onDone }) {
   }, [message, type, onDone])
   if (!message) return null
   const isSuccess = type === 'success'
-  const accent = isSuccess ? '#4ade80' : '#f87171'
+  const accent = isSuccess ? 'var(--state-success)' : 'var(--state-danger)'
   const bg     = isSuccess ? 'rgba(74, 222, 128, 0.12)' : 'rgba(248, 113, 113, 0.12)'
-  const fg     = isSuccess ? '#065F46' : '#991B1B'
+  const fg     = isSuccess ? 'var(--state-success)' : 'var(--state-danger)'
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
@@ -255,10 +255,10 @@ function SectionOverview({ setActiveSection }) {
   }, [])
 
   const cards = [
-    { label: 'Total Tenants',     value: stats.tenants, accent: '#bc1723' },
-    { label: 'Active Tenants',    value: stats.active,  accent: '#065F46' },
-    { label: 'Pending Approvals', value: stats.pending, accent: '#92400E' },
-    { label: 'Total Users',       value: stats.users,   accent: '#1E40AF' },
+    { label: 'Total Tenants',     value: stats.tenants, accent: 'var(--app-accent)' },
+    { label: 'Active Tenants',    value: stats.active,  accent: 'var(--state-success)' },
+    { label: 'Pending Approvals', value: stats.pending, accent: 'var(--state-warning)' },
+    { label: 'Total Users',       value: stats.users,   accent: 'var(--state-info)' },
     { label: 'Total Events',      value: stats.events,  accent: '#3730A3' },
   ]
 
@@ -267,23 +267,23 @@ function SectionOverview({ setActiveSection }) {
       <SectionHeader title="Platform Overview" subtitle="Live platform health across all tenants." />
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
         {cards.map(c => (
-          <div key={c.label} style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '20px 24px', minWidth: '160px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
+          <div key={c.label} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', minWidth: '160px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
             <div style={{ fontSize: '28px', fontWeight: 700, fontFamily: FD, color: c.accent, letterSpacing: '-0.5px', marginBottom: '4px' }}>{loading ? '—' : c.value}</div>
-            <div style={{ fontSize: '12px', fontWeight: 500, fontFamily: F, color: '#7a7060', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{c.label}</div>
+            <div style={{ fontSize: '12px', fontWeight: 500, fontFamily: F, color: 'var(--app-text-dim-lg)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{c.label}</div>
           </div>
         ))}
       </div>
 
       {stats.pending > 0 && (
-        <div style={{ background: '#FFFBEB', border: '0.5px solid #FDE68A', borderRadius: '10px', padding: '14px 20px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '14px', color: '#92400E', fontFamily: F }}>⚠️ {stats.pending} application(s) awaiting your review.</span>
-          <button onClick={() => setActiveSection('approvals')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#bc1723', fontFamily: F, padding: 0 }}>Go to Approvals →</button>
+        <div style={{ background: 'var(--state-warning-bg)', border: '0.5px solid var(--state-warning-bg)', borderRadius: '10px', padding: '14px 20px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '14px', color: 'var(--state-warning)', fontFamily: F }}>⚠️ {stats.pending} application(s) awaiting your review.</span>
+          <button onClick={() => setActiveSection('approvals')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: 'var(--app-accent)', fontFamily: F, padding: 0 }}>Go to Approvals →</button>
         </div>
       )}
 
-      <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'hidden' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '0.5px solid #d8d2c8' }}>
-          <span style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: '#1a1008' }}>Recent Tenants</span>
+      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--app-border)' }}>
+          <span style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: 'var(--app-ink)' }}>Recent Tenants</span>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>{['Company', 'Contact', 'Status', 'Plan', 'Registered'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
@@ -291,16 +291,16 @@ function SectionOverview({ setActiveSection }) {
             {loading
               ? Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={`skel-${i}`} cols={5} />)
               : recent.length === 0
-                ? <tr><td colSpan={5} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No tenants yet</td></tr>
+                ? <tr><td colSpan={5} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>No tenants yet</td></tr>
                 : recent.map((t, i) => (
-                  <tr key={t.id} onClick={() => setActiveSection('tenants')} style={{ cursor: 'pointer', background: i % 2 === 0 ? '#fff' : '#faf8f5' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f2efe9'}
-                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? '#fff' : '#faf8f5'}>
+                  <tr key={t.id} onClick={() => setActiveSection('tenants')} style={{ cursor: 'pointer', background: i % 2 === 0 ? '#fff' : 'var(--app-bg)' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--app-surface)'}
+                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? '#fff' : 'var(--app-bg)'}>
                     <td style={{ ...tdStyle, fontWeight: 500 }}>{t.name}</td>
                     <td style={tdStyle}>{t.contact_name || '—'}</td>
                     <td style={tdStyle}><StatusPill status={t.status} /></td>
                     <td style={tdStyle}><PlanPill plan={t.plan} /></td>
-                    <td style={{ ...tdStyle, color: '#7a7060' }}>{fmtDate(t.created_at)}</td>
+                    <td style={{ ...tdStyle, color: 'var(--app-text-dim-lg)' }}>{fmtDate(t.created_at)}</td>
                   </tr>
                 ))
             }
@@ -386,21 +386,21 @@ function SectionApprovals({ refreshBadge, showToast, showError }) {
     <div>
       <SectionHeader title="Approvals Queue" subtitle="Review and act on incoming tenant applications." />
       {loading ? (
-        <p style={{ textAlign: 'center', color: '#7a7060', padding: '40px 0', fontFamily: F }}>Loading...</p>
+        <p style={{ textAlign: 'center', color: 'var(--app-text-dim-lg)', padding: '40px 0', fontFamily: F }}>Loading...</p>
       ) : list.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
           <div style={{ fontSize: '32px', marginBottom: '12px' }}>✓</div>
-          <p style={{ fontFamily: FD, fontSize: '20px', color: '#1a1008', marginBottom: '6px' }}>All caught up</p>
-          <p style={{ fontSize: '14px', color: '#7a7060', fontFamily: F }}>No pending applications.</p>
+          <p style={{ fontFamily: FD, fontSize: '20px', color: 'var(--app-ink)', marginBottom: '6px' }}>All caught up</p>
+          <p style={{ fontSize: '14px', color: 'var(--app-text-dim-lg)', fontFamily: F }}>No pending applications.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {list.map(t => (
-            <div key={t.id} style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '20px 24px' }}>
+            <div key={t.id} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: FD, fontSize: '18px', fontWeight: 700, color: '#1a1008' }}>{t.name}</span>
+                    <span style={{ fontFamily: FD, fontSize: '18px', fontWeight: 700, color: 'var(--app-ink)' }}>{t.name}</span>
                     <StatusPill status={t.status} />
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '8px 24px' }}>
@@ -418,7 +418,7 @@ function SectionApprovals({ refreshBadge, showToast, showError }) {
                   {t.status === 'pending_review' && (
                     <button onClick={() => { setWaitlistModal(t); setWaitlistReason("We're being careful with onboarding — you're on our list.") }} style={{ ...btnSecondary, whiteSpace: 'nowrap' }}>Waitlist</button>
                   )}
-                  {rowToasts[t.id] && <span style={{ fontSize: '12px', color: '#065F46', fontFamily: F, fontWeight: 500 }}>{rowToasts[t.id]}</span>}
+                  {rowToasts[t.id] && <span style={{ fontSize: '12px', color: 'var(--state-success)', fontFamily: F, fontWeight: 500 }}>{rowToasts[t.id]}</span>}
                 </div>
               </div>
             </div>
@@ -594,14 +594,14 @@ function TenantDetail({ tenant, onBack, showToast, showError }) {
     <div>
       <button onClick={onBack} style={{ ...btnSecondary, marginBottom: '20px', fontSize: '12px' }}>← Back to Tenants</button>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: FD, fontSize: '26px', fontWeight: 700, color: '#1a1008' }}>{tenant.name}</span>
+        <span style={{ fontFamily: FD, fontSize: '26px', fontWeight: 700, color: 'var(--app-ink)' }}>{tenant.name}</span>
         <StatusPill status={tenant.status} />
         <PlanPill plan={tenant.plan} />
       </div>
 
-      <div style={{ display: 'flex', borderBottom: '0.5px solid #d8d2c8', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', borderBottom: '0.5px solid var(--app-border)', marginBottom: '24px' }}>
         {subTabs.map(st => (
-          <button key={st} onClick={() => setSubTab(st)} style={{ padding: '10px 20px', fontSize: '13px', fontWeight: 500, fontFamily: F, background: 'none', border: 'none', borderBottom: subTab === st ? '2px solid #bc1723' : '2px solid transparent', color: subTab === st ? '#1a1008' : '#7a7060', cursor: 'pointer', marginBottom: '-0.5px', textTransform: 'capitalize' }}>
+          <button key={st} onClick={() => setSubTab(st)} style={{ padding: '10px 20px', fontSize: '13px', fontWeight: 500, fontFamily: F, background: 'none', border: 'none', borderBottom: subTab === st ? '2px solid var(--app-accent)' : '2px solid transparent', color: subTab === st ? 'var(--app-ink)' : 'var(--app-text-dim-lg)', cursor: 'pointer', marginBottom: '-0.5px', textTransform: 'capitalize' }}>
             {st}
           </button>
         ))}
@@ -628,11 +628,11 @@ function TenantDetail({ tenant, onBack, showToast, showError }) {
           </div>
           <button onClick={handleSaveForm} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.6 : 1, marginBottom: '32px' }}>{saving ? 'Saving...' : 'Save Changes'}</button>
 
-          <div style={{ borderTop: '0.5px solid #d8d2c8', paddingTop: '24px' }}>
-            <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#7a7060', fontFamily: F, marginBottom: '12px' }}>Danger Zone</p>
+          <div style={{ borderTop: '0.5px solid var(--app-border)', paddingTop: '24px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--app-text-dim-lg)', fontFamily: F, marginBottom: '12px' }}>Danger Zone</p>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <button onClick={() => handleStatusChange('suspended')} style={{ padding: '9px 16px', fontSize: '13px', fontWeight: 500, fontFamily: F, background: '#FEF3C7', color: '#92400E', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Suspend Tenant</button>
-              <button onClick={() => handleStatusChange('active')} style={{ padding: '9px 16px', fontSize: '13px', fontWeight: 500, fontFamily: F, background: '#D1FAE5', color: '#065F46', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Activate Tenant</button>
+              <button onClick={() => handleStatusChange('suspended')} style={{ padding: '9px 16px', fontSize: '13px', fontWeight: 500, fontFamily: F, background: 'var(--state-warning-bg)', color: 'var(--state-warning)', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Suspend Tenant</button>
+              <button onClick={() => handleStatusChange('active')} style={{ padding: '9px 16px', fontSize: '13px', fontWeight: 500, fontFamily: F, background: 'var(--state-success-bg)', color: 'var(--state-success)', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Activate Tenant</button>
               <button onClick={() => setDeleteModal(true)} style={btnDanger}>Delete Tenant</button>
             </div>
           </div>
@@ -641,29 +641,29 @@ function TenantDetail({ tenant, onBack, showToast, showError }) {
 
       {subTab === 'team' && (
         <div>
-          {usersLoading ? <p style={{ color: '#7a7060', fontFamily: F }}>Loading...</p> : (
+          {usersLoading ? <p style={{ color: 'var(--app-text-dim-lg)', fontFamily: F }}>Loading...</p> : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr>{['Name', 'Email', 'Role', 'Status', 'Joined', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
                 {users.length === 0
-                  ? <tr><td colSpan={6} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No users</td></tr>
+                  ? <tr><td colSpan={6} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>No users</td></tr>
                   : users.map(u => (
                     <tr key={u.id}>
                       <td style={{ ...tdStyle, fontWeight: 500 }}>{u.full_name || '—'}</td>
                       <td style={tdStyle}>{u.email}</td>
                       <td style={tdStyle}>
-                        <select value={u.role} onChange={e => handleUserRoleChange(u.id, e.target.value)} style={{ fontSize: '12px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5' }}>
+                        <select value={u.role} onChange={e => handleUserRoleChange(u.id, e.target.value)} style={{ fontSize: '12px', fontFamily: F, padding: '4px 8px', border: '0.5px solid var(--app-border)', borderRadius: '6px', background: 'var(--app-bg)' }}>
                           {Object.entries(ROLE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                         </select>
                       </td>
                       <td style={tdStyle}><StatusPill status={u.status || 'active'} /></td>
-                      <td style={{ ...tdStyle, color: '#7a7060' }}>{fmtDate(u.created_at)}</td>
+                      <td style={{ ...tdStyle, color: 'var(--app-text-dim-lg)' }}>{fmtDate(u.created_at)}</td>
                       <td style={tdStyle}>
                         <div style={{ display: 'flex', gap: '6px' }}>
-                          <button onClick={() => handleUserStatusToggle(u)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: u.status === 'suspended' ? '#D1FAE5' : '#FEF3C7', color: u.status === 'suspended' ? '#065F46' : '#92400E', fontFamily: F }}>
+                          <button onClick={() => handleUserStatusToggle(u)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: u.status === 'suspended' ? 'var(--state-success-bg)' : 'var(--state-warning-bg)', color: u.status === 'suspended' ? 'var(--state-success)' : 'var(--state-warning)', fontFamily: F }}>
                             {u.status === 'suspended' ? 'Reinstate' : 'Suspend'}
                           </button>
-                          <button onClick={() => handleUserDelete(u.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#FEE2E2', color: '#991B1B', fontFamily: F }}>Delete</button>
+                          <button onClick={() => handleUserDelete(u.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-danger-bg)', color: 'var(--state-danger)', fontFamily: F }}>Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -677,18 +677,18 @@ function TenantDetail({ tenant, onBack, showToast, showError }) {
 
       {subTab === 'events' && (
         <div>
-          {eventsLoading ? <p style={{ color: '#7a7060', fontFamily: F }}>Loading...</p> : (
+          {eventsLoading ? <p style={{ color: 'var(--app-text-dim-lg)', fontFamily: F }}>Loading...</p> : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr>{['Event Name', 'Status', 'Cities', 'Created'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
                 {events.length === 0
-                  ? <tr><td colSpan={4} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No events</td></tr>
+                  ? <tr><td colSpan={4} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>No events</td></tr>
                   : events.map(ev => (
                     <tr key={ev.id}>
                       <td style={{ ...tdStyle, fontWeight: 500 }}>{ev.name}</td>
                       <td style={tdStyle}><StatusPill status={ev.status} /></td>
                       <td style={tdStyle}>{Array.isArray(ev.cities) ? ev.cities.join(', ') : (ev.cities || '—')}</td>
-                      <td style={{ ...tdStyle, color: '#7a7060' }}>{fmtDate(ev.created_at)}</td>
+                      <td style={{ ...tdStyle, color: 'var(--app-text-dim-lg)' }}>{fmtDate(ev.created_at)}</td>
                     </tr>
                   ))
                 }
@@ -700,8 +700,8 @@ function TenantDetail({ tenant, onBack, showToast, showError }) {
 
       {subTab === 'credits' && (
         <div>
-          {subLoading ? <p style={{ color: '#7a7060', fontFamily: F }}>Loading...</p> : !sub ? (
-            <p style={{ color: '#7a7060', fontFamily: F }}>No subscription record found.</p>
+          {subLoading ? <p style={{ color: 'var(--app-text-dim-lg)', fontFamily: F }}>Loading...</p> : !sub ? (
+            <p style={{ color: 'var(--app-text-dim-lg)', fontFamily: F }}>No subscription record found.</p>
           ) : (
             <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
@@ -710,13 +710,13 @@ function TenantDetail({ tenant, onBack, showToast, showError }) {
                   { label: 'Status', value: <StatusPill status={sub.status} /> },
                   { label: 'Credits Total', value: sub.event_credits_total ?? '—' },
                   { label: 'Credits Used', value: sub.event_credits_used ?? 0 },
-                  { label: 'Remaining', value: <span style={{ fontWeight: 700, color: remaining > 0 ? '#065F46' : '#991B1B' }}>{remaining}</span> },
+                  { label: 'Remaining', value: <span style={{ fontWeight: 700, color: remaining > 0 ? 'var(--state-success)' : 'var(--state-danger)' }}>{remaining}</span> },
                   { label: 'Starts At', value: fmtDate(sub.starts_at) },
                   { label: 'Ends At', value: fmtDate(sub.ends_at) },
                 ].map(f => (
-                  <div key={f.label} style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '10px', padding: '14px 18px' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#7a7060', marginBottom: '6px', fontFamily: F }}>{f.label}</div>
-                    <div style={{ fontSize: '15px', fontFamily: F, color: '#1a1008' }}>{f.value}</div>
+                  <div key={f.label} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '10px', padding: '14px 18px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--app-text-dim-lg)', marginBottom: '6px', fontFamily: F }}>{f.label}</div>
+                    <div style={{ fontSize: '15px', fontFamily: F, color: 'var(--app-ink)' }}>{f.value}</div>
                   </div>
                 ))}
               </div>
@@ -815,14 +815,14 @@ function SectionTenants({ showToast, showError }) {
         </select>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email…" style={{ ...inputStyle, flex: 1, minWidth: '200px' }} />
       </div>
-      <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>{['Company', 'Status', 'Plan', 'Trial Ends', 'Events', 'Users', 'Last User Added', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
           <tbody>
             {loading
               ? Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={`skel-${i}`} cols={8} />)
               : filtered.length === 0
-                ? <tr><td colSpan={8} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No tenants match</td></tr>
+                ? <tr><td colSpan={8} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>No tenants match</td></tr>
                 : filtered.map(t => {
                   const dl = daysLeft(t.trial_ends_at)
                   const c = countMap[t.id]
@@ -831,18 +831,18 @@ function SectionTenants({ showToast, showError }) {
                       <td style={{ ...tdStyle, fontWeight: 500 }}>{t.name}</td>
                       <td style={tdStyle}><StatusPill status={t.status} /></td>
                       <td style={tdStyle}><PlanPill plan={t.plan} /></td>
-                      <td style={{ ...tdStyle, color: dl !== null && dl < 7 ? '#991B1B' : '#7a7060' }}>
+                      <td style={{ ...tdStyle, color: dl !== null && dl < 7 ? 'var(--state-danger)' : 'var(--app-text-dim-lg)' }}>
                         {t.trial_ends_at ? (dl !== null ? `${dl}d left` : fmtDate(t.trial_ends_at)) : '—'}
                       </td>
                       <td style={tdStyle}>{c?.events ?? '—'}</td>
                       <td style={tdStyle}>{c?.users ?? '—'}</td>
-                      <td style={{ ...tdStyle, color: '#7a7060' }}>
+                      <td style={{ ...tdStyle, color: 'var(--app-text-dim-lg)' }}>
                         {tenantLastActive[t.id]
                           ? new Date(tenantLastActive[t.id]).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })
                           : '—'}
                       </td>
                       <td style={tdStyle}>
-                        <button onClick={() => setSelected(t)} style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '6px', border: '0.5px solid #d8d2c8', background: '#faf8f5', color: '#1a1008', cursor: 'pointer', fontFamily: F }}>View →</button>
+                        <button onClick={() => setSelected(t)} style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '6px', border: '0.5px solid var(--app-border)', background: 'var(--app-bg)', color: 'var(--app-ink)', cursor: 'pointer', fontFamily: F }}>View →</button>
                       </td>
                     </tr>
                   )
@@ -927,43 +927,43 @@ function SectionUsers({ showToast, showError }) {
         <input value={search} onChange={e => { setSearch(e.target.value); setPage(0) }} placeholder="Search name or email…" style={{ ...inputStyle, flex: 1, minWidth: '180px' }} />
       </div>
 
-      <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>{['Name', 'Email', 'Role', 'Tenant', 'Status', 'Joined', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
           <tbody>
             {loading
               ? Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={`skel-${i}`} cols={7} />)
               : paged.length === 0
-                ? <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No users match</td></tr>
+                ? <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>No users match</td></tr>
                 : paged.map(u => (
                   <tr key={u.id}>
                     <td style={{ ...tdStyle, fontWeight: 500 }}>{u.full_name || '—'}</td>
                     <td style={tdStyle}>{u.email}</td>
                     <td style={tdStyle}>
-                      <select value={u.role} onChange={e => handleRoleChange(u.id, e.target.value)} style={{ fontSize: '12px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5' }}>
+                      <select value={u.role} onChange={e => handleRoleChange(u.id, e.target.value)} style={{ fontSize: '12px', fontFamily: F, padding: '4px 8px', border: '0.5px solid var(--app-border)', borderRadius: '6px', background: 'var(--app-bg)' }}>
                         {Object.entries(ROLE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                       </select>
                     </td>
-                    <td style={{ ...tdStyle, color: '#7a7060' }}>{u.tenants?.name || '—'}</td>
+                    <td style={{ ...tdStyle, color: 'var(--app-text-dim-lg)' }}>{u.tenants?.name || '—'}</td>
                     <td style={tdStyle}>
                       {u.invite_status === 'invited' ? (() => {
                         const hoursLeft = (new Date(u.invited_at).getTime() + 86400000 - Date.now()) / 3600000
                         return hoursLeft > 0
-                          ? <span style={{background:'#fef3c7',color:'#92400e',padding:'2px 8px',borderRadius:4,fontSize:12,fontFamily:'DM Sans'}}>
+                          ? <span style={{background:'var(--state-warning-bg)',color:'var(--state-warning)',padding:'2px 8px',borderRadius:4,fontSize:12,fontFamily:'DM Sans'}}>
                               Invited · {Math.floor(hoursLeft)}h {Math.floor((hoursLeft % 1) * 60)}m left
                             </span>
-                          : <span style={{background:'#fee2e2',color:'#991b1b',padding:'2px 8px',borderRadius:4,fontSize:12,fontFamily:'DM Sans'}}>
+                          : <span style={{background:'var(--state-danger-bg)',color:'var(--state-danger)',padding:'2px 8px',borderRadius:4,fontSize:12,fontFamily:'DM Sans'}}>
                               Expired
                             </span>
                       })() : <StatusPill status={u.status || 'active'} />}
                     </td>
-                    <td style={{ ...tdStyle, color: '#7a7060' }}>{fmtDate(u.created_at)}</td>
+                    <td style={{ ...tdStyle, color: 'var(--app-text-dim-lg)' }}>{fmtDate(u.created_at)}</td>
                     <td style={tdStyle}>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <button onClick={() => handleStatusToggle(u)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: (u.status || 'active') === 'suspended' ? '#D1FAE5' : '#FEF3C7', color: (u.status || 'active') === 'suspended' ? '#065F46' : '#92400E', fontFamily: F }}>
+                        <button onClick={() => handleStatusToggle(u)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: (u.status || 'active') === 'suspended' ? 'var(--state-success-bg)' : 'var(--state-warning-bg)', color: (u.status || 'active') === 'suspended' ? 'var(--state-success)' : 'var(--state-warning)', fontFamily: F }}>
                           {(u.status || 'active') === 'suspended' ? 'Reinstate' : 'Suspend'}
                         </button>
-                        <button onClick={() => handleDelete(u.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#FEE2E2', color: '#991B1B', fontFamily: F }}>Delete</button>
+                        <button onClick={() => handleDelete(u.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-danger-bg)', color: 'var(--state-danger)', fontFamily: F }}>Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -974,7 +974,7 @@ function SectionUsers({ showToast, showError }) {
       </div>
 
       {totalPages > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', fontFamily: F, fontSize: '13px', color: '#7a7060' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', fontFamily: F, fontSize: '13px', color: 'var(--app-text-dim-lg)' }}>
           <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ ...btnSecondary, opacity: page === 0 ? 0.4 : 1 }}>← Prev</button>
           <span>Page {page + 1} of {totalPages}</span>
           <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ ...btnSecondary, opacity: page >= totalPages - 1 ? 0.4 : 1 }}>Next →</button>
@@ -1058,30 +1058,30 @@ function SectionCredits({ showToast, showError }) {
 
       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '20px' }}>
         {[
-          { label: 'Active Subscriptions', value: total, accent: '#065F46' },
-          { label: 'On Trial', value: onTrial, accent: '#92400E' },
-          { label: '0 Credits Remaining', value: zeroCredits, accent: '#991B1B' },
+          { label: 'Active Subscriptions', value: total, accent: 'var(--state-success)' },
+          { label: 'On Trial', value: onTrial, accent: 'var(--state-warning)' },
+          { label: '0 Credits Remaining', value: zeroCredits, accent: 'var(--state-danger)' },
         ].map(c => (
-          <div key={c.label} style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '20px 24px', minWidth: '160px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
+          <div key={c.label} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', minWidth: '160px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
             <div style={{ fontSize: '28px', fontWeight: 700, fontFamily: FD, color: c.accent }}>{loading ? '—' : c.value}</div>
-            <div style={{ fontSize: '12px', fontFamily: F, color: '#7a7060', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '4px' }}>{c.label}</div>
+            <div style={{ fontSize: '12px', fontFamily: F, color: 'var(--app-text-dim-lg)', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '4px' }}>{c.label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ background: '#FEF3C7', border: '0.5px solid #F59E0B', borderRadius: '8px', padding: '12px 16px', fontSize: '13px', color: '#92400E', marginBottom: '16px', fontFamily: F }}>
+      <div style={{ background: 'var(--state-warning-bg)', border: '0.5px solid var(--state-warning)', borderRadius: '8px', padding: '12px 16px', fontSize: '13px', color: 'var(--state-warning)', marginBottom: '16px', fontFamily: F }}>
         💡 Credits will power AI features — element suggestions, brief analysis, and smart imports. Assign allowances now and activate when AI goes live.
       </div>
 
-      <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>{['Tenant', 'Plan', 'Total', 'Used', 'Remaining', 'Trial Ends', 'Sub Status', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
           <tbody>
             {loading
-              ? <tr><td colSpan={8} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
+              ? <tr><td colSpan={8} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>Loading...</td></tr>
               : subs.map(s => {
                 const rem = (s.event_credits_total || 0) - (s.event_credits_used || 0)
-                const remColor = rem > 2 ? '#065F46' : rem > 0 ? '#92400E' : '#991B1B'
+                const remColor = rem > 2 ? 'var(--state-success)' : rem > 0 ? 'var(--state-warning)' : 'var(--state-danger)'
                 const dl = daysLeft(s.tenants?.trial_ends_at)
                 return (
                   <tr key={s.id}>
@@ -1090,15 +1090,15 @@ function SectionCredits({ showToast, showError }) {
                     <td style={tdStyle}>{s.event_credits_total ?? '—'}</td>
                     <td style={tdStyle}>{s.event_credits_used ?? 0}</td>
                     <td style={{ ...tdStyle, fontWeight: 600, color: remColor }}>{rem}</td>
-                    <td style={{ ...tdStyle, color: dl !== null && dl < 7 ? '#991B1B' : '#7a7060' }}>
+                    <td style={{ ...tdStyle, color: dl !== null && dl < 7 ? 'var(--state-danger)' : 'var(--app-text-dim-lg)' }}>
                       {s.tenants?.trial_ends_at ? (dl !== null ? `${dl}d` : '—') : '—'}
                     </td>
                     <td style={tdStyle}><StatusPill status={s.status || 'active'} /></td>
                     <td style={tdStyle}>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <button onClick={() => { setTopUpModal(s); setTopUpN(10) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#D1FAE5', color: '#065F46', fontFamily: F }}>Top Up</button>
-                        <button onClick={() => { setChangePlanModal(s); setNewPlan(s.plan || 'trial') }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#DBEAFE', color: '#1E40AF', fontFamily: F }}>Plan</button>
-                        <button onClick={() => { setExtendModal(s); setExtendDays(30) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#FEF3C7', color: '#92400E', fontFamily: F }}>Extend</button>
+                        <button onClick={() => { setTopUpModal(s); setTopUpN(10) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-success-bg)', color: 'var(--state-success)', fontFamily: F }}>Top Up</button>
+                        <button onClick={() => { setChangePlanModal(s); setNewPlan(s.plan || 'trial') }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-info-bg)', color: 'var(--state-info)', fontFamily: F }}>Plan</button>
+                        <button onClick={() => { setExtendModal(s); setExtendDays(30) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-warning-bg)', color: 'var(--state-warning)', fontFamily: F }}>Extend</button>
                       </div>
                     </td>
                   </tr>
@@ -1140,9 +1140,9 @@ function SectionCredits({ showToast, showError }) {
 
 const SOURCE_TAGS = [
   { value: 'AI_RESEARCH',     label: 'AI Research',     color: '#7C3AED' },
-  { value: 'VENDOR_QUOTE',    label: 'Vendor Quote',    color: '#065F46' },
-  { value: 'INTERNAL',        label: 'Internal',        color: '#1E40AF' },
-  { value: 'MARKET_SURVEY',   label: 'Market Survey',   color: '#92400E' },
+  { value: 'VENDOR_QUOTE',    label: 'Vendor Quote',    color: 'var(--state-success)' },
+  { value: 'INTERNAL',        label: 'Internal',        color: 'var(--state-info)' },
+  { value: 'MARKET_SURVEY',   label: 'Market Survey',   color: 'var(--state-warning)' },
   { value: 'CLIENT_PROVIDED', label: 'Client Provided', color: '#6B7280' },
 ]
 
@@ -1337,8 +1337,8 @@ function SectionRateCards({ showToast }) {
     XLSX.writeFile(wb, 'rate_card_template.xlsx')
   }
 
-  const miniInput = { fontSize: '12px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5', color: '#1a1008', outline: 'none', width: '100%' }
-  const tabStyle = (active) => ({ padding: '8px 16px', fontSize: '13px', fontFamily: F, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', borderBottom: active ? '2px solid #bc1723' : '2px solid transparent', color: active ? '#1a1008' : '#7a7060', marginBottom: '-0.5px' })
+  const miniInput = { fontSize: '12px', fontFamily: F, padding: '4px 8px', border: '0.5px solid var(--app-border)', borderRadius: '6px', background: 'var(--app-bg)', color: 'var(--app-ink)', outline: 'none', width: '100%' }
+  const tabStyle = (active) => ({ padding: '8px 16px', fontSize: '13px', fontFamily: F, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', borderBottom: active ? '2px solid var(--app-accent)' : '2px solid transparent', color: active ? 'var(--app-ink)' : 'var(--app-text-dim-lg)', marginBottom: '-0.5px' })
 
   const validCount = importRows.filter(r => validateRow(r).length === 0).length
   const errorCount = importRows.length - validCount
@@ -1347,7 +1347,7 @@ function SectionRateCards({ showToast }) {
     <div>
       <SectionHeader title="Rate Cards" subtitle="Platform master rates and all tenant rate cards." />
 
-      <div style={{ display: 'flex', borderBottom: '0.5px solid #d8d2c8', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', borderBottom: '0.5px solid var(--app-border)', marginBottom: '24px' }}>
         {[['browse', 'Browse & Edit'], ['import', 'Bulk Import'], ['templates', 'Templates']].map(([key, label]) => (
           <button key={key} onClick={() => setRcTab(key)} style={tabStyle(rcTab === key)}>{label}</button>
         ))}
@@ -1378,14 +1378,14 @@ function SectionRateCards({ showToast }) {
             <button onClick={() => setAddModal(true)} style={btnPrimary}>+ Add Row</button>
           </div>
 
-          <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'auto' }}>
+          <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
               <thead><tr>{['Element Name', 'Category', 'City', 'Rate Min', 'Rate Max', 'Rate Type', 'Source', 'Tenant', '✦', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
                 {loading
-                  ? <tr><td colSpan={10} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
+                  ? <tr><td colSpan={10} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>Loading...</td></tr>
                   : paged.length === 0
-                    ? <tr><td colSpan={10} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>No rows match</td></tr>
+                    ? <tr><td colSpan={10} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>No rows match</td></tr>
                     : paged.map(r => {
                       const isEditing = editingId === r.id
                       const srcTag = SOURCE_TAGS.find(s => s.value === r.source_tag)
@@ -1396,21 +1396,21 @@ function SectionRateCards({ showToast }) {
                           <td style={tdStyle}>{isEditing ? <input value={editBuffer.city} onChange={e => setEditBuffer(p => ({ ...p, city: e.target.value }))} style={miniInput} /> : (r.city || '—')}</td>
                           <td style={tdStyle}>{isEditing ? <input type="number" value={editBuffer.rate_min} onChange={e => setEditBuffer(p => ({ ...p, rate_min: e.target.value }))} style={{ ...miniInput, width: '80px' }} /> : (r.rate_min != null ? `₹${r.rate_min.toLocaleString('en-IN')}` : '—')}</td>
                           <td style={tdStyle}>{isEditing ? <input type="number" value={editBuffer.rate_max} onChange={e => setEditBuffer(p => ({ ...p, rate_max: e.target.value }))} style={{ ...miniInput, width: '80px' }} /> : (r.rate_max != null ? `₹${r.rate_max.toLocaleString('en-IN')}` : '—')}</td>
-                          <td style={tdStyle}>{isEditing ? <select value={editBuffer.rate_type} onChange={e => setEditBuffer(p => ({ ...p, rate_type: e.target.value }))} style={miniInput}>{['per_unit','per_day','lump_sum','per_person','per_sqft'].map(t => <option key={t} value={t}>{t}</option>)}</select> : <span style={{ fontSize: '11px', background: '#f2efe9', color: '#7a7060', padding: '2px 7px', borderRadius: '5px', fontFamily: F }}>{r.rate_type || '—'}</span>}</td>
-                          <td style={tdStyle}>{srcTag ? <span style={{ fontSize: '11px', background: srcTag.color + '20', color: srcTag.color, padding: '2px 8px', borderRadius: '5px', fontWeight: 600, fontFamily: F }}>{srcTag.label}</span> : <span style={{ color: '#7a7060' }}>—</span>}</td>
-                          <td style={{ ...tdStyle, fontSize: '12px', color: '#7a7060' }}>{r.is_platform_master ? 'Platform Master' : (r.tenants?.name || '—')}</td>
-                          <td style={{ ...tdStyle, textAlign: 'center' }}>{r.is_platform_master ? <span style={{ color: '#D97A28' }}>✦</span> : '—'}</td>
+                          <td style={tdStyle}>{isEditing ? <select value={editBuffer.rate_type} onChange={e => setEditBuffer(p => ({ ...p, rate_type: e.target.value }))} style={miniInput}>{['per_unit','per_day','lump_sum','per_person','per_sqft'].map(t => <option key={t} value={t}>{t}</option>)}</select> : <span style={{ fontSize: '11px', background: 'var(--app-surface)', color: 'var(--app-text-dim-lg)', padding: '2px 7px', borderRadius: '5px', fontFamily: F }}>{r.rate_type || '—'}</span>}</td>
+                          <td style={tdStyle}>{srcTag ? <span style={{ fontSize: '11px', background: srcTag.color + '20', color: srcTag.color, padding: '2px 8px', borderRadius: '5px', fontWeight: 600, fontFamily: F }}>{srcTag.label}</span> : <span style={{ color: 'var(--app-text-dim-lg)' }}>—</span>}</td>
+                          <td style={{ ...tdStyle, fontSize: '12px', color: 'var(--app-text-dim-lg)' }}>{r.is_platform_master ? 'Platform Master' : (r.tenants?.name || '—')}</td>
+                          <td style={{ ...tdStyle, textAlign: 'center' }}>{r.is_platform_master ? <span style={{ color: 'var(--app-accent-hover)' }}>✦</span> : '—'}</td>
                           <td style={tdStyle}>
                             <div style={{ display: 'flex', gap: '6px' }}>
                               {isEditing ? (
                                 <>
-                                  <button onClick={() => saveEdit(r.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#D1FAE5', color: '#065F46', fontFamily: F }}>Save</button>
-                                  <button onClick={() => setEditingId(null)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#f2efe9', color: '#7a7060', fontFamily: F }}>Cancel</button>
+                                  <button onClick={() => saveEdit(r.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-success-bg)', color: 'var(--state-success)', fontFamily: F }}>Save</button>
+                                  <button onClick={() => setEditingId(null)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--app-surface)', color: 'var(--app-text-dim-lg)', fontFamily: F }}>Cancel</button>
                                 </>
                               ) : (
                                 <>
-                                  <button onClick={() => { setEditingId(r.id); setEditBuffer({ element_name: r.element_name, city: r.city || '', rate_min: r.rate_min ?? '', rate_max: r.rate_max ?? '', rate_type: r.rate_type || '' }) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#f2efe9', color: '#1a1008', fontFamily: F }}>✏</button>
-                                  <button onClick={() => handleDeleteRow(r.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#FEE2E2', color: '#991B1B', fontFamily: F }}>🗑</button>
+                                  <button onClick={() => { setEditingId(r.id); setEditBuffer({ element_name: r.element_name, city: r.city || '', rate_min: r.rate_min ?? '', rate_max: r.rate_max ?? '', rate_type: r.rate_type || '' }) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--app-surface)', color: 'var(--app-ink)', fontFamily: F }}>✏</button>
+                                  <button onClick={() => handleDeleteRow(r.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-danger-bg)', color: 'var(--state-danger)', fontFamily: F }}>🗑</button>
                                 </>
                               )}
                             </div>
@@ -1424,7 +1424,7 @@ function SectionRateCards({ showToast }) {
           </div>
 
           {totalPages > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', fontFamily: F, fontSize: '13px', color: '#7a7060' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', fontFamily: F, fontSize: '13px', color: 'var(--app-text-dim-lg)' }}>
               <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ ...btnSecondary, opacity: page === 0 ? 0.4 : 1 }}>← Prev</button>
               <span>Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredRows.length)} of {filteredRows.length} rows</span>
               <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ ...btnSecondary, opacity: page >= totalPages - 1 ? 0.4 : 1 }}>Next →</button>
@@ -1436,14 +1436,14 @@ function SectionRateCards({ showToast }) {
       {rcTab === 'import' && (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, fontFamily: F, color: '#1a1008', whiteSpace: 'nowrap' }}>Import to:</label>
+            <label style={{ fontSize: '13px', fontWeight: 600, fontFamily: F, color: 'var(--app-ink)', whiteSpace: 'nowrap' }}>Import to:</label>
             <select value={importTenantId || ''} onChange={e => setImportTenantId(e.target.value || saTenantId)} style={{ ...inputStyle, width: 'auto', minWidth: '220px' }}>
               <option value={saTenantId || ''}>Platform Master (Benchmark)</option>
               {tenants.filter(t => t.id !== saTenantId).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </div>
 
-          <div style={{ display: 'flex', borderBottom: '0.5px solid #d8d2c8', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', borderBottom: '0.5px solid var(--app-border)', marginBottom: '20px' }}>
             {[['upload', 'Upload File'], ['paste', 'Paste Data']].map(([k, l]) => (
               <button key={k} onClick={() => setImportTab(k)} style={tabStyle(importTab === k)}>{l}</button>
             ))}
@@ -1453,13 +1453,13 @@ function SectionRateCards({ showToast }) {
             <div>
               <div
                 onClick={() => document.getElementById('rc-file-input').click()}
-                style={{ border: '1.5px dashed #d8d2c8', borderRadius: '12px', padding: '40px', textAlign: 'center', cursor: 'pointer', background: '#faf8f5', marginBottom: '16px' }}
+                style={{ border: '1.5px dashed var(--app-border)', borderRadius: '12px', padding: '40px', textAlign: 'center', cursor: 'pointer', background: 'var(--app-bg)', marginBottom: '16px' }}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFileUpload(f) }}
               >
-                <div style={{ fontSize: '14px', fontFamily: F, color: '#1a1008', marginBottom: '6px' }}>Drop your Excel file here or click to browse</div>
-                <div style={{ fontSize: '12px', fontFamily: F, color: '#7a7060' }}>Accepted format: .xlsx · Download the template from the Templates tab</div>
-                {importFile && <div style={{ marginTop: '10px', fontSize: '12px', color: '#065F46', fontFamily: F }}>📄 {importFile.name}</div>}
+                <div style={{ fontSize: '14px', fontFamily: F, color: 'var(--app-ink)', marginBottom: '6px' }}>Drop your Excel file here or click to browse</div>
+                <div style={{ fontSize: '12px', fontFamily: F, color: 'var(--app-text-dim-lg)' }}>Accepted format: .xlsx · Download the template from the Templates tab</div>
+                {importFile && <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--state-success)', fontFamily: F }}>📄 {importFile.name}</div>}
               </div>
               <input id="rc-file-input" type="file" accept=".xlsx" style={{ display: 'none' }} onChange={e => { if (e.target.files[0]) handleFileUpload(e.target.files[0]) }} />
             </div>
@@ -1467,12 +1467,12 @@ function SectionRateCards({ showToast }) {
 
           {importTab === 'paste' && (
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, fontFamily: F, color: '#7a7060', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Paste tab-separated data (copy from Excel):</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, fontFamily: F, color: 'var(--app-text-dim-lg)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Paste tab-separated data (copy from Excel):</label>
               <textarea
                 rows={10}
                 value={importPaste}
                 onChange={e => setImportPaste(e.target.value)}
-                style={{ width: '100%', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', padding: '10px 12px', border: '0.5px solid #d8d2c8', borderRadius: '8px', background: '#faf8f5', color: '#1a1008', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                style={{ width: '100%', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', padding: '10px 12px', border: '0.5px solid var(--app-border)', borderRadius: '8px', background: 'var(--app-bg)', color: 'var(--app-ink)', outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
                 placeholder={'Category\tElement Name\tCity\tRate Min\tRate Max\tRate Type\tUnit\tNotes\tSource\n...'}
               />
               <button onClick={handlePasteParse} style={{ ...btnSecondary, marginTop: '10px' }}>Parse</button>
@@ -1482,13 +1482,13 @@ function SectionRateCards({ showToast }) {
           {importRows.length > 0 && (
             <div style={{ marginTop: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontSize: '13px', fontFamily: F, color: '#1a1008' }}>
+                <span style={{ fontSize: '13px', fontFamily: F, color: 'var(--app-ink)' }}>
                   <strong>{validCount}</strong> rows ready to import
-                  {errorCount > 0 && <> · <span style={{ color: '#991B1B' }}>{errorCount} have errors</span></>}
+                  {errorCount > 0 && <> · <span style={{ color: 'var(--state-danger)' }}>{errorCount} have errors</span></>}
                 </span>
                 <button onClick={() => { setImportRows([]); setImportFile(null); setImportPaste('') }} style={{ ...btnSecondary, fontSize: '12px', padding: '6px 12px' }}>Clear</button>
               </div>
-              <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'auto', maxHeight: '360px' }}>
+              <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'auto', maxHeight: '360px' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
                   <thead><tr>{['#', 'Category', 'Element Name', 'City', 'Rate Min', 'Rate Max', 'Rate Type', 'Status'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
                   <tbody>
@@ -1496,8 +1496,8 @@ function SectionRateCards({ showToast }) {
                       const missing = validateRow(r)
                       const ok = missing.length === 0
                       return (
-                        <tr key={i} style={{ background: ok ? undefined : '#FEE2E2' }}>
-                          <td style={{ ...tdStyle, color: '#7a7060', fontSize: '12px' }}>{i + 1}</td>
+                        <tr key={i} style={{ background: ok ? undefined : 'var(--state-danger-bg)' }}>
+                          <td style={{ ...tdStyle, color: 'var(--app-text-dim-lg)', fontSize: '12px' }}>{i + 1}</td>
                           <td style={tdStyle}>{r.category || '—'}</td>
                           <td style={tdStyle}>{r.element_name || '—'}</td>
                           <td style={tdStyle}>{r.city || '—'}</td>
@@ -1506,8 +1506,8 @@ function SectionRateCards({ showToast }) {
                           <td style={tdStyle}>{r.rate_type || '—'}</td>
                           <td style={tdStyle}>
                             {ok
-                              ? <span style={{ color: '#065F46', fontSize: '12px', fontWeight: 600 }}>✓ Valid</span>
-                              : <span style={{ color: '#991B1B', fontSize: '12px', fontWeight: 600 }}>✗ Missing: {missing.join(', ')}</span>}
+                              ? <span style={{ color: 'var(--state-success)', fontSize: '12px', fontWeight: 600 }}>✓ Valid</span>
+                              : <span style={{ color: 'var(--state-danger)', fontSize: '12px', fontWeight: 600 }}>✗ Missing: {missing.join(', ')}</span>}
                           </td>
                         </tr>
                       )
@@ -1525,10 +1525,10 @@ function SectionRateCards({ showToast }) {
 
       {rcTab === 'templates' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '24px' }}>
-            <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: F, color: '#1a1008', marginBottom: '8px' }}>Rate Card Excel Template</div>
-            <p style={{ fontSize: '13px', fontFamily: F, color: '#7a7060', marginBottom: '16px' }}>Download this template, fill it in Excel or Google Sheets, then import it in the Bulk Import tab.</p>
-            <div style={{ background: '#faf8f5', border: '0.5px solid #d8d2c8', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
+          <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '24px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: F, color: 'var(--app-ink)', marginBottom: '8px' }}>Rate Card Excel Template</div>
+            <p style={{ fontSize: '13px', fontFamily: F, color: 'var(--app-text-dim-lg)', marginBottom: '16px' }}>Download this template, fill it in Excel or Google Sheets, then import it in the Bulk Import tab.</p>
+            <div style={{ background: 'var(--app-bg)', border: '0.5px solid var(--app-border)', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead><tr>{['Column', 'Expected Values'].map(h => <th key={h} style={{ ...thStyle, fontSize: '11px' }}>{h}</th>)}</tr></thead>
                 <tbody>
@@ -1545,7 +1545,7 @@ function SectionRateCards({ showToast }) {
                   ].map(([col, val]) => (
                     <tr key={col}>
                       <td style={{ ...tdStyle, fontWeight: 600, whiteSpace: 'nowrap', width: '180px' }}>{col}</td>
-                      <td style={{ ...tdStyle, color: '#7a7060' }}>{val}</td>
+                      <td style={{ ...tdStyle, color: 'var(--app-text-dim-lg)' }}>{val}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1554,8 +1554,8 @@ function SectionRateCards({ showToast }) {
             <button onClick={handleDownloadTemplate} style={btnPrimary}>Download Template</button>
           </div>
 
-          <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '24px' }}>
-            <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: F, color: '#1a1008', marginBottom: '16px' }}>Source Tags</div>
+          <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '24px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: F, color: 'var(--app-ink)', marginBottom: '16px' }}>Source Tags</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
                 { ...SOURCE_TAGS[0], desc: 'Rates sourced from AI research or public data' },
@@ -1566,7 +1566,7 @@ function SectionRateCards({ showToast }) {
               ].map(st => (
                 <div key={st.value} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <span style={{ fontSize: '12px', background: st.color + '20', color: st.color, padding: '3px 10px', borderRadius: '6px', fontWeight: 600, fontFamily: F, whiteSpace: 'nowrap' }}>{st.label}</span>
-                  <span style={{ fontSize: '13px', fontFamily: F, color: '#7a7060' }}>{st.desc}</span>
+                  <span style={{ fontSize: '13px', fontFamily: F, color: 'var(--app-text-dim-lg)' }}>{st.desc}</span>
                 </div>
               ))}
             </div>
@@ -1625,7 +1625,7 @@ function SectionRateCards({ showToast }) {
           </div>
           <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <input type="checkbox" id="add-is-master" checked={addForm.is_platform_master} onChange={e => setAddForm(p => ({ ...p, is_platform_master: e.target.checked }))} />
-            <label htmlFor="add-is-master" style={{ fontSize: '13px', fontFamily: F, color: '#1a1008', cursor: 'pointer' }}>Platform Master row (✦)</label>
+            <label htmlFor="add-is-master" style={{ fontSize: '13px', fontFamily: F, color: 'var(--app-ink)', cursor: 'pointer' }}>Platform Master row (✦)</label>
           </div>
           {!addForm.is_platform_master && (
             <div style={{ gridColumn: '1 / -1' }}>
@@ -1835,13 +1835,13 @@ function SectionCategories({ showToast }) {
   const activeCats = cats.filter(c => c.is_active).length
   const unusedCats = cats.filter(c => (usageMap[c.name] || 0) === 0).length
 
-  const tabStyle = (active) => ({ padding: '8px 16px', fontSize: '13px', fontFamily: F, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', borderBottom: active ? '2px solid #bc1723' : '2px solid transparent', color: active ? '#1a1008' : '#7a7060', marginBottom: '-0.5px' })
+  const tabStyle = (active) => ({ padding: '8px 16px', fontSize: '13px', fontFamily: F, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', borderBottom: active ? '2px solid var(--app-accent)' : '2px solid transparent', color: active ? 'var(--app-ink)' : 'var(--app-text-dim-lg)', marginBottom: '-0.5px' })
 
   return (
     <div>
       <SectionHeader title="Categories" subtitle="Global category registry and production stage configuration." />
 
-      <div style={{ display: 'flex', borderBottom: '0.5px solid #d8d2c8', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', borderBottom: '0.5px solid var(--app-border)', marginBottom: '24px' }}>
         <button onClick={() => setCatTab('registry')} style={tabStyle(catTab === 'registry')}>Category Registry</button>
         <button onClick={() => setCatTab('stageconfig')} style={tabStyle(catTab === 'stageconfig')}>Stage Config</button>
       </div>
@@ -1854,23 +1854,23 @@ function SectionCategories({ showToast }) {
 
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
             {[
-              { label: 'Total Categories', value: totalCats, accent: '#1E40AF' },
-              { label: 'Active', value: activeCats, accent: '#065F46' },
-              { label: 'Unused (cleanup)', value: unusedCats, accent: '#92400E' },
+              { label: 'Total Categories', value: totalCats, accent: 'var(--state-info)' },
+              { label: 'Active', value: activeCats, accent: 'var(--state-success)' },
+              { label: 'Unused (cleanup)', value: unusedCats, accent: 'var(--state-warning)' },
             ].map(c => (
-              <div key={c.label} style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '10px', padding: '16px 20px', minWidth: '130px', flex: 1 }}>
+              <div key={c.label} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '10px', padding: '16px 20px', minWidth: '130px', flex: 1 }}>
                 <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: FD, color: c.accent }}>{loading ? '—' : c.value}</div>
-                <div style={{ fontSize: '11px', fontFamily: F, color: '#7a7060', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '3px' }}>{c.label}</div>
+                <div style={{ fontSize: '11px', fontFamily: F, color: 'var(--app-text-dim-lg)', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '3px' }}>{c.label}</div>
               </div>
             ))}
           </div>
 
-          <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr>{['Sort', 'Name', 'Slug', 'Usage', 'Status', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
                 {loading
-                  ? <tr><td colSpan={6} style={{ ...tdStyle, textAlign: 'center', color: '#7a7060' }}>Loading...</td></tr>
+                  ? <tr><td colSpan={6} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>Loading...</td></tr>
                   : cats.map((c, idx) => {
                     const usage = usageMap[c.name] || 0
                     const isEdit = editingId === c.id
@@ -1878,29 +1878,29 @@ function SectionCategories({ showToast }) {
                       <tr key={c.id}>
                         <td style={tdStyle}>
                           <div style={{ display: 'flex', gap: '4px' }}>
-                            <button onClick={() => handleMove(idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? '#d8d2c8' : '#7a7060', fontSize: '12px', padding: '2px 4px' }}>▲</button>
-                            <button onClick={() => handleMove(idx, 1)} disabled={idx === cats.length - 1} style={{ background: 'none', border: 'none', cursor: idx === cats.length - 1 ? 'default' : 'pointer', color: idx === cats.length - 1 ? '#d8d2c8' : '#7a7060', fontSize: '12px', padding: '2px 4px' }}>▼</button>
+                            <button onClick={() => handleMove(idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}>▲</button>
+                            <button onClick={() => handleMove(idx, 1)} disabled={idx === cats.length - 1} style={{ background: 'none', border: 'none', cursor: idx === cats.length - 1 ? 'default' : 'pointer', color: idx === cats.length - 1 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}>▼</button>
                           </div>
                         </td>
                         <td style={tdStyle}>
                           {isEdit
-                            ? <input value={editName} onChange={e => setEditName(e.target.value)} onBlur={() => handleRename(c)} onKeyDown={e => e.key === 'Enter' && handleRename(c)} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5', color: '#1a1008', outline: 'none' }} autoFocus />
-                            : <span onClick={() => { setEditingId(c.id); setEditName(c.name) }} style={{ cursor: 'pointer', color: '#1a1008', fontWeight: 500 }} title="Click to rename">{c.name}</span>
+                            ? <input value={editName} onChange={e => setEditName(e.target.value)} onBlur={() => handleRename(c)} onKeyDown={e => e.key === 'Enter' && handleRename(c)} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid var(--app-border)', borderRadius: '6px', background: 'var(--app-bg)', color: 'var(--app-ink)', outline: 'none' }} autoFocus />
+                            : <span onClick={() => { setEditingId(c.id); setEditName(c.name) }} style={{ cursor: 'pointer', color: 'var(--app-ink)', fontWeight: 500 }} title="Click to rename">{c.name}</span>
                           }
-                          {isEdit && <div style={{ fontSize: '11px', color: '#92400E', fontFamily: F, marginTop: '3px' }}>⚠ Renaming cascades to elements and rate cards</div>}
+                          {isEdit && <div style={{ fontSize: '11px', color: 'var(--state-warning)', fontFamily: F, marginTop: '3px' }}>⚠ Renaming cascades to elements and rate cards</div>}
                         </td>
-                        <td style={{ ...tdStyle, fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: '#7a7060' }}>{c.slug}</td>
+                        <td style={{ ...tdStyle, fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: 'var(--app-text-dim-lg)' }}>{c.slug}</td>
                         <td style={tdStyle}>
-                          <span style={{ fontSize: '12px', fontWeight: 600, background: usage > 0 ? '#D1FAE5' : '#F3F4F6', color: usage > 0 ? '#065F46' : '#6B7280', padding: '2px 8px', borderRadius: '5px', fontFamily: F }}>{usage}</span>
+                          <span style={{ fontSize: '12px', fontWeight: 600, background: usage > 0 ? 'var(--state-success-bg)' : '#F3F4F6', color: usage > 0 ? 'var(--state-success)' : '#6B7280', padding: '2px 8px', borderRadius: '5px', fontFamily: F }}>{usage}</span>
                         </td>
                         <td style={tdStyle}>
-                          <button onClick={() => handleToggleActive(c)} style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: c.is_active ? '#D1FAE5' : '#F3F4F6', color: c.is_active ? '#065F46' : '#6B7280', fontFamily: F, fontWeight: 600 }}>
+                          <button onClick={() => handleToggleActive(c)} style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: c.is_active ? 'var(--state-success-bg)' : '#F3F4F6', color: c.is_active ? 'var(--state-success)' : '#6B7280', fontFamily: F, fontWeight: 600 }}>
                             {c.is_active ? 'Active' : 'Inactive'}
                           </button>
                         </td>
                         <td style={tdStyle}>
                           <button onClick={() => handleDelete(c)} disabled={usage > 0} title={usage > 0 ? `Cannot delete — ${usage} elements use this category` : 'Delete'}
-                            style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: usage > 0 ? 'not-allowed' : 'pointer', background: usage > 0 ? '#F3F4F6' : '#FEE2E2', color: usage > 0 ? '#d8d2c8' : '#991B1B', fontFamily: F }}
+                            style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: usage > 0 ? 'not-allowed' : 'pointer', background: usage > 0 ? '#F3F4F6' : 'var(--state-danger-bg)', color: usage > 0 ? 'var(--app-border)' : 'var(--state-danger)', fontFamily: F }}
                           >Delete</button>
                         </td>
                       </tr>
@@ -1913,7 +1913,7 @@ function SectionCategories({ showToast }) {
 
           <SAModal open={addModal} onClose={() => setAddModal(false)} title="Add Category">
             <div style={{ marginBottom: '16px' }}><ModalLabel>Category Name</ModalLabel><input value={newCatName} onChange={e => setNewCatName(e.target.value)} style={inputStyle} placeholder="e.g. Lighting" /></div>
-            {newCatName && <p style={{ fontSize: '12px', color: '#7a7060', fontFamily: F, marginBottom: '16px' }}>Slug: {slugify(newCatName)}</p>}
+            {newCatName && <p style={{ fontSize: '12px', color: 'var(--app-text-dim-lg)', fontFamily: F, marginBottom: '16px' }}>Slug: {slugify(newCatName)}</p>}
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={handleAdd} disabled={mLoading || !newCatName.trim()} style={{ ...btnPrimary, flex: 1, opacity: (mLoading || !newCatName.trim()) ? 0.6 : 1 }}>{mLoading ? 'Adding...' : 'Add Category'}</button>
               <button onClick={() => setAddModal(false)} style={btnSecondary}>Cancel</button>
@@ -1924,26 +1924,26 @@ function SectionCategories({ showToast }) {
 
       {catTab === 'stageconfig' && (
         <div>
-          <p style={{ fontSize: '14px', color: '#7a7060', fontFamily: F, marginBottom: '20px' }}>Define the production stage sequences for each category type. These stages drive the Production tab workflow for all tenants.</p>
+          <p style={{ fontSize: '14px', color: 'var(--app-text-dim-lg)', fontFamily: F, marginBottom: '20px' }}>Define the production stage sequences for each category type. These stages drive the Production tab workflow for all tenants.</p>
 
           {stageLoading
-            ? <p style={{ color: '#7a7060', fontFamily: F }}>Loading...</p>
+            ? <p style={{ color: 'var(--app-text-dim-lg)', fontFamily: F }}>Loading...</p>
             : stageTypes.length === 0
-              ? <p style={{ color: '#7a7060', fontFamily: F }}>No stage types configured yet.</p>
+              ? <p style={{ color: 'var(--app-text-dim-lg)', fontFamily: F }}>No stage types configured yet.</p>
               : stageTypes.map(type => {
                 const stages = stageData[type] || []
                 const isExpanded = expandedType === type
                 return (
-                  <div key={type} style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '10px', marginBottom: '10px', overflow: 'hidden' }}>
+                  <div key={type} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '10px', marginBottom: '10px', overflow: 'hidden' }}>
                     <div onClick={() => setExpandedType(isExpanded ? null : type)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', cursor: 'pointer' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 600, fontFamily: F, color: '#1a1008' }}>{formatType(type)}</span>
+                      <span style={{ fontSize: '14px', fontWeight: 600, fontFamily: F, color: 'var(--app-ink)' }}>{formatType(type)}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '12px', background: '#f2efe9', color: '#7a7060', padding: '2px 10px', borderRadius: '10px', fontFamily: F }}>{stages.length} stages</span>
-                        <span style={{ color: '#7a7060', fontSize: '12px' }}>{isExpanded ? '▲' : '▼'}</span>
+                        <span style={{ fontSize: '12px', background: 'var(--app-surface)', color: 'var(--app-text-dim-lg)', padding: '2px 10px', borderRadius: '10px', fontFamily: F }}>{stages.length} stages</span>
+                        <span style={{ color: 'var(--app-text-dim-lg)', fontSize: '12px' }}>{isExpanded ? '▲' : '▼'}</span>
                       </div>
                     </div>
                     {isExpanded && (
-                      <div style={{ borderTop: '0.5px solid #d8d2c8' }}>
+                      <div style={{ borderTop: '0.5px solid var(--app-border)' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                           <thead><tr>{['Sort', 'Stage Name', 'Days Before Event', 'Terminal?', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
                           <tbody>
@@ -1953,31 +1953,31 @@ function SectionCategories({ showToast }) {
                                 <tr key={s.id}>
                                   <td style={tdStyle}>
                                     <div style={{ display: 'flex', gap: '4px' }}>
-                                      <button onClick={() => handleSwapStages(stages, idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? '#d8d2c8' : '#7a7060', fontSize: '12px', padding: '2px 4px' }}>▲</button>
-                                      <button onClick={() => handleSwapStages(stages, idx, 1)} disabled={idx === stages.length - 1} style={{ background: 'none', border: 'none', cursor: idx === stages.length - 1 ? 'default' : 'pointer', color: idx === stages.length - 1 ? '#d8d2c8' : '#7a7060', fontSize: '12px', padding: '2px 4px' }}>▼</button>
+                                      <button onClick={() => handleSwapStages(stages, idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}>▲</button>
+                                      <button onClick={() => handleSwapStages(stages, idx, 1)} disabled={idx === stages.length - 1} style={{ background: 'none', border: 'none', cursor: idx === stages.length - 1 ? 'default' : 'pointer', color: idx === stages.length - 1 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}>▼</button>
                                     </div>
                                   </td>
-                                  <td style={tdStyle}>{isEditingS ? <input value={stageEditBuffer.stage_name} onChange={e => setStageEditBuffer(p => ({ ...p, stage_name: e.target.value }))} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5', outline: 'none', width: '100%' }} autoFocus /> : s.stage_name}</td>
-                                  <td style={tdStyle}>{isEditingS ? <input type="number" value={stageEditBuffer.days_before_event} onChange={e => setStageEditBuffer(p => ({ ...p, days_before_event: e.target.value }))} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid #d8d2c8', borderRadius: '6px', background: '#faf8f5', outline: 'none', width: '80px' }} /> : `${s.days_before_event} days before`}</td>
+                                  <td style={tdStyle}>{isEditingS ? <input value={stageEditBuffer.stage_name} onChange={e => setStageEditBuffer(p => ({ ...p, stage_name: e.target.value }))} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid var(--app-border)', borderRadius: '6px', background: 'var(--app-bg)', outline: 'none', width: '100%' }} autoFocus /> : s.stage_name}</td>
+                                  <td style={tdStyle}>{isEditingS ? <input type="number" value={stageEditBuffer.days_before_event} onChange={e => setStageEditBuffer(p => ({ ...p, days_before_event: e.target.value }))} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid var(--app-border)', borderRadius: '6px', background: 'var(--app-bg)', outline: 'none', width: '80px' }} /> : `${s.days_before_event} days before`}</td>
                                   <td style={tdStyle}>
                                     {isEditingS
                                       ? <input type="checkbox" checked={stageEditBuffer.is_terminal} onChange={e => setStageEditBuffer(p => ({ ...p, is_terminal: e.target.checked }))} />
                                       : s.is_terminal
-                                        ? <span style={{ fontSize: '11px', background: '#D1FAE5', color: '#065F46', padding: '2px 8px', borderRadius: '5px', fontWeight: 600, fontFamily: F }}>Terminal</span>
-                                        : <span style={{ color: '#7a7060' }}>—</span>
+                                        ? <span style={{ fontSize: '11px', background: 'var(--state-success-bg)', color: 'var(--state-success)', padding: '2px 8px', borderRadius: '5px', fontWeight: 600, fontFamily: F }}>Terminal</span>
+                                        : <span style={{ color: 'var(--app-text-dim-lg)' }}>—</span>
                                     }
                                   </td>
                                   <td style={tdStyle}>
                                     <div style={{ display: 'flex', gap: '6px' }}>
                                       {isEditingS ? (
                                         <>
-                                          <button onClick={() => handleSaveStage(s)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#D1FAE5', color: '#065F46', fontFamily: F }}>Save</button>
-                                          <button onClick={() => setEditingStage(null)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#f2efe9', color: '#7a7060', fontFamily: F }}>Cancel</button>
+                                          <button onClick={() => handleSaveStage(s)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-success-bg)', color: 'var(--state-success)', fontFamily: F }}>Save</button>
+                                          <button onClick={() => setEditingStage(null)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--app-surface)', color: 'var(--app-text-dim-lg)', fontFamily: F }}>Cancel</button>
                                         </>
                                       ) : (
                                         <>
-                                          <button onClick={() => { setEditingStage(s.id); setStageEditBuffer({ stage_name: s.stage_name, days_before_event: s.days_before_event, is_terminal: s.is_terminal }) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#f2efe9', color: '#1a1008', fontFamily: F }}>✏</button>
-                                          <button onClick={() => handleDeleteStage(s.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: '#FEE2E2', color: '#991B1B', fontFamily: F }}>🗑</button>
+                                          <button onClick={() => { setEditingStage(s.id); setStageEditBuffer({ stage_name: s.stage_name, days_before_event: s.days_before_event, is_terminal: s.is_terminal }) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--app-surface)', color: 'var(--app-ink)', fontFamily: F }}>✏</button>
+                                          <button onClick={() => handleDeleteStage(s.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-danger-bg)', color: 'var(--state-danger)', fontFamily: F }}>🗑</button>
                                         </>
                                       )}
                                     </div>
@@ -1987,8 +1987,8 @@ function SectionCategories({ showToast }) {
                             })}
                           </tbody>
                         </table>
-                        <div style={{ padding: '12px 20px', borderTop: '0.5px solid #d8d2c8' }}>
-                          <button onClick={() => { setAddStageForm(f => ({ ...f, category_type: type })); setAddStageModal(true) }} style={{ ...btnSecondary, border: '0.5px solid #bc1723', color: '#bc1723', fontSize: '12px' }}>+ Add Stage</button>
+                        <div style={{ padding: '12px 20px', borderTop: '0.5px solid var(--app-border)' }}>
+                          <button onClick={() => { setAddStageForm(f => ({ ...f, category_type: type })); setAddStageModal(true) }} style={{ ...btnSecondary, border: '0.5px solid var(--app-accent)', color: 'var(--app-accent)', fontSize: '12px' }}>+ Add Stage</button>
                         </div>
                       </div>
                     )}
@@ -1998,13 +1998,13 @@ function SectionCategories({ showToast }) {
           }
 
           <div style={{ marginTop: '16px' }}>
-            <button onClick={() => setAddTypeModal(true)} style={{ ...btnSecondary, border: '0.5px solid #bc1723', color: '#bc1723' }}>+ Add New Category Type</button>
+            <button onClick={() => setAddTypeModal(true)} style={{ ...btnSecondary, border: '0.5px solid var(--app-accent)', color: 'var(--app-accent)' }}>+ Add New Category Type</button>
           </div>
 
           <SAModal open={addStageModal} onClose={() => setAddStageModal(false)} title="Add Stage" subtitle={addStageForm.category_type ? formatType(addStageForm.category_type) : ''}>
             <div style={{ marginBottom: '12px' }}>
               <ModalLabel>Category Type</ModalLabel>
-              <div style={{ fontSize: '13px', fontFamily: F, color: '#7a7060', padding: '9px 0' }}>{formatType(addStageForm.category_type)}</div>
+              <div style={{ fontSize: '13px', fontFamily: F, color: 'var(--app-text-dim-lg)', padding: '9px 0' }}>{formatType(addStageForm.category_type)}</div>
             </div>
             <div style={{ marginBottom: '12px' }}>
               <ModalLabel>Stage Name</ModalLabel>
@@ -2016,7 +2016,7 @@ function SectionCategories({ showToast }) {
             </div>
             <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <input type="checkbox" id="stage-terminal" checked={addStageForm.is_terminal} onChange={e => setAddStageForm(p => ({ ...p, is_terminal: e.target.checked }))} />
-              <label htmlFor="stage-terminal" style={{ fontSize: '13px', fontFamily: F, color: '#1a1008', cursor: 'pointer' }}>Is Terminal</label>
+              <label htmlFor="stage-terminal" style={{ fontSize: '13px', fontFamily: F, color: 'var(--app-ink)', cursor: 'pointer' }}>Is Terminal</label>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={handleAddStage} disabled={mLoading || !addStageForm.stage_name} style={{ ...btnPrimary, flex: 1, opacity: (mLoading || !addStageForm.stage_name) ? 0.6 : 1 }}>{mLoading ? 'Adding...' : 'Add Stage'}</button>
@@ -2028,7 +2028,7 @@ function SectionCategories({ showToast }) {
             <div style={{ marginBottom: '16px' }}>
               <ModalLabel>Type Name</ModalLabel>
               <input value={newTypeName} onChange={e => setNewTypeName(e.target.value)} style={inputStyle} placeholder="e.g. Logistics" />
-              {newTypeName && <p style={{ fontSize: '12px', color: '#7a7060', fontFamily: F, marginTop: '6px' }}>Slug: {newTypeName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}</p>}
+              {newTypeName && <p style={{ fontSize: '12px', color: 'var(--app-text-dim-lg)', fontFamily: F, marginTop: '6px' }}>Slug: {newTypeName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}</p>}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={handleAddType} disabled={mLoading || !newTypeName.trim()} style={{ ...btnPrimary, flex: 1, opacity: (mLoading || !newTypeName.trim()) ? 0.6 : 1 }}>{mLoading ? 'Adding...' : 'Add Type'}</button>
@@ -2120,51 +2120,51 @@ function SectionAnalytics() {
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
         {[
-          { label: 'Total Events', value: stats.events, accent: '#bc1723' },
+          { label: 'Total Events', value: stats.events, accent: 'var(--app-accent)' },
           { label: 'Total Tasks', value: stats.tasks, accent: '#3730A3' },
-          { label: 'Total Elements', value: stats.elements, accent: '#1E40AF' },
-          { label: 'Total Users', value: stats.users, accent: '#065F46' },
-          { label: 'Rate Card Rows', value: stats.rateCards, accent: '#92400E' },
+          { label: 'Total Elements', value: stats.elements, accent: 'var(--state-info)' },
+          { label: 'Total Users', value: stats.users, accent: 'var(--state-success)' },
+          { label: 'Rate Card Rows', value: stats.rateCards, accent: 'var(--state-warning)' },
         ].map(c => (
-          <div key={c.label} style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '20px 24px', minWidth: '140px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
+          <div key={c.label} style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', minWidth: '140px', flex: 1, borderTop: `3px solid ${c.accent}` }}>
             <div style={{ fontSize: '28px', fontWeight: 700, fontFamily: FD, color: c.accent }}>{loading ? '—' : c.value}</div>
-            <div style={{ fontSize: '12px', fontFamily: F, color: '#7a7060', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '4px' }}>{c.label}</div>
+            <div style={{ fontSize: '12px', fontFamily: F, color: 'var(--app-text-dim-lg)', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: '4px' }}>{c.label}</div>
           </div>
         ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '28px' }}>
         {/* Bar chart */}
-        <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '20px 24px' }}>
-          <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: '#1a1008', marginBottom: '16px' }}>New Tenants Per Month</p>
+        <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
+          <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '16px' }}>New Tenants Per Month</p>
           {BarChart && !loading ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={chartData}>
-                <XAxis dataKey="month" tick={{ fontSize: 11, fontFamily: F, fill: '#7a7060' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fontFamily: F, fill: '#7a7060' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip contentStyle={{ fontFamily: F, fontSize: 12, borderRadius: 8, border: '0.5px solid #d8d2c8' }} />
-                <Bar dataKey="count" fill="#bc1723" radius={[4, 4, 0, 0]} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fontFamily: F, fill: 'var(--app-text-dim-lg)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fontFamily: F, fill: 'var(--app-text-dim-lg)' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={{ fontFamily: F, fontSize: 12, borderRadius: 8, border: '0.5px solid var(--app-border)' }} />
+                <Bar dataKey="count" fill="var(--app-accent)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
             <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ color: '#7a7060', fontFamily: F, fontSize: '13px' }}>{loading ? 'Loading...' : 'Install recharts to view chart'}</p>
+              <p style={{ color: 'var(--app-text-dim-lg)', fontFamily: F, fontSize: '13px' }}>{loading ? 'Loading...' : 'Install recharts to view chart'}</p>
             </div>
           )}
         </div>
 
         {/* Top categories */}
-        <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '20px 24px' }}>
-          <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: '#1a1008', marginBottom: '16px' }}>Top Categories by Element Usage</p>
-          {loading ? <p style={{ color: '#7a7060', fontFamily: F, fontSize: '13px' }}>Loading...</p> : (
+        <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
+          <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '16px' }}>Top Categories by Element Usage</p>
+          {loading ? <p style={{ color: 'var(--app-text-dim-lg)', fontFamily: F, fontSize: '13px' }}>Loading...</p> : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {topCats.map(([cat, count]) => (
                 <div key={cat}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                    <span style={{ fontSize: '12px', fontFamily: F, color: '#1a1008' }}>{cat}</span>
-                    <span style={{ fontSize: '12px', fontFamily: F, color: '#7a7060', fontWeight: 600 }}>{count}</span>
+                    <span style={{ fontSize: '12px', fontFamily: F, color: 'var(--app-ink)' }}>{cat}</span>
+                    <span style={{ fontSize: '12px', fontFamily: F, color: 'var(--app-text-dim-lg)', fontWeight: 600 }}>{count}</span>
                   </div>
-                  <div style={{ background: '#f2efe9', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
+                  <div style={{ background: 'var(--app-surface)', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
                     <div style={{ width: `${(count / maxCat) * 100}%`, background: 'rgba(188,23,35,0.25)', height: '100%', borderRadius: '4px' }} />
                   </div>
                 </div>
@@ -2175,27 +2175,27 @@ function SectionAnalytics() {
       </div>
 
       {/* Events per month chart */}
-      <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '20px 24px', marginBottom: '28px' }}>
-        <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: '#1a1008', marginBottom: '16px' }}>Events Created Per Month</p>
+      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px', marginBottom: '28px' }}>
+        <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '16px' }}>Events Created Per Month</p>
         {BarChart && !loading ? (
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={eventsChartData}>
-              <XAxis dataKey="month" tick={{ fontSize: 11, fontFamily: F, fill: '#7a7060' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fontFamily: F, fill: '#7a7060' }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip contentStyle={{ fontFamily: F, fontSize: 12, borderRadius: 8, border: '0.5px solid #d8d2c8' }} />
-              <Bar dataKey="count" fill="#bc1723" radius={[4, 4, 0, 0]} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fontFamily: F, fill: 'var(--app-text-dim-lg)' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fontFamily: F, fill: 'var(--app-text-dim-lg)' }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip contentStyle={{ fontFamily: F, fontSize: 12, borderRadius: 8, border: '0.5px solid var(--app-border)' }} />
+              <Bar dataKey="count" fill="var(--app-accent)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
           <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <p style={{ color: '#7a7060', fontFamily: F, fontSize: '13px' }}>{loading ? 'Loading...' : 'Install recharts to view chart'}</p>
+            <p style={{ color: 'var(--app-text-dim-lg)', fontFamily: F, fontSize: '13px' }}>{loading ? 'Loading...' : 'Install recharts to view chart'}</p>
           </div>
         )}
       </div>
 
       {/* Tenant status distribution */}
-      <div style={{ background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '12px', padding: '20px 24px' }}>
-        <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: '#1a1008', marginBottom: '16px' }}>Tenant Status Distribution</p>
+      <div style={{ background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '12px', padding: '20px 24px' }}>
+        <p style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '16px' }}>Tenant Status Distribution</p>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           {statusDist.map(s => (
             <div key={s.key} style={{ background: s.bg, borderRadius: '10px', padding: '14px 20px', minWidth: '100px', textAlign: 'center' }}>
@@ -2248,7 +2248,7 @@ export default function SuperAdminPanel({ onClose }) {
   if (platformRole !== 'super_admin') {
     return (
       <div style={{ padding: '80px', textAlign: 'center' }}>
-        <p style={{ fontFamily: F, fontSize: '14px', color: '#7a7060' }}>Access restricted.</p>
+        <p style={{ fontFamily: F, fontSize: '14px', color: 'var(--app-text-dim-lg)' }}>Access restricted.</p>
       </div>
     )
   }
@@ -2267,7 +2267,7 @@ export default function SuperAdminPanel({ onClose }) {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#faf8f5', fontFamily: F }}>
+    <div style={{ display: 'flex', height: '100vh', background: 'var(--app-bg)', fontFamily: F }}>
       <style>{`
         @keyframes sa-shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
         .sa-skel-cell {
@@ -2279,12 +2279,12 @@ export default function SuperAdminPanel({ onClose }) {
         }
       `}</style>
       {/* Sidebar */}
-      <div style={{ width: '220px', flexShrink: 0, height: '100vh', overflowY: 'auto', background: '#fff', borderRight: '0.5px solid #d8d2c8', display: 'flex', flexDirection: 'column', padding: '24px 0' }}>
+      <div style={{ width: '220px', flexShrink: 0, height: '100vh', overflowY: 'auto', background: '#fff', borderRight: '0.5px solid var(--app-border)', display: 'flex', flexDirection: 'column', padding: '24px 0' }}>
         <div style={{ padding: '0 20px 20px' }}>
-          <div style={{ fontFamily: FD, fontSize: '18px', fontWeight: 700, color: '#1a1008', lineHeight: 1.2 }}>Platform Admin</div>
-          <div style={{ fontFamily: F, fontSize: '11px', color: '#7a7060', marginTop: '3px' }}>Myoozz Events</div>
+          <div style={{ fontFamily: FD, fontSize: '18px', fontWeight: 700, color: 'var(--app-ink)', lineHeight: 1.2 }}>Platform Admin</div>
+          <div style={{ fontFamily: F, fontSize: '11px', color: 'var(--app-text-dim-lg)', marginTop: '3px' }}>Myoozz Events</div>
         </div>
-        <div style={{ height: '0.5px', background: '#d8d2c8', marginBottom: '12px' }} />
+        <div style={{ height: '0.5px', background: 'var(--app-border)', marginBottom: '12px' }} />
 
         <nav style={{ flex: 1, padding: '0 12px' }}>
           {SECTIONS.map(s => {
@@ -2296,19 +2296,19 @@ export default function SuperAdminPanel({ onClose }) {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
                   padding: '9px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                  background: isActive ? '#bc1723' : 'none',
-                  color: isActive ? '#fff' : '#7a7060',
+                  background: isActive ? 'var(--app-accent)' : 'none',
+                  color: isActive ? '#fff' : 'var(--app-text-dim-lg)',
                   fontFamily: F, fontSize: '13px', fontWeight: isActive ? 600 : 400,
                   marginBottom: '2px', textAlign: 'left',
                   transition: 'background 0.12s',
                 }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#f2efe9' }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--app-surface)' }}
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'none' }}
               >
                 <span style={{ fontSize: '16px', lineHeight: 1 }}>{s.icon}</span>
                 <span style={{ flex: 1 }}>{s.label}</span>
                 {s.badge && pendingCount > 0 && (
-                  <span style={{ fontSize: '10px', fontWeight: 700, background: isActive ? 'rgba(255,255,255,0.3)' : '#bc1723', color: '#fff', padding: '1px 6px', borderRadius: '10px', minWidth: '18px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, background: isActive ? 'rgba(255,255,255,0.3)' : 'var(--app-accent)', color: '#fff', padding: '1px 6px', borderRadius: '10px', minWidth: '18px', textAlign: 'center' }}>
                     {pendingCount}
                   </span>
                 )}
@@ -2320,8 +2320,8 @@ export default function SuperAdminPanel({ onClose }) {
         <div style={{ padding: '12px' }}>
           <button
             onClick={onClose}
-            style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: 'none', color: '#7a7060', fontFamily: F, fontSize: '13px', textAlign: 'left' }}
-            onMouseEnter={e => e.currentTarget.style.background = '#f2efe9'}
+            style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: 'none', color: 'var(--app-text-dim-lg)', fontFamily: F, fontSize: '13px', textAlign: 'left' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--app-surface)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
           >
             ← Exit Admin

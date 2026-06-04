@@ -5,50 +5,84 @@
 }
 
 :root {
-  /* ── Myoozz Brand Palette (v2.0 · April 2026) ─────────── */
-  --red:          #F28F3B;   /* Myoozz Red — master brand (logo, errors, legal pages) */
-  --red-deep:     #8E0A1F;   /* Red deep — hover/pressed on red */
-  --accent:       #F28F3B;   /* Me · Events primary accent (all interactive UI) */
-  --accent-deep:  #D97A28;   /* Accent hover/pressed */
+  /* ===== ME Design System V2 · 03 Jun 2026 · WCAG 2.2 AA =====
+     Migrated from interim orange. Colors + font families applied app-wide.
+     Type-scale / spacing / radius / elevation / motion tokens are ADDED for
+     later use; global element sizes & corner geometry are intentionally
+     left unchanged so no layout shifts (landing stays frozen). */
 
-  /* Sub-brand fields */
-  --me:           #F28F3B;   /* Me · Events (this product) — same as --accent */
-  --mn:           #2D5BFF;   /* Mn · Nexus */
-  --ma:           #00A877;   /* Ma · Assistant */
-  --mx:           #7C3AED;   /* Mx · Experiments */
+  /* 1 · BRAND LAYER — Petrol Teal (brand/marketing/decks only; never product UI) */
+  --brand-teal: #005F73;  --brand-teal-deep: #003D4D;  --brand-aqua: #1B9AAA;
+  --brand-teal-mid: #007A8C;  --brand-teal-soft: #E0F2F7;  --brand-teal-dim: rgba(0,95,115,0.12);
+  --myoozz-red: #922B21;  /* logo M only */
 
-  /* Status — UI only, < 5% of surface */
-  --signal-live:  #00C853;
-  --signal-warn:  #FFB400;
+  /* 2 · PRODUCT LAYER — warm, single red accent */
+  --app-accent: #BC1723;  --app-accent-hover: #A4131D;
+  --app-ink: #1A1008;  --app-bg: #FAF8F5;  --app-surface: #F2EFE9;  --app-border: #D8D2C8;
+  --app-text-dim: #5F564A;  --app-text-dim-lg: #7A7060;
+  --app-landing-navy: #16203A;  --app-ratecard-dark: #141413;
 
-  /* ── Surfaces & text ────────────────────────────────────── */
-  --bg:               #F5F1E8;            /* paper-3 — page background */
-  --bg-secondary:     #EDE8DD;            /* paper — card/surface background */
-  --bg-surface-2:     #DDD7C7;            /* paper-2 — table headers, hover */
-  --text:             #0A0A0A;            /* ink */
-  --text-2:           #1A1A1A;            /* ink-2 */
-  --text-secondary:   rgba(10,10,10,0.55); /* muted */
-  --text-tertiary:    rgba(10,10,10,0.35);
-  --border:           rgba(10,10,10,0.14); /* hair */
-  --border-strong:    rgba(10,10,10,0.32); /* hair-strong */
+  /* 3 · SEMANTIC STATE — system feedback only (never decorative / second accent) */
+  --state-success: #2E7D32;  --state-success-bg: #E8F1E9;
+  --state-warning: #B45309;  --state-warning-bg: #FBEFD9;
+  --state-danger:  #C0392B;  --state-danger-bg:  #F8E0DC;
+  --state-info:    #1565C0;  --state-info-bg:    #DCE8F7;
 
-  /* ── Semantic aliases (mapped to brand palette) ─────────── */
-  --gold:         #F28F3B;   /* → Me orange (events accent) */
-  --gold-light:   #FEF0E0;
-  --green:        #00A877;   /* → Ma green (positive/success) */
-  --green-light:  #E6F7F2;
-  --blue:         #2D5BFF;   /* → Mn blue (info) */
-  --blue-light:   #EBF0FF;
-  --amber:        #B45309;   /* rust — caution */
-  --amber-light:  #FEF3E2;
+  /* 4 · DARK BRAND MODE (brand surfaces only) */
+  --dark-surface: #14110D;  --dark-text: #EDE8E1;
 
-  /* ── Typography ─────────────────────────────────────────── */
-  --font-display: 'Bricolage Grotesque', sans-serif; /* headlines */
-  --font-body:    'Inter', system-ui, sans-serif;    /* UI, body */
-  --font-mono:    'JetBrains Mono', monospace;       /* codes, IDs */
+  /* 5 · TYPOGRAPHY — V2 families */
+  --font-brand:   'Poppins', sans-serif;
+  --font-sub:     'Fraunces', serif;
+  --font-heading: 'Cormorant Garamond', Georgia, serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+  --font-mono:    'DM Mono', ui-monospace, monospace;
 
-  --radius: 10px;
-  --radius-sm: 6px;
+  /* 6 · TYPE SCALE (available; element sizes not globally rewired this migration) */
+  --t-display-size: 40px;  --t-display-lh: 48px;
+  --t-h1-size: 32px;  --t-h1-lh: 40px;
+  --t-h2-size: 24px;  --t-h2-lh: 32px;
+  --t-h3-size: 18px;  --t-h3-lh: 26px;
+  --t-body-size: 15px;  --t-body-lh: 24px;
+  --t-small-size: 13px;  --t-small-lh: 20px;
+  --t-data-size: 14px;  --t-data-lh: 20px;
+  --t-button-size: 14px;  --t-button-lh: 16px;
+  --t-label-size: 11px;  --t-label-lh: 16px;
+
+  /* 7 · SPACING (4-pt) */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;  --space-4: 16px;
+  --space-6: 24px;  --space-8: 32px;  --space-12: 48px;  --space-16: 64px;  --space-20: 80px;
+
+  /* 8 · RADIUS — legacy geometry preserved (layout frozen); V2 sizes added alongside */
+  --radius: 10px;  --radius-sm: 6px;  --radius-md: 8px;  --radius-lg: 12px;
+
+  /* 9 · ELEVATION (warm, tinted from ink) */
+  --elev-1: 0 1px 2px rgba(26,16,8,0.06), 0 1px 3px rgba(26,16,8,0.04);
+  --elev-2: 0 4px 12px rgba(26,16,8,0.10);
+  --elev-3: 0 12px 32px rgba(26,16,8,0.16);
+
+  /* 10 · MOTION */
+  --ease-out: cubic-bezier(0.22,1,0.36,1);  --ease-in: cubic-bezier(0.55,0,1,0.45);  --ease-in-out: cubic-bezier(0.65,0,0.35,1);
+  --dur-fast: 80ms;  --dur-quick: 150ms;  --dur-modal-out: 150ms;  --dur-modal-in: 200ms;  --dur-signature: 200ms;  --dur-reveal: 240ms;
+
+  /* 11 · MODAL BACKDROP */
+  --modal-overlay: rgba(26,16,8,0.40);  --modal-blur: 8px;
+
+  /* ===== Legacy aliases -> V2 (existing var(--x) usages cascade to V2) ===== */
+  --accent: var(--app-accent);  --accent-deep: var(--app-accent-hover);  --me: var(--app-accent);
+  --red: var(--app-accent);  --red-deep: var(--app-accent-hover);  --red-dark: var(--app-accent-hover);
+  --gold: var(--app-accent);  --gold-light: var(--state-warning-bg);
+  --mn: #2D5BFF;  --ma: var(--state-success);  --mx: #7C3AED;
+  --signal-live: var(--state-success);  --signal-warn: var(--state-warning);
+  --bg: var(--app-bg);  --bg-secondary: var(--app-surface);  --bg-surface-2: var(--app-border);  --bg-warm: var(--app-surface);
+  --text: var(--app-ink);  --text-2: var(--app-ink);  --ink: var(--app-ink);
+  --text-secondary: var(--app-text-dim);  --text-tertiary: var(--app-text-dim-lg);
+  --text-muted: var(--app-text-dim);  --muted: var(--app-text-dim);  --text-light: var(--app-text-dim-lg);
+  --border: var(--app-border);  --border-strong: #C8C2B8;  --rule: var(--app-border);
+  --navy: var(--app-landing-navy);
+  --green: var(--state-success);  --green-light: var(--state-success-bg);
+  --amber: var(--state-warning);  --amber-light: var(--state-warning-bg);
+  --blue: var(--state-info);  --blue-light: var(--state-info-bg);
 }
 
 html {

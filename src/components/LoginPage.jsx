@@ -43,7 +43,7 @@ const primaryBtn = (loading) => ({
 function ErrorBox({ message }) {
   return (
     <div style={{
-      fontSize: '13px', color: '#A32D2D', background: '#FCEBEB',
+      fontSize: '13px', color: 'var(--state-danger)', background: 'var(--state-danger-bg)',
       border: '0.5px solid #F09595', borderRadius: 'var(--radius-sm)',
       padding: '10px 14px', marginBottom: '20px', lineHeight: 1.5,
     }}>
@@ -55,7 +55,7 @@ function ErrorBox({ message }) {
 function SuccessBox({ message }) {
   return (
     <div style={{
-      fontSize: '13px', color: '#065F46', background: '#D1FAE5',
+      fontSize: '13px', color: 'var(--state-success)', background: 'var(--state-success-bg)',
       border: '0.5px solid #6EE7B7', borderRadius: 'var(--radius-sm)',
       padding: '10px 14px', marginBottom: '20px', lineHeight: 1.5,
     }}>
@@ -448,7 +448,7 @@ export default function LoginPage() {
             <div style={{ textAlign: 'center' }}>
               <div style={{
                 width: '48px', height: '48px', borderRadius: '50%',
-                background: 'rgba(242,143,59,0.12)', border: '1.5px solid rgba(242,143,59,0.35)',
+                background: 'rgba(188,23,35,0.12)', border: '1.5px solid rgba(188,23,35,0.35)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 20px', fontSize: '22px',
               }}>
@@ -493,20 +493,20 @@ export default function LoginPage() {
                 padding: '10px 20px',
                 fontSize: '13px', fontWeight: 500,
                 fontFamily: 'var(--font-body)',
-                color: '#F28F3B',
-                background: 'rgba(242,143,59,0.08)',
-                border: '0.5px solid rgba(242,143,59,0.3)',
+                color: 'var(--app-accent)',
+                background: 'rgba(188,23,35,0.08)',
+                border: '0.5px solid rgba(188,23,35,0.3)',
                 borderRadius: 'var(--radius-sm)',
                 cursor: 'pointer',
                 transition: 'all 0.18s',
               }}
               onMouseOver={e => {
-                e.currentTarget.style.background = 'rgba(242,143,59,0.14)'
-                e.currentTarget.style.borderColor = 'rgba(242,143,59,0.5)'
+                e.currentTarget.style.background = 'rgba(188,23,35,0.14)'
+                e.currentTarget.style.borderColor = 'rgba(188,23,35,0.5)'
               }}
               onMouseOut={e => {
-                e.currentTarget.style.background = 'rgba(242,143,59,0.08)'
-                e.currentTarget.style.borderColor = 'rgba(242,143,59,0.3)'
+                e.currentTarget.style.background = 'rgba(188,23,35,0.08)'
+                e.currentTarget.style.borderColor = 'rgba(188,23,35,0.3)'
               }}
             >
               Request access →

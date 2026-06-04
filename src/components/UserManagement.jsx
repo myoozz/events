@@ -299,10 +299,10 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
             }}>
               <span style={{ fontSize: '16px', flexShrink: 0 }}>💡</span>
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#92400E', marginBottom: '4px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--state-warning)', marginBottom: '4px' }}>
                   They'll complete the rest themselves
                 </div>
-                <div style={{ fontSize: '12px', color: '#92400E', lineHeight: 1.6, opacity: 0.85 }}>
+                <div style={{ fontSize: '12px', color: 'var(--state-warning)', lineHeight: 1.6, opacity: 0.85 }}>
                   Once they log in, they'll be guided to add their bio, LinkedIn, Instagram and more — each with a reason why it helps them get the right assignments.
                 </div>
               </div>
@@ -310,7 +310,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
 
             {error && (
               <div style={{
-                fontSize: '13px', color: '#A32D2D', background: '#FCEBEB',
+                fontSize: '13px', color: 'var(--state-danger)', background: 'var(--state-danger-bg)',
                 border: '0.5px solid #F09595', borderRadius: 'var(--radius-sm)',
                 padding: '10px 14px', marginBottom: '16px',
               }}>
@@ -362,7 +362,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
               background: 'none', border: 'none', cursor: 'pointer',
               color: activeTab === tab.key ? 'var(--text)' : 'var(--text-secondary)',
               fontWeight: activeTab === tab.key ? 600 : 400,
-              borderBottom: activeTab === tab.key ? '2px solid #F28F3B' : '2px solid transparent',
+              borderBottom: activeTab === tab.key ? '2px solid var(--app-accent)' : '2px solid transparent',
               marginBottom: '-1px', transition: 'all 0.15s',
             }}
           >
@@ -370,7 +370,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
             {tab.count > 0 && (
               <span style={{
                 marginLeft: '6px', fontSize: '11px', fontWeight: 500,
-                background: activeTab === tab.key ? '#F28F3B' : 'var(--bg-surface-2)',
+                background: activeTab === tab.key ? 'var(--app-accent)' : 'var(--bg-surface-2)',
                 color: activeTab === tab.key ? '#fff' : 'var(--text-secondary)',
                 padding: '1px 6px', borderRadius: '10px',
               }}>
@@ -408,7 +408,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                         title="View profile"
                         style={{
                           width: '36px', height: '36px', borderRadius: '8px',
-                          background: '#F28F3B',
+                          background: 'var(--app-accent)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '13px', fontWeight: 700, color: '#fff',
                           flexShrink: 0,
@@ -449,14 +449,14 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                             borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                             color: 'var(--text-secondary)', transition: 'all 0.15s',
                           }}
-                          onMouseOver={e => { e.currentTarget.style.borderColor = '#F28F3B'; e.currentTarget.style.color = '#F28F3B' }}
+                          onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--app-accent)'; e.currentTarget.style.color = 'var(--app-accent)' }}
                           onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
                         >
                           View profile
                         </button>
                       )}
                       {resendMsg[u.id] && (
-                        <span style={{ fontSize: '11px', color: resendMsg[u.id].startsWith('✓') ? 'var(--green)' : '#A32D2D', fontFamily: 'var(--font-body)' }}>
+                        <span style={{ fontSize: '11px', color: resendMsg[u.id].startsWith('✓') ? 'var(--green)' : 'var(--state-danger)', fontFamily: 'var(--font-body)' }}>
                           {resendMsg[u.id]}
                         </span>
                       )}
@@ -465,8 +465,8 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                         onChange={e => handleRoleChange(u.id, e.target.value)}
                         style={{
                           padding: '5px 10px', fontSize: '12px', fontFamily: 'var(--font-body)',
-                          background: u.role === 'admin' ? 'var(--green-light)' : u.role === 'manager' ? '#EFF6FF' : u.role === 'event_lead' ? '#FEF3C7' : 'var(--bg-secondary)',
-                          color: u.role === 'admin' ? 'var(--green)' : u.role === 'manager' ? '#1D4ED8' : u.role === 'event_lead' ? '#92400E' : 'var(--text-secondary)',
+                          background: u.role === 'admin' ? 'var(--green-light)' : u.role === 'manager' ? 'var(--state-info-bg)' : u.role === 'event_lead' ? 'var(--state-warning-bg)' : 'var(--bg-secondary)',
+                          color: u.role === 'admin' ? 'var(--green)' : u.role === 'manager' ? 'var(--state-info)' : u.role === 'event_lead' ? 'var(--state-warning)' : 'var(--text-secondary)',
                           border: '0.5px solid var(--border)', borderRadius: '20px',
                           cursor: 'pointer', outline: 'none', fontWeight: 500,
                         }}
@@ -479,7 +479,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                             type='checkbox'
                             checked={!!u.can_manage_rate_cards}
                             onChange={() => handleRateCardToggle(u.id, !!u.can_manage_rate_cards)}
-                            style={{ accentColor: '#F28F3B', width: '14px', height: '14px', cursor: 'pointer' }}
+                            style={{ accentColor: 'var(--app-accent)', width: '14px', height: '14px', cursor: 'pointer' }}
                           />
                           <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>Rate Cards Access</span>
                         </label>
@@ -507,7 +507,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                           fontSize: '13px', color: 'var(--text-tertiary)',
                           fontFamily: 'var(--font-body)', padding: '4px 8px',
                         }}
-                        onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
+                        onMouseOver={e => e.currentTarget.style.color = 'var(--state-danger)'}
                         onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
                       >
                         Suspend
@@ -561,7 +561,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                           background: 'none', border: '0.5px solid var(--border-strong)',
                           borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-secondary)',
                         }}
-                        onMouseOver={e => { e.currentTarget.style.borderColor = '#F28F3B'; e.currentTarget.style.color = '#F28F3B' }}
+                        onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--app-accent)'; e.currentTarget.style.color = 'var(--app-accent)' }}
                         onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
                       >
                         Reinstate
@@ -572,7 +572,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                           background: 'none', border: 'none', cursor: 'pointer',
                           fontSize: '13px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', padding: '4px 8px',
                         }}
-                        onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
+                        onMouseOver={e => e.currentTarget.style.color = 'var(--state-danger)'}
                         onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
                       >
                         Delete
@@ -605,7 +605,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                         width: '36px', height: '36px', borderRadius: '8px',
                         background: '#F5DFC0',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '13px', fontWeight: 700, color: '#92400E', flexShrink: 0,
+                        fontSize: '13px', fontWeight: 700, color: 'var(--state-warning)', flexShrink: 0,
                       }}>
                         {(u.full_name || u.email).trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').slice(0,2).join('')}
                       </div>
@@ -616,7 +616,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       {resendMsg[u.id] && (
-                        <span style={{ fontSize: '11px', color: resendMsg[u.id].startsWith('✓') ? 'var(--green)' : '#A32D2D', fontFamily: 'var(--font-body)' }}>
+                        <span style={{ fontSize: '11px', color: resendMsg[u.id].startsWith('✓') ? 'var(--green)' : 'var(--state-danger)', fontFamily: 'var(--font-body)' }}>
                           {resendMsg[u.id]}
                         </span>
                       )}
@@ -640,7 +640,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                           background: 'none', border: 'none', cursor: 'pointer',
                           fontSize: '13px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)', padding: '4px 8px',
                         }}
-                        onMouseOver={e => e.currentTarget.style.color = '#A32D2D'}
+                        onMouseOver={e => e.currentTarget.style.color = 'var(--state-danger)'}
                         onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
                       >
                         Delete

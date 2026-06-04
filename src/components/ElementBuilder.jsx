@@ -13,10 +13,10 @@ import { logElementCreated, logElementDeleted, logCategoryAdded, logCategoryDele
 const SIZE_UNITS = ['sqft','sqmtr','nos','per pax']
 const STATUS_OPTIONS = ['Estimated','Confirmed','Actuals','Client scope']
 const STATUS_STYLES = {
-  'Estimated':    { bg:'#FEF3C7', color:'#92400E' },
-  'Confirmed':    { bg:'#D1FAE5', color:'#065F46' },
+  'Estimated':    { bg:'var(--state-warning-bg)', color:'var(--state-warning)' },
+  'Confirmed':    { bg:'var(--state-success-bg)', color:'var(--state-success)' },
   'Actuals':      { bg:'#F3F4F6', color:'#6B7280' },
-  'Client scope': { bg:'#DBEAFE', color:'#1E40AF' },
+  'Client scope': { bg:'var(--state-info-bg)', color:'var(--state-info)' },
 }
 
 // ─────────────────────────────────────────────
@@ -191,10 +191,10 @@ const subLabel=(text)=>(
 // Card mode input style (unchanged from before)
 const inp=(amber,locked)=>({
   width:'100%',fontSize:'13px',padding:'6px 8px',
-  border:'0.5px solid '+(amber?'#F59E0B':'var(--border)'),
+  border:'0.5px solid '+(amber?'var(--state-warning)':'var(--border)'),
   borderRadius:'4px',
-  background:locked?'var(--bg-secondary)':amber?'#FFFBEB':'var(--bg)',
-  color:amber?'#92400E':'var(--text)',
+  background:locked?'var(--bg-secondary)':amber?'var(--state-warning-bg)':'var(--bg)',
+  color:amber?'var(--state-warning)':'var(--text)',
   fontFamily:'var(--font-body)',outline:'none',
   boxSizing:'border-box',minWidth:0,
 })
@@ -294,7 +294,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
                 onChange={e=>setSizeH(e.target.value)} onBlur={commitSize}
               />
               {sizeL&&sizeB&&!isNaN(+sizeL)&&!isNaN(+sizeB)&&(
-                <span style={{fontSize:'9px',color:'var(--text-tertiary)',background:'#f2efe9',border:'0.5px solid var(--border)',borderRadius:'3px',padding:'1px 3px',flexShrink:0,whiteSpace:'nowrap'}}>{(+sizeL*(+sizeB)).toLocaleString('en-IN')} sqft</span>
+                <span style={{fontSize:'9px',color:'var(--text-tertiary)',background:'var(--app-surface)',border:'0.5px solid var(--border)',borderRadius:'3px',padding:'1px 3px',flexShrink:0,whiteSpace:'nowrap'}}>{(+sizeL*(+sizeB)).toLocaleString('en-IN')} sqft</span>
               )}
               <select value={el.size_unit||'sqft'} disabled={locked}
                 onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
@@ -347,7 +347,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
           {!locked&&clientAmt>0&&(
             <div style={{fontSize:'11px',color:'var(--text-secondary)',fontWeight:500,marginTop:'1px'}}>= {fmt(clientAmt)}</div>
           )}
-          {locked&&<div style={{fontSize:'10px',color:'#1E40AF'}}>On actuals</div>}
+          {locked&&<div style={{fontSize:'10px',color:'var(--state-info)'}}>On actuals</div>}
         </div>
 
         {/* Internal cost — admin only */}
@@ -364,7 +364,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
               onLump={()=>{onUpdate('internal_lump',true);onSave()}}
               muted={true}
             />
-            {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.rateType==='vendor_quoted'?'#e6f4ec':'#e8eef8',color:rateSuggestion.rateType==='vendor_quoted'?'#1a6b3a':'#1a4b8a',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
+            {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success-bg)':'var(--state-info-bg)',color:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success)':'#1a4b8a',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
             {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>}
             {internalAmt>0&&(
               <div style={{fontSize:'11px',color:'#6B7280',fontWeight:500,marginTop:'1px'}}>= {fmt(internalAmt)}</div>
@@ -373,8 +373,8 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
               <div style={{
                 display:'inline-flex',alignItems:'center',marginTop:'3px',
                 fontSize:'10px',fontWeight:600,padding:'2px 7px',borderRadius:'20px',width:'fit-content',
-                background:margin>0?'#D1FAE5':margin===0?'#FEF3C7':'#FECACA',
-                color:margin>0?'#065F46':margin===0?'#92400E':'#A32D2D',
+                background:margin>0?'var(--state-success-bg)':margin===0?'var(--state-warning-bg)':'#FECACA',
+                color:margin>0?'var(--state-success)':margin===0?'var(--state-warning)':'var(--state-danger)',
               }}>
                 {Math.round((margin/clientAmt)*100)}% margin
               </div>
@@ -415,12 +415,12 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
         {/* Delete + del */}
         <div style={{...cell(false,true,{flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',padding:'4px 0'})}}>
           <button onClick={onDelete}
-            style={{background:'none',border:'1px solid #F28F3B',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#F28F3B',padding:'2px 4px',lineHeight:1}}
+            style={{background:'none',border:'1px solid var(--app-accent)',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'var(--app-accent)',padding:'2px 4px',lineHeight:1}}
           >✕</button>
           {isSaved&&(
             <button onClick={onMarkAsOption} title="Move to alternates — not in budget"
               style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
-              onMouseOver={e=>e.currentTarget.style.color='#F28F3B'}
+              onMouseOver={e=>e.currentTarget.style.color='var(--app-accent)'}
               onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
             >del</button>
           )}
@@ -527,7 +527,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
         {!locked&&!el.lump_sum&&clientAmt>0&&(
           <div style={{fontSize:'11px',color:'var(--text-secondary)',marginTop:'2px',fontWeight:500}}>{fmt(clientAmt)}</div>
         )}
-        {locked&&<div style={{fontSize:'11px',color:'#1E40AF',marginTop:'2px'}}>On actuals</div>}
+        {locked&&<div style={{fontSize:'11px',color:'var(--state-info)',marginTop:'2px'}}>On actuals</div>}
       </div>
 
       {/* Internal cost — admin only */}
@@ -546,10 +546,10 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             onLump={()=>{onUpdate('internal_lump',true);onSave()}}
             muted={true}
           />
-          {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.rateType==='vendor_quoted'?'#e6f4ec':'#e8eef8',color:rateSuggestion.rateType==='vendor_quoted'?'#1a6b3a':'#1a4b8a',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
+          {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success-bg)':'var(--state-info-bg)',color:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success)':'#1a4b8a',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
           {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'#9ca3af',cursor:'pointer',display:'block'}}>Ask for rates</span>}
           {!el.internal_lump&&internalAmt>0&&(
-            <div style={{fontSize:'11px',color:'#92400E',marginTop:'2px',fontWeight:500}}>{fmt(internalAmt)}</div>
+            <div style={{fontSize:'11px',color:'var(--state-warning)',marginTop:'2px',fontWeight:500}}>{fmt(internalAmt)}</div>
           )}
         </div>
       )}
@@ -563,12 +563,12 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
             onChange={e=>onUpdate('source',e.target.value)} onBlur={onSave}
           />
           {isAdmin&&clientAmt>0&&(+(el.internal_rate)||+(el.internal_amount))>0&&(
-            <div style={{fontSize:'11px',marginTop:'2px',fontWeight:500,color:margin>0?'#065F46':margin===0?'#92400E':'#A32D2D'}}>
+            <div style={{fontSize:'11px',marginTop:'2px',fontWeight:500,color:margin>0?'var(--state-success)':margin===0?'var(--state-warning)':'var(--state-danger)'}}>
               Margin: {fmt(margin)} ({Math.round((margin/clientAmt)*100)}%)
             </div>
           )}
           {isAdmin&&clientAmt>0&&!((+(el.internal_rate)||+(el.internal_amount))>0)&&(
-            <div style={{fontSize:'11px',marginTop:'2px',color:'#92400E',fontWeight:500}}>Margin: ₹0 — add internal cost</div>
+            <div style={{fontSize:'11px',marginTop:'2px',color:'var(--state-warning)',fontWeight:500}}>Margin: ₹0 — add internal cost</div>
           )}
         </div>
       )}
@@ -608,12 +608,12 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
       {/* Delete + alt */}
       <div style={{paddingTop:'18px',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
         <button onClick={onDelete}
-          style={{background:'none',border:'1px solid #F28F3B',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#F28F3B',padding:'3px 5px',lineHeight:1}}
+          style={{background:'none',border:'1px solid var(--app-accent)',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'var(--app-accent)',padding:'3px 5px',lineHeight:1}}
         >✕</button>
         {isSaved&&(
           <button onClick={onMarkAsOption} title="Move to alternates — not in budget"
             style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
-            onMouseOver={e=>e.currentTarget.style.color='#F28F3B'}
+            onMouseOver={e=>e.currentTarget.style.color='var(--app-accent)'}
             onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
           >del</button>
         )}
@@ -654,7 +654,7 @@ function OptionRow({ el, onBack, onConfirm, onDelete }){
         >✓ Confirm</button>
         <button onClick={()=>onDelete(el.id,el.element_name)}
           style={{background:'none',border:'none',cursor:'pointer',fontSize:'13px',color:'var(--text-tertiary)',padding:'2px 4px'}}
-          onMouseOver={e=>e.currentTarget.style.color='#A32D2D'}
+          onMouseOver={e=>e.currentTarget.style.color='var(--state-danger)'}
           onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
         >✕</button>
       </div>
@@ -773,8 +773,8 @@ function CategoryBlock({
         <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
         {/* Collapse toggle */}
         <button onClick={()=>setOpen(!open)} title={open?'Collapse':'Expand'}
-          style={{width:'26px',height:'26px',display:'flex',alignItems:'center',justifyContent:'center',background:open?'#e8f5e9':'#fde8ea',border:'1px solid #d8d2c8',borderRadius:'4px',cursor:'pointer',padding:0,flexShrink:0,transition:'all 0.12s'}}
-        ><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:open?'rotate(180deg)':'none',transition:'transform 0.18s ease'}}><path d="M3 5l4 4 4-4" stroke={open?'#2e7d32':'#F28F3B'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+          style={{width:'26px',height:'26px',display:'flex',alignItems:'center',justifyContent:'center',background:open?'var(--state-success-bg)':'var(--state-danger-bg)',border:'1px solid var(--app-border)',borderRadius:'4px',cursor:'pointer',padding:0,flexShrink:0,transition:'all 0.12s'}}
+        ><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:open?'rotate(180deg)':'none',transition:'transform 0.18s ease'}}><path d="M3 5l4 4 4-4" stroke={open?'var(--state-success)':'var(--app-accent)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
 
         {/* Reorder — Phase F */}
         <div style={{display:'flex',gap:'2px',flexShrink:0}} onClick={e=>e.stopPropagation()}>
@@ -814,7 +814,7 @@ function CategoryBlock({
               onChange={e=>setZoneVal(e.target.value)}
               onBlur={e=>{e.stopPropagation();onZoneLabelChange&&onZoneLabelChange(cat.name,zoneVal)}}
               placeholder="+ zone"
-              style={{fontSize:'11px',color:zoneVal?'var(--text-tertiary)':'#F28F3B88',background:'none',border:'none',outline:'none',fontFamily:'var(--font-body)',width:'70px',cursor:'text',padding:0}}
+              style={{fontSize:'11px',color:zoneVal?'var(--text-tertiary)':'#bc172388',background:'none',border:'none',outline:'none',fontFamily:'var(--font-body)',width:'70px',cursor:'text',padding:0}}
             />
           </span>
         )}
@@ -824,7 +824,7 @@ function CategoryBlock({
         {/* Item count */}
         <span style={{fontSize:'12px',color:'var(--text-tertiary)',flexShrink:0}}>
           {mainItems.length} {mainItems.length===1?'item':'items'}
-          {optionItems.length>0&&<span style={{color:'#F28F3B',marginLeft:'4px'}}>+{optionItems.length} alt</span>}
+          {optionItems.length>0&&<span style={{color:'var(--app-accent)',marginLeft:'4px'}}>+{optionItems.length} alt</span>}
         </span>
 
         {/* Category total */}
@@ -844,7 +844,7 @@ function CategoryBlock({
           <div style={{position:'relative',flexShrink:0}} onClick={e=>e.stopPropagation()}>
             <button onClick={()=>setShowMerge(!showMerge)}
               title="Move all elements from this category into another. This category will be removed."
-              style={{fontSize:'11px',padding:'3px 8px',background:'none',border:'1px solid #d8d2c8',borderRadius:'3px',cursor:'pointer',color:'#2c2518',fontFamily:'var(--font-body)'}}
+              style={{fontSize:'11px',padding:'3px 8px',background:'none',border:'1px solid var(--app-border)',borderRadius:'3px',cursor:'pointer',color:'#2c2518',fontFamily:'var(--font-body)'}}
             >Merge into →</button>
             {showMerge&&(
               <div style={{position:'absolute',right:0,top:'100%',marginTop:'4px',background:'var(--bg)',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',padding:'8px',zIndex:50,minWidth:'200px',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
@@ -875,7 +875,7 @@ function CategoryBlock({
 
         {/* Delete category */}
         <button onClick={e=>{e.stopPropagation();onDelete()}} title="Remove category"
-          style={{background:'none',border:'1px solid #F28F3B',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'#F28F3B',padding:'2px 5px',lineHeight:1,flexShrink:0}}
+          style={{background:'none',border:'1px solid var(--app-accent)',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'var(--app-accent)',padding:'2px 5px',lineHeight:1,flexShrink:0}}
         >✕</button>
         </div>{/* end RIGHT GROUP */}
       </div>
@@ -885,15 +885,15 @@ function CategoryBlock({
         <>
           {/* Bundle override */}
           {cat.bundled&&(
-            <div style={{padding:'8px 14px',background:'#FFFBEB',borderBottom:'0.5px solid var(--border)',display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap'}}>
-              <span style={{fontSize:'12px',fontWeight:500,color:'#92400E'}}>Client sees one total:</span>
+            <div style={{padding:'8px 14px',background:'var(--state-warning-bg)',borderBottom:'0.5px solid var(--border)',display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap'}}>
+              <span style={{fontSize:'12px',fontWeight:500,color:'var(--state-warning)'}}>Client sees one total:</span>
               <input type="number"
-                style={{width:'160px',fontSize:'13px',padding:'5px 10px',border:'0.5px solid #F59E0B',borderRadius:'4px',background:'white',color:'#92400E',fontFamily:'var(--font-body)',outline:'none'}}
+                style={{width:'160px',fontSize:'13px',padding:'5px 10px',border:'0.5px solid var(--state-warning)',borderRadius:'4px',background:'white',color:'var(--state-warning)',fontFamily:'var(--font-body)',outline:'none'}}
                 value={cat.bundle_amt||''}
                 placeholder={`Auto: ${fmt(autoSum)||'₹0'}`}
                 onChange={e=>onUpdateCat('bundle_amt',+e.target.value)}
               />
-              <span style={{fontSize:'11px',color:'#92400E',opacity:0.7}}>Auto-sum: {fmt(autoSum)||'₹0'} · Edit to override</span>
+              <span style={{fontSize:'11px',color:'var(--state-warning)',opacity:0.7}}>Auto-sum: {fmt(autoSum)||'₹0'} · Edit to override</span>
             </div>
           )}
 
@@ -955,7 +955,7 @@ function CategoryBlock({
           {/* Add element */}
           <div style={{padding:'8px 14px',borderTop:'0.5px solid var(--border)'}}>
             <button onClick={onAddElement}
-              style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',cursor:'pointer',fontFamily:'var(--font-body)',padding:'5px 12px'}}
+              style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',fontFamily:'var(--font-body)',padding:'5px 12px'}}
             >+ Add element</button>
           </div>
 
@@ -1491,13 +1491,13 @@ function CityElements({ event, city, userRole, teamUsers }){
             Upload an existing cost sheet, paste from Excel, or start fresh.
           </p>
           <div style={{display:'flex',gap:'10px',justifyContent:'center',flexWrap:'wrap'}}>
-            <button onClick={downloadTemplate} style={{padding:'9px 18px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>
+            <button onClick={downloadTemplate} style={{padding:'9px 18px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>
               ↓ Download template
             </button>
-            <button onClick={()=>setShowImport(true)} style={{padding:'9px 18px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>
+            <button onClick={()=>setShowImport(true)} style={{padding:'9px 18px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>
               ↑ Upload or Paste
             </button>
-            <button onClick={()=>setShowCategoryPicker(true)} style={{padding:'9px 18px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#F28F3B',color:'#fff',border:'1px solid #F28F3B',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>
+            <button onClick={()=>setShowCategoryPicker(true)} style={{padding:'9px 18px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'#fff',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>
               + Start from scratch
             </button>
           </div>
@@ -1508,7 +1508,7 @@ function CityElements({ event, city, userRole, teamUsers }){
       {/* Top action bar */}
       {categories.length>0&&(
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
-          <button onClick={()=>setShowCategoryPicker(true)} style={{padding:'7px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>
+          <button onClick={()=>setShowCategoryPicker(true)} style={{padding:'7px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>
             + Add category
           </button>
           <div style={{display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap'}}>
@@ -1522,11 +1522,11 @@ function CityElements({ event, city, userRole, teamUsers }){
                 style={{padding:'5px 10px',fontSize:'12px',fontFamily:'var(--font-body)',background:viewMode==='cards'?'rgba(0,0,0,0.07)':'none',border:'none',borderLeft:'1px solid rgba(0,0,0,0.14)',color:viewMode==='cards'?'var(--text)':'var(--text-tertiary)',cursor:'pointer',fontWeight:viewMode==='cards'?500:400}}
               >☰ Cards</button>
             </div>
-            <button onClick={()=>setShowImport(true)} style={{fontSize:'12px',fontWeight:500,color:'#2c2518',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↑ Import more</button>
-            <button onClick={()=>setShowSheetSettings(true)} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>⚙ Sheet</button>
-            <button onClick={handleDownloadElementMaster} style={{fontSize:'12px',fontWeight:500,color:'#fff',background:'#F28F3B',border:'1px solid #F28F3B',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↓ Download list</button>
-            <button onClick={downloadTemplate} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↓ Template</button>
-            <button onClick={clearAllElements} style={{fontSize:'12px',color:'#F28F3B',background:'none',border:'1px solid #F28F3B',borderRadius:'var(--radius-sm)',cursor:'pointer',fontFamily:'var(--font-body)',marginLeft:'8px',padding:'5px 10px'}}>Clear all</button>
+            <button onClick={()=>setShowImport(true)} style={{fontSize:'12px',fontWeight:500,color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↑ Import more</button>
+            <button onClick={()=>setShowSheetSettings(true)} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>⚙ Sheet</button>
+            <button onClick={handleDownloadElementMaster} style={{fontSize:'12px',fontWeight:500,color:'#fff',background:'var(--app-accent)',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↓ Download list</button>
+            <button onClick={downloadTemplate} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↓ Template</button>
+            <button onClick={clearAllElements} style={{fontSize:'12px',color:'var(--app-accent)',background:'none',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer',fontFamily:'var(--font-body)',marginLeft:'8px',padding:'5px 10px'}}>Clear all</button>
           </div>
         </div>
       )}
@@ -1545,8 +1545,8 @@ function CityElements({ event, city, userRole, teamUsers }){
               }
             }} style={{
               padding:'4px 12px',fontSize:'12px',fontFamily:'var(--font-body)',
-              border:'1px solid #d8d2c8',borderRadius:'20px',cursor:'pointer',
-              background:activePill===pill?'#1a1008':'none',
+              border:'1px solid var(--app-border)',borderRadius:'20px',cursor:'pointer',
+              background:activePill===pill?'var(--app-ink)':'none',
               color:activePill===pill?'#fff':'var(--text-secondary)',
               ...(pill==='__all__'?{marginRight:'8px'}:{}),
             }}>{pill==='__all__'?'All':pill}</button>
@@ -1606,17 +1606,17 @@ function CityElements({ event, city, userRole, teamUsers }){
             <div style={{fontSize:'11px',color:'var(--text-tertiary)',marginTop:'2px'}}>{categories.length} {categories.length===1?'category':'categories'}</div>
           </div>
           {isAdmin&&(
-            <div style={{background:'#FFFBEB',borderRadius:'var(--radius-sm)',padding:'14px 18px',border:'0.5px solid #F59E0B'}}>
-              <div style={{fontSize:'11px',color:'#92400E',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'6px'}}>Internal cost</div>
-              <div style={{fontSize:'24px',fontWeight:500,color:'#92400E',fontFamily:'var(--font-display)'}}>{fmt(totalInternal)||'₹0'}</div>
-              <div style={{fontSize:'11px',color:'#92400E',opacity:0.7,marginTop:'2px'}}>Total paid to vendors</div>
+            <div style={{background:'var(--state-warning-bg)',borderRadius:'var(--radius-sm)',padding:'14px 18px',border:'0.5px solid var(--state-warning)'}}>
+              <div style={{fontSize:'11px',color:'var(--state-warning)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'6px'}}>Internal cost</div>
+              <div style={{fontSize:'24px',fontWeight:500,color:'var(--state-warning)',fontFamily:'var(--font-display)'}}>{fmt(totalInternal)||'₹0'}</div>
+              <div style={{fontSize:'11px',color:'var(--state-warning)',opacity:0.7,marginTop:'2px'}}>Total paid to vendors</div>
             </div>
           )}
           {isAdmin&&(
-            <div style={{background:margin>0?'#F0FDF4':'#FEF2F2',borderRadius:'var(--radius-sm)',padding:'14px 18px',border:`0.5px solid ${margin>0?'#22C55E':'#F87171'}`}}>
-              <div style={{fontSize:'11px',color:margin>0?'#15803D':'#B91C1C',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'6px'}}>Margin</div>
-              <div style={{fontSize:'24px',fontWeight:500,color:margin>0?'#15803D':'#B91C1C',fontFamily:'var(--font-display)'}}>{fmt(margin)||'₹0'}</div>
-              {totalClient>0&&<div style={{fontSize:'11px',color:margin>0?'#15803D':'#B91C1C',opacity:0.8,marginTop:'2px'}}>{Math.round((margin/totalClient)*100)}% margin</div>}
+            <div style={{background:margin>0?'var(--state-success-bg)':'var(--state-danger-bg)',borderRadius:'var(--radius-sm)',padding:'14px 18px',border:`0.5px solid ${margin>0?'var(--state-success)':'var(--state-danger)'}`}}>
+              <div style={{fontSize:'11px',color:margin>0?'var(--state-success)':'var(--state-danger)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'6px'}}>Margin</div>
+              <div style={{fontSize:'24px',fontWeight:500,color:margin>0?'var(--state-success)':'var(--state-danger)',fontFamily:'var(--font-display)'}}>{fmt(margin)||'₹0'}</div>
+              {totalClient>0&&<div style={{fontSize:'11px',color:margin>0?'var(--state-success)':'var(--state-danger)',opacity:0.8,marginTop:'2px'}}>{Math.round((margin/totalClient)*100)}% margin</div>}
             </div>
           )}
           {isAdmin&&(
@@ -1698,7 +1698,7 @@ function CityElements({ event, city, userRole, teamUsers }){
             </p>
             <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
               <button onClick={()=>doDelete(deleteConfirm.catName,deleteConfirm.elId,deleteConfirm.elementName,true)}
-                style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#A32D2D',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
+                style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--state-danger)',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
               >Delete from all cities</button>
               <button onClick={()=>doDelete(deleteConfirm.catName,deleteConfirm.elId,deleteConfirm.elementName,false)}
                 style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'none',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'var(--text)',textAlign:'left'}}
@@ -1731,7 +1731,7 @@ function CityElements({ event, city, userRole, teamUsers }){
                   try{ await logCategoryDeleted(event.id,categoryDeleteConfirm) }catch{}
                   setCategoryDeleteConfirm(null)
                 }}
-                style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#A32D2D',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
+                style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--state-danger)',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
               >Yes, remove category and all elements</button>
               <button onClick={()=>setCategoryDeleteConfirm(null)}
                 style={{padding:'8px 16px',fontSize:'12px',fontFamily:'var(--font-body)',background:'none',border:'none',cursor:'pointer',color:'var(--text-tertiary)'}}
@@ -1755,7 +1755,7 @@ function CityElements({ event, city, userRole, teamUsers }){
               </p>
               <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
                 <button onClick={applyDefaultToExistingRows}
-                  style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#F28F3B',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
+                  style={{padding:'10px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'white',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',textAlign:'left'}}
                 >Update {count} row{count!==1?'s':''}</button>
                 <button onClick={()=>setPendingDefaultChange(null)}
                   style={{padding:'8px 16px',fontSize:'12px',fontFamily:'var(--font-body)',background:'none',border:'none',cursor:'pointer',color:'var(--text-tertiary)'}}
@@ -1788,8 +1788,8 @@ function CityElements({ event, city, userRole, teamUsers }){
                   style={{width:'100%',padding:'10px 12px',fontSize:'13px',fontFamily:'monospace',background:'var(--bg-secondary)',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',color:'var(--text)',outline:'none',resize:'vertical',boxSizing:'border-box',lineHeight:1.6}}
                 />
                 <div style={{display:'flex',gap:'8px',marginTop:'12px',justifyContent:'flex-end'}}>
-                  <button onClick={()=>{setShowPaste(false);setPasteText('')}} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>Cancel</button>
-                  <button onClick={()=>setPastePreview(parsePaste(pasteText))} disabled={!pasteText.trim()} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#F28F3B',color:'#fff',border:'1px solid #F28F3B',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Preview →</button>
+                  <button onClick={()=>{setShowPaste(false);setPasteText('')}} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>Cancel</button>
+                  <button onClick={()=>setPastePreview(parsePaste(pasteText))} disabled={!pasteText.trim()} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'#fff',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Preview →</button>
                 </div>
               </>
             ):(
@@ -1810,8 +1810,8 @@ function CityElements({ event, city, userRole, teamUsers }){
                   ))}
                 </div>
                 <div style={{display:'flex',gap:'8px',justifyContent:'flex-end'}}>
-                  <button onClick={()=>setPastePreview([])} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid #d8d2c8',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>← Edit</button>
-                  <button onClick={confirmPaste} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'#F28F3B',color:'#fff',border:'1px solid #F28F3B',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Import elements</button>
+                  <button onClick={()=>setPastePreview([])} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>← Edit</button>
+                  <button onClick={confirmPaste} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'#fff',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Import elements</button>
                 </div>
               </>
             )}
@@ -1900,7 +1900,7 @@ export default function ElementBuilder({ event, userRole, teamUsers }){
               disabled={copying||!copyFrom||(copyTo!=='__all__'&&copyTo===copyFrom)}
               style={{
                 padding:'7px 14px',fontSize:'12px',fontWeight:500,
-                fontFamily:'var(--font-body)',background:'#F28F3B',color:'#fff',
+                fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'#fff',
                 border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',
                 opacity:(copying||!copyFrom||(copyTo!=='__all__'&&copyTo===copyFrom))?0.45:1,
               }}

@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────────
-const BRAND_RED  = '#F28F3B'
+const BRAND_RED  = 'var(--app-accent)'
 const WARM_BG    = '#FAFAF8'
 const FONT_HEAD  = '"Cormorant Garamond", Georgia, serif'
 const FONT_BODY  = '"DM Sans", system-ui, sans-serif'
@@ -180,8 +180,8 @@ export default function AnalyticsDashboard({ userId, userRole }) {
         else                                     pending++
       })
       setPipelineData([
-        { label: 'Active',           count: active,   color: '#22c55e'  },
-        { label: 'Pending Approval', count: pending,  color: '#f59e0b'  },
+        { label: 'Active',           count: active,   color: 'var(--state-success)'  },
+        { label: 'Pending Approval', count: pending,  color: 'var(--state-warning)'  },
         { label: 'Archived',         count: archived, color: '#94a3b8'  },
       ])
     } catch (err) {
@@ -412,9 +412,9 @@ export default function AnalyticsDashboard({ userId, userRole }) {
                 />
                 <Line
                   type="monotone" dataKey="completed" name="Completed"
-                  stroke="#22c55e" strokeWidth={2.5}
-                  dot={{ r: 3.5, fill: '#22c55e', strokeWidth: 0 }}
-                  activeDot={{ r: 5.5, fill: '#22c55e' }}
+                  stroke="var(--state-success)" strokeWidth={2.5}
+                  dot={{ r: 3.5, fill: 'var(--state-success)', strokeWidth: 0 }}
+                  activeDot={{ r: 5.5, fill: 'var(--state-success)' }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -454,7 +454,7 @@ export default function AnalyticsDashboard({ userId, userRole }) {
                 />
                 <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f5f2ee' }} />
                 <Legend wrapperStyle={{ fontFamily: FONT_BODY, fontSize: 12, paddingTop: 8 }} />
-                <Bar dataKey="done"    name="Done"    stackId="w" fill="#22c55e" />
+                <Bar dataKey="done"    name="Done"    stackId="w" fill="var(--state-success)" />
                 <Bar dataKey="active"  name="Active"  stackId="w" fill="#93c5fd" />
                 <Bar dataKey="overdue" name="Overdue" stackId="w" fill={BRAND_RED} radius={[0, 4, 4, 0]} />
               </BarChart>

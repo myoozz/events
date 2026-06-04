@@ -36,8 +36,8 @@ const STAGES = [
 
 // Colors matching app color system
 const STAGE_COLORS = {
-  done:    { bg: '#DCFCE7', border: '#16A34A', text: '#15803D', dot: '#16A34A' },
-  active:  { bg: '#FFF7ED', border: '#F97316', text: '#EA580C', dot: '#F97316' },
+  done:    { bg: 'var(--state-success-bg)', border: 'var(--state-success)', text: 'var(--state-success)', dot: 'var(--state-success)' },
+  active:  { bg: '#FFF7ED', border: 'var(--state-warning)', text: 'var(--state-warning)', dot: 'var(--state-warning)' },
   pending: { bg: 'var(--bg-secondary)', border: 'var(--border)', text: 'var(--text-tertiary)', dot: 'var(--border-strong)' },
 }
 
@@ -168,8 +168,8 @@ export default function EventMilestone({ event }) {
                 <div style={{
                   flex: 1, height: '2px', marginTop: '17px',
                   background: achieved.has(STAGES[i + 1]?.key) || isDone
-                    ? '#16A34A'
-                    : isActive ? '#F97316' : 'var(--border)',
+                    ? 'var(--state-success)'
+                    : isActive ? 'var(--state-warning)' : 'var(--border)',
                   transition: 'background 0.3s',
                 }} />
               )}

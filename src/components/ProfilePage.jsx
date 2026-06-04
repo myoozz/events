@@ -7,17 +7,17 @@ const db = (table) => supabase.from(table);
 
 const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team' }
 const ROLE_COLORS = {
-  admin:      { bg: '#DCFCE7', color: '#166534' },
-  manager:    { bg: '#EFF6FF', color: '#1D4ED8' },
-  event_lead: { bg: '#FEF3C7', color: '#92400E' },
+  admin:      { bg: 'var(--state-success-bg)', color: 'var(--state-success)' },
+  manager:    { bg: 'var(--state-info-bg)', color: 'var(--state-info)' },
+  event_lead: { bg: 'var(--state-warning-bg)', color: 'var(--state-warning)' },
   team:       { bg: '#F3F4F6', color: '#374151' },
 }
 const STATUS_META = {
-  active:    { label: 'Active',    color: '#059669', bg: '#ECFDF5' },
-  pitch:     { label: 'Pitch',     color: '#D97706', bg: '#FFFBEB' },
+  active:    { label: 'Active',    color: '#059669', bg: 'var(--state-success-bg)' },
+  pitch:     { label: 'Pitch',     color: 'var(--state-warning)', bg: 'var(--state-warning-bg)' },
   completed: { label: 'Completed', color: '#6B7280', bg: '#F3F4F6' },
   won:       { label: 'Won',       color: '#7C3AED', bg: '#F5F3FF' },
-  cancelled: { label: 'Cancelled', color: '#DC2626', bg: '#FEF2F2' },
+  cancelled: { label: 'Cancelled', color: 'var(--state-danger)', bg: 'var(--state-danger-bg)' },
 }
 
 const SOCIAL_DEFAULTS = [
@@ -408,7 +408,7 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
                             onClick={() => { setFieldVal(cs.url); setOpenField(fieldKey) }}>
                             <PencilIcon size={12} />
                           </button>
-                          <button style={{ ...S.editIconBtn, color: '#DC2626' }} title="Remove"
+                          <button style={{ ...S.editIconBtn, color: 'var(--state-danger)' }} title="Remove"
                             onClick={() => saveSocials(socials.filter(x => x.key !== cs.key))}>
                             ✕
                           </button>
@@ -586,7 +586,7 @@ const S = {
   },
   avatarCircle: {
     width: 72, height: 72, borderRadius: '14px',
-    background: '#F28F3B', color: '#fff',
+    background: 'var(--app-accent)', color: '#fff',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px',
     fontFamily: "'DM Sans', sans-serif",
@@ -611,7 +611,7 @@ const S = {
   nameEditRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 },
   nameInput: {
     flex: 1, padding: '6px 10px',
-    border: '1.5px solid #F28F3B', borderRadius: 7,
+    border: '1.5px solid var(--app-accent)', borderRadius: 7,
     fontSize: 18, fontFamily: "'DM Sans', sans-serif",
     color: '#1a1a1a', background: '#fff', outline: 'none',
   },
@@ -620,7 +620,7 @@ const S = {
     color: '#C4BDB6', padding: 2, display: 'flex', alignItems: 'center',
   },
   miniSaveBtn: {
-    padding: '4px 10px', background: '#F28F3B', color: '#fff',
+    padding: '4px 10px', background: 'var(--app-accent)', color: '#fff',
     border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600,
   },
   miniCancelBtn: {
@@ -641,7 +641,7 @@ const S = {
   email: { fontSize: 12, color: '#9CA3AF', margin: 0 },
   savedBadge: {
     position: 'absolute', top: 16, right: 16,
-    padding: '5px 12px', background: '#ECFDF5', color: '#059669',
+    padding: '5px 12px', background: 'var(--state-success-bg)', color: '#059669',
     borderRadius: 8, fontSize: 12, fontWeight: 600,
   },
 
@@ -653,7 +653,7 @@ const S = {
     color: '#9CA3AF', fontWeight: 500, marginBottom: -1,
     transition: 'color 0.15s, border-color 0.15s',
   },
-  tabActive: { color: '#F28F3B', borderBottomColor: '#F28F3B', fontWeight: 600 },
+  tabActive: { color: 'var(--app-accent)', borderBottomColor: 'var(--app-accent)', fontWeight: 600 },
 
   detailsWrap: { display: 'flex', flexDirection: 'column', gap: 0 },
   fieldBlock: {
@@ -683,14 +683,14 @@ const S = {
   nudgeBenefit: { fontSize: 13, color: '#6B7280', flex: 1, lineHeight: 1.4 },
   nudgeAddBtn: {
     padding: '6px 16px', border: 'none', borderRadius: 20,
-    background: '#F28F3B', color: '#fff', cursor: 'pointer',
+    background: 'var(--app-accent)', color: '#fff', cursor: 'pointer',
     fontSize: 12, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
     flexShrink: 0, whiteSpace: 'nowrap',
   },
 
   inlineInput: {
     width: '100%', padding: '9px 12px',
-    border: '1.5px solid #F28F3B', borderRadius: 7,
+    border: '1.5px solid var(--app-accent)', borderRadius: 7,
     fontSize: 14, fontFamily: "'DM Sans', sans-serif",
     background: '#fff', color: '#1a1a1a', outline: 'none',
     boxSizing: 'border-box',
@@ -702,7 +702,7 @@ const S = {
   },
   inlineSaveBtn: {
     padding: '7px 20px', border: 'none', borderRadius: 7,
-    background: '#F28F3B', color: '#fff', cursor: 'pointer',
+    background: 'var(--app-accent)', color: '#fff', cursor: 'pointer',
     fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
   },
 
@@ -712,7 +712,7 @@ const S = {
     marginBottom: 8, paddingLeft: 2,
   },
   socialLink: {
-    fontSize: 13, color: '#F28F3B', textDecoration: 'none',
+    fontSize: 13, color: 'var(--app-accent)', textDecoration: 'none',
     flex: 1, wordBreak: 'break-all',
   },
   addMoreBtn: {

@@ -123,7 +123,7 @@ function CategoryBreakdown({ cities, getCitySummary, isAdmin }) {
                 <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '12px' }}>
                   <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text)', fontFamily: 'var(--font-display)' }}>{fmt(cat.total)}</div>
                   {isAdmin && cat.internalTotal > 0 && (
-                    <div style={{ fontSize: '11px', color: '#92400E', marginTop: '2px' }}>Internal: {fmt(cat.internalTotal)}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--state-warning)', marginTop: '2px' }}>Internal: {fmt(cat.internalTotal)}</div>
                   )}
                 </div>
               </div>
@@ -144,7 +144,7 @@ function CategoryBreakdown({ cities, getCitySummary, isAdmin }) {
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>{fmt(cityData.clientTotal)}</div>
                           {isAdmin && cityData.internalTotal > 0 && (
-                            <div style={{ fontSize: '11px', color: '#92400E' }}>Internal: {fmt(cityData.internalTotal)}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--state-warning)' }}>Internal: {fmt(cityData.internalTotal)}</div>
                           )}
                         </div>
                       </div>
@@ -333,9 +333,9 @@ export default function CostSummary({ event, userRole }) {
         {isAdmin && (
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap: '8px', marginTop: '12px' }}>
             {[
-              { label: 'Total internal cost', value: fmt(grandInternal) || '—', color: '#92400E', bg: '#FFFBEB', border: '#F59E0B' },
-              { label: 'Gross margin', value: fmt(totalMargin) || '₹0', color: totalMargin > 0 ? '#15803D' : totalMargin === 0 ? '#92400E' : '#B91C1C', bg: totalMargin > 0 ? '#F0FDF4' : totalMargin === 0 ? '#FFFBEB' : '#FEF2F2', border: totalMargin > 0 ? '#22C55E' : totalMargin === 0 ? '#F59E0B' : '#F87171' },
-              { label: 'Margin %', value: grandClient > 0 ? Math.round((totalMargin / grandClient) * 100) + '%' : '—', color: totalMargin > 0 ? '#15803D' : totalMargin === 0 ? '#92400E' : '#B91C1C', bg: totalMargin > 0 ? '#F0FDF4' : totalMargin === 0 ? '#FFFBEB' : '#FEF2F2', border: totalMargin > 0 ? '#22C55E' : totalMargin === 0 ? '#F59E0B' : '#F87171' },
+              { label: 'Total internal cost', value: fmt(grandInternal) || '—', color: 'var(--state-warning)', bg: 'var(--state-warning-bg)', border: 'var(--state-warning)' },
+              { label: 'Gross margin', value: fmt(totalMargin) || '₹0', color: totalMargin > 0 ? 'var(--state-success)' : totalMargin === 0 ? 'var(--state-warning)' : 'var(--state-danger)', bg: totalMargin > 0 ? 'var(--state-success-bg)' : totalMargin === 0 ? 'var(--state-warning-bg)' : 'var(--state-danger-bg)', border: totalMargin > 0 ? 'var(--state-success)' : totalMargin === 0 ? 'var(--state-warning)' : 'var(--state-danger)' },
+              { label: 'Margin %', value: grandClient > 0 ? Math.round((totalMargin / grandClient) * 100) + '%' : '—', color: totalMargin > 0 ? 'var(--state-success)' : totalMargin === 0 ? 'var(--state-warning)' : 'var(--state-danger)', bg: totalMargin > 0 ? 'var(--state-success-bg)' : totalMargin === 0 ? 'var(--state-warning-bg)' : 'var(--state-danger-bg)', border: totalMargin > 0 ? 'var(--state-success)' : totalMargin === 0 ? 'var(--state-warning)' : 'var(--state-danger)' },
             ].map((s, i) => (
               <div key={i} style={{ background: s.bg, border: `0.5px solid ${s.border}`, borderRadius: 'var(--radius-sm)', padding: '12px 16px' }}>
                 <div style={{ fontSize: '11px', color: s.color, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>{s.label}</div>
@@ -345,7 +345,7 @@ export default function CostSummary({ event, userRole }) {
           </div>
         )}
         {isAdmin && totalMargin === 0 && grandClient > 0 && (
-          <p style={{ fontSize: '11px', color: '#92400E', marginTop: '6px' }}>
+          <p style={{ fontSize: '11px', color: 'var(--state-warning)', marginTop: '6px' }}>
             Margin is ₹0 — add internal (vendor) costs in Elements tab to see actual margin.
           </p>
         )}
@@ -394,7 +394,7 @@ export default function CostSummary({ event, userRole }) {
                     const sel = tncSelected.includes(clause.id)
                     return (
                       <div key={clause.id} onClick={() => toggleClause(clause.id)}
-                        style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 16px', cursor: 'pointer', background: sel ? '#F0FDF4' : 'none', borderBottom: '0.5px solid var(--border)' }}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 16px', cursor: 'pointer', background: sel ? 'var(--state-success-bg)' : 'none', borderBottom: '0.5px solid var(--border)' }}
                         onMouseOver={e => { if (!sel) e.currentTarget.style.background = 'var(--bg-secondary)' }}
                         onMouseOut={e => { if (!sel) e.currentTarget.style.background = 'none' }}
                       >
@@ -429,7 +429,7 @@ export default function CostSummary({ event, userRole }) {
             </div>
           </div>
           {tncCustom.map((clause, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 16px', background: '#F0FDF4', borderBottom: idx < tncCustom.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
+            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 16px', background: 'var(--state-success-bg)', borderBottom: idx < tncCustom.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
               <div style={{ width: '18px', height: '18px', borderRadius: '4px', background: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="var(--bg)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>

@@ -52,7 +52,7 @@ function ConfirmDialog({ message, onConfirm, onCancel }) {
           </button>
           <button onClick={onConfirm} style={{
             padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
-            fontWeight: 500, background: '#A32D2D', color: 'white',
+            fontWeight: 500, background: 'var(--state-danger)', color: 'white',
             border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
           }}>
             Archive
@@ -453,21 +453,21 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
           zIndex: 300, padding: '24px',
         }}>
           <div style={{
-            background: '#faf8f5', border: '1px solid #d8d2c8',
+            background: 'var(--app-bg)', border: '1px solid var(--app-border)',
             borderRadius: '12px', padding: '28px 32px',
             maxWidth: '400px', width: '100%',
           }}>
-            <p style={{ fontSize: '15px', fontWeight: 600, color: '#1a1008', marginBottom: '6px', fontFamily: 'var(--font-body)' }}>
+            <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '6px', fontFamily: 'var(--font-body)' }}>
               Archive "{confirmArchive.event_name}"?
             </p>
-            <p style={{ fontSize: '13px', color: '#7a7060', marginBottom: '24px', lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
+            <p style={{ fontSize: '13px', color: 'var(--app-text-dim-lg)', marginBottom: '24px', lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
               This event will be moved to Archived. You can restore it at any time.
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button onClick={() => setConfirmArchive(null)} style={{
                 padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
                 background: 'none', border: '1px solid #c8c2b8',
-                borderRadius: '8px', cursor: 'pointer', color: '#1a1008',
+                borderRadius: '8px', cursor: 'pointer', color: 'var(--app-ink)',
               }}>
                 Cancel
               </button>
@@ -475,7 +475,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                 onClick={confirmAndArchive}
                 style={{
                   padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
-                  fontWeight: 500, background: '#A32D2D', color: '#fff',
+                  fontWeight: 500, background: 'var(--state-danger)', color: '#fff',
                   border: 'none', borderRadius: '8px', cursor: 'pointer',
                   transition: 'background 0.15s',
                 }}
@@ -502,14 +502,14 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
           zIndex: 300, padding: '24px',
         }}>
           <div style={{
-            background: '#faf8f5', border: '1px solid #d8d2c8',
+            background: 'var(--app-bg)', border: '1px solid var(--app-border)',
             borderRadius: '12px', padding: '28px 32px',
             maxWidth: '400px', width: '100%',
           }}>
-            <p style={{ fontSize: '15px', fontWeight: 600, color: '#1a1008', marginBottom: '6px', fontFamily: 'var(--font-body)' }}>
+            <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '6px', fontFamily: 'var(--font-body)' }}>
               Delete "{confirmDelete.event_name}"?
             </p>
-            <p style={{ fontSize: '13px', color: '#7a7060', marginBottom: '18px', lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
+            <p style={{ fontSize: '13px', color: 'var(--app-text-dim-lg)', marginBottom: '18px', lineHeight: 1.5, fontFamily: 'var(--font-body)' }}>
               This will permanently delete the event and cannot be undone.
             </p>
             <input
@@ -520,7 +520,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
               style={{
                 width: '100%', padding: '9px 12px', fontSize: '13px',
                 border: '1px solid #c8c2b8', borderRadius: '8px',
-                background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)',
+                background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)',
                 outline: 'none', boxSizing: 'border-box', marginBottom: '16px',
               }}
               autoFocus
@@ -529,7 +529,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
               <button onClick={() => { setConfirmDelete(null); setDeleteTyped('') }} style={{
                 padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
                 background: 'none', border: '1px solid #c8c2b8',
-                borderRadius: '8px', cursor: 'pointer', color: '#1a1008',
+                borderRadius: '8px', cursor: 'pointer', color: 'var(--app-ink)',
               }}>
                 Cancel
               </button>
@@ -539,7 +539,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                 style={{
                   padding: '8px 18px', fontSize: '13px', fontFamily: 'var(--font-body)',
                   fontWeight: 500,
-                  background: deleteTyped.trim().toLowerCase() === 'delete it' ? '#bc1723' : '#e0d8d0',
+                  background: deleteTyped.trim().toLowerCase() === 'delete it' ? 'var(--app-accent)' : '#e0d8d0',
                   color: deleteTyped.trim().toLowerCase() === 'delete it' ? '#fff' : '#a09080',
                   border: 'none', borderRadius: '8px',
                   cursor: deleteTyped.trim().toLowerCase() === 'delete it' ? 'pointer' : 'not-allowed',
@@ -556,7 +556,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
       {toast && (
         <div style={{
           position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
-          background: '#1a1008', color: '#faf8f5', padding: '10px 20px',
+          background: 'var(--app-ink)', color: 'var(--app-bg)', padding: '10px 20px',
           borderRadius: '8px', fontSize: '13px', fontFamily: 'var(--font-body)',
           zIndex: 400, pointerEvents: 'none', whiteSpace: 'nowrap',
           boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
@@ -588,9 +588,9 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
         style={{
-          fontSize: '13px', color: '#7a7060',
+          fontSize: '13px', color: 'var(--app-text-dim-lg)',
           fontFamily: 'var(--font-body)', marginBottom: '16px',
-          ...(urgent ? { color: '#92400E', fontWeight: 500 } : {}),
+          ...(urgent ? { color: 'var(--state-warning)', fontWeight: 500 } : {}),
         }}
       >
         {message}
@@ -626,11 +626,11 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
           style={{
             flex: 1, minWidth: '200px', padding: '8px 12px', fontSize: '13px',
             border: '1px solid #c8c2b8', borderRadius: '8px',
-            background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)', outline: 'none',
+            background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none',
           }}
         />
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
           <option value="">All statuses</option>
           {['pitch','won','active','on hold','lost','completed'].map(s => (
             <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>
@@ -638,20 +638,20 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
         </select>
         {allClients.length > 0 && (
           <select value={filterClient} onChange={e => setFilterClient(e.target.value)}
-            style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+            style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
             <option value="">All clients</option>
             {allClients.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         )}
         {allCities.length > 0 && (
           <select value={filterCity} onChange={e => setFilterCity(e.target.value)}
-            style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+            style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
             <option value="">All cities</option>
             {allCities.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         )}
         <select value={filterSort} onChange={e => setFilterSort(e.target.value)}
-          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: '#1a1008', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+          style={{ padding: '8px 12px', fontSize: '13px', border: '1px solid #c8c2b8', borderRadius: '8px', background: '#fff', color: 'var(--app-ink)', fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
           <option value="smart">Default smart</option>
           <option value="recent_opened">Recently opened</option>
           <option value="recent_created">Recently created</option>
@@ -661,7 +661,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
         </select>
         {(search || filterStatus || filterClient || filterCity) && (
           <button onClick={() => { setSearch(''); setFilterStatus(''); setFilterClient(''); setFilterCity('') }}
-            style={{ padding: '8px 12px', fontSize: '12px', fontFamily: 'var(--font-body)', background: 'none', border: '1px solid #c8c2b8', borderRadius: '8px', cursor: 'pointer', color: '#7a7060' }}>
+            style={{ padding: '8px 12px', fontSize: '12px', fontFamily: 'var(--font-body)', background: 'none', border: '1px solid #c8c2b8', borderRadius: '8px', cursor: 'pointer', color: 'var(--app-text-dim-lg)' }}>
             Clear
           </button>
         )}
@@ -673,8 +673,8 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
             style={{
               display: 'flex', alignItems: 'center', gap: '7px',
               padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
-              background: showTestEvents ? '#1a1008' : 'none',
-              color: showTestEvents ? '#faf8f5' : '#7a7060',
+              background: showTestEvents ? 'var(--app-ink)' : 'none',
+              color: showTestEvents ? 'var(--app-bg)' : 'var(--app-text-dim-lg)',
               border: '1px solid #c8c2b8', borderRadius: '20px',
               cursor: 'pointer', transition: 'all 0.15s',
             }}
@@ -703,7 +703,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
               fontWeight: view === v.key ? 500 : 400,
               fontFamily: 'var(--font-body)',
               background: 'none',
-              color: view === v.key ? '#F28F3B' : 'var(--text-tertiary)',
+              color: view === v.key ? 'var(--app-accent)' : 'var(--text-tertiary)',
               border: 'none', cursor: 'pointer',
               position: 'relative',
               transition: 'color 0.15s',
@@ -715,7 +715,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                 layoutId="tab-indicator"
                 style={{
                   position: 'absolute', bottom: 0, left: 0, right: 0,
-                  height: '2px', background: '#F28F3B',
+                  height: '2px', background: 'var(--app-accent)',
                   borderRadius: '2px 2px 0 0',
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 36 }}
@@ -732,14 +732,14 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 500, color: 'var(--text)' }}>
               Pending review
             </h3>
-            <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 8px', borderRadius: '20px', background: '#FEF3C7', color: '#92400E' }}>
+            <span style={{ fontSize: '11px', fontWeight: 500, padding: '2px 8px', borderRadius: '20px', background: 'var(--state-warning-bg)', color: 'var(--state-warning)' }}>
               {pendingEvents.length} {pendingEvents.length === 1 ? 'event' : 'events'}
             </span>
           </div>
           {pendingEvents.map(ev => (
             <div key={ev.id} style={{
-              border: '0.5px solid #F59E0B', borderRadius: 'var(--radius-sm)',
-              padding: '14px 16px', marginBottom: '8px', background: '#FFFBEB',
+              border: '0.5px solid var(--state-warning)', borderRadius: 'var(--radius-sm)',
+              padding: '14px 16px', marginBottom: '8px', background: 'var(--state-warning-bg)',
               display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px',
             }}>
               <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setOpenEvent(ev)}>
@@ -749,7 +749,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                 <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginBottom: '2px' }}>
                   {ev.clients?.group_name}{ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : ''}
                 </div>
-                <div style={{ fontSize: '11px', color: '#92400E' }}>
+                <div style={{ fontSize: '11px', color: 'var(--state-warning)' }}>
                   Created by {ev.created_by || 'team member'} · awaiting your review
                 </div>
               </div>
@@ -768,7 +768,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                     await supabase.from('events').update({ archived: true }).eq('id', ev.id)
                     fetchEvents()
                   }}
-                  style={{ padding: '6px 14px', fontSize: '12px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid #F59E0B', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: '#92400E' }}
+                  style={{ padding: '6px 14px', fontSize: '12px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--state-warning)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--state-warning)' }}
                 >
                   Archive
                 </button>
@@ -787,7 +787,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
 
       {/* Team pending notice */}
       {userRole !== 'admin' && events.some(e => e.review_status === 'pending_review') && (
-        <div style={{ padding: '10px 14px', background: '#FFFBEB', border: '0.5px solid #F59E0B', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '13px', color: '#92400E' }}>
+        <div style={{ padding: '10px 14px', background: 'var(--state-warning-bg)', border: '0.5px solid var(--state-warning)', borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '13px', color: 'var(--state-warning)' }}>
           {events.filter(e => e.review_status === 'pending_review').length} event(s) pending admin review — you can still work on them.
         </div>
       )}
@@ -857,14 +857,14 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                     })
                   : displayEvents.map(ev => (
                       <motion.div key={`archived-${ev.id}`} variants={itemVariants} style={{
-                        border: '1px solid #d8d2c8', borderRadius: '12px',
-                        padding: '16px 20px', background: '#faf8f5',
+                        border: '1px solid var(--app-border)', borderRadius: '12px',
+                        padding: '16px 20px', background: 'var(--app-bg)',
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         opacity: 0.75,
                       }}>
                         <div>
-                          <div style={{ fontSize: '14px', fontWeight: 500, color: '#1a1008', marginBottom: '3px' }}>{ev.event_name}</div>
-                          <div style={{ fontSize: '12px', color: '#7a7060' }}>
+                          <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--app-ink)', marginBottom: '3px' }}>{ev.event_name}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--app-text-dim-lg)' }}>
                             {ev.clients?.group_name}{ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : ''}
                             {ev.archived_at ? ` · archived ${new Date(ev.archived_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
                           </div>
@@ -876,7 +876,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                               padding: '7px 14px', fontSize: '12px', fontWeight: 500,
                               fontFamily: 'var(--font-body)', background: 'none',
                               border: '1px solid #c8c2b8', flexShrink: 0,
-                              borderRadius: '8px', cursor: 'pointer', color: '#1a1008',
+                              borderRadius: '8px', cursor: 'pointer', color: 'var(--app-ink)',
                             }}
                           >
                             Restore

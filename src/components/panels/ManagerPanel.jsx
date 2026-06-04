@@ -4,13 +4,13 @@ import { supabase } from '../../supabase'
 // ── Inline helpers (kept inside this file per spec — 4 panel files only) ─────
 const F  = "'DM Sans', sans-serif"
 const FD = "'Cormorant Garamond', serif"
-const C  = { surface: '#f2efe9', border: '#d8d2c8', accent: '#bc1723', dim: '#7a7060', bg: '#faf8f5' }
+const C  = { surface: 'var(--app-surface)', border: 'var(--app-border)', accent: 'var(--app-accent)', dim: 'var(--app-text-dim-lg)', bg: 'var(--app-bg)' }
 
 const STATUS_STYLE = {
-  not_started: { bg: '#e5e3de', color: '#7a7060', label: 'Not Started' },
-  pending:     { bg: '#fef3c7', color: '#92400e', label: 'Pending' },
-  in_progress: { bg: '#dbeafe', color: '#1e40af', label: 'In Progress' },
-  completed:   { bg: '#dcfce7', color: '#166534', label: 'Completed' },
+  not_started: { bg: '#e5e3de', color: 'var(--app-text-dim-lg)', label: 'Not Started' },
+  pending:     { bg: 'var(--state-warning-bg)', color: 'var(--state-warning)', label: 'Pending' },
+  in_progress: { bg: 'var(--state-info-bg)', color: 'var(--state-info)', label: 'In Progress' },
+  completed:   { bg: 'var(--state-success-bg)', color: 'var(--state-success)', label: 'Completed' },
 }
 // "My Tasks" groups open tasks only (completed filtered out by query). Order: pending → in_progress → not_started.
 const GROUP_ORDER = ['pending', 'in_progress', 'not_started']
@@ -24,8 +24,8 @@ function DueDateChip({ deadline }) {
   if (!deadline) return <span style={{ fontSize: '12px', color: '#9C9488', fontFamily: F }}>—</span>
   const days = Math.ceil((new Date(deadline + 'T00:00:00') - Date.now()) / 86400000)
   let bg = C.surface, color = C.dim
-  if (days < 0)       { bg = '#FEE2E2'; color = '#991B1B' }
-  else if (days <= 3) { bg = '#FEF3C7'; color = '#92400E' }
+  if (days < 0)       { bg = 'var(--state-danger-bg)'; color = 'var(--state-danger)' }
+  else if (days <= 3) { bg = 'var(--state-warning-bg)'; color = 'var(--state-warning)' }
   const label = new Date(deadline + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
   return <span style={{ fontSize: '11px', fontWeight: 500, fontFamily: F, background: bg, color, padding: '3px 9px', borderRadius: '6px', whiteSpace: 'nowrap' }}>{label}</span>
 }

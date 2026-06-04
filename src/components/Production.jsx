@@ -3,13 +3,13 @@ import { supabase } from '../supabase'
 
 // ─── Color system ─────────────────────────────────────────
 const C = {
-  red:    { bg: '#FEE2E2', color: '#DC2626', border: '#FCA5A5' },
-  orange: { bg: '#FFF7ED', color: '#EA580C', border: '#FED7AA' },
-  yellow: { bg: '#FEFCE8', color: '#CA8A04', border: '#FDE68A' },
+  red:    { bg: 'var(--state-danger-bg)', color: 'var(--state-danger)', border: '#FCA5A5' },
+  orange: { bg: '#FFF7ED', color: 'var(--state-warning)', border: '#FED7AA' },
+  yellow: { bg: '#FEFCE8', color: '#CA8A04', border: 'var(--state-warning-bg)' },
   lime:   { bg: '#F7FEE7', color: '#65A30D', border: '#D9F99D' },
-  green:  { bg: '#DCFCE7', color: '#16A34A', border: '#86EFAC' },
+  green:  { bg: 'var(--state-success-bg)', color: 'var(--state-success)', border: '#86EFAC' },
   grey:   { bg: 'var(--bg-secondary)', color: 'var(--text-tertiary)', border: 'var(--border)' },
-  blue:   { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' },
+  blue:   { bg: 'var(--state-info-bg)', color: 'var(--state-info)', border: '#BFDBFE' },
 }
 
 // ─── Status definitions per stream ───────────────────────
@@ -104,7 +104,7 @@ function StatusPill({ statuses, current, onSelect, blocked, blockMsg, isQC }) {
           outline: 'none',
         }}
       >
-        {current_s.label} <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={open?'#2e7d32':'#F28F3B'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        {current_s.label} <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={open?'var(--state-success)':'var(--app-accent)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
       {open && (
         <>
@@ -168,7 +168,7 @@ function ProductionRow({ task, teamUsers, onUpdate }) {
   return (
     <tr style={{
       borderBottom: '0.5px solid var(--border)',
-      background: printAlert ? '#FFF5F5' : hasCreativeNote ? '#FFFBEB' : 'var(--bg)',
+      background: printAlert ? '#FFF5F5' : hasCreativeNote ? 'var(--state-warning-bg)' : 'var(--bg)',
     }}>
       {/* Element */}
       <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
@@ -474,10 +474,10 @@ export default function Production({ event, teamUsers = [] }) {
           ).length
           const allDone = catDone === catTasks.length && catTasks.length > 0
           const inProgress = catDone > 0 && !allDone
-          const dotColor = allDone ? '#16A34A' : inProgress ? '#EA580C' : '#9ca3af'
+          const dotColor = allDone ? 'var(--state-success)' : inProgress ? 'var(--state-warning)' : '#9ca3af'
           const done = catTasks.filter(t => t.status === 'done').length
           const pct = catTasks.length > 0 ? Math.round((done / catTasks.length) * 100) : 0
-          const pctColor = pct === 100 ? '#22c55e' : pct >= 70 ? '#3b82f6' : pct >= 30 ? '#f59e0b' : '#F28F3B'
+          const pctColor = pct === 100 ? 'var(--state-success)' : pct >= 70 ? 'var(--state-info)' : pct >= 30 ? 'var(--state-warning)' : 'var(--app-accent)'
 
           return (
             <div

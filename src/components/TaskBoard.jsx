@@ -11,9 +11,9 @@ const STATUS_OPTIONS = ['pending', 'in_progress', 'done', 'blocked'];
 
 const STATUS_META = {
   pending:     { label: 'Pending',     color: '#9CA3AF', bg: '#F3F4F6' },
-  in_progress: { label: 'In Progress', color: '#D97706', bg: '#FFFBEB' },
-  done:        { label: 'Done',        color: '#059669', bg: '#ECFDF5' },
-  blocked:     { label: 'Blocked',     color: '#DC2626', bg: '#FEF2F2' },
+  in_progress: { label: 'In Progress', color: 'var(--state-warning)', bg: 'var(--state-warning-bg)' },
+  done:        { label: 'Done',        color: '#059669', bg: 'var(--state-success-bg)' },
+  blocked:     { label: 'Blocked',     color: 'var(--state-danger)', bg: 'var(--state-danger-bg)' },
 };
 
 const ROLE_CAN_ASSIGN = (role, scope) => {
@@ -439,12 +439,12 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                       elementAssignments[`${t.element_id}_${activeCity ?? ''}`]?.assigned_to
                     ).length;
                     return (
-                      <span style={{ fontSize: '10px', color: assignedCount === elTasks.length ? '#2563EB' : '#9CA3AF', marginLeft: 4 }}>
+                      <span style={{ fontSize: '10px', color: assignedCount === elTasks.length ? 'var(--state-info)' : '#9CA3AF', marginLeft: 4 }}>
                         {assignedCount}/{elTasks.length} assigned
                       </span>
                     );
                   })()}
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:collapsed[cat]?'rotate(-90deg)':'none',transition:'transform 0.18s ease',flexShrink:0}}><path d="M3 5l4 4 4-4" stroke={collapsed[cat]?'#F28F3B':'#2e7d32'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{transform:collapsed[cat]?'rotate(-90deg)':'none',transition:'transform 0.18s ease',flexShrink:0}}><path d="M3 5l4 4 4-4" stroke={collapsed[cat]?'var(--app-accent)':'var(--state-success)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </span>
               </button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '8px', flexShrink: 0 }}>
@@ -461,13 +461,13 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                         const u = users.find(u => u.id === uid);
                         if (!u) return null;
                         return (
-                          <div key={uid} title={u.full_name} style={{ width: 22, height: 22, borderRadius: '6px', background: '#F28F3B', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-body)', marginLeft: i > 0 ? '-4px' : 0, border: '1.5px solid #fff', position: 'relative', zIndex: visible.length - i }}>
+                          <div key={uid} title={u.full_name} style={{ width: 22, height: 22, borderRadius: '6px', background: 'var(--app-accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-body)', marginLeft: i > 0 ? '-4px' : 0, border: '1.5px solid #fff', position: 'relative', zIndex: visible.length - i }}>
                             {initials(u.full_name)}
                           </div>
                         );
                       })}
                       {extra > 0 && (
-                        <div style={{ width: 22, height: 22, borderRadius: '6px', background: '#E5E1DC', color: '#7a7060', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-body)', marginLeft: '-4px', border: '1.5px solid #fff', position: 'relative' }}>
+                        <div style={{ width: 22, height: 22, borderRadius: '6px', background: '#E5E1DC', color: 'var(--app-text-dim-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-body)', marginLeft: '-4px', border: '1.5px solid #fff', position: 'relative' }}>
                           +{extra}
                         </div>
                       )}
@@ -479,12 +479,12 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <button
                       onClick={(e) => { e.stopPropagation(); setCatAssignMenu(catAssignMenu === cat ? null : cat); }}
-                      style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', border: '0.5px solid #d8d2c8', background: '#fff', cursor: 'pointer', color: '#2c2518', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}
+                      style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', border: '0.5px solid var(--app-border)', background: '#fff', cursor: 'pointer', color: '#2c2518', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}
                     >
-                      Assign All <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={catAssignMenu===cat?'#2e7d32':'#F28F3B'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Assign All <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={catAssignMenu===cat?'var(--state-success)':'var(--app-accent)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </button>
                     {catAssignMenu === cat && (
-                      <div data-catassign style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '0.5px solid #d8d2c8', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 200, minWidth: '180px', padding: '4px 0' }}>
+                      <div data-catassign style={{ position: 'absolute', right: 0, top: '110%', background: '#fff', border: '0.5px solid var(--app-border)', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 200, minWidth: '180px', padding: '4px 0' }}>
                         {users.map(u => (
                           <button
                             key={u.id}
@@ -521,10 +521,10 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                         ))}
                         {(userRole === 'admin' || userRole === 'manager') && (
                           <>
-                            <div style={{ height: '0.5px', background: '#d8d2c8', margin: '4px 0' }} />
+                            <div style={{ height: '0.5px', background: 'var(--app-border)', margin: '4px 0' }} />
                             <button
                               onClick={() => { setCatAssignMenu(null); setShowCatInvite(cat); }}
-                              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', color: '#F28F3B' }}
+                              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'var(--font-body)', color: 'var(--app-accent)' }}
                             >
                               ＋ Invite someone...
                             </button>
@@ -538,13 +538,13 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
             </div>
 
             {showCatInvite === cat && (userRole === 'admin' || userRole === 'manager') && (
-              <div style={{ margin: '6px 0 4px', padding: '10px', background: '#f2efe9', borderRadius: '6px', border: '0.5px solid #d8d2c8' }}>
+              <div style={{ margin: '6px 0 4px', padding: '10px', background: 'var(--app-surface)', borderRadius: '6px', border: '0.5px solid var(--app-border)' }}>
                 <input
                   type="email"
                   placeholder="Email address"
                   value={catInviteEmail}
                   onChange={(e) => setCatInviteEmail(e.target.value)}
-                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '0.5px solid #d8d2c8', fontSize: '13px', fontFamily: 'var(--font-body)', marginBottom: '8px', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '0.5px solid var(--app-border)', fontSize: '13px', fontFamily: 'var(--font-body)', marginBottom: '8px', boxSizing: 'border-box' }}
                 />
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <button
@@ -565,13 +565,13 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                         setShowCatInvite(null);
                       }
                     }}
-                    style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#F28F3B', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                    style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px', border: 'none', background: 'var(--app-accent)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
                   >
                     {catInviteSending ? 'Sending...' : 'Send invite'}
                   </button>
                   <button
                     onClick={() => { setShowCatInvite(null); setCatInviteEmail(''); }}
-                    style={{ fontSize: '12px', background: 'none', border: 'none', color: '#7a7060', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                    style={{ fontSize: '12px', background: 'none', border: 'none', color: 'var(--app-text-dim-lg)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
                   >
                     Cancel
                   </button>
@@ -590,7 +590,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                       ...styles.card,
                       ...(task.element_id ? {
                         borderLeft: elementAssignments[`${task.element_id}_${activeCity ?? ''}`]?.assigned_to
-                          ? '3px solid #2563EB'
+                          ? '3px solid var(--state-info)'
                           : '3px solid #D1D5DB',
                       } : {}),
                     }}>
@@ -603,7 +603,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                             title={canAssign ? 'Change status' : sm.label}
                           >
                             {sm.label}
-                            {canAssign && <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={statusMenu===task.id?'#2e7d32':'#F28F3B'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                            {canAssign && <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{marginLeft:3,verticalAlign:'middle',display:'inline-block'}}><path d="M2 3.5l3 3 3-3" stroke={statusMenu===task.id?'var(--state-success)':'var(--app-accent)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                           </button>
                           {statusMenu === task.id && (
                             <div ref={statusRef} style={styles.statusDropdown}>
@@ -660,9 +660,9 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                                 fontSize: '11px',
                                 padding: '3px 6px',
                                 borderRadius: '4px',
-                                border: '0.5px solid #d8d2c8',
+                                border: '0.5px solid var(--app-border)',
                                 background: assignedUser ? '#EBF5FF' : '#fff',
-                                color: assignedUser ? '#1d4ed8' : '#6B7280',
+                                color: assignedUser ? 'var(--state-info)' : '#6B7280',
                                 fontFamily: 'var(--font-body)',
                                 cursor: 'pointer',
                                 maxWidth: '120px',
@@ -682,7 +682,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                           const assignedUser = users.find(u => u.id === existing.assigned_to);
                           if (!assignedUser) return null;
                           return (
-                            <span style={{ fontSize: '11px', color: '#1d4ed8', background: '#EBF5FF', padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-body)' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--state-info)', background: '#EBF5FF', padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-body)' }}>
                               {assignedUser.full_name}
                             </span>
                           );
@@ -750,13 +750,13 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
               )}
             </select>
             {showInlineInvite && (userRole === 'admin' || userRole === 'manager') && (
-              <div style={{ marginTop: '10px', padding: '10px', background: '#f2efe9', borderRadius: '6px', border: '0.5px solid #d8d2c8' }}>
+              <div style={{ marginTop: '10px', padding: '10px', background: 'var(--app-surface)', borderRadius: '6px', border: '0.5px solid var(--app-border)' }}>
                 <input
                   type="email"
                   placeholder="Email address"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '0.5px solid #d8d2c8', fontSize: '13px', fontFamily: 'var(--font-body)', marginBottom: '8px', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '0.5px solid var(--app-border)', fontSize: '13px', fontFamily: 'var(--font-body)', marginBottom: '8px', boxSizing: 'border-box' }}
                 />
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <button
@@ -777,13 +777,13 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                         setShowInlineInvite(false);
                       }
                     }}
-                    style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#F28F3B', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                    style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px', border: 'none', background: 'var(--app-accent)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
                   >
                     {inviteSending ? 'Sending...' : 'Send invite'}
                   </button>
                   <button
                     onClick={() => { setShowInlineInvite(false); setInviteEmail(''); }}
-                    style={{ fontSize: '12px', background: 'none', border: 'none', color: '#7a7060', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                    style={{ fontSize: '12px', background: 'none', border: 'none', color: 'var(--app-text-dim-lg)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
                   >
                     Cancel
                   </button>
@@ -798,7 +798,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                   type="checkbox"
                   checked={applyAllCities}
                   onChange={(e) => setApplyAllCities(e.target.checked)}
-                  style={{ marginRight: 8, accentColor: '#F28F3B' }}
+                  style={{ marginRight: 8, accentColor: 'var(--app-accent)' }}
                 />
                 <span>Apply to all cities</span>
                 <span style={styles.allCitiesHint}>
@@ -864,7 +864,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                           type="checkbox"
                           checked={!!importSel[el.id]}
                           onChange={(e) => setImportSel((p) => ({ ...p, [el.id]: e.target.checked }))}
-                          style={{ marginRight: 10, accentColor: '#F28F3B', flexShrink: 0, marginTop: 1 }}
+                          style={{ marginRight: 10, accentColor: 'var(--app-accent)', flexShrink: 0, marginTop: 1 }}
                         />
                         <span style={styles.importElName}>{el.element_name}</span>
                         <span style={styles.importElCat}>{el.category || 'General'}</span>
@@ -932,8 +932,8 @@ const styles = {
     transition: 'all 0.15s',
   },
   tabActive: {
-    background: '#F28F3B',
-    borderColor: '#F28F3B',
+    background: 'var(--app-accent)',
+    borderColor: 'var(--app-accent)',
     color: '#fff',
     fontWeight: 600,
   },
@@ -1166,7 +1166,7 @@ const styles = {
     width: 22,
     height: 22,
     borderRadius: '6px',
-    background: '#F28F3B',
+    background: 'var(--app-accent)',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
@@ -1215,7 +1215,7 @@ const styles = {
 
   /* ── import modal dark theme ── */
   importModal: {
-    background: '#141413',
+    background: 'var(--app-ratecard-dark)',
     border: '0.5px solid #2e2e2c',
     borderRadius: 14,
     width: '100%',
@@ -1276,8 +1276,8 @@ const styles = {
     cursor: 'pointer',
   },
   importCityPillActive: {
-    background: '#F28F3B',
-    borderColor: '#F28F3B',
+    background: 'var(--app-accent)',
+    borderColor: 'var(--app-accent)',
     color: '#fff',
   },
   importBody: {
@@ -1350,7 +1350,7 @@ const styles = {
     padding: '9px 22px',
     border: 'none',
     borderRadius: 8,
-    background: '#F28F3B',
+    background: 'var(--app-accent)',
     color: '#fff',
     cursor: 'pointer',
     fontSize: 13,
@@ -1426,7 +1426,7 @@ const styles = {
     padding: '9px 22px',
     border: 'none',
     borderRadius: 8,
-    background: '#F28F3B',
+    background: 'var(--app-accent)',
     color: '#fff',
     cursor: 'pointer',
     fontSize: 13,

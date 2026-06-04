@@ -12,10 +12,10 @@ const STATUS_LABELS = {
 }
 const STATUS_COLORS = {
   not_started: { bg:'#F3F4F6', color:'#6B7280' },
-  in_progress:  { bg:'#DBEAFE', color:'#1E40AF' },
-  arranged:     { bg:'#FEF3C7', color:'#92400E' },
+  in_progress:  { bg:'var(--state-info-bg)', color:'var(--state-info)' },
+  arranged:     { bg:'var(--state-warning-bg)', color:'var(--state-warning)' },
   on_site:      { bg:'#EDE9FE', color:'#5B21B6' },
-  done:         { bg:'#D1FAE5', color:'#065F46' },
+  done:         { bg:'var(--state-success-bg)', color:'var(--state-success)' },
 }
 
 export default function PublicTask() {
@@ -114,7 +114,7 @@ export default function PublicTask() {
             {task.source && <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px' }}>Vendor: {task.source}</p>}
 
             {task.deadline && (
-              <p style={{ fontSize: '13px', color: new Date(task.deadline) < new Date() && task.status !== 'done' ? '#A32D2D' : '#6B7280', marginBottom: '16px' }}>
+              <p style={{ fontSize: '13px', color: new Date(task.deadline) < new Date() && task.status !== 'done' ? 'var(--state-danger)' : '#6B7280', marginBottom: '16px' }}>
                 {new Date(task.deadline) < new Date() && task.status !== 'done' ? '⚠️ ' : '📅 '}
                 Deadline: {new Date(task.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
