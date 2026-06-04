@@ -195,7 +195,7 @@ function FormActions({ onSave, onCancel, saving }) {
       }}>Cancel</button>
       <button onClick={onSave} disabled={saving} style={{
         padding: '7px 14px', border: 'none', borderRadius: 'var(--radius-sm)',
-        background: 'var(--brand-red, #F28F3B)', color: '#fff', cursor: 'pointer',
+        background: 'var(--brand-red, var(--app-accent))', color: '#fff', cursor: 'pointer',
         fontSize: 13, fontFamily: 'var(--font-body)', fontWeight: 500,
         opacity: saving ? 0.7 : 1
       }}>{saving ? 'Saving…' : 'Save'}</button>
@@ -210,12 +210,12 @@ function FlightCard({ row, onDelete, isAdmin }) {
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 12,
       padding: '12px 14px', background: 'var(--bg)',
-      borderLeft: '3px solid #3b82f6',
+      borderLeft: '3px solid var(--state-info)',
       borderRadius: 'var(--radius-sm)',
       border: '0.5px solid var(--border)',
-      borderLeftWidth: 3, borderLeftColor: '#3b82f6'
+      borderLeftWidth: 3, borderLeftColor: 'var(--state-info)'
     }}>
-      <Plane size={15} style={{ color: '#3b82f6', marginTop: 2, flexShrink: 0 }} />
+      <Plane size={15} style={{ color: 'var(--state-info)', marginTop: 2, flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
@@ -223,7 +223,7 @@ function FlightCard({ row, onDelete, isAdmin }) {
           </span>
           {row.flight_no && <span style={{ fontSize: 12, color: 'var(--text-secondary)', background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: 4 }}>{row.flight_no}</span>}
           {row.source === 'agent_confirmed' && (
-            <span style={{ fontSize: 11, color: '#16a34a', background: '#dcfce7', padding: '2px 6px', borderRadius: 4, fontWeight: 500 }}>Confirmed</span>
+            <span style={{ fontSize: 11, color: 'var(--state-success)', background: 'var(--state-success-bg)', padding: '2px 6px', borderRadius: 4, fontWeight: 500 }}>Confirmed</span>
           )}
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -249,16 +249,16 @@ function StayCard({ row, onDelete, isAdmin }) {
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 12,
       padding: '12px 14px', background: 'var(--bg)',
-      border: '0.5px solid var(--border)', borderLeftWidth: 3, borderLeftColor: '#6b7280',
+      border: '0.5px solid var(--border)', borderLeftWidth: 3, borderLeftColor: 'var(--app-text-dim)',
       borderRadius: 'var(--radius-sm)'
     }}>
-      <Building2 size={15} style={{ color: '#6b7280', marginTop: 2, flexShrink: 0 }} />
+      <Building2 size={15} style={{ color: 'var(--app-text-dim)', marginTop: 2, flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{row.hotel_name || '—'}</span>
           {row.room_type && <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{row.room_type}</span>}
           {row.source === 'agent_confirmed' && (
-            <span style={{ fontSize: 11, color: '#16a34a', background: '#dcfce7', padding: '2px 6px', borderRadius: 4, fontWeight: 500 }}>Confirmed</span>
+            <span style={{ fontSize: 11, color: 'var(--state-success)', background: 'var(--state-success-bg)', padding: '2px 6px', borderRadius: 4, fontWeight: 500 }}>Confirmed</span>
           )}
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -282,10 +282,10 @@ function GroundCard({ row, onDelete }) {
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 12,
       padding: '12px 14px', background: 'var(--bg)',
-      border: '0.5px solid var(--border)', borderLeftWidth: 3, borderLeftColor: '#d97706',
+      border: '0.5px solid var(--border)', borderLeftWidth: 3, borderLeftColor: 'var(--state-warning)',
       borderRadius: 'var(--radius-sm)'
     }}>
-      <Car size={15} style={{ color: '#d97706', marginTop: 2, flexShrink: 0 }} />
+      <Car size={15} style={{ color: 'var(--state-warning)', marginTop: 2, flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
@@ -421,7 +421,7 @@ ${text}
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Sparkles size={16} style={{ color: 'var(--brand-red, #F28F3B)' }} />
+            <Sparkles size={16} style={{ color: 'var(--brand-red, var(--app-accent))' }} />
             <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-display)' }}>
               Paste Agent Reply
             </h3>
@@ -445,10 +445,10 @@ ${text}
             resize: 'vertical', outline: 'none', boxSizing: 'border-box'
           }}
         />
-        {error && <p style={{ margin: 0, fontSize: 12, color: '#dc2626' }}>{error}</p>}
+        {error && <p style={{ margin: 0, fontSize: 12, color: 'var(--state-danger)' }}>{error}</p>}
         {!preview && (
           <button onClick={handleParse} disabled={parsing || !text.trim()} style={{
-            padding: '9px 18px', background: 'var(--brand-red, #F28F3B)', color: '#fff',
+            padding: '9px 18px', background: 'var(--brand-red, var(--app-accent))', color: '#fff',
             border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
             fontSize: 13, fontWeight: 500, fontFamily: 'var(--font-body)',
             opacity: parsing ? 0.7 : 1, alignSelf: 'flex-start'
@@ -481,7 +481,7 @@ ${text}
                 color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13
               }}>Re-parse</button>
               <button onClick={handleImport} style={{
-                padding: '8px 18px', background: 'var(--brand-red, #F28F3B)', color: '#fff',
+                padding: '8px 18px', background: 'var(--brand-red, var(--app-accent))', color: '#fff',
                 border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                 fontSize: 13, fontWeight: 500
               }}>Import {preview.length} Row{preview.length !== 1 ? 's' : ''}</button>
@@ -567,7 +567,7 @@ function EventTravel({ event, userRole }) {
             <button key={c} onClick={() => setActiveCity(c)} style={{
               padding: '6px 14px', border: '0.5px solid var(--border-strong)',
               borderRadius: 20, cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-body)',
-              background: activeCity === c ? 'var(--brand-red, #F28F3B)' : 'var(--bg)',
+              background: activeCity === c ? 'var(--brand-red, var(--app-accent))' : 'var(--bg)',
               color: activeCity === c ? '#fff' : 'var(--text-secondary)',
               fontWeight: activeCity === c ? 600 : 400
             }}>{c}</button>
@@ -608,7 +608,7 @@ function EventTravel({ event, userRole }) {
       ) : (
         <>
           {/* Flights */}
-          <TravelSection title="Flights" icon={Plane} accent="#3b82f6" count={flights.length}>
+          <TravelSection title="Flights" icon={Plane} accent="var(--state-info)" count={flights.length}>
             {flights.map(r => <FlightCard key={r.id} row={r} onDelete={() => deleteRow(r.id)} isAdmin={isAdmin} />)}
             {addingType === 'flight'
               ? <FlightForm form={form} setForm={setForm} onSave={saveRow} onCancel={() => setAddingType(null)} saving={saving} />
@@ -625,7 +625,7 @@ function EventTravel({ event, userRole }) {
           </TravelSection>
 
           {/* Stay */}
-          <TravelSection title="Stay" icon={Building2} accent="#6b7280" count={stays.length}>
+          <TravelSection title="Stay" icon={Building2} accent="var(--app-text-dim)" count={stays.length}>
             {stays.map(r => <StayCard key={r.id} row={r} onDelete={() => deleteRow(r.id)} isAdmin={isAdmin} />)}
             {addingType === 'stay'
               ? <StayForm form={form} setForm={setForm} onSave={saveRow} onCancel={() => setAddingType(null)} saving={saving} />
@@ -642,7 +642,7 @@ function EventTravel({ event, userRole }) {
           </TravelSection>
 
           {/* Ground */}
-          <TravelSection title="Ground Transport" icon={Car} accent="#d97706" count={ground.length}>
+          <TravelSection title="Ground Transport" icon={Car} accent="var(--state-warning)" count={ground.length}>
             {ground.map(r => <GroundCard key={r.id} row={r} onDelete={() => deleteRow(r.id)} />)}
             {addingType === 'ground'
               ? <GroundForm form={form} setForm={setForm} onSave={saveRow} onCancel={() => setAddingType(null)} saving={saving} />
@@ -752,7 +752,7 @@ function ItineraryHeader({ itinerary, onSave, saving }) {
       <Field label="Internal Notes" value={form.notes} onChange={s('notes')} full />
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button onClick={() => onSave(form)} disabled={saving} style={{
-          padding: '9px 20px', background: 'var(--brand-red, #F28F3B)', color: '#fff',
+          padding: '9px 20px', background: 'var(--brand-red, var(--app-accent))', color: '#fff',
           border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
           fontSize: 13, fontWeight: 500, opacity: saving ? 0.7 : 1
         }}>{saving ? 'Saving…' : 'Save Header'}</button>
@@ -858,7 +858,7 @@ function DayProgram({ itineraryId, userRole }) {
           }} onClick={() => toggleDay(day.id)}>
             <span style={{
               width: 26, height: 26, borderRadius: '50%',
-              background: 'var(--brand-red, #F28F3B)', color: '#fff',
+              background: 'var(--brand-red, var(--app-accent))', color: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 12, fontWeight: 700, flexShrink: 0
             }}>{day.day_number}</span>
@@ -886,8 +886,8 @@ function DayProgram({ itineraryId, userRole }) {
                     {sect.venue && <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{sect.venue}</span>}
                     <span style={{
                       fontSize: 11, padding: '2px 7px', borderRadius: 10,
-                      background: sect.responsibility === 'internal' ? '#dbeafe' : sect.responsibility === 'local' ? '#fef3c7' : '#f3f4f6',
-                      color: sect.responsibility === 'internal' ? '#1d4ed8' : sect.responsibility === 'local' ? '#92400e' : '#374151'
+                      background: sect.responsibility === 'internal' ? 'var(--state-info-bg)' : sect.responsibility === 'local' ? 'var(--state-warning-bg)' : 'var(--app-surface)',
+                      color: sect.responsibility === 'internal' ? 'var(--state-info)' : sect.responsibility === 'local' ? 'var(--state-warning)' : 'var(--app-ink)'
                     }}>{RESPONSIBILITY_LABELS[sect.responsibility] || 'Internal'}</span>
                   </div>
 
@@ -1026,12 +1026,12 @@ function RoomingList({ itineraryId, userRole }) {
       {rows.length > 0 && (
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{
-            padding: '8px 14px', background: '#dcfce7', borderRadius: 'var(--radius-sm)',
-            fontSize: 13, color: '#15803d', fontWeight: 600
+            padding: '8px 14px', background: 'var(--state-success-bg)', borderRadius: 'var(--radius-sm)',
+            fontSize: 13, color: 'var(--state-success)', fontWeight: 600
           }}>{confirmed} Confirmed</div>
           <div style={{
-            padding: '8px 14px', background: '#fef3c7', borderRadius: 'var(--radius-sm)',
-            fontSize: 13, color: '#92400e', fontWeight: 600
+            padding: '8px 14px', background: 'var(--state-warning-bg)', borderRadius: 'var(--radius-sm)',
+            fontSize: 13, color: 'var(--state-warning)', fontWeight: 600
           }}>{tentative} Tentative</div>
           <div style={{
             padding: '8px 14px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)',
@@ -1066,8 +1066,8 @@ function RoomingList({ itineraryId, userRole }) {
                   <td style={{ padding: '10px 12px' }}>
                     <span style={{
                       fontSize: 11, padding: '3px 8px', borderRadius: 10, fontWeight: 600,
-                      background: r.status === 'confirmed' ? '#dcfce7' : r.status === 'tentative' ? '#fef3c7' : '#fee2e2',
-                      color: r.status === 'confirmed' ? '#15803d' : r.status === 'tentative' ? '#92400e' : '#dc2626'
+                      background: r.status === 'confirmed' ? 'var(--state-success-bg)' : r.status === 'tentative' ? 'var(--state-warning-bg)' : 'var(--state-danger-bg)',
+                      color: r.status === 'confirmed' ? 'var(--state-success)' : r.status === 'tentative' ? 'var(--state-warning)' : 'var(--state-danger)'
                     }}>{r.status}</span>
                   </td>
                   <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{r.mobile || '—'}</td>
@@ -1197,8 +1197,8 @@ function MICEItinerary({ event, userRole }) {
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '10px 16px', border: 'none', background: 'none', cursor: tab.locked ? 'not-allowed' : 'pointer',
               fontSize: 13, fontFamily: 'var(--font-body)',
-              color: tab.locked ? 'var(--text-tertiary)' : activeTab === tab.id ? 'var(--brand-red, #F28F3B)' : 'var(--text-secondary)',
-              borderBottom: activeTab === tab.id ? '2px solid var(--brand-red, #F28F3B)' : '2px solid transparent',
+              color: tab.locked ? 'var(--text-tertiary)' : activeTab === tab.id ? 'var(--brand-red, var(--app-accent))' : 'var(--text-secondary)',
+              borderBottom: activeTab === tab.id ? '2px solid var(--brand-red, var(--app-accent))' : '2px solid transparent',
               fontWeight: activeTab === tab.id ? 600 : 400,
               marginBottom: -1
             }}>
@@ -1222,9 +1222,9 @@ function MICEItinerary({ event, userRole }) {
 
       {!itinerary && activeTab === 'header' && (
         <div style={{
-          padding: '12px 16px', background: '#fef3c7',
+          padding: '12px 16px', background: 'var(--state-warning-bg)',
           border: '0.5px solid #fcd34d', borderRadius: 'var(--radius-sm)',
-          fontSize: 13, color: '#92400e'
+          fontSize: 13, color: 'var(--state-warning)'
         }}>
           Fill in the trip header to unlock Day Program and Rooming List.
         </div>
@@ -1254,8 +1254,8 @@ export default function TravelItinerary({ event, session, userRole }) {
     padding: '10px 20px', border: 'none', background: 'none',
     cursor: 'pointer', fontSize: 14, fontFamily: 'var(--font-body)',
     fontWeight: activeTab === id ? 600 : 400,
-    color: activeTab === id ? 'var(--brand-red, #F28F3B)' : 'var(--text-secondary)',
-    borderBottom: activeTab === id ? '2px solid var(--brand-red, #F28F3B)' : '2px solid transparent',
+    color: activeTab === id ? 'var(--brand-red, var(--app-accent))' : 'var(--text-secondary)',
+    borderBottom: activeTab === id ? '2px solid var(--brand-red, var(--app-accent))' : '2px solid transparent',
     marginBottom: -1
   })
 

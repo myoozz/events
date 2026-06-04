@@ -6,12 +6,12 @@
 
 :root {
   /* ── Myoozz Brand Palette (v2.0 · April 2026) ─────────── */
-  --red:          #F28F3B;   /* master brand / errors */
+  --red:          var(--app-accent);   /* master brand / errors */
   --red-deep:     #8E0A1F;
-  --accent:       #F28F3B;   /* Me Events primary interactive accent */
-  --accent-deep:  #D97A28;
+  --accent:       var(--app-accent);   /* Me Events primary interactive accent */
+  --accent-deep:  var(--app-accent-hover);
 
-  --me:           #F28F3B;
+  --me:           var(--app-accent);
   --mn:           #2D5BFF;
   --ma:           #00A877;
   --mx:           #7C3AED;
@@ -23,19 +23,19 @@
   --bg-secondary:     #EDE8DD;
   --bg-surface-2:     #DDD7C7;
   --text:             #0A0A0A;
-  --text-2:           #1A1A1A;
+  --text-2:           var(--app-ink);
   --text-secondary:   rgba(10,10,10,0.55);
   --text-tertiary:    rgba(10,10,10,0.35);
   --border:           rgba(10,10,10,0.14);
   --border-strong:    rgba(10,10,10,0.32);
 
-  --gold:         #F28F3B;
+  --gold:         var(--app-accent);
   --gold-light:   #FEF0E0;
   --green:        #00A877;
   --green-light:  #E6F7F2;
   --blue:         #2D5BFF;
   --blue-light:   #EBF0FF;
-  --amber:        #B45309;
+  --amber:        var(--state-warning);
   --amber-light:  #FEF3E2;
 
   --font-display: 'Bricolage Grotesque', sans-serif;

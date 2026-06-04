@@ -33,10 +33,10 @@ export default function FeedbackAdmin() {
   }
 
   const STATUS_STYLES = {
-    new:      { bg: '#FEF3C7', color: '#92400E', label: 'New' },
-    reviewed: { bg: '#DBEAFE', color: '#1E40AF', label: 'Reviewed' },
+    new:      { bg: 'var(--state-warning-bg)', color: 'var(--state-warning)', label: 'New' },
+    reviewed: { bg: 'var(--state-info-bg)', color: 'var(--state-info)', label: 'Reviewed' },
     planned:  { bg: '#EDE9FE', color: '#5B21B6', label: 'Planned' },
-    done:     { bg: '#D1FAE5', color: '#065F46', label: 'Done ✓' },
+    done:     { bg: 'var(--state-success-bg)', color: 'var(--state-success)', label: 'Done ✓' },
   }
 
   const filtered = filter === 'all' ? items : items.filter(i => i.status === filter)

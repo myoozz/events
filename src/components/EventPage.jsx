@@ -217,8 +217,8 @@ function FloatingHelp({ activeTab }) {
         style={{
           width: 34, height: 34,
           borderRadius: '50%',
-          background: open ? '#F28F3B' : 'var(--bg)',
-          border: '0.5px solid ' + (open ? '#F28F3B' : 'var(--border-strong)'),
+          background: open ? 'var(--app-accent)' : 'var(--bg)',
+          border: '0.5px solid ' + (open ? 'var(--app-accent)' : 'var(--border-strong)'),
           color: open ? '#fff' : 'var(--text-tertiary)',
           fontSize: 14, fontWeight: 600,
           cursor: 'pointer',
@@ -227,7 +227,7 @@ function FloatingHelp({ activeTab }) {
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
           transition: 'all 0.15s',
         }}
-        onMouseOver={e => { if (!open) { e.currentTarget.style.borderColor = '#F28F3B'; e.currentTarget.style.color = '#F28F3B' } }}
+        onMouseOver={e => { if (!open) { e.currentTarget.style.borderColor = 'var(--app-accent)'; e.currentTarget.style.color = 'var(--app-accent)' } }}
         onMouseOut={e => { if (!open) { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.color = 'var(--text-tertiary)' } }}
       >
         ?
@@ -245,10 +245,10 @@ const tabStyle = (active) => ({
   fontSize: '13px',
   fontWeight: active ? 500 : 400,
   fontFamily: 'var(--font-body)',
-  color: active ? '#F28F3B' : 'var(--text-tertiary)',
+  color: active ? 'var(--app-accent)' : 'var(--text-tertiary)',
   background: 'none',
   border: 'none',
-  borderBottom: active ? '2px solid #F28F3B' : '2px solid transparent',
+  borderBottom: active ? '2px solid var(--app-accent)' : '2px solid transparent',
   cursor: 'pointer',
   letterSpacing: '0.2px',
   transition: 'color 0.15s',
@@ -279,11 +279,11 @@ const statusColor = {
   pitch:    { bg: 'var(--blue-light)',  color: 'var(--blue)' },
   submitted:{ bg: 'var(--amber-light)', color: 'var(--amber)' },
   won:      { bg: 'var(--green-light)', color: 'var(--green)' },
-  lost:     { bg: '#FCEBEB',            color: '#A32D2D' },
+  lost:     { bg: 'var(--state-danger-bg)',            color: 'var(--state-danger)' },
   'on hold':{ bg: 'var(--bg-secondary)',color: 'var(--text-tertiary)' },
 }
 
-const CONFETTI_COLORS = ['#F28F3B', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']
+const CONFETTI_COLORS = ['var(--app-accent)', 'var(--state-warning)', '#10b981', 'var(--state-info)', '#8b5cf6', '#ec4899']
 const CONFETTI_PIECES = Array.from({ length: 44 }, (_, i) => ({
   left:     ((i * 13.7 + 5) % 100).toFixed(1) + '%',
   color:    CONFETTI_COLORS[i % CONFETTI_COLORS.length],
@@ -560,13 +560,13 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                 {': '}
                 <span style={{ color: 'var(--text-tertiary)' }}>{String(currentEvent[field] ?? '—')}</span>
                 {' → '}
-                <span style={{ color: '#92400E' }}>{String(val)}</span>
+                <span style={{ color: 'var(--state-warning)' }}>{String(val)}</span>
               </span>
             ))}
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <button onClick={approvePendingEdits} style={{ padding: '6px 14px', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500, background: '#065F46', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Approve</button>
-            <button onClick={rejectPendingEdits} style={{ padding: '6px 14px', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500, background: 'none', color: 'var(--red)', border: '0.5px solid var(--red)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Reject</button>
+            <button onClick={approvePendingEdits} style={{ padding: '6px 14px', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500, background: 'var(--state-success)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Approve</button>
+            <button onClick={rejectPendingEdits} style={{ padding: '6px 14px', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500, background: 'none', color: 'var(--state-danger)', border: '0.5px solid var(--state-danger)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Reject</button>
           </div>
         </div>
       )}
@@ -816,28 +816,28 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
             fn: handleSubmitProposal,
           },
           submitted: {
-            bc: '#bdd7f5', tc: '#1d4ed8',
+            bc: '#bdd7f5', tc: 'var(--state-info)',
             h: 'Proposal submitted.',
             sub: 'Waiting for client confirmation. Mark as Won when they confirm.',
             btn: 'Mark as Won',
             fn: handleMarkAsWon,
           },
           won: {
-            bc: '#fde68a', tc: '#92400e',
+            bc: 'var(--state-warning-bg)', tc: 'var(--state-warning)',
             h: 'You won this one.',
             sub: 'Export your approved elements to Execution and assign your team. Real work begins now — let\'s plan it together and delegate.',
             btn: 'Import to Execution →',
             fn: () => { setActiveTab('tasks'); setRefreshKey(k => k + 1) },
           },
           execution: {
-            bc: '#fde68a', tc: '#92400e',
+            bc: 'var(--state-warning-bg)', tc: 'var(--state-warning)',
             h: 'Execution in progress.',
             sub: 'Track what\'s happening on your project, city by city. Production begins when all tasks are done.',
             btn: 'Send Reminder',
             fn: handleSendReminder,
           },
           production: {
-            bc: '#fbbcbd', tc: '#991b1b',
+            bc: '#fbbcbd', tc: 'var(--state-danger)',
             h: 'Production is live.',
             sub: 'Your team is on ground. Things are getting done — keep a close eye on timelines.',
             btn: 'Mark Production Complete',
@@ -935,7 +935,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
               </button>
             ) : <div />}
             <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ color: '#16A34A' }}>✓</span> Auto-saved
+              <span style={{ color: 'var(--state-success)' }}>✓</span> Auto-saved
             </span>
             {next ? (
               <button onClick={() => handleTabChange(next.key)} style={btnStyle}
@@ -983,7 +983,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                 Cancel
               </button>
               <button onClick={() => handleRevoke(revokeConfirm)}
-                style={{ padding:'8px 18px', fontSize:'13px', fontWeight:500, fontFamily:'var(--font-body)', background:'#A32D2D', color:'white', border:'none', borderRadius:'var(--radius-sm)', cursor:'pointer' }}>
+                style={{ padding:'8px 18px', fontSize:'13px', fontWeight:500, fontFamily:'var(--font-body)', background:'var(--state-danger)', color:'white', border:'none', borderRadius:'var(--radius-sm)', cursor:'pointer' }}>
                 Yes, remove access
               </button>
             </div>

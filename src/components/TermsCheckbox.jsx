@@ -48,7 +48,7 @@ const STYLES = `
     margin-top: 1px;
     border-radius: 4px;
     border: 1.5px solid #d0cbc5;
-    background: #fff;
+    background: var(--app-surface);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -57,13 +57,13 @@ const STYLES = `
   }
 
   .tc-box.checked {
-    background: #F28F3B;
-    border-color: #F28F3B;
+    background: var(--app-accent);
+    border-color: var(--app-accent);
     box-shadow: 0 0 0 3px rgba(188,23,35,0.12);
   }
 
   .tc-box.error-state {
-    border-color: #F28F3B;
+    border-color: var(--app-accent);
     box-shadow: 0 0 0 3px rgba(188,23,35,0.10);
     animation: tc-shake 0.35s ease;
   }
@@ -89,20 +89,20 @@ const STYLES = `
   .tc-label {
     font-size: 13.5px;
     font-weight: 300;
-    color: #444;
+    color: var(--app-ink);
     line-height: 1.65;
     padding-top: 1px;
   }
 
   .tc-label a {
-    color: #F28F3B;
+    color: var(--app-accent);
     text-decoration: none;
     font-weight: 400;
     border-bottom: 1px solid rgba(188,23,35,0.25);
     transition: border-color 0.15s ease;
   }
   .tc-label a:hover {
-    border-bottom-color: #F28F3B;
+    border-bottom-color: var(--app-accent);
   }
 
   /* ── Error message ── */
@@ -114,7 +114,7 @@ const STYLES = `
     margin-left: 32px;
     font-size: 12px;
     font-weight: 400;
-    color: #F28F3B;
+    color: var(--app-accent);
     opacity: 0;
     transform: translateY(-4px);
     transition: opacity 0.2s ease, transform 0.2s ease;
@@ -127,7 +127,7 @@ const STYLES = `
   .tc-error-dot {
     width: 4px; height: 4px;
     border-radius: 50%;
-    background: #F28F3B;
+    background: var(--app-accent);
     flex-shrink: 0;
   }
 

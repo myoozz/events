@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabase'
 
-const RED = '#bc1723'
+const RED = 'var(--app-accent)'
 const RED_HOVER = '#8E0A1F'
 
 const inputStyle = {
@@ -140,7 +140,7 @@ export default function OnboardingModal({ userId, tenantId, tenantName, onComple
         style={{
           width: '100%',
           maxWidth: '420px',
-          background: '#fff',
+          background: 'var(--app-surface)',
           borderRadius: '12px',
           padding: '24px',
           position: 'relative',

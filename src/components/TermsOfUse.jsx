@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 
 /* ─────────────────────────────────────────────
    Myoozz Events — Terms of Use
-   Brand: #F28F3B red · #FAFAF8 warm white
+   Brand: var(--app-accent) red · #FAFAF8 warm white
    Fonts: Cormorant Garamond (headlines) · DM Sans (body)
    Last updated: April 2026
    © Myoozz Consulting Pvt. Ltd.
@@ -165,10 +165,10 @@ export default function TermsOfUse() {
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap');
 
         :root {
-          --red: #F28F3B;
+          --red: var(--app-accent);
           --bg: #FAFAF8;
-          --ink: #1a1a1a;
-          --muted: #6b6b6b;
+          --ink: var(--app-ink);
+          --muted: var(--app-text-dim);
           --rule: #e8e4df;
           --card: #ffffff;
         }
@@ -304,7 +304,7 @@ export default function TermsOfUse() {
         .tu-notice p {
           font-size: 13.5px;
           font-weight: 400;
-          color: #444;
+          color: var(--app-ink);
           line-height: 1.7;
         }
         .tu-notice strong {
@@ -350,7 +350,7 @@ export default function TermsOfUse() {
           font-size: 15px;
           font-weight: 300;
           line-height: 1.8;
-          color: #333;
+          color: var(--app-ink);
           margin-bottom: 14px;
         }
         .tu-section p:last-child { margin-bottom: 0; }
@@ -372,7 +372,7 @@ export default function TermsOfUse() {
           font-size: 14.5px;
           font-weight: 300;
           line-height: 1.75;
-          color: #444;
+          color: var(--app-ink);
           padding-left: 20px;
           position: relative;
           margin-bottom: 4px;

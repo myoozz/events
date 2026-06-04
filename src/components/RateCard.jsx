@@ -372,7 +372,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,25,21,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 400, padding: '24px' }}>
-      <div style={{ '--bg': '#141413', '--bg-secondary': '#1e1e1c', '--text': '#e8e6e0', '--text-secondary': '#a8a49e', '--text-tertiary': '#6b6760', '--border': '#2e2e2c', '--border-strong': '#3e3e3c', background: '#141413', border: '0.5px solid #2e2e2c', borderRadius: 'var(--radius)', maxWidth: '720px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ '--bg': 'var(--app-ratecard-dark)', '--bg-secondary': '#1e1e1c', '--text': '#e8e6e0', '--text-secondary': '#a8a49e', '--text-tertiary': '#6b6760', '--border': '#2e2e2c', '--border-strong': '#3e3e3c', background: 'var(--app-ratecard-dark)', border: '0.5px solid #2e2e2c', borderRadius: 'var(--radius)', maxWidth: '720px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px', borderBottom: '0.5px solid var(--border)', flexShrink: 0 }}>
           <div>
@@ -397,15 +397,15 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
           )}
 
           {!importing && dupeWarning && (
-            <div style={{ border: '0.5px solid #FCD34D', borderRadius: 'var(--radius-sm)', padding: '20px', background: '#FFFBEB', marginBottom: '20px' }}>
-              <p style={{ fontSize: '14px', fontWeight: 500, color: '#92400E', marginBottom: '6px' }}>
+            <div style={{ border: '0.5px solid #FCD34D', borderRadius: 'var(--radius-sm)', padding: '20px', background: 'var(--state-warning-bg)', marginBottom: '20px' }}>
+              <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--state-warning)', marginBottom: '6px' }}>
                 ⚠ {dupeWarning.count} rate{dupeWarning.count > 1 ? 's' : ''} from <strong>{dupeWarning.source}</strong> already exist with the same element name and city.
               </p>
               <p style={{ fontSize: '13px', color: '#78350F', marginBottom: '16px' }}>
                 Adding again will create duplicate entries for the same source. Continue only if this is an updated rate card from the same vendor.
               </p>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={runImport} style={{ padding: '8px 20px', fontSize: '13px', fontWeight: 500, background: '#BC1723', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                <button onClick={runImport} style={{ padding: '8px 20px', fontSize: '13px', fontWeight: 500, background: 'var(--app-accent)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
                   Import anyway
                 </button>
                 <button onClick={() => setDupeWarning(null)} style={{ padding: '8px 14px', fontSize: '13px', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
@@ -548,7 +548,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                             setPbCopied(true)
                             setTimeout(() => setPbCopied(false), 2000)
                           }}
-                          style={{ padding: '8px 20px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: pbCopied ? '#D1FAE5' : (category && pbCities.length > 0 ? 'var(--text)' : 'var(--bg)'), color: pbCopied ? '#065F46' : (category && pbCities.length > 0 ? 'var(--bg)' : 'var(--text-tertiary)'), border: 'none', borderRadius: 'var(--radius-sm)', cursor: (category && pbCities.length > 0) ? 'pointer' : 'default', transition: 'all 0.2s' }}>
+                          style={{ padding: '8px 20px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: pbCopied ? 'var(--state-success-bg)' : (category && pbCities.length > 0 ? 'var(--text)' : 'var(--bg)'), color: pbCopied ? 'var(--state-success)' : (category && pbCities.length > 0 ? 'var(--bg)' : 'var(--text-tertiary)'), border: 'none', borderRadius: 'var(--radius-sm)', cursor: (category && pbCities.length > 0) ? 'pointer' : 'default', transition: 'all 0.2s' }}>
                           {pbCopied ? '✓ Copied!' : 'Copy Prompt'}
                         </button>
                       </div>
@@ -556,7 +556,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                   )}
 
                   {!category && !showPromptBuilder && (
-                    <p style={{ fontSize: '12px', color: '#B45309', background: '#FEF3C7', padding: '8px 12px', borderRadius: '4px', marginBottom: '12px' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--state-warning)', background: 'var(--state-warning-bg)', padding: '8px 12px', borderRadius: '4px', marginBottom: '12px' }}>
                       Select a category above to copy the prompt for that category.
                     </p>
                   )}
@@ -568,7 +568,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                     style={{ ...inputStyle, fontFamily: 'monospace', fontSize: '12px', background: 'var(--bg-secondary)', resize: 'vertical', lineHeight: 1.6 }}
                   />
                   {jsonError && (
-                    <p style={{ fontSize: '12px', color: '#BC1723', marginTop: '6px' }}>⚠ {jsonError}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--app-accent)', marginTop: '6px' }}>⚠ {jsonError}</p>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
                     <button onClick={handleJsonParse} disabled={!jsonText.trim()}
@@ -595,8 +595,8 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                   const mapped = mapping[h]
                   const isMatched = !!mapped
                   return (
-                    <div key={h} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '0.5px solid var(--border)', background: isMatched ? '#F0FDF4' : '#FFFBEB', alignItems: 'center', padding: '6px 14px', gap: '12px' }}>
-                      <div style={{ fontSize: '13px', color: isMatched ? '#065F46' : '#92400E', fontWeight: 500 }}>
+                    <div key={h} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '0.5px solid var(--border)', background: isMatched ? 'var(--state-success-bg)' : 'var(--state-warning-bg)', alignItems: 'center', padding: '6px 14px', gap: '12px' }}>
+                      <div style={{ fontSize: '13px', color: isMatched ? 'var(--state-success)' : 'var(--state-warning)', fontWeight: 500 }}>
                         {isMatched ? '✓ ' : '· '}{h}
                       </div>
                       <select value={mapped || ''} onChange={e => setMapping(prev => ({ ...prev, [h]: e.target.value || undefined }))}
@@ -844,7 +844,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
 
   // ── Dark theme tokens ─────────────────────────────────────────────────────
   const D = {
-    bg:        '#1a1a1a',
+    bg:        'var(--app-ink)',
     card:      '#252525',
     cardHov:   '#2e2e2e',
     border:    '#333333',
@@ -852,14 +852,14 @@ export default function RateCard({ session, userRole, canManageRateCards = false
     text:      '#ffffff',
     sub:       '#aaaaaa',
     dim:       '#666666',
-    red:       '#F28F3B',
+    red:       'var(--app-accent)',
   }
 
   const s = { fontFamily: 'var(--font-body)' }
 
   const inpSt = {
     ...s, padding: '6px 10px', fontSize: '12px',
-    border: '0.5px solid #444', borderRadius: '6px',
+    border: '0.5px solid var(--app-ink)', borderRadius: '6px',
     background: '#2a2a2a', color: '#fff',
     outline: 'none', width: '100%', boxSizing: 'border-box',
   }
@@ -870,8 +870,8 @@ export default function RateCard({ session, userRole, canManageRateCards = false
     padding: small ? '3px 10px' : '6px 16px',
     borderRadius: '20px', cursor: 'pointer', whiteSpace: 'nowrap',
     background: active ? '#ffffff' : 'transparent',
-    color: active ? '#1a1a1a' : D.text,
-    border: '0.5px solid ' + (active ? '#ffffff' : '#444'),
+    color: active ? 'var(--app-ink)' : D.text,
+    border: '0.5px solid ' + (active ? '#ffffff' : 'var(--app-ink)'),
     transition: 'all 0.1s',
   })
 
@@ -883,7 +883,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
   })
 
   const warningIcon  = { duplicate: '⚠️', city_mismatch: '🏙️', multi_city: '🔁', no_rate: '—', mandatory: '📋' }
-  const warningColor = { duplicate: '#FEF3C7', city_mismatch: '#FEF3C7', multi_city: '#FEF3C7', no_rate: '#F3F4F6', mandatory: '#EFF6FF' }
+  const warningColor = { duplicate: 'var(--state-warning-bg)', city_mismatch: 'var(--state-warning-bg)', multi_city: 'var(--state-warning-bg)', no_rate: 'var(--app-surface)', mandatory: 'var(--state-info-bg)' }
   const selectedEvent = events.find(e => e.id === targetEvent)
   const eventCities   = selectedEvent?.cities || []
 
@@ -911,7 +911,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
 
       {/* ── Empty state ── */}
       {!loading && rates.length === 0 && (
-        <div style={{ border: '0.5px dashed #444', borderRadius: '14px', padding: '80px 32px', textAlign: 'center' }}>
+        <div style={{ border: '0.5px dashed var(--app-ink)', borderRadius: '14px', padding: '80px 32px', textAlign: 'center' }}>
           <p style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: D.text, marginBottom: '8px' }}>No rate cards yet</p>
           <p style={{ fontSize: '13px', color: D.sub, marginBottom: '24px', lineHeight: 1.6 }}>
             Upload vendor rate cards or paste AI research JSON.<br />Rates are suggested when your team enters internal costs.
@@ -1001,7 +1001,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                               onClick={() => { setSelectedItem(isActive ? null : item); setSelected(new Set(isActive ? [] : [item.id])) }}
                               style={{
                                 background: isActive ? '#2e2e2e' : D.card,
-                                border: `0.5px solid ${isActive ? '#666' : D.border}`,
+                                border: `0.5px solid ${isActive ? 'var(--app-text-dim)' : D.border}`,
                                 borderRadius: '10px', padding: '12px 14px',
                                 cursor: 'pointer', display: 'flex',
                                 justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px',
@@ -1113,7 +1113,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                       </div>
 
                       {/* Rate highlight box */}
-                      <div style={{ background: '#1a1a1a', borderRadius: '10px', padding: '18px', margin: '16px 0', textAlign: 'center' }}>
+                      <div style={{ background: 'var(--app-ink)', borderRadius: '10px', padding: '18px', margin: '16px 0', textAlign: 'center' }}>
                         <div style={{ fontSize: '24px', fontWeight: 600, color: D.text, marginBottom: '5px', userSelect: 'none' }}>
                           {fmtRange(selectedItem.rate_min, selectedItem.rate_max) || '—'}
                         </div>
@@ -1324,7 +1324,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                 {addWarnings.length > 0 && (
                   <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {addWarnings.map((w, i) => (
-                      <div key={i} style={{ fontSize: '12px', padding: '8px 10px', borderRadius: 'var(--radius-sm)', background: warningColor[w.type] || '#FEF3C7', color: 'var(--text)', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                      <div key={i} style={{ fontSize: '12px', padding: '8px 10px', borderRadius: 'var(--radius-sm)', background: warningColor[w.type] || 'var(--state-warning-bg)', color: 'var(--text)', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                         <span style={{ flexShrink: 0 }}>{warningIcon[w.type] || '⚠️'}</span>
                         <span>{w.text}</span>
                       </div>
@@ -1334,7 +1334,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={confirmAddToEvent}
                     disabled={!targetEvent || !targetCity || adding}
-                    style={{ ...s, flex: 1, padding: '9px', fontSize: '13px', fontWeight: 500, background: '#F28F3B', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', opacity: targetEvent && targetCity ? 1 : 0.5 }}>
+                    style={{ ...s, flex: 1, padding: '9px', fontSize: '13px', fontWeight: 500, background: 'var(--app-accent)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', opacity: targetEvent && targetCity ? 1 : 0.5 }}>
                     {adding ? 'Adding…' : addWarnings.some(w => w.type === 'duplicate') ? 'Add anyway' : 'Confirm'}
                   </button>
                   <button onClick={() => setShowAddModal(false)}
@@ -1356,7 +1356,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '20px' }}>This rate will be removed from the library. Won't affect existing events.</p>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button onClick={() => deleteRow(deleteConfirm)}
-                style={{ ...s, flex: 1, padding: '9px', fontSize: '13px', fontWeight: 500, background: '#A32D2D', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>
+                style={{ ...s, flex: 1, padding: '9px', fontSize: '13px', fontWeight: 500, background: 'var(--state-danger)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>
                 Remove
               </button>
               <button onClick={() => setDeleteConfirm(null)}

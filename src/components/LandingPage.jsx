@@ -6,27 +6,27 @@ function MeLogo({ size = 36 }) {
   return (
     <svg width={s * 1.6} height={s} viewBox="0 0 64 40" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* M */}
-      <text x="0" y="34" fontFamily="'DM Sans', sans-serif" fontWeight="800" fontSize="38" fill="#F28F3B">M</text>
+      <text x="0" y="34" fontFamily="'DM Sans', sans-serif" fontWeight="800" fontSize="38" fill="#BC1723">M</text>
       {/* e circle */}
       <circle cx="52" cy="24" r="12" fill="#d1d5d8"/>
       {/* e letter */}
-      <text x="46.5" y="29.5" fontFamily="'DM Sans', sans-serif" fontWeight="700" fontSize="14" fill="#F28F3B">e</text>
+      <text x="46.5" y="29.5" fontFamily="'DM Sans', sans-serif" fontWeight="700" fontSize="14" fill="#BC1723">e</text>
     </svg>
   );
 }
 
 const css = `
 :root {
-  --red: #F28F3B;
-  --red-dark: #9a1219;
-  --bg: #FAFAF8;
-  --bg-warm: #F4F2EE;
-  --navy: #111827;
-  --text: #1a1917;
-  --text-muted: #6b6860;
-  --text-light: #9e9b95;
-  --border: rgba(26,25,23,0.12);
-  --border-strong: rgba(26,25,23,0.22);
+  --red: #BC1723;
+  --red-dark: #A4131D;
+  --bg: #FAF8F5;
+  --bg-warm: #F2EFE9;
+  --navy: #16203A;
+  --text: #1A1008;
+  --text-muted: #5F564A;
+  --text-light: #7A7060;
+  --border: #D8D2C8;
+  --border-strong: #C8C2B8;
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
   --font-logo: 'Poppins', sans-serif;
@@ -96,7 +96,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--font-body);
 .hero-right { position: relative; height: 420px; animation: fadeIn 1s 0.4s ease both; }
 .doc-card { position: absolute; background: #fff; border-radius: 10px; padding: 18px 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06); min-width: 190px; border: 0.5px solid var(--border); }
 .doc-card-bar { height: 4px; border-radius: 2px; margin-bottom: 14px; width: 36px; }
-.doc-card-bar--red { background: #F28F3B; }
+.doc-card-bar--red { background: #BC1723; }
 .doc-card-bar--green { background: #22c55e; }
 .doc-card-bar--blue { background: #3b82f6; }
 .doc-card-bar--amber { background: #f59e0b; }

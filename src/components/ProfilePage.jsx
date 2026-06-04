@@ -7,17 +7,17 @@ const db = (table) => supabase.from(table);
 
 const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team' }
 const ROLE_COLORS = {
-  admin:      { bg: '#DCFCE7', color: '#166534' },
-  manager:    { bg: '#EFF6FF', color: '#1D4ED8' },
-  event_lead: { bg: '#FEF3C7', color: '#92400E' },
-  team:       { bg: '#F3F4F6', color: '#374151' },
+  admin:      { bg: 'var(--state-success-bg)', color: 'var(--state-success)' },
+  manager:    { bg: 'var(--state-info-bg)', color: 'var(--state-info)' },
+  event_lead: { bg: 'var(--state-warning-bg)', color: 'var(--state-warning)' },
+  team:       { bg: 'var(--app-surface)', color: 'var(--app-ink)' },
 }
 const STATUS_META = {
-  active:    { label: 'Active',    color: '#059669', bg: '#ECFDF5' },
-  pitch:     { label: 'Pitch',     color: '#D97706', bg: '#FFFBEB' },
-  completed: { label: 'Completed', color: '#6B7280', bg: '#F3F4F6' },
+  active:    { label: 'Active',    color: '#059669', bg: 'var(--state-success-bg)' },
+  pitch:     { label: 'Pitch',     color: 'var(--state-warning)', bg: 'var(--state-warning-bg)' },
+  completed: { label: 'Completed', color: 'var(--app-text-dim)', bg: 'var(--app-surface)' },
   won:       { label: 'Won',       color: '#7C3AED', bg: '#F5F3FF' },
-  cancelled: { label: 'Cancelled', color: '#DC2626', bg: '#FEF2F2' },
+  cancelled: { label: 'Cancelled', color: 'var(--state-danger)', bg: 'var(--state-danger-bg)' },
 }
 
 const SOCIAL_DEFAULTS = [
@@ -242,8 +242,8 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
               <span style={S.locationChip}>
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style={{ flexShrink: 0 }}>
                   <path d="M5.5 1C3.84 1 2.5 2.34 2.5 4c0 2.25 3 6 3 6s3-3.75 3-6c0-1.66-1.34-3-3-3z"
-                    stroke="#9CA3AF" strokeWidth="1.1" fill="none"/>
-                  <circle cx="5.5" cy="4" r="1" fill="#9CA3AF"/>
+                    stroke="var(--app-text-dim-lg)" strokeWidth="1.1" fill="none"/>
+                  <circle cx="5.5" cy="4" r="1" fill="var(--app-text-dim-lg)"/>
                 </svg>
                 {[profile.base_city, profile.base_state].filter(Boolean).join(', ')}
               </span>
@@ -408,7 +408,7 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
                             onClick={() => { setFieldVal(cs.url); setOpenField(fieldKey) }}>
                             <PencilIcon size={12} />
                           </button>
-                          <button style={{ ...S.editIconBtn, color: '#DC2626' }} title="Remove"
+                          <button style={{ ...S.editIconBtn, color: 'var(--state-danger)' }} title="Remove"
                             onClick={() => saveSocials(socials.filter(x => x.key !== cs.key))}>
                             ✕
                           </button>
@@ -563,18 +563,18 @@ function InstagramIcon() {
 
 /* ─── Styles ──────────────────────────────────────────────── */
 const S = {
-  root:      { fontFamily: "'DM Sans', sans-serif", color: '#1a1a1a', maxWidth: 640 },
-  centerMsg: { textAlign: 'center', color: '#9CA3AF', fontSize: 14, padding: '60px 0', fontFamily: "'DM Sans', sans-serif" },
+  root:      { fontFamily: "'DM Sans', sans-serif", color: 'var(--app-ink)', maxWidth: 640 },
+  centerMsg: { textAlign: 'center', color: 'var(--app-text-dim-lg)', fontSize: 14, padding: '60px 0', fontFamily: "'DM Sans', sans-serif" },
 
   back: {
     display: 'flex', alignItems: 'center', gap: 6,
     background: 'none', border: 'none', cursor: 'pointer',
-    fontSize: 13, color: '#6B7280', fontFamily: "'DM Sans', sans-serif",
+    fontSize: 13, color: 'var(--app-text-dim)', fontFamily: "'DM Sans', sans-serif",
     marginBottom: 20, padding: 0,
   },
 
   heroCard: {
-    background: '#fff', border: '1px solid #EDE8E2', borderRadius: 14,
+    background: 'var(--app-surface)', border: '1px solid #EDE8E2', borderRadius: 14,
     padding: '24px 24px 20px', display: 'flex', gap: 20,
     alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 20,
     position: 'relative',
@@ -586,7 +586,7 @@ const S = {
   },
   avatarCircle: {
     width: 72, height: 72, borderRadius: '14px',
-    background: '#F28F3B', color: '#fff',
+    background: 'var(--app-accent)', color: '#fff',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px',
     fontFamily: "'DM Sans', sans-serif",
@@ -606,26 +606,26 @@ const S = {
   nameRow:  { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
   name: {
     fontFamily: "'Cormorant Garamond', serif",
-    fontSize: 28, fontWeight: 600, margin: 0, color: '#1a1a1a', lineHeight: 1.1,
+    fontSize: 28, fontWeight: 600, margin: 0, color: 'var(--app-ink)', lineHeight: 1.1,
   },
   nameEditRow: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 },
   nameInput: {
     flex: 1, padding: '6px 10px',
-    border: '1.5px solid #F28F3B', borderRadius: 7,
+    border: '1.5px solid var(--app-accent)', borderRadius: 7,
     fontSize: 18, fontFamily: "'DM Sans', sans-serif",
-    color: '#1a1a1a', background: '#fff', outline: 'none',
+    color: 'var(--app-ink)', background: 'var(--app-bg)', outline: 'none',
   },
   nameEditBtn: {
     background: 'none', border: 'none', cursor: 'pointer',
     color: '#C4BDB6', padding: 2, display: 'flex', alignItems: 'center',
   },
   miniSaveBtn: {
-    padding: '4px 10px', background: '#F28F3B', color: '#fff',
+    padding: '4px 10px', background: 'var(--app-accent)', color: '#fff',
     border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600,
   },
   miniCancelBtn: {
     padding: '4px 8px', background: 'none', border: '1px solid #E5E1DC',
-    borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#6B7280',
+    borderRadius: 6, cursor: 'pointer', fontSize: 13, color: 'var(--app-text-dim)',
   },
 
   metaRow: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 },
@@ -636,12 +636,12 @@ const S = {
   },
   locationChip: {
     display: 'flex', alignItems: 'center', gap: 4,
-    fontSize: 12, color: '#9CA3AF',
+    fontSize: 12, color: 'var(--app-text-dim-lg)',
   },
-  email: { fontSize: 12, color: '#9CA3AF', margin: 0 },
+  email: { fontSize: 12, color: 'var(--app-text-dim-lg)', margin: 0 },
   savedBadge: {
     position: 'absolute', top: 16, right: 16,
-    padding: '5px 12px', background: '#ECFDF5', color: '#059669',
+    padding: '5px 12px', background: 'var(--state-success-bg)', color: '#059669',
     borderRadius: 8, fontSize: 12, fontWeight: 600,
   },
 
@@ -650,23 +650,23 @@ const S = {
     padding: '10px 20px', background: 'none', border: 'none',
     borderBottom: '2px solid transparent', cursor: 'pointer',
     fontSize: 13, fontFamily: "'DM Sans', sans-serif",
-    color: '#9CA3AF', fontWeight: 500, marginBottom: -1,
+    color: 'var(--app-text-dim-lg)', fontWeight: 500, marginBottom: -1,
     transition: 'color 0.15s, border-color 0.15s',
   },
-  tabActive: { color: '#F28F3B', borderBottomColor: '#F28F3B', fontWeight: 600 },
+  tabActive: { color: 'var(--app-accent)', borderBottomColor: 'var(--app-accent)', fontWeight: 600 },
 
   detailsWrap: { display: 'flex', flexDirection: 'column', gap: 0 },
   fieldBlock: {
-    background: '#fff', border: '1px solid #EDE8E2',
+    background: 'var(--app-surface)', border: '1px solid #EDE8E2',
     borderRadius: 10, padding: '14px 16px', marginBottom: 8,
   },
   fieldLabel: {
-    fontSize: 11, fontWeight: 700, color: '#9CA3AF',
+    fontSize: 11, fontWeight: 700, color: 'var(--app-text-dim-lg)',
     textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
     display: 'flex', alignItems: 'center',
   },
   filledRow: { display: 'flex', alignItems: 'flex-start', gap: 8 },
-  filledVal: { fontSize: 14, color: '#1a1a1a', flex: 1 },
+  filledVal: { fontSize: 14, color: 'var(--app-ink)', flex: 1 },
   bioVal:    { fontSize: 14, color: '#4B5563', flex: 1, lineHeight: 1.6, whiteSpace: 'pre-wrap', fontStyle: 'italic' },
   emptyVal:  { fontSize: 13, color: '#D1D5DB' },
   editIconBtn: {
@@ -680,49 +680,49 @@ const S = {
     borderRadius: 8, padding: '10px 14px',
     border: '1px dashed #E5E1DC',
   },
-  nudgeBenefit: { fontSize: 13, color: '#6B7280', flex: 1, lineHeight: 1.4 },
+  nudgeBenefit: { fontSize: 13, color: 'var(--app-text-dim)', flex: 1, lineHeight: 1.4 },
   nudgeAddBtn: {
     padding: '6px 16px', border: 'none', borderRadius: 20,
-    background: '#F28F3B', color: '#fff', cursor: 'pointer',
+    background: 'var(--app-accent)', color: '#fff', cursor: 'pointer',
     fontSize: 12, fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
     flexShrink: 0, whiteSpace: 'nowrap',
   },
 
   inlineInput: {
     width: '100%', padding: '9px 12px',
-    border: '1.5px solid #F28F3B', borderRadius: 7,
+    border: '1.5px solid var(--app-accent)', borderRadius: 7,
     fontSize: 14, fontFamily: "'DM Sans', sans-serif",
-    background: '#fff', color: '#1a1a1a', outline: 'none',
+    background: 'var(--app-bg)', color: 'var(--app-ink)', outline: 'none',
     boxSizing: 'border-box',
   },
   inlineCancelBtn: {
     padding: '7px 16px', border: '1.5px solid #E5E1DC',
     borderRadius: 7, background: 'transparent', cursor: 'pointer',
-    fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: '#6B7280',
+    fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: 'var(--app-text-dim)',
   },
   inlineSaveBtn: {
     padding: '7px 20px', border: 'none', borderRadius: 7,
-    background: '#F28F3B', color: '#fff', cursor: 'pointer',
+    background: 'var(--app-accent)', color: '#fff', cursor: 'pointer',
     fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 600,
   },
 
   sectionHeading: {
-    fontSize: 10, fontWeight: 700, color: '#9CA3AF',
+    fontSize: 10, fontWeight: 700, color: 'var(--app-text-dim-lg)',
     textTransform: 'uppercase', letterSpacing: '0.08em',
     marginBottom: 8, paddingLeft: 2,
   },
   socialLink: {
-    fontSize: 13, color: '#F28F3B', textDecoration: 'none',
+    fontSize: 13, color: 'var(--app-accent)', textDecoration: 'none',
     flex: 1, wordBreak: 'break-all',
   },
   addMoreBtn: {
     background: 'none', border: '1px dashed #E5E1DC',
     borderRadius: 8, padding: '10px 16px', cursor: 'pointer',
-    fontSize: 13, color: '#9CA3AF', fontFamily: "'DM Sans', sans-serif",
+    fontSize: 13, color: 'var(--app-text-dim-lg)', fontFamily: "'DM Sans', sans-serif",
     width: '100%', textAlign: 'left', marginTop: 4,
   },
 
-  card: { background: '#fff', border: '1px solid #EDE8E2', borderRadius: 12, padding: 24 },
+  card: { background: 'var(--app-surface)', border: '1px solid #EDE8E2', borderRadius: 12, padding: 24 },
 
   eventList:   { display: 'flex', flexDirection: 'column', gap: 8 },
   eventCard: {
@@ -733,13 +733,13 @@ const S = {
   eventLeft:   { display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 },
   eventRight:  { display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 },
   statusDot:   { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
-  eventName:   { fontSize: 14, fontWeight: 500, color: '#1a1a1a' },
-  eventCities: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+  eventName:   { fontSize: 14, fontWeight: 500, color: 'var(--app-ink)' },
+  eventCities: { fontSize: 12, color: 'var(--app-text-dim-lg)', marginTop: 2 },
   statusPill: {
     padding: '3px 10px', borderRadius: 12,
     fontSize: 11, fontWeight: 600,
     textTransform: 'uppercase', letterSpacing: '0.03em',
   },
-  eventDate: { fontSize: 12, color: '#9CA3AF' },
-  emptyMsg:  { fontSize: 14, color: '#9CA3AF', textAlign: 'center', padding: '24px 0', margin: 0 },
+  eventDate: { fontSize: 12, color: 'var(--app-text-dim-lg)' },
+  emptyMsg:  { fontSize: 14, color: 'var(--app-text-dim-lg)', textAlign: 'center', padding: '24px 0', margin: 0 },
 }

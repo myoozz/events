@@ -470,9 +470,9 @@ export default function ImportModal({ event, city, onImported, onClose }) {
                 <div style={{ overflowX: 'auto', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
                   <table style={{ borderCollapse: 'collapse', fontSize: '12px', width: '100%' }}>
                     {previewRows.map((row, ri) => (
-                      <tr key={ri} style={{ background: ri + Math.max(0, headerRowIdx - 2) === headerRowIdx ? '#FFFBEB' : ri % 2 === 0 ? 'var(--bg)' : 'var(--bg-secondary)' }}>
+                      <tr key={ri} style={{ background: ri + Math.max(0, headerRowIdx - 2) === headerRowIdx ? 'var(--state-warning-bg)' : ri % 2 === 0 ? 'var(--bg)' : 'var(--bg-secondary)' }}>
                         {row.slice(0, 10).map((cell, ci) => (
-                          <td key={ci} style={{ padding: '5px 10px', borderBottom: '0.5px solid var(--border)', borderRight: '0.5px solid var(--border)', whiteSpace: 'nowrap', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', color: ri + Math.max(0, headerRowIdx - 2) === headerRowIdx ? '#92400E' : 'var(--text)', fontWeight: ri + Math.max(0, headerRowIdx - 2) === headerRowIdx ? 500 : 400 }}>
+                          <td key={ci} style={{ padding: '5px 10px', borderBottom: '0.5px solid var(--border)', borderRight: '0.5px solid var(--border)', whiteSpace: 'nowrap', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', color: ri + Math.max(0, headerRowIdx - 2) === headerRowIdx ? 'var(--state-warning)' : 'var(--text)', fontWeight: ri + Math.max(0, headerRowIdx - 2) === headerRowIdx ? 500 : 400 }}>
                             {cell || '—'}
                           </td>
                         ))}
@@ -493,7 +493,7 @@ export default function ImportModal({ event, city, onImported, onClose }) {
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
                 {mapping.map(m => (
-                  <div key={m.colIdx} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: m.field ? '#F0FDF4' : 'var(--bg-secondary)', border: `0.5px solid ${m.field ? '#22C55E' : 'var(--border)'}`, borderRadius: 'var(--radius-sm)' }}>
+                  <div key={m.colIdx} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: m.field ? 'var(--state-success-bg)' : 'var(--bg-secondary)', border: `0.5px solid ${m.field ? 'var(--state-success)' : 'var(--border)'}`, borderRadius: 'var(--radius-sm)' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         Col {m.colIdx + 1}: <strong style={{ color: 'var(--text)' }}>{m.header || '(empty)'}</strong>

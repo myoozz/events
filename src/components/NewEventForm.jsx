@@ -52,7 +52,7 @@ const S = {
     zIndex: 1000, padding: '20px',
   },
   modal: {
-    background: '#faf8f5', borderRadius: '12px', width: '100%',
+    background: 'var(--app-bg)', borderRadius: '12px', width: '100%',
     maxWidth: '580px', maxHeight: '90vh', overflow: 'hidden',
     display: 'flex', flexDirection: 'column',
     boxShadow: '0 24px 64px rgba(26,16,8,0.22)',
@@ -68,34 +68,34 @@ const S = {
   footer: {
     padding: '14px 28px', borderTop: '1px solid #e8e4dc',
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    background: '#faf8f5', flexShrink: 0,
+    background: 'var(--app-bg)', flexShrink: 0,
   },
   title: {
     fontFamily: "'Cormorant Garamond', serif",
     fontSize: '26px', fontWeight: 700,
-    color: '#1a1008', lineHeight: 1.2, margin: 0,
+    color: 'var(--app-ink)', lineHeight: 1.2, margin: 0,
   },
-  sub: { fontSize: '13px', color: '#7a7060', marginTop: '3px' },
+  sub: { fontSize: '13px', color: 'var(--app-text-dim-lg)', marginTop: '3px' },
   label: {
     display: 'block', fontSize: '10px', fontWeight: 600,
     textTransform: 'uppercase', letterSpacing: '0.8px',
-    color: '#7a7060', marginBottom: '6px',
+    color: 'var(--app-text-dim-lg)', marginBottom: '6px',
   },
   input: {
     width: '100%', padding: '10px 12px',
-    border: '1px solid #d8d2c8', borderRadius: '6px',
-    fontSize: '14px', color: '#1a1008', background: '#fff',
+    border: '1px solid var(--app-border)', borderRadius: '6px',
+    fontSize: '14px', color: 'var(--app-ink)', background: 'var(--app-bg)',
     outline: 'none', fontFamily: "'DM Sans', sans-serif",
     boxSizing: 'border-box', transition: 'border-color 0.15s',
   },
   tile: {
-    width: '100%', border: '1.5px solid #d8d2c8', borderRadius: '8px',
-    padding: '12px 14px', cursor: 'pointer', background: '#fff',
+    width: '100%', border: '1.5px solid var(--app-border)', borderRadius: '8px',
+    padding: '12px 14px', cursor: 'pointer', background: 'var(--app-surface)',
     transition: 'all 0.12s', textAlign: 'left',
     fontFamily: "'DM Sans', sans-serif",
   },
   tileActive: {
-    borderColor: '#bc1723', background: '#fde8ea',
+    borderColor: 'var(--app-accent)', background: 'var(--state-danger-bg)',
   },
   btn: {
     padding: '9px 18px', borderRadius: '6px', fontSize: '13px',
@@ -103,26 +103,26 @@ const S = {
     fontFamily: "'DM Sans', sans-serif", transition: 'all 0.12s',
     display: 'inline-flex', alignItems: 'center', gap: '6px',
   },
-  btnDark: { background: '#1a1008', color: '#fff' },
-  btnRed:  { background: '#bc1723', color: '#fff' },
+  btnDark: { background: 'var(--app-ink)', color: '#fff' },
+  btnRed:  { background: 'var(--app-accent)', color: '#fff' },
   btnGhost: {
-    background: 'transparent', color: '#7a7060',
+    background: 'transparent', color: 'var(--app-text-dim-lg)',
     padding: '9px 0',
   },
   closeBtn: {
     background: 'none', border: 'none', cursor: 'pointer',
-    color: '#7a7060', fontSize: '22px', lineHeight: 1,
+    color: 'var(--app-text-dim-lg)', fontSize: '22px', lineHeight: 1,
     padding: '2px 4px', fontFamily: 'inherit',
   },
   pill: {
     display: 'inline-flex', alignItems: 'center', gap: '6px',
-    background: '#1a1008', color: '#e8e4dc',
+    background: 'var(--app-ink)', color: '#e8e4dc',
     borderRadius: '20px', padding: '3px 10px 3px 10px',
     fontSize: '12px',
   },
   sectionLabel: {
     fontSize: '9px', fontWeight: 700, textTransform: 'uppercase',
-    letterSpacing: '1px', color: '#7a7060', marginBottom: '12px',
+    letterSpacing: '1px', color: 'var(--app-text-dim-lg)', marginBottom: '12px',
   },
   divider: {
     border: 'none', borderTop: '1px solid #e8e4dc', margin: '16px 0',
@@ -337,7 +337,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         <div style={{ ...S.modal, ...(step === 6 ? { overflow: 'visible' } : {}) }}>
           <div style={{ ...S.header, alignItems: 'center' }}>
             <span style={{
-              fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#7a7060',
+              fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'var(--app-text-dim-lg)',
             }}>
               {step} / {TOTAL_STEPS}
             </span>
@@ -347,7 +347,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
           {/* Progress bar */}
           <div style={{ height: '2px', background: '#e8e4dc', margin: '12px 28px 0', borderRadius: '2px' }}>
             <div style={{
-              height: '2px', background: '#bc1723', borderRadius: '2px',
+              height: '2px', background: 'var(--app-accent)', borderRadius: '2px',
               width: `${pct}%`, transition: 'width 0.3s ease',
             }} />
           </div>
@@ -407,7 +407,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
             {/* More Details */}
             <div style={{ marginTop: '16px' }}>
               <button
-                style={{ ...S.btn, ...S.btnGhost, fontSize: '12px', color: '#7a7060' }}
+                style={{ ...S.btn, ...S.btnGhost, fontSize: '12px', color: 'var(--app-text-dim-lg)' }}
                 onClick={() => setShowMore(!showMore)}
               >
                 {showMore ? '▾' : '▸'} More details — Agency fee, GST, Proposal date
@@ -415,7 +415,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
               {showMore && (
                 <div style={{
-                  marginTop: '12px', padding: '16px', background: '#f2efe9',
+                  marginTop: '12px', padding: '16px', background: 'var(--app-surface)',
                   borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '12px',
                 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -438,7 +438,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                       <input type="range" min="0" max="30" step="0.5"
                         value={a.agencyFee}
                         onChange={e => set('agencyFee', parseFloat(e.target.value))}
-                        style={{ width: '100%', accentColor: '#bc1723' }} />
+                        style={{ width: '100%', accentColor: 'var(--app-accent)' }} />
                     </div>
                     <div>
                       <label style={S.label}>GST</label>
@@ -462,9 +462,9 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
             {error && (
               <div style={{
-                marginTop: '12px', padding: '10px 14px', background: '#fde8ea',
-                border: '1px solid #f5b5ba', borderRadius: '6px',
-                fontSize: '13px', color: '#8a1119',
+                marginTop: '12px', padding: '10px 14px', background: 'var(--state-danger-bg)',
+                border: '1px solid var(--state-danger-bg)', borderRadius: '6px',
+                fontSize: '13px', color: 'var(--state-danger)',
               }}>
                 {error}
               </div>
@@ -544,7 +544,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
             {/* ── EVENT DETAILS ── */}
             <div style={S.sectionLabel}>Event Details</div>
             <div style={{ marginBottom: '10px' }}>
-              <label style={S.label}>Event Name <span style={{ color: '#bc1723' }}>*</span></label>
+              <label style={S.label}>Event Name <span style={{ color: 'var(--app-accent)' }}>*</span></label>
               <input style={ci} value={a.eventName}
                 onChange={e => set('eventName', e.target.value)}
                 placeholder="e.g. Udaan Contractor Meet 2026" />
@@ -641,9 +641,9 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
             {error && (
               <div style={{
-                marginTop: '12px', padding: '10px 14px', background: '#fde8ea',
-                border: '1px solid #f5b5ba', borderRadius: '6px',
-                fontSize: '13px', color: '#8a1119',
+                marginTop: '12px', padding: '10px 14px', background: 'var(--state-danger-bg)',
+                border: '1px solid var(--state-danger-bg)', borderRadius: '6px',
+                fontSize: '13px', color: 'var(--state-danger)',
               }}>
                 {error}
               </div>
@@ -677,7 +677,7 @@ function EntryTile({ icon, title, desc, onClick, accent, disabled, badge }) {
     <button
       style={{
         ...S.tile,
-        ...(accent ? { background: '#1a1008', borderColor: '#1a1008' } : {}),
+        ...(accent ? { background: 'var(--app-ink)', borderColor: 'var(--app-ink)' } : {}),
         ...(disabled ? { opacity: 0.45, cursor: 'not-allowed' } : {}),
         display: 'flex', gap: '14px', alignItems: 'flex-start',
       }}
@@ -687,13 +687,13 @@ function EntryTile({ icon, title, desc, onClick, accent, disabled, badge }) {
       <div style={{ flex: 1, textAlign: 'left' }}>
         <div style={{
           fontWeight: 600, fontSize: '14px', marginBottom: '2px',
-          color: accent ? '#fff' : '#1a1008',
+          color: accent ? '#fff' : 'var(--app-ink)',
           display: 'flex', alignItems: 'center', gap: '8px',
         }}>
           {title}
           {badge && (
             <span style={{
-              fontSize: '9px', background: '#e8e4dc', color: '#7a7060',
+              fontSize: '9px', background: '#e8e4dc', color: 'var(--app-text-dim-lg)',
               padding: '2px 6px', borderRadius: '3px', fontWeight: 500,
               textTransform: 'uppercase', letterSpacing: '0.4px',
             }}>
@@ -701,11 +701,11 @@ function EntryTile({ icon, title, desc, onClick, accent, disabled, badge }) {
             </span>
           )}
         </div>
-        <div style={{ fontSize: '12px', color: accent ? 'rgba(255,255,255,0.55)' : '#7a7060' }}>
+        <div style={{ fontSize: '12px', color: accent ? 'rgba(255,255,255,0.55)' : 'var(--app-text-dim-lg)' }}>
           {desc}
         </div>
       </div>
-      <span style={{ color: accent ? 'rgba(255,255,255,0.3)' : '#d8d2c8', fontSize: '16px', marginTop: '4px' }}>
+      <span style={{ color: accent ? 'rgba(255,255,255,0.3)' : 'var(--app-border)', fontSize: '16px', marginTop: '4px' }}>
         →
       </span>
     </button>
@@ -808,7 +808,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                 <span style={{ fontSize: '18px' }}>{t.icon}</span>
                 <span style={{
                   fontSize: '12px', fontWeight: 600,
-                  color: a.eventType === t.value ? '#bc1723' : '#1a1008',
+                  color: a.eventType === t.value ? 'var(--app-accent)' : 'var(--app-ink)',
                 }}>{t.label}</span>
               </button>
             ))}
@@ -823,9 +823,9 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                       padding: '6px 13px', borderRadius: '20px', cursor: 'pointer',
                       fontSize: '12px', fontFamily: "'DM Sans', sans-serif",
                       border: '1px solid',
-                      borderColor: a.subCategory === sub ? '#bc1723' : '#d8d2c8',
-                      background: a.subCategory === sub ? '#fde8ea' : '#fff',
-                      color: a.subCategory === sub ? '#bc1723' : '#2c2518',
+                      borderColor: a.subCategory === sub ? 'var(--app-accent)' : 'var(--app-border)',
+                      background: a.subCategory === sub ? 'var(--state-danger-bg)' : 'var(--app-surface)',
+                      color: a.subCategory === sub ? 'var(--app-accent)' : '#2c2518',
                       transition: 'all 0.12s',
                     }}
                     onClick={() => set('subCategory', sub)}
@@ -858,7 +858,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
           </div>
           {execDays && (
             <div style={{
-              padding: '10px 14px', background: '#e6f4ec', borderRadius: '6px',
+              padding: '10px 14px', background: 'var(--state-success-bg)', borderRadius: '6px',
               fontSize: '13px', color: '#0d4a26',
               display: 'flex', alignItems: 'center', gap: '8px',
             }}>
@@ -901,13 +901,13 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
             <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {a.cities.map(c => (
                 <div key={c} style={{ background: '#ede8dd', borderRadius: '6px', padding: '10px 12px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#1a1008', marginBottom: '8px',
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '8px',
                     textTransform: 'capitalize' }}>
                     {c}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <div>
-                      <label style={{ fontSize: '11px', color: '#7a7060', display: 'block', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '11px', color: 'var(--app-text-dim-lg)', display: 'block', marginBottom: '4px' }}>
                         Start Date
                       </label>
                       <input
@@ -920,7 +920,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '11px', color: '#7a7060', display: 'block', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '11px', color: 'var(--app-text-dim-lg)', display: 'block', marginBottom: '4px' }}>
                         End Date
                       </label>
                       <input
@@ -960,12 +960,12 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
               >
                 <div style={{
                   fontSize: '14px', fontWeight: 600,
-                  color: isSelected ? '#bc1723' : '#1a1008',
+                  color: isSelected ? 'var(--app-accent)' : 'var(--app-ink)',
                 }}>
                   {label}
                 </div>
                 {isSelected && (
-                  <div style={{ fontSize: '12px', color: '#7a7060', marginTop: '4px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--app-text-dim-lg)', marginTop: '4px' }}>
                     {multi ? `${a.cities.length} cities added` : a.cities[0] || ''}
                   </div>
                 )}
@@ -989,9 +989,9 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
               onChange={e => set('paxCount', e.target.value)}
               placeholder="500"
             />
-            <span style={{ fontSize: '13px', color: '#7a7060' }}>guests (PAX)</span>
+            <span style={{ fontSize: '13px', color: 'var(--app-text-dim-lg)' }}>guests (PAX)</span>
           </div>
-          <p style={{ fontSize: '12px', color: '#7a7060', marginTop: '10px' }}>
+          <p style={{ fontSize: '12px', color: 'var(--app-text-dim-lg)', marginTop: '10px' }}>
             You can update this later. Even a rough number helps.
           </p>
         </div>
@@ -1013,7 +1013,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
             >
               <div style={{
                 fontSize: '13px', fontWeight: 600,
-                color: a.seatingFormat === f ? '#bc1723' : '#1a1008',
+                color: a.seatingFormat === f ? 'var(--app-accent)' : 'var(--app-ink)',
               }}>
                 {f}
               </div>
@@ -1042,7 +1042,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
               >
                 <div style={{
                   fontSize: '13px', fontWeight: 600,
-                  color: a.hasSubEvents === val ? '#bc1723' : '#1a1008',
+                  color: a.hasSubEvents === val ? 'var(--app-accent)' : 'var(--app-ink)',
                 }}>
                   {label}
                 </div>
@@ -1078,16 +1078,16 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
               <div>
                 <div style={{
                   fontWeight: 600, fontSize: '14px',
-                  color: a.budgetTier === t.value ? '#bc1723' : '#1a1008',
+                  color: a.budgetTier === t.value ? 'var(--app-accent)' : 'var(--app-ink)',
                 }}>
                   {t.label}
                 </div>
-                <div style={{ fontSize: '12px', color: '#7a7060', marginTop: '2px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--app-text-dim-lg)', marginTop: '2px' }}>
                   {t.desc}
                 </div>
               </div>
               {a.budgetTier === t.value && (
-                <span style={{ color: '#bc1723', fontSize: '18px', flexShrink: 0 }}>✓</span>
+                <span style={{ color: 'var(--app-accent)', fontSize: '18px', flexShrink: 0 }}>✓</span>
               )}
             </button>
           ))}
@@ -1110,7 +1110,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
       content: (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {users.length === 0 && (
-            <p style={{ fontSize: '13px', color: '#7a7060' }}>Loading team...</p>
+            <p style={{ fontSize: '13px', color: 'var(--app-text-dim-lg)' }}>Loading team...</p>
           )}
           {users.map(u => (
             <button key={u.id}
@@ -1123,7 +1123,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
             >
               <div style={{
                 width: '34px', height: '34px', borderRadius: '7px', flexShrink: 0,
-                background: a.agencyPocId === u.id ? '#bc1723' : '#1a1008',
+                background: a.agencyPocId === u.id ? 'var(--app-accent)' : 'var(--app-ink)',
                 color: '#fff', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', fontSize: '13px', fontWeight: 700,
               }}>
@@ -1132,12 +1132,12 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
               <div style={{ flex: 1, textAlign: 'left' }}>
                 <div style={{
                   fontSize: '13px', fontWeight: 600,
-                  color: a.agencyPocId === u.id ? '#bc1723' : '#1a1008',
+                  color: a.agencyPocId === u.id ? 'var(--app-accent)' : 'var(--app-ink)',
                 }}>
                   {u.full_name}
                 </div>
                 <div style={{
-                  fontSize: '10px', color: '#7a7060',
+                  fontSize: '10px', color: 'var(--app-text-dim-lg)',
                   textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1px',
                 }}>
                   {u.role === 'manager'    ? 'Project Head' :
@@ -1145,12 +1145,12 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                 </div>
               </div>
               {a.agencyPocId === u.id && (
-                <span style={{ color: '#bc1723', fontSize: '16px' }}>✓</span>
+                <span style={{ color: 'var(--app-accent)', fontSize: '16px' }}>✓</span>
               )}
             </button>
           ))}
           <button
-            style={{ ...S.tile, color: '#7a7060', fontSize: '13px', textAlign: 'center', padding: '10px' }}
+            style={{ ...S.tile, color: 'var(--app-text-dim-lg)', fontSize: '13px', textAlign: 'center', padding: '10px' }}
             onClick={() => { set('agencyPocId', ''); setStep('preview') }}
           >
             Skip — assign later
@@ -1170,9 +1170,9 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
       {q.content}
       {stepError && (
         <div style={{
-          marginTop: '12px', padding: '10px 14px', background: '#fde8ea',
-          border: '1px solid #f5b5ba', borderRadius: '6px',
-          fontSize: '13px', color: '#8a1119',
+          marginTop: '12px', padding: '10px 14px', background: 'var(--state-danger-bg)',
+          border: '1px solid var(--state-danger-bg)', borderRadius: '6px',
+          fontSize: '13px', color: 'var(--state-danger)',
         }}>
           {stepError}
         </div>
@@ -1206,19 +1206,19 @@ function PreviewCard({ a, onEdit }) {
         <div key={row.label} style={{
           display: 'flex', alignItems: 'center',
           padding: '9px 14px',
-          borderBottom: i < rows.length - 1 ? '1px solid #f2efe9' : 'none',
-          background: i % 2 === 0 ? '#fff' : '#faf8f5',
+          borderBottom: i < rows.length - 1 ? '1px solid var(--app-surface)' : 'none',
+          background: i % 2 === 0 ? 'var(--app-surface)' : 'var(--app-bg)',
         }}>
-          <span style={{ fontSize: '11px', color: '#7a7060', width: '100px', flexShrink: 0 }}>
+          <span style={{ fontSize: '11px', color: 'var(--app-text-dim-lg)', width: '100px', flexShrink: 0 }}>
             {row.label}
           </span>
-          <span style={{ fontSize: '13px', color: '#1a1008', flex: 1 }}>
+          <span style={{ fontSize: '13px', color: 'var(--app-ink)', flex: 1 }}>
             {row.value}
           </span>
           <button
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: '#bc1723', fontSize: '11px', padding: '2px 8px',
+              color: 'var(--app-accent)', fontSize: '11px', padding: '2px 8px',
               fontFamily: "'DM Sans', sans-serif",
             }}
             onClick={() => onEdit(row.step)}

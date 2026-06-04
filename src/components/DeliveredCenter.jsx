@@ -22,7 +22,7 @@ const DOCS = [
     icon: '📋',
     title: 'Element master list',
     desc: 'All elements city-wise with size, qty, specification — in the format you need',
-    color: '#1E40AF',
+    color: 'var(--state-info)',
   },
   {
     key: 'tasks',
@@ -36,14 +36,14 @@ const DOCS = [
     icon: '🎨',
     title: 'Production & print list',
     desc: 'Creative, fabrication and print status for every element',
-    color: '#065F46',
+    color: 'var(--state-success)',
   },
   {
     key: 'vendors',
     icon: '📞',
     title: 'Vendor contact sheet',
     desc: 'Element → vendor → contact — ready to share with your team',
-    color: '#92400E',
+    color: 'var(--state-warning)',
   },
   {
     key: 'timeline',
@@ -127,7 +127,7 @@ export default function DeliveredCenter({ event, session }) {
       <div style={{
         padding: '20px 24px',
         borderRadius: 'var(--radius-sm)',
-        background: allDone ? '#DCFCE7' : 'var(--bg-secondary)',
+        background: allDone ? 'var(--state-success-bg)' : 'var(--bg-secondary)',
         border: `0.5px solid ${allDone ? '#86EFAC' : 'var(--border)'}`,
         marginBottom: '28px',
         display: 'flex',
@@ -137,10 +137,10 @@ export default function DeliveredCenter({ event, session }) {
         gap: '16px',
       }}>
         <div>
-          <p style={{ fontSize: '16px', fontWeight: 500, color: allDone ? '#15803D' : 'var(--text)', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>
+          <p style={{ fontSize: '16px', fontWeight: 500, color: allDone ? 'var(--state-success)' : 'var(--text)', fontFamily: 'var(--font-display)', marginBottom: '4px' }}>
             {allDone ? '🎉 All tasks done. Well done.' : `${taskDone} of ${taskTotal} tasks complete — ${pct}%`}
           </p>
-          <p style={{ fontSize: '12px', color: allDone ? '#16A34A' : 'var(--text-tertiary)' }}>
+          <p style={{ fontSize: '12px', color: allDone ? 'var(--state-success)' : 'var(--text-tertiary)' }}>
             {allDone
               ? 'Your event has been delivered. All documents are ready to download.'
               : 'Complete all tasks to unlock the full delivered state. Documents are available anytime.'}
@@ -149,7 +149,7 @@ export default function DeliveredCenter({ event, session }) {
         {taskTotal > 0 && (
           <div style={{ minWidth: '120px' }}>
             <div style={{ height: '8px', background: 'white', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${pct}%`, background: allDone ? '#16A34A' : 'var(--text)', borderRadius: '4px', transition: 'width 0.3s' }} />
+              <div style={{ height: '100%', width: `${pct}%`, background: allDone ? 'var(--state-success)' : 'var(--text)', borderRadius: '4px', transition: 'width 0.3s' }} />
             </div>
           </div>
         )}

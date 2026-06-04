@@ -19,7 +19,7 @@ const BUTTON_STYLES = `
     max-width: 420px;
     margin: 0 auto;
     padding: 40px 32px;
-    background: #fff;
+    background: var(--app-surface);
     border: 1px solid #e8e4df;
     border-radius: 8px;
     font-family: 'DM Sans', sans-serif;
@@ -29,13 +29,13 @@ const BUTTON_STYLES = `
     font-family: 'Cormorant Garamond', serif;
     font-size: 28px;
     font-weight: 500;
-    color: #1a1a1a;
+    color: var(--app-ink);
     margin: 0 0 4px;
   }
 
   .reg-form p {
     font-size: 13.5px;
-    color: #888;
+    color: var(--app-text-dim-lg);
     font-weight: 300;
     margin: 0;
     line-height: 1.5;
@@ -49,13 +49,13 @@ const BUTTON_STYLES = `
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     font-weight: 300;
-    color: #1a1a1a;
+    color: var(--app-ink);
     background: #FAFAF8;
     outline: none;
     transition: border-color 0.15s ease;
     box-sizing: border-box;
   }
-  .reg-input:focus { border-color: #F28F3B; }
+  .reg-input:focus { border-color: var(--app-accent); }
 
   .reg-divider {
     border: none;
@@ -79,7 +79,7 @@ const BUTTON_STYLES = `
 
   /* Active — terms agreed */
   .reg-btn.active {
-    background: #F28F3B;
+    background: var(--app-accent);
     color: #fff;
   }
   .reg-btn.active:hover  { background: #a31420; }
@@ -88,7 +88,7 @@ const BUTTON_STYLES = `
   /* Locked — terms not agreed */
   .reg-btn.locked {
     background: #e8e4df;
-    color: #aaa;
+    color: var(--app-text-dim-lg);
     cursor: not-allowed;
   }
 `;
