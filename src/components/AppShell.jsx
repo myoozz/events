@@ -624,14 +624,14 @@ export default function AppShell({ session }) {
                   borderRadius: 'var(--radius-sm)', background: activeTab === 'profile' && profileUserId === userId
                     ? 'var(--bg-secondary)' : 'var(--bg-secondary)',
                   border: activeTab === 'profile' && profileUserId === userId
-                    ? '1px solid var(--brand-aqua)' : '1px solid transparent',
+                    ? '1px solid var(--border)' : '1px solid transparent',
                   cursor: 'pointer', textAlign: 'left',
                   transition: 'border-color 0.15s',
                 }}
-                onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--brand-aqua)' }}
+                onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
                 onMouseOut={e => {
                   e.currentTarget.style.borderColor =
-                    (activeTab === 'profile' && profileUserId === userId) ? 'var(--brand-aqua)' : 'transparent'
+                    (activeTab === 'profile' && profileUserId === userId) ? 'var(--border)' : 'transparent'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -673,7 +673,7 @@ export default function AppShell({ session }) {
                   background: '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '11px', fontWeight: 700, color: 'var(--brand-teal-deep)',
-                  outline: (activeTab === 'profile' && profileUserId === userId) ? '2px solid var(--brand-aqua)' : 'none',
+                  outline: (activeTab === 'profile' && profileUserId === userId) ? '2px solid var(--border)' : 'none',
                   outlineOffset: '2px',
                 }}>
                   {ini || userName.charAt(0).toUpperCase()}
