@@ -80,54 +80,54 @@ function TabIcon({ tabKey, active }) {
     case 'elements':
       return (
         <svg style={s} viewBox="0 0 14 14" fill="none">
-          <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2"/>
-          <line x1="4" y1="5" x2="10" y2="5" stroke="currentColor" strokeWidth="1.1"/>
-          <line x1="4" y1="7.5" x2="10" y2="7.5" stroke="currentColor" strokeWidth="1.1"/>
-          <line x1="4" y1="10" x2="7" y2="10" stroke="currentColor" strokeWidth="1.1"/>
+          <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="4" y1="5" x2="10" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="4" y1="7.5" x2="10" y2="7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="4" y1="10" x2="7" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       )
     case 'export':
       return (
         <svg style={s} viewBox="0 0 14 14" fill="none">
-          <path d="M7 8.5V2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-          <path d="M4.5 4.5L7 2l2.5 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M2 10v1.5c0 .3.2.5.5.5h9c.3 0 .5-.2.5-.5V10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+          <path d="M7 8.5V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M4.5 4.5L7 2l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 10v1.5c0 .3.2.5.5.5h9c.3 0 .5-.2.5-.5V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       )
     case 'tasks':
       return (
         <svg style={s} viewBox="0 0 14 14" fill="none">
-          <path d="M8.5 1.5L3.5 7.5H7l-1.5 5 6-7H8L8.5 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+          <path d="M8.5 1.5L3.5 7.5H7l-1.5 5 6-7H8L8.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
         </svg>
       )
     case 'production':
       return (
         <svg style={s} viewBox="0 0 14 14" fill="none">
-          <path d="M2 5.5l5-3 5 3-5 3-5-3z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
-          <path d="M2 8.5l5 3 5-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+          <path d="M2 5.5l5-3 5 3-5 3-5-3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+          <path d="M2 8.5l5 3 5-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       )
     case 'travel':
       return (
         <svg style={s} viewBox="0 0 14 14" fill="none">
-          <path d="M7 1C4.8 1 3 2.8 3 5.5c0 3.5 4 7.5 4 7.5s4-4 4-7.5C11 2.8 9.2 1 7 1z" stroke="currentColor" strokeWidth="1.2"/>
-          <circle cx="7" cy="5.5" r="1.5" stroke="currentColor" strokeWidth="1.1"/>
+          <path d="M7 1C4.8 1 3 2.8 3 5.5c0 3.5 4 7.5 4 7.5s4-4 4-7.5C11 2.8 9.2 1 7 1z" stroke="currentColor" strokeWidth="1.5"/>
+          <circle cx="7" cy="5.5" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
         </svg>
       )
     case 'delivered':
       return (
         <svg style={s} viewBox="0 0 14 14" fill="none">
-          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2"/>
-          <path d="M4.5 7l2 2 3-3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M4.5 7l2 2 3-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       )
     case 'cuesheet':
       return (
         <svg style={s} viewBox="0 0 14 14" fill="none">
-          <rect x="1.5" y="3.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
-          <line x1="1.5" y1="6" x2="12.5" y2="6" stroke="currentColor" strokeWidth="1.1"/>
-          <line x1="4.5" y1="3.5" x2="3.5" y2="6" stroke="currentColor" strokeWidth="1.1"/>
-          <line x1="8" y1="3.5" x2="7" y2="6" stroke="currentColor" strokeWidth="1.1"/>
+          <rect x="1.5" y="3.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+          <line x1="1.5" y1="6" x2="12.5" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="4.5" y1="3.5" x2="3.5" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="8" y1="3.5" x2="7" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       )
     default:

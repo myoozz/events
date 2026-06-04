@@ -203,8 +203,8 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
             <div style={S.cameraOverlay}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path d="M1 5.5A1.5 1.5 0 012.5 4h1l1-2h9l1 2h1A1.5 1.5 0 0117 5.5v9A1.5 1.5 0 0115.5 16h-13A1.5 1.5 0 011 14.5v-9z"
-                  stroke="rgba(255,255,255,0.9)" strokeWidth="1.3" fill="none"/>
-                <circle cx="9" cy="10" r="2.5" stroke="rgba(255,255,255,0.9)" strokeWidth="1.3"/>
+                  stroke="rgba(255,255,255,0.9)" strokeWidth="1.5" fill="none"/>
+                <circle cx="9" cy="10" r="2.5" stroke="rgba(255,255,255,0.9)" strokeWidth="1.5"/>
               </svg>
               <span style={S.comingSoonLabel}>Coming soon</span>
             </div>
@@ -242,7 +242,7 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
               <span style={S.locationChip}>
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style={{ flexShrink: 0 }}>
                   <path d="M5.5 1C3.84 1 2.5 2.34 2.5 4c0 2.25 3 6 3 6s3-3.75 3-6c0-1.66-1.34-3-3-3z"
-                    stroke="var(--app-text-dim-lg)" strokeWidth="1.1" fill="none"/>
+                    stroke="var(--app-text-dim-lg)" strokeWidth="1.5" fill="none"/>
                   <circle cx="5.5" cy="4" r="1" fill="var(--app-text-dim-lg)"/>
                 </svg>
                 {[profile.base_city, profile.base_state].filter(Boolean).join(', ')}
@@ -538,7 +538,7 @@ function InlineEdit({ value, onChange, placeholder, type = 'text', multiline, sa
 function PencilIcon({ size = 13 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 13 13" fill="none">
-      <path d="M9 2l2 2-6.5 6.5H2.5V9L9 2z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" fill="none"/>
+      <path d="M9 2l2 2-6.5 6.5H2.5V9L9 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
     </svg>
   )
 }
