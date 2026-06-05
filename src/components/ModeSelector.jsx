@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { Icon } from '../icons'
 
 const MODES = [
   {
     key: 'proposal',
-    icon: '📋',
+    icon: 'proposal',
     title: 'Full proposal',
     desc: 'Build a complete cost sheet, export a formatted proposal for your client.',
     have: ['Element list or past cost sheet (Excel optional)', 'Client name and event details', 'City-wise scope if multi-city'],
@@ -21,7 +22,7 @@ const MODES = [
   },
   {
     key: 'elements',
-    icon: '📄',
+    icon: 'document',
     title: 'Element master list',
     desc: 'Build a clean scope of work by category — no costs, just what is needed.',
     have: ['List of elements or past Excel sheet', 'Category breakdown if available'],
@@ -30,7 +31,7 @@ const MODES = [
   },
   {
     key: 'execution',
-    icon: '⚡',
+    icon: 'execution',
     title: 'Execution checklist',
     desc: 'Assign every element to your team, set deadlines, track to completion.',
     have: ['Approved element list', 'Team member names and contact details', 'Event date and deadlines'],
@@ -39,7 +40,7 @@ const MODES = [
   },
   {
     key: 'production',
-    icon: '🎨',
+    icon: 'production',
     title: 'Production & print tracker',
     desc: 'Track creative approvals, fabrication and print status for every element.',
     have: ['Element list with vendor names', 'Creative team contacts', 'Print vendor details'],
@@ -48,7 +49,7 @@ const MODES = [
   },
   {
     key: 'showflow',
-    icon: '🎬',
+    icon: 'showflow',
     title: 'Show flow / Cue sheet',
     desc: 'Build a minute-by-minute show flow with technical cues per screen.',
     have: ['Programme schedule with approximate timings', 'Names of screens or technical departments', 'Script notes for MC or VO if available'],
@@ -57,7 +58,7 @@ const MODES = [
   },
   {
     key: 'full',
-    icon: '🗂',
+    icon: 'full',
     title: 'Full event management',
     desc: 'Manage the complete lifecycle — proposal, execution, production, delivery.',
     have: ['Everything — you\'re running the full show'],
@@ -131,7 +132,7 @@ export default function ModeSelector({ event, onSelect, onDismiss }) {
                   onMouseOver={e => { e.currentTarget.style.border = `0.5px solid ${m.color}`; e.currentTarget.style.background = 'var(--bg-secondary)' }}
                   onMouseOut={e => { e.currentTarget.style.border = '0.5px solid var(--border)'; e.currentTarget.style.background = 'var(--bg)' }}
                 >
-                  <div style={{ fontSize: '22px', marginBottom: '8px' }}>{m.icon}</div>
+                  <div style={{ fontSize: '22px', marginBottom: '8px' }}>{m.icon === '₹' ? <span style={{ color: m.color }}>₹</span> : <Icon name={m.icon} size={22} color={m.color} />}</div>
                   <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>{m.title}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', lineHeight: 1.6 }}>{m.desc}</div>
                 </button>
@@ -156,7 +157,7 @@ export default function ModeSelector({ event, onSelect, onDismiss }) {
                 onMouseOver={e => e.currentTarget.style.opacity = '0.85'}
                 onMouseOut={e => e.currentTarget.style.opacity = '1'}
               >
-                <span style={{ fontSize: '20px' }}>🗂</span>
+                <Icon name="full" size={20} color="var(--bg)" />
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--bg)' }}>Full event management</div>
                   <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>Manage the complete lifecycle — proposal through delivery</div>
@@ -181,7 +182,7 @@ export default function ModeSelector({ event, onSelect, onDismiss }) {
                 ← Back
               </button>
 
-              <div style={{ fontSize: '28px', marginBottom: '10px' }}>{mode.icon}</div>
+              <div style={{ fontSize: '28px', marginBottom: '10px' }}>{mode.icon === '₹' ? <span style={{ color: mode.color }}>₹</span> : <Icon name={mode.icon} size={28} color={mode.color} />}</div>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 500, color: 'var(--text)', marginBottom: '6px' }}>
                 {mode.title}
               </h3>
