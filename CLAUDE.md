@@ -118,6 +118,13 @@ Never change DB values. Display rename = find/replace in UI strings only.
 - Framer Motion is installed (framer-motion@12). Use it for entrance/hover animations on new UI.
 - Brand assets (logos, PNGs): `public/brand/` — wordmark, monogram, Me/Mn/Ma/Mx lockups, bubble glyphs.
 
+### Icon System (Phase 1 — June 2026)
+- **Default Lucide for ALL icons.** Use `lucide-react` through the shared icon module `src/icons.jsx` — concept→icon is defined once there and reused on every surface. Never scatter ad-hoc Lucide imports or inline emoji as icons.
+- **Bespoke inline-SVG allowlist — currently EMPTY.** New icons are ALWAYS Lucide. A bespoke inline SVG is allowed only if appended to the list directly below, here in this file, with a one-line justification — that edit is the admission gate. Going bespoke without it is wrong.
+  - _Allowlist:_ (none)
+- **Color per-context via `currentColor`**: white on the teal nav rail, ink/dim in product (`var(--text)` / dim text tokens), `var(--state-*)` for warning/semantic states. Never flat black, never aqua — the three sanctioned teal anchors above are the only in-app teal/aqua.
+- **Stroke matches Phase 0 spec**: `strokeWidth={1.5}` with round caps/joins. The shared module bakes `strokeWidth=1.5` in (Lucide's own default is 2).
+
 ## What Belongs Here vs Chat
 - **HERE**: File edits, git commits, SQL migrations, JSON fixes, multi-file changes
 - **CHAT** (claude.ai): Planning, brainstorming, MemPalace, JSON validation for rate cards, design decisions
