@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Icon } from '../icons'
 import { MASTER_CATEGORIES, CATEGORY_SUGGESTIONS } from './CategoryLibrary'
 import { supabase } from '../supabase'
 import * as XLSX from 'xlsx'
@@ -288,9 +289,9 @@ function PreviewEditor({ parsed, setParsed, city, onBack, onImport }) {
       </div>
 
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-        <button onClick={onBack} style={{ padding: '9px 18px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}>← Adjust mapping</button>
+        <button onClick={onBack} style={{ padding: '9px 18px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}><Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Adjust mapping</button>
         <button onClick={onImport} style={{ padding: '9px 24px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>
-          Import {totalElements} elements →
+          Import {totalElements} elements <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} />
         </button>
       </div>
     </div>
@@ -405,7 +406,7 @@ export default function ImportModal({ event, city, onImported, onClose }) {
               {step === 'importing' && 'Importing...'}
             </p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: 'var(--text-tertiary)', padding: '4px 8px' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: 'var(--text-tertiary)', padding: '4px 8px' }}><Icon name="close" size={18} /></button>
         </div>
 
         <div style={{ padding: '24px 28px' }}>
@@ -415,7 +416,7 @@ export default function ImportModal({ event, city, onImported, onClose }) {
             <div>
               <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
                 <button onClick={() => setMode('file')} style={{ flex: 1, padding: '12px', fontSize: '13px', fontFamily: 'var(--font-body)', background: mode === 'file' ? 'var(--text)' : 'var(--bg-secondary)', color: mode === 'file' ? 'var(--bg)' : 'var(--text)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: mode === 'file' ? 500 : 400 }}>
-                  ↑ Upload Excel / CSV
+                  <Icon name="upload" size={14} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Upload Excel / CSV
                 </button>
                 <button onClick={() => setMode('paste')} style={{ flex: 1, padding: '12px', fontSize: '13px', fontFamily: 'var(--font-body)', background: mode === 'paste' ? 'var(--text)' : 'var(--bg-secondary)', color: mode === 'paste' ? 'var(--bg)' : 'var(--text)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: mode === 'paste' ? 500 : 400 }}>
                   ⌘ Paste from Excel
@@ -451,7 +452,7 @@ export default function ImportModal({ event, city, onImported, onClose }) {
                   />
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
                     <button onClick={() => readPaste(pasteText)} disabled={!pasteText.trim()} style={{ padding: '9px 20px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', opacity: pasteText.trim() ? 1 : 0.5 }}>
-                      Detect columns →
+                      Detect columns <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} />
                     </button>
                   </div>
                 </div>
@@ -482,8 +483,8 @@ export default function ImportModal({ event, city, onImported, onClose }) {
                 </div>
                 <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '6px' }}>
                   Highlighted row = detected header. Header row: {headerRowIdx + 1}
-                  <button onClick={() => setHeaderRowIdx(Math.max(0, headerRowIdx - 1))} style={{ marginLeft: '10px', fontSize: '11px', padding: '1px 8px', border: '0.5px solid var(--border)', borderRadius: '3px', background: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>↑</button>
-                  <button onClick={() => setHeaderRowIdx(Math.min(rawRows.length - 1, headerRowIdx + 1))} style={{ marginLeft: '4px', fontSize: '11px', padding: '1px 8px', border: '0.5px solid var(--border)', borderRadius: '3px', background: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>↓</button>
+                  <button onClick={() => setHeaderRowIdx(Math.max(0, headerRowIdx - 1))} style={{ marginLeft: '10px', fontSize: '11px', padding: '1px 8px', border: '0.5px solid var(--border)', borderRadius: '3px', background: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}><Icon name="up" size={11} /></button>
+                  <button onClick={() => setHeaderRowIdx(Math.min(rawRows.length - 1, headerRowIdx + 1))} style={{ marginLeft: '4px', fontSize: '11px', padding: '1px 8px', border: '0.5px solid var(--border)', borderRadius: '3px', background: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}><Icon name="down" size={11} /></button>
                 </p>
               </div>
 
@@ -513,8 +514,8 @@ export default function ImportModal({ event, city, onImported, onClose }) {
               </div>
 
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button onClick={() => setStep('upload')} style={{ padding: '9px 18px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}>← Back</button>
-                <button onClick={buildPreview} style={{ padding: '9px 20px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Preview import →</button>
+                <button onClick={() => setStep('upload')} style={{ padding: '9px 18px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}><Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back</button>
+                <button onClick={buildPreview} style={{ padding: '9px 20px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Preview import <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} /></button>
               </div>
             </div>
           )}
@@ -526,7 +527,7 @@ export default function ImportModal({ event, city, onImported, onClose }) {
                 <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-tertiary)' }}>
                   <p style={{ fontSize: '16px', marginBottom: '8px' }}>No elements detected.</p>
                   <p style={{ fontSize: '13px' }}>Check your column mapping — make sure "Element name" is assigned.</p>
-                  <button onClick={() => setStep('map')} style={{ marginTop: '16px', padding: '9px 18px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}>← Adjust mapping</button>
+                  <button onClick={() => setStep('map')} style={{ marginTop: '16px', padding: '9px 18px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}><Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Adjust mapping</button>
                 </div>
               ) : (
                 <PreviewEditor

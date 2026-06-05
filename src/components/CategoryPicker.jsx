@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Icon } from '../icons'
 import { CATEGORY_SUGGESTIONS } from './CategoryLibrary'
 import { supabase } from '../supabase'
 
@@ -57,7 +58,7 @@ export default function CategoryPicker({ existingCategories, onAdd, onClose }) {
             </p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--text-tertiary)', padding: '0 4px', marginLeft: '16px', flexShrink: 0 }}>
-            ✕
+            <Icon name="close" size={16} />
           </button>
         </div>
 

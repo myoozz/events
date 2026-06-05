@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Icon } from '../icons'
 import { supabase } from '../supabase'
 
 const DEFAULT_CLAUSES = [
@@ -93,7 +94,7 @@ function CategoryBreakdown({ cities, getCitySummary, isAdmin }) {
                   {/* Expand toggle for multi-city */}
                   {isMultiCity && (
                     <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', flexShrink: 0 }}>
-                      {isExpanded ? '▼' : '▶'}
+                      {isExpanded ? <Icon name="expand" size={12} /> : <Icon name="collapse" size={12} />}
                     </span>
                   )}
                   <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>{cat.name}</span>
@@ -436,7 +437,7 @@ export default function CostSummary({ event, userRole }) {
               <p style={{ flex: 1, fontSize: '13px', color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>
                 {clause} <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>· Custom</span>
               </p>
-              <button onClick={() => removeCustom(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--text-tertiary)', padding: '0 4px', flexShrink: 0 }}>✕</button>
+              <button onClick={() => removeCustom(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--text-tertiary)', padding: '0 4px', flexShrink: 0 }}><Icon name="close" size={14} /></button>
             </div>
           ))}
         </div>

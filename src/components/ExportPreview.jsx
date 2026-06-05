@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Icon } from '../icons'
 import { supabase } from '../supabase'
 import { exportProposalExcel } from '../utils/excelExport'
 
@@ -251,7 +252,7 @@ export default function ExportPreview({ event, userRole }) {
                     style={{ padding: '10px 24px', background: 'var(--bg-secondary)', borderBottom: '0.5px solid var(--border)', fontSize: '13px', fontWeight: 500, color: 'var(--text)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                   >
                     <span>{section.name}</span>
-                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{collapsedSections['city-' + section.name] ? '▶' : '▼'}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{collapsedSections['city-' + section.name] ? <Icon name="collapse" size={11} /> : <Icon name="expand" size={11} />}</span>
                   </div>
                 )}
                 {/* Categories */}
@@ -269,7 +270,7 @@ export default function ExportPreview({ event, userRole }) {
                         <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{catName}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text)' }}>{fmt(catTotal)}</span>
-                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{isCatCollapsed ? '▶' : '▼'}</span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{isCatCollapsed ? <Icon name="collapse" size={11} /> : <Icon name="expand" size={11} />}</span>
                         </div>
                       </div>
                       {/* Column headers — hidden when collapsed */}
@@ -402,7 +403,7 @@ export default function ExportPreview({ event, userRole }) {
               marginBottom: '6px',
             }}
           >
-            {exporting ? 'Generating...' : '↓ Download Excel'}
+            {exporting ? 'Generating...' : <><Icon name="download" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Download Excel</>}
           </button>
           <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', textAlign: 'center', marginBottom: '20px' }}>
             PDF & Word coming soon
