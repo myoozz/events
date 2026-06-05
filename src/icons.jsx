@@ -23,7 +23,7 @@ import {
   X, Check, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ChevronUp, ChevronDown,
   ChevronRight, RotateCw, ArrowUpRight, LayoutGrid, Settings, CornerDownLeft,
   Pause, Star, Trash2, Eye, BarChart3, Ruler, MapPin, Link2, AlertTriangle,
-  Download, Menu, Plus, Car, Sparkles,
+  Download, Menu, Plus, Car, Sparkles, ShieldCheck, MessageSquare, LogOut, ChevronLeft,
 } from 'lucide-react'
 
 // concept key → glyph. Several keys may share a glyph (same meaning reused) so
@@ -33,7 +33,8 @@ export const ICONS = {
   elements: ClipboardList,
   list: ClipboardList,
   proposal: ClipboardList,
-  ratecards: ClipboardList,
+  ratecards: Banknote,
+  ratecard: Banknote,
   taskAssigned: ClipboardList,
   document: FileText,
   brief: FileText,
@@ -57,6 +58,11 @@ export const ICONS = {
   credits: CreditCard,
   categories: Tags,
   analytics: TrendingUp,
+  events: LayoutGrid,
+  activitylog: ClipboardList,
+  feedback: MessageSquare,
+  platformAdmin: ShieldCheck,
+  signOut: LogOut,
   exhibition: Landmark,
   government: Flag,        // 🎌 → Flag (Landmark is taken by Exhibitions)
   guided: MessageCircle,
@@ -83,6 +89,7 @@ export const ICONS = {
   sortDown: ChevronDown,
   expand: ChevronDown,
   collapse: ChevronRight,
+  chevronLeft: ChevronLeft,
   refresh: RotateCw,
   external: ArrowUpRight,
   cards: LayoutGrid,      // ☰ "Cards" view toggle → grid

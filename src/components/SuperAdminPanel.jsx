@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabase'
+import { Icon } from '../icons'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
@@ -22,14 +23,14 @@ const PLAN_COLORS = {
 }
 
 const SECTIONS = [
-  { key: 'overview',   label: 'Overview',   icon: '◈' },
-  { key: 'approvals',  label: 'Approvals',  icon: '⏳', badge: true },
-  { key: 'tenants',    label: 'Tenants',    icon: '🏢' },
-  { key: 'users',      label: 'Users',      icon: '👥' },
-  { key: 'credits',    label: 'Credits',    icon: '💳' },
-  { key: 'ratecards',  label: 'Rate Cards', icon: '📋' },
-  { key: 'categories', label: 'Categories', icon: '🏷' },
-  { key: 'analytics',  label: 'Analytics',  icon: '📈' },
+  { key: 'overview',   label: 'Overview',   icon: 'overview' },
+  { key: 'approvals',  label: 'Approvals',  icon: 'approvals', badge: true },
+  { key: 'tenants',    label: 'Tenants',    icon: 'tenants' },
+  { key: 'users',      label: 'Users',      icon: 'users' },
+  { key: 'credits',    label: 'Credits',    icon: 'credits' },
+  { key: 'ratecards',  label: 'Rate Cards', icon: 'ratecards' },
+  { key: 'categories', label: 'Categories', icon: 'categories' },
+  { key: 'analytics',  label: 'Analytics',  icon: 'analytics' },
 ]
 
 const ROLE_LABELS = {
@@ -2305,7 +2306,7 @@ export default function SuperAdminPanel({ onClose }) {
                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--app-surface)' }}
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'none' }}
               >
-                <span style={{ fontSize: '16px', lineHeight: 1 }}>{s.icon}</span>
+                <Icon name={s.icon} size={16} />
                 <span style={{ flex: 1 }}>{s.label}</span>
                 {s.badge && pendingCount > 0 && (
                   <span style={{ fontSize: '10px', fontWeight: 700, background: isActive ? 'rgba(255,255,255,0.3)' : 'var(--app-accent)', color: '#fff', padding: '1px 6px', borderRadius: '10px', minWidth: '18px', textAlign: 'center' }}>
