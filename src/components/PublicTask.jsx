@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Icon } from '../icons'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 
@@ -105,17 +106,17 @@ export default function PublicTask() {
             </h2>
             {/* Element details */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-              {task.size && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}>📐 {task.size}{task.size_unit ? ' '+task.size_unit : ''}</span>}
+              {task.size && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}><Icon name="size" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {task.size}{task.size_unit ? ' '+task.size_unit : ''}</span>}
               {task.qty && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}>× {task.qty} nos</span>}
-              {task.days && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}>📅 {task.days} day{task.days > 1 ? 's' : ''}</span>}
-              {task.city && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}>📍 {task.city}</span>}
+              {task.days && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}><Icon name="calendar" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {task.days} day{task.days > 1 ? 's' : ''}</span>}
+              {task.city && <span style={{ fontSize: '12px', padding: '3px 10px', background: 'var(--app-surface)', borderRadius: '20px', color: 'var(--app-ink)' }}><Icon name="location" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {task.city}</span>}
             </div>
             {task.finish && <p style={{ fontSize: '13px', color: 'var(--app-text-dim)', marginBottom: '8px' }}>Spec: {task.finish}</p>}
             {task.source && <p style={{ fontSize: '13px', color: 'var(--app-text-dim)', marginBottom: '8px' }}>Vendor: {task.source}</p>}
 
             {task.deadline && (
               <p style={{ fontSize: '13px', color: new Date(task.deadline) < new Date() && task.status !== 'done' ? 'var(--state-danger)' : 'var(--app-text-dim)', marginBottom: '16px' }}>
-                {new Date(task.deadline) < new Date() && task.status !== 'done' ? '⚠️ ' : '📅 '}
+                {new Date(task.deadline) < new Date() && task.status !== 'done' ? <Icon name="warning" size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} /> : <Icon name="calendar" size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />}
                 Deadline: {new Date(task.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             )}

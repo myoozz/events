@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { Icon } from '../icons'
 import { logUserInvited } from '../utils/activityLogger'
 
 const ROLES = ['admin', 'manager', 'event_lead', 'team']
@@ -498,7 +499,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                         onMouseOver={e => { if (resending !== u.id) e.currentTarget.style.borderColor = 'var(--text)' }}
                         onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
                       >
-                        {resending === u.id ? 'Sending...' : '↻ Resend invite'}
+                        {resending === u.id ? 'Sending...' : <><Icon name="refresh" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Resend invite</>}
                       </button>
                       <button
                         onClick={() => suspendUser(u.id, u.email)}
@@ -632,7 +633,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                         onMouseOver={e => { if (resending !== u.id) e.currentTarget.style.borderColor = 'var(--text)' }}
                         onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
                       >
-                        {resending === u.id ? 'Sending...' : '↻ Resend invite'}
+                        {resending === u.id ? 'Sending...' : <><Icon name="refresh" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Resend invite</>}
                       </button>
                       <button
                         onClick={() => hardDeleteUser(u.id, u.email)}

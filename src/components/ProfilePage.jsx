@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { Icon } from '../icons'
 import { supabase } from '../supabase'
 import { logActivity } from '../utils/activityLogger'
 import CityAutocomplete from './CityAutocomplete'
@@ -222,8 +223,8 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
                 onKeyDown={e => e.key === 'Enter' && saveName()}
                 autoFocus
               />
-              <button style={S.miniSaveBtn} onClick={saveName} disabled={saving}>{saving ? '…' : '✓'}</button>
-              <button style={S.miniCancelBtn} onClick={() => { setEditName(false); setNameVal(profile.full_name) }}>✕</button>
+              <button style={S.miniSaveBtn} onClick={saveName} disabled={saving}>{saving ? '…' : <Icon name="check" size={14} />}</button>
+              <button style={S.miniCancelBtn} onClick={() => { setEditName(false); setNameVal(profile.full_name) }}><Icon name="close" size={14} /></button>
             </div>
           ) : (
             <div style={S.nameRow}>
@@ -397,7 +398,7 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
               const isOpen   = openField === fieldKey
               return (
                 <div key={cs.key} style={S.fieldBlock}>
-                  <div style={S.fieldLabel}>🔗&nbsp;{cs.label}</div>
+                  <div style={S.fieldLabel}><Icon name="link" size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />{cs.label}</div>
                   {!isOpen && (
                     <div style={S.filledRow}>
                       <a href={cs.url.startsWith('http') ? cs.url : `https://${cs.url}`}
@@ -410,7 +411,7 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
                           </button>
                           <button style={{ ...S.editIconBtn, color: 'var(--state-danger)' }} title="Remove"
                             onClick={() => saveSocials(socials.filter(x => x.key !== cs.key))}>
-                            ✕
+                            <Icon name="close" size={14} />
                           </button>
                         </>
                       )}
@@ -442,7 +443,7 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
 
             {canEdit && addCustom && (
               <div style={{ ...S.fieldBlock, gap: 8, display: 'flex', flexDirection: 'column' }}>
-                <div style={S.fieldLabel}>🔗&nbsp;New link</div>
+                <div style={S.fieldLabel}><Icon name="link" size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />New link</div>
                 <input style={S.inlineInput} placeholder="Label (e.g. Portfolio, Twitter)"
                   value={customLabel} onChange={e => setCustomLabel(e.target.value)} autoFocus />
                 <input style={S.inlineInput} placeholder="URL (e.g. behance.net/yourname)"
