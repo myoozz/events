@@ -368,7 +368,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
               style={{ ...S.btn, ...S.btnGhost }}
               onClick={() => { setStepError(''); step === 1 ? setFlowMode('entry') : setStep(step - 1) }}
             >
-              ← Back
+              <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back
             </button>
             <button
               id="nef-next"
@@ -381,7 +381,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                 isLastStep ? setStep('preview') : setStep(step + 1)
               }}
             >
-              {isLastStep ? 'Review →' : 'Next →'}
+              {isLastStep ? <>Review <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></> : <>Next <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></>}
             </button>
           </div>
         </div>
@@ -411,7 +411,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                 style={{ ...S.btn, ...S.btnGhost, fontSize: '12px', color: 'var(--app-text-dim-lg)' }}
                 onClick={() => setShowMore(!showMore)}
               >
-                {showMore ? '▾' : '▸'} More details — Agency fee, GST, Proposal date
+                {showMore ? <Icon name="expand" size={12} style={{ verticalAlign: '-2px' }} /> : <Icon name="collapse" size={12} style={{ verticalAlign: '-2px' }} />} More details — Agency fee, GST, Proposal date
               </button>
 
               {showMore && (
@@ -474,14 +474,14 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
           <div style={S.footer}>
             <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => setStep(TOTAL_STEPS)}>
-              ← Edit
+              <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Edit
             </button>
             <button
               style={{ ...S.btn, ...S.btnRed, opacity: loading ? 0.7 : 1 }}
               onClick={handleCreate}
               disabled={loading}
             >
-              {loading ? 'Creating...' : 'Create event →'}
+              {loading ? 'Creating...' : <>Create event <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></>}
             </button>
           </div>
         </div>
@@ -653,7 +653,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
           <div style={S.footer}>
             <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => setFlowMode('entry')}>
-              ← Back
+              <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back
             </button>
             <button
               style={{ ...S.btn, ...S.btnDark, opacity: (!a.eventName.trim() || loading) ? 0.5 : 1 }}
@@ -861,7 +861,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
               fontSize: '13px', color: '#0d4a26',
               display: 'flex', alignItems: 'center', gap: '8px',
             }}>
-              <span style={{ fontSize: '15px' }}>📅</span>
+              <Icon name="calendar" size={15} />
               <span><strong>{execDays}</strong> execution day{execDays > 1 ? 's' : ''}</span>
             </div>
           )}
@@ -1086,7 +1086,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                 </div>
               </div>
               {a.budgetTier === t.value && (
-                <span style={{ color: 'var(--app-accent)', fontSize: '18px', flexShrink: 0 }}>✓</span>
+                <Icon name="check" size={16} color="var(--app-accent)" style={{ flexShrink: 0 }} />
               )}
             </button>
           ))}
@@ -1144,7 +1144,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                 </div>
               </div>
               {a.agencyPocId === u.id && (
-                <span style={{ color: 'var(--app-accent)', fontSize: '16px' }}>✓</span>
+                <Icon name="check" size={16} color="var(--app-accent)" />
               )}
             </button>
           ))}

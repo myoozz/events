@@ -133,7 +133,7 @@ function FloatingHelp({ activeTab }) {
                 lineHeight: 1, flexShrink: 0, marginTop: 1,
               }}
             >
-              ✕
+              <Icon name="close" size={14} />
             </button>
           </div>
 
@@ -465,9 +465,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
               style={{ fontSize: '13px', padding: '3px 8px', border: '1px solid var(--accent)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', outline: 'none', fontFamily: 'var(--font-body)', width: 110 }}
             />
             <button onClick={() => saveField(field)} disabled={savingField} style={{ padding: '3px 8px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '11px' }}>
-              {savingField ? '…' : '✓'}
+              {savingField ? '…' : <Icon name="check" size={12} />}
             </button>
-            <button onClick={() => setEditingField(null)} style={{ padding: '3px 8px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '11px', color: 'var(--text-tertiary)' }}>✕</button>
+            <button onClick={() => setEditingField(null)} style={{ padding: '3px 8px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '11px', color: 'var(--text-tertiary)' }}><Icon name="close" size={12} /></button>
           </div>
         ) : (
           <div
@@ -494,7 +494,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
           marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '6px',
         }}
       >
-        ← All events
+        <Icon name="back" size={14} /> All events
       </button>
 
       {/* ── Pending edits banner — admin sees + approves/rejects manager changes ── */}
@@ -526,7 +526,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
           {/* Event logo */}
           <div style={{ width: 88, height: 88, borderRadius: 10, border: '0.5px dashed var(--border-strong)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer', background: 'var(--bg-secondary)', flexShrink: 0 }}>
-            <span style={{ fontSize: '22px', opacity: 0.3 }}>🏢</span>
+            <span style={{ opacity: 0.3 }}><Icon name="corporate" size={22} color="var(--text-tertiary)" /></span>
             <span style={{ fontSize: '9px', color: 'var(--text-tertiary)', textAlign: 'center', lineHeight: 1.4 }}>Event<br/>logo</span>
           </div>
 
@@ -563,7 +563,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                   <button onClick={() => saveField('event_name')} disabled={savingField} style={{ padding: '5px 12px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500 }}>
                     {savingField ? '…' : 'Save'}
                   </button>
-                  <button onClick={() => setEditingField(null)} style={{ padding: '5px 9px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-tertiary)' }}>✕</button>
+                  <button onClick={() => setEditingField(null)} style={{ padding: '5px 9px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-tertiary)' }}><Icon name="close" size={14} /></button>
                 </div>
               ) : (
                 <h1
@@ -585,7 +585,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                   >
                     {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
                   </select>
-                  <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 8, color: sc.color }}>▾</span>
+                  <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: sc.color }}><Icon name="expand" size={10} /></span>
                   {savingStatus && <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: 6 }}>Saving...</span>}
                 </div>
               ) : (
@@ -880,17 +880,17 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
               <button onClick={() => handleTabChange(prev.key)} style={btnStyle}
                 onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                 onMouseOut={e => e.currentTarget.style.background = 'none'}>
-                ← {prev.label}
+                <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {prev.label}
               </button>
             ) : <div />}
             <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ color: 'var(--state-success)' }}>✓</span> Auto-saved
+              <Icon name="check" size={12} color="var(--state-success)" /> Auto-saved
             </span>
             {next ? (
               <button onClick={() => handleTabChange(next.key)} style={btnStyle}
                 onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                 onMouseOut={e => e.currentTarget.style.background = 'none'}>
-                {next.label} →
+                {next.label} <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} />
               </button>
             ) : <div />}
           </div>

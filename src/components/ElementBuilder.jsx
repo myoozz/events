@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { Icon } from '../icons'
 import ImportModal from './ImportModal'
 import { CATEGORY_SUGGESTIONS } from './CategoryLibrary'
 import CategoryPicker from './CategoryPicker'
@@ -416,7 +417,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
         <div style={{...cell(false,true,{flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',padding:'4px 0'})}}>
           <button onClick={onDelete}
             style={{background:'none',border:'1px solid var(--app-accent)',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'var(--app-accent)',padding:'2px 4px',lineHeight:1}}
-          >✕</button>
+          ><Icon name="close" size={14} /></button>
           {isSaved&&(
             <button onClick={onMarkAsOption} title="Move to alternates — not in budget"
               style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
@@ -609,7 +610,7 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
       <div style={{paddingTop:'18px',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
         <button onClick={onDelete}
           style={{background:'none',border:'1px solid var(--app-accent)',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'var(--app-accent)',padding:'3px 5px',lineHeight:1}}
-        >✕</button>
+        ><Icon name="close" size={14} /></button>
         {isSaved&&(
           <button onClick={onMarkAsOption} title="Move to alternates — not in budget"
             style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
@@ -648,15 +649,15 @@ function OptionRow({ el, onBack, onConfirm, onDelete }){
       <div style={{display:'flex',gap:'6px',flexShrink:0,marginLeft:'auto'}}>
         <button onClick={()=>onBack(el.id)}
           style={{fontSize:'11px',padding:'3px 10px',background:'none',border:'0.5px solid var(--border-strong)',borderRadius:'3px',cursor:'pointer',color:'var(--text)',fontFamily:'var(--font-body)'}}
-        >← Back</button>
+        ><Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back</button>
         <button onClick={()=>onConfirm(el.id,el.option_group)}
           style={{fontSize:'11px',padding:'3px 10px',background:'var(--text)',color:'var(--bg)',border:'none',borderRadius:'3px',cursor:'pointer',fontFamily:'var(--font-body)',fontWeight:500}}
-        >✓ Confirm</button>
+        ><Icon name="check" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Confirm</button>
         <button onClick={()=>onDelete(el.id,el.element_name)}
           style={{background:'none',border:'none',cursor:'pointer',fontSize:'13px',color:'var(--text-tertiary)',padding:'2px 4px'}}
           onMouseOver={e=>e.currentTarget.style.color='var(--state-danger)'}
           onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
-        >✕</button>
+        ><Icon name="close" size={14} /></button>
       </div>
     </div>
   )
@@ -780,10 +781,10 @@ function CategoryBlock({
         <div style={{display:'flex',gap:'2px',flexShrink:0}} onClick={e=>e.stopPropagation()}>
           <button onClick={onMoveUp} disabled={isFirst} title="Move category up"
             style={{width:'22px',height:'22px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',background:'none',border:'0.5px solid '+(isFirst?'var(--border)':'var(--border-strong)'),borderRadius:'3px',cursor:isFirst?'default':'pointer',color:isFirst?'var(--text-tertiary)':'var(--text)',padding:0,opacity:isFirst?0.4:1}}
-          >↑</button>
+          ><Icon name="up" size={12} /></button>
           <button onClick={onMoveDown} disabled={isLast} title="Move category down"
             style={{width:'22px',height:'22px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',background:'none',border:'0.5px solid '+(isLast?'var(--border)':'var(--border-strong)'),borderRadius:'3px',cursor:isLast?'default':'pointer',color:isLast?'var(--text-tertiary)':'var(--text)',padding:0,opacity:isLast?0.4:1}}
-          >↓</button>
+          ><Icon name="down" size={12} /></button>
         </div>
 
         {/* Editable category name */}
@@ -845,7 +846,7 @@ function CategoryBlock({
             <button onClick={()=>setShowMerge(!showMerge)}
               title="Move all elements from this category into another. This category will be removed."
               style={{fontSize:'11px',padding:'3px 8px',background:'none',border:'1px solid var(--app-border)',borderRadius:'3px',cursor:'pointer',color:'#2c2518',fontFamily:'var(--font-body)'}}
-            >Merge into →</button>
+            >Merge into <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} /></button>
             {showMerge&&(
               <div style={{position:'absolute',right:0,top:'100%',marginTop:'4px',background:'var(--bg)',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',padding:'8px',zIndex:50,minWidth:'200px',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
                 <p style={{fontSize:'11px',color:'var(--text-tertiary)',marginBottom:'6px',fontWeight:500,lineHeight:1.4}}>Move all elements from <em>{cat.name}</em> into:</p>
@@ -876,7 +877,7 @@ function CategoryBlock({
         {/* Delete category */}
         <button onClick={e=>{e.stopPropagation();onDelete()}} title="Remove category"
           style={{background:'none',border:'1px solid var(--app-accent)',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'var(--app-accent)',padding:'2px 5px',lineHeight:1,flexShrink:0}}
-        >✕</button>
+        ><Icon name="close" size={14} /></button>
         </div>{/* end RIGHT GROUP */}
       </div>
 
@@ -1492,10 +1493,10 @@ function CityElements({ event, city, userRole, teamUsers }){
           </p>
           <div style={{display:'flex',gap:'10px',justifyContent:'center',flexWrap:'wrap'}}>
             <button onClick={downloadTemplate} style={{padding:'9px 18px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>
-              ↓ Download template
+              <Icon name="download" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Download template
             </button>
             <button onClick={()=>setShowImport(true)} style={{padding:'9px 18px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>
-              ↑ Upload or Paste
+              <Icon name="upload" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Upload or Paste
             </button>
             <button onClick={()=>setShowCategoryPicker(true)} style={{padding:'9px 18px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'#fff',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>
               + Start from scratch
@@ -1517,15 +1518,15 @@ function CityElements({ event, city, userRole, teamUsers }){
             <div style={{display:'flex',border:'1px solid rgba(0,0,0,0.14)',borderRadius:'4px',overflow:'hidden'}}>
               <button onClick={()=>{setViewMode('grid');try{localStorage.setItem('myoozz_element_view','grid')}catch{}}}
                 style={{padding:'5px 10px',fontSize:'12px',fontFamily:'var(--font-body)',background:viewMode==='grid'?'rgba(0,0,0,0.07)':'none',border:'none',color:viewMode==='grid'?'var(--text)':'var(--text-tertiary)',cursor:'pointer',fontWeight:viewMode==='grid'?500:400}}
-              >⊞ Grid</button>
+              ><Icon name="grid" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Grid</button>
               <button onClick={()=>{setViewMode('cards');try{localStorage.setItem('myoozz_element_view','cards')}catch{}}}
                 style={{padding:'5px 10px',fontSize:'12px',fontFamily:'var(--font-body)',background:viewMode==='cards'?'rgba(0,0,0,0.07)':'none',border:'none',borderLeft:'1px solid rgba(0,0,0,0.14)',color:viewMode==='cards'?'var(--text)':'var(--text-tertiary)',cursor:'pointer',fontWeight:viewMode==='cards'?500:400}}
-              >☰ Cards</button>
+              ><Icon name="cards" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Cards</button>
             </div>
-            <button onClick={()=>setShowImport(true)} style={{fontSize:'12px',fontWeight:500,color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↑ Import more</button>
-            <button onClick={()=>setShowSheetSettings(true)} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>⚙ Sheet</button>
-            <button onClick={handleDownloadElementMaster} style={{fontSize:'12px',fontWeight:500,color:'#fff',background:'var(--app-accent)',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↓ Download list</button>
-            <button onClick={downloadTemplate} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}>↓ Template</button>
+            <button onClick={()=>setShowImport(true)} style={{fontSize:'12px',fontWeight:500,color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}><Icon name="upload" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Import more</button>
+            <button onClick={()=>setShowSheetSettings(true)} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}><Icon name="settings" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Sheet</button>
+            <button onClick={handleDownloadElementMaster} style={{fontSize:'12px',fontWeight:500,color:'#fff',background:'var(--app-accent)',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}><Icon name="download" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Download list</button>
+            <button onClick={downloadTemplate} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}><Icon name="download" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Template</button>
             <button onClick={clearAllElements} style={{fontSize:'12px',color:'var(--app-accent)',background:'none',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer',fontFamily:'var(--font-body)',marginLeft:'8px',padding:'5px 10px'}}>Clear all</button>
           </div>
         </div>
@@ -1637,7 +1638,7 @@ function CityElements({ event, city, userRole, teamUsers }){
           <div style={{background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius)',padding:'28px 32px',maxWidth:'440px',width:'100%'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'6px'}}>
               <h3 style={{fontFamily:'var(--font-display)',fontSize:'20px',fontWeight:500,color:'var(--text)'}}>Customize sheet</h3>
-              <button onClick={()=>setShowSheetSettings(false)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'18px',color:'var(--text-tertiary)'}}>✕</button>
+              <button onClick={()=>setShowSheetSettings(false)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'18px',color:'var(--text-tertiary)'}}><Icon name="close" size={14} /></button>
             </div>
             <p style={{fontSize:'13px',color:'var(--text-tertiary)',marginBottom:'20px',lineHeight:1.6}}>
               Toggle off columns you don't need for this event.
@@ -1789,7 +1790,7 @@ function CityElements({ event, city, userRole, teamUsers }){
                 />
                 <div style={{display:'flex',gap:'8px',marginTop:'12px',justifyContent:'flex-end'}}>
                   <button onClick={()=>{setShowPaste(false);setPasteText('')}} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>Cancel</button>
-                  <button onClick={()=>setPastePreview(parsePaste(pasteText))} disabled={!pasteText.trim()} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'#fff',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Preview →</button>
+                  <button onClick={()=>setPastePreview(parsePaste(pasteText))} disabled={!pasteText.trim()} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'#fff',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Preview <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} /></button>
                 </div>
               </>
             ):(
@@ -1810,7 +1811,7 @@ function CityElements({ event, city, userRole, teamUsers }){
                   ))}
                 </div>
                 <div style={{display:'flex',gap:'8px',justifyContent:'flex-end'}}>
-                  <button onClick={()=>setPastePreview([])} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>← Edit</button>
+                  <button onClick={()=>setPastePreview([])} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}><Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Edit</button>
                   <button onClick={confirmPaste} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'#fff',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Import elements</button>
                 </div>
               </>
@@ -1886,7 +1887,7 @@ export default function ElementBuilder({ event, userRole, teamUsers }){
             >
               {cities.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
-            <span style={{fontSize:'12px',color:'var(--text-tertiary)'}}>→ to</span>
+            <span style={{fontSize:'12px',color:'var(--text-tertiary)'}}><Icon name="next" size={12} style={{ verticalAlign: '-2px', marginRight: 3 }} /> to</span>
             <select
               value={copyTo}
               onChange={e=>setCopyTo(e.target.value)}

@@ -179,7 +179,7 @@ export default function ModeSelector({ event, onSelect, onDismiss }) {
             <div style={{ padding: '28px' }}>
               <button onClick={() => setStep('pick')}
                 style={{ fontSize: '12px', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', marginBottom: '16px', padding: 0 }}>
-                ← Back
+                <Icon name="back" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Back
               </button>
 
               <div style={{ fontSize: '28px', marginBottom: '10px' }}>{mode.icon === '₹' ? <span style={{ color: mode.color }}>₹</span> : <Icon name={mode.icon} size={28} color={mode.color} />}</div>
@@ -197,7 +197,7 @@ export default function ModeSelector({ event, onSelect, onDismiss }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                   {mode.have.map((item, i) => (
                     <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: '12px', color: mode.color, flexShrink: 0, marginTop: '1px' }}>✓</span>
+                      <Icon name="check" size={12} color={mode.color} style={{ flexShrink: 0, marginTop: '1px' }} />
                       <span style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.5 }}>{item}</span>
                     </div>
                   ))}
@@ -207,7 +207,7 @@ export default function ModeSelector({ event, onSelect, onDismiss }) {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={handleGo}
                   style={{ flex: 2, padding: '12px', fontSize: '14px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>
-                  Got it — let's go →
+                  Got it — let's go <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} />
                 </button>
                 <button onClick={onDismiss}
                   style={{ flex: 1, padding: '12px', fontSize: '12px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}>

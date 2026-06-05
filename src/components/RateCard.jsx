@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Icon } from '../icons'
 import { supabase } from '../supabase'
 import { MASTER_CATEGORIES } from './CategoryLibrary'
 import { generateRateCardTemplate, RC_CATEGORIES } from '../utils/excelExport'
@@ -384,7 +385,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
               {importing && progress}
             </p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--text-tertiary)', padding: '4px' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--text-tertiary)', padding: '4px' }}><Icon name="close" size={18} /></button>
         </div>
 
         <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1 }}>
@@ -399,7 +400,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
           {!importing && dupeWarning && (
             <div style={{ border: '0.5px solid #FCD34D', borderRadius: 'var(--radius-sm)', padding: '20px', background: 'var(--state-warning-bg)', marginBottom: '20px' }}>
               <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--state-warning)', marginBottom: '6px' }}>
-                ⚠ {dupeWarning.count} rate{dupeWarning.count > 1 ? 's' : ''} from <strong>{dupeWarning.source}</strong> already exist with the same element name and city.
+                <Icon name="warning" size={14} style={{ verticalAlign: '-2px', marginRight: 5 }} /> {dupeWarning.count} rate{dupeWarning.count > 1 ? 's' : ''} from <strong>{dupeWarning.source}</strong> already exist with the same element name and city.
               </p>
               <p style={{ fontSize: '13px', color: '#78350F', marginBottom: '16px' }}>
                 Adding again will create duplicate entries for the same source. Continue only if this is an updated rate card from the same vendor.
@@ -418,13 +419,13 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
           {!importing && !dupeWarning && step === 'upload' && (
             <>
               <div style={{ display: 'flex', gap: '0', marginBottom: '24px', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                {[['upload', '↑ Upload / Download'], ['json', '{ } Paste JSON']].map(([t, label]) => (
+                {[['upload', 'upload', 'Upload / Download'], ['json', null, 'Paste JSON']].map(([t, ic, label]) => (
                   <button key={t} onClick={() => setTab(t)} style={{
                     flex: 1, padding: '10px', fontSize: '13px', fontFamily: 'var(--font-body)',
                     background: tab === t ? 'var(--text)' : 'var(--bg-secondary)',
                     color: tab === t ? 'var(--bg)' : 'var(--text)',
                     border: 'none', cursor: 'pointer', fontWeight: tab === t ? 500 : 400,
-                  }}>{label}</button>
+                  }}>{ic && <Icon name={ic} size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} />}{label}</button>
                 ))}
               </div>
 
@@ -444,7 +445,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                     </span>
                     <button onClick={handleDownload} disabled={!category || dlLoading}
                       style={{ padding: '8px 16px', fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-body)', background: category ? 'var(--text)' : 'var(--bg)', color: category ? 'var(--bg)' : 'var(--text-tertiary)', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: category ? 'pointer' : 'default', whiteSpace: 'nowrap' }}>
-                      {dlLoading ? 'Downloading...' : '↓ Download template'}
+                      {dlLoading ? 'Downloading...' : <><Icon name="download" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Download template</>}
                     </button>
                   </div>
 
@@ -480,7 +481,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                     </p>
                     <button onClick={togglePromptBuilder}
                       style={{ padding: '7px 14px', fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-body)', background: showPromptBuilder ? 'var(--bg-secondary)' : 'var(--bg)', color: 'var(--text)', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s' }}>
-                      {showPromptBuilder ? '✕ Close prompt builder' : '⌘ Build research prompt'}
+                      {showPromptBuilder ? <><Icon name="close" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Close prompt builder</> : '⌘ Build research prompt'}
                     </button>
                   </div>
 
@@ -568,12 +569,12 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                     style={{ ...inputStyle, fontFamily: 'monospace', fontSize: '12px', background: 'var(--bg-secondary)', resize: 'vertical', lineHeight: 1.6 }}
                   />
                   {jsonError && (
-                    <p style={{ fontSize: '12px', color: 'var(--app-accent)', marginTop: '6px' }}>⚠ {jsonError}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--app-accent)', marginTop: '6px' }}><Icon name="warning" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {jsonError}</p>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
                     <button onClick={handleJsonParse} disabled={!jsonText.trim()}
                       style={{ padding: '9px 22px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: jsonText.trim() ? 'var(--text)' : 'var(--bg-secondary)', color: jsonText.trim() ? 'var(--bg)' : 'var(--text-tertiary)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: jsonText.trim() ? 'pointer' : 'default' }}>
-                      Preview →
+                      Preview <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} />
                     </button>
                   </div>
                 </>
@@ -597,7 +598,7 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                   return (
                     <div key={h} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '0.5px solid var(--border)', background: isMatched ? 'var(--state-success-bg)' : 'var(--state-warning-bg)', alignItems: 'center', padding: '6px 14px', gap: '12px' }}>
                       <div style={{ fontSize: '13px', color: isMatched ? 'var(--state-success)' : 'var(--state-warning)', fontWeight: 500 }}>
-                        {isMatched ? '✓ ' : '· '}{h}
+                        {isMatched ? <Icon name="check" size={12} style={{ verticalAlign: '-1px', marginRight: 2 }} /> : '· '}{h}
                       </div>
                       <select value={mapped || ''} onChange={e => setMapping(prev => ({ ...prev, [h]: e.target.value || undefined }))}
                         style={{ ...selectStyle, fontSize: '12px', padding: '5px 8px', background: 'var(--bg)' }}>
@@ -609,10 +610,10 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
                 })}
               </div>
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button onClick={() => setStep('upload')} style={{ padding: '9px 16px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}>← Back</button>
+                <button onClick={() => setStep('upload')} style={{ padding: '9px 16px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}><Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back</button>
                 <button onClick={confirmMapping} disabled={!isMapped}
                   style={{ padding: '9px 22px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: isMapped ? 'var(--text)' : 'var(--bg-secondary)', color: isMapped ? 'var(--bg)' : 'var(--text-tertiary)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: isMapped ? 'pointer' : 'default' }}>
-                  Preview {isMapped ? `→` : '(map Element Name first)'}
+                  Preview {isMapped ? <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 3 }} /> : '(map Element Name first)'}
                 </button>
               </div>
             </>
@@ -645,11 +646,11 @@ function ImportRateCard({ onImported, onClose, session, userRole }) {
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button onClick={() => setStep(tab === 'json' ? 'upload' : 'mapping')}
                   style={{ padding: '9px 16px', fontSize: '13px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)' }}>
-                  ← Back
+                  <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back
                 </button>
                 <button onClick={checkAndImport}
                   style={{ padding: '9px 22px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>
-                  Import {preview.length} rates →
+                  Import {preview.length} rates <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} />
                 </button>
               </div>
             </>
@@ -882,7 +883,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
     flexShrink: 0,
   })
 
-  const warningIcon  = { duplicate: '⚠️', city_mismatch: '🏙️', multi_city: '🔁', no_rate: '—', mandatory: '📋' }
+  const warningIcon  = { duplicate: 'warning', city_mismatch: 'city', multi_city: 'repeat', no_rate: '—', mandatory: 'list' }
   const warningColor = { duplicate: 'var(--state-warning-bg)', city_mismatch: 'var(--state-warning-bg)', multi_city: 'var(--state-warning-bg)', no_rate: 'var(--app-surface)', mandatory: 'var(--state-info-bg)' }
   const selectedEvent = events.find(e => e.id === targetEvent)
   const eventCities   = selectedEvent?.cities || []
@@ -904,7 +905,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
         {canEdit && (
           <button onClick={() => setShowImport(true)}
             style={{ ...s, padding: '9px 20px', fontSize: '13px', fontWeight: 500, background: 'transparent', color: D.text, border: '1px solid #555', borderRadius: '8px', cursor: 'pointer' }}>
-            ↑ Import data
+            <Icon name="upload" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Import data
           </button>
         )}
       </div>
@@ -919,7 +920,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
           {canEdit && (
             <button onClick={() => setShowImport(true)}
               style={{ ...s, padding: '10px 28px', fontSize: '13px', fontWeight: 500, background: 'transparent', color: D.text, border: '1px solid #555', borderRadius: '8px', cursor: 'pointer' }}>
-              ↑ Add first rate card data
+              <Icon name="upload" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Add first rate card data
             </button>
           )}
         </div>
@@ -1142,7 +1143,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                       {selectedItem.source_url && (
                         <a href={selectedItem.source_url} target="_blank" rel="noreferrer"
                           style={{ display: 'block', fontSize: '11px', color: D.dim, textDecoration: 'none', padding: '8px 0', borderBottom: `0.5px solid ${D.border}`, marginBottom: '4px' }}>
-                          ↗ View source
+                          <Icon name="external" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> View source
                         </a>
                       )}
                       {/* Admin actions — hidden for master (benchmark) rows */}
@@ -1284,7 +1285,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
             {addDone ? (
               <>
                 <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                  <div style={{ fontSize: '28px', marginBottom: '8px' }}>✓</div>
+                  <div style={{ marginBottom: '8px' }}><Icon name="delivered" size={28} color="var(--state-success)" /></div>
                   <p style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 500, color: 'var(--text)', marginBottom: '6px' }}>Added to event</p>
                   <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Element added · Go to the event to fill client costs and quantities.</p>
                 </div>
@@ -1325,7 +1326,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                   <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {addWarnings.map((w, i) => (
                       <div key={i} style={{ fontSize: '12px', padding: '8px 10px', borderRadius: 'var(--radius-sm)', background: warningColor[w.type] || 'var(--state-warning-bg)', color: 'var(--text)', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                        <span style={{ flexShrink: 0 }}>{warningIcon[w.type] || '⚠️'}</span>
+                        <span style={{ flexShrink: 0 }}>{warningIcon[w.type] === '—' ? '—' : <Icon name={warningIcon[w.type] || 'warning'} size={14} />}</span>
                         <span>{w.text}</span>
                       </div>
                     ))}

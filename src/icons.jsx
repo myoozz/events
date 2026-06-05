@@ -1,7 +1,7 @@
 // src/icons.jsx
 // ─────────────────────────────────────────────────────────────────────────────
 // SINGLE SOURCE OF TRUTH for all app icons (Phase 1 — default Lucide).
-// Concept → Lucide component is defined ONCE here and reused on every surface.
+// Concept -> Lucide component is defined ONCE here and reused on every surface.
 // Do NOT scatter ad-hoc `lucide-react` imports across components, and never use
 // emoji as icons — add/rename a concept here instead.
 //
@@ -23,10 +23,10 @@ import {
   X, Check, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ChevronUp, ChevronDown,
   ChevronRight, RotateCw, ArrowUpRight, LayoutGrid, Settings, CornerDownLeft,
   Pause, Star, Trash2, Eye, BarChart3, Ruler, MapPin, Link2, AlertTriangle,
-  Download, Menu, Plus, Car, Sparkles, ShieldCheck, MessageSquare, LogOut, ChevronLeft,
+  Download, Menu, Plus, Car, Sparkles, ShieldCheck, MessageSquare, LogOut, ChevronLeft, Repeat, Grid3x3,
 } from 'lucide-react'
 
-// concept key → glyph. Several keys may share a glyph (same meaning reused) so
+// concept key -> glyph. Several keys may share a glyph (same meaning reused) so
 // each surface reads by its own concept while the mapping stays in one place.
 export const ICONS = {
   // ── workflow / domain ──
@@ -40,7 +40,7 @@ export const ICONS = {
   brief: FileText,
   export: Upload,
   execution: Zap,
-  brandActivation: Zap,   // ⚡ reused for execution AND brand activation (no invented distinction)
+  brandActivation: Zap,   // reused for execution AND brand activation (no invented distinction)
   production: Palette,
   travel: Plane,
   mice: Plane,
@@ -64,7 +64,7 @@ export const ICONS = {
   platformAdmin: ShieldCheck,
   signOut: LogOut,
   exhibition: Landmark,
-  government: Flag,        // 🎌 → Flag (Landmark is taken by Exhibitions)
+  government: Flag,        // crossed-flags -> Flag (Landmark is taken by Exhibitions)
   guided: MessageCircle,
   edit: Pencil,
   vendors: Phone,
@@ -76,7 +76,7 @@ export const ICONS = {
   rateRequested: Banknote,
   bell: Bell,
   notifFallback: Pin,
-  progressActive: CircleDashed,   // ◐ in-progress milestone state
+  progressActive: CircleDashed,   // in-progress (half-filled) milestone state
 
   // ── controls ──
   close: X,
@@ -92,11 +92,12 @@ export const ICONS = {
   chevronLeft: ChevronLeft,
   refresh: RotateCw,
   external: ArrowUpRight,
-  cards: LayoutGrid,      // ☰ "Cards" view toggle → grid
+  cards: LayoutGrid,      // "Cards" view toggle
+  grid: Grid3x3,          // "Grid" view toggle
   settings: Settings,
   return: CornerDownLeft,
   pause: Pause,
-  master: Star,           // ✦ platform-master / featured
+  master: Star,           // platform-master / featured
   delete: Trash2,
   view: Eye,
   chart: BarChart3,
@@ -104,6 +105,8 @@ export const ICONS = {
   location: MapPin,
   link: Link2,
   warning: AlertTriangle,
+  city: Building2,
+  repeat: Repeat,
   upload: Upload,
   download: Download,
   menu: Menu,

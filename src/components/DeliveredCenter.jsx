@@ -191,7 +191,7 @@ export default function DeliveredCenter({ event, session }) {
                 transition: 'all 0.15s',
               }}
             >
-              {downloading === doc.key ? 'Downloading...' : '↓ Download'}
+              {downloading === doc.key ? 'Downloading...' : <><Icon name="download" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Download</>}
             </button>
           </div>
         ))}
@@ -221,7 +221,7 @@ export default function DeliveredCenter({ event, session }) {
             opacity: downloading ? 0.7 : 1,
           }}
         >
-          {downloading === 'all' ? 'Downloading all...' : '↓ Download everything'}
+          {downloading === 'all' ? 'Downloading all...' : <><Icon name="download" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Download everything</>}
         </button>
       </div>
 
