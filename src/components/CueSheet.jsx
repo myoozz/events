@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Icon } from '../icons'
 import { supabase } from '../supabase'
 
 // ─── Time utilities ───────────────────────────────────────
@@ -215,7 +216,7 @@ function CityCueSheet({ event, city, sheetData, onSave, saving }) {
           {screens.map(s => (
             <span key={s} style={{ fontSize: '11px', padding: '3px 8px', background: 'var(--text)', color: 'var(--bg)', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}>
               {s}
-              <button onClick={() => removeScreen(s)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--bg)', fontSize: '11px', padding: '0', lineHeight: 1, opacity: 0.7 }}>✕</button>
+              <button onClick={() => removeScreen(s)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--bg)', fontSize: '11px', padding: '0', lineHeight: 1, opacity: 0.7 }}><Icon name="close" size={11} /></button>
             </span>
           ))}
           {showAddScreen ? (
@@ -226,7 +227,7 @@ function CityCueSheet({ event, city, sheetData, onSave, saving }) {
                 autoFocus
                 style={{ padding: '4px 8px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: '4px', fontFamily: 'var(--font-body)', outline: 'none', width: '130px' }} />
               <button onClick={addScreen} style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Add</button>
-              <button onClick={() => setShowAddScreen(false)} style={{ padding: '4px 8px', fontSize: '11px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-tertiary)' }}>✕</button>
+              <button onClick={() => setShowAddScreen(false)} style={{ padding: '4px 8px', fontSize: '11px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-tertiary)' }}><Icon name="close" size={11} /></button>
             </div>
           ) : (
             <button onClick={() => setShowAddScreen(true)}
@@ -348,7 +349,7 @@ function CityCueSheet({ event, city, sheetData, onSave, saving }) {
                         style={{ padding: '2px 5px', fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1 }}
                         onMouseOver={e => e.currentTarget.style.color = 'var(--state-danger)'}
                         onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}>
-                        ✕
+                        <Icon name="close" size={11} />
                       </button>
                     )}
                   </div>
@@ -437,7 +438,7 @@ export default function CueSheet({ event }) {
         </div>
         <button onClick={exportCueSheet} disabled={exporting}
           style={{ padding: '9px 18px', fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: exporting ? 'wait' : 'pointer', opacity: exporting ? 0.7 : 1 }}>
-          {exporting ? 'Exporting...' : '↓ Export Excel'}
+          {exporting ? 'Exporting...' : <><Icon name="download" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Export Excel</>}
         </button>
       </div>
 

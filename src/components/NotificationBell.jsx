@@ -18,6 +18,7 @@ import {
   NOTIF_META,
   timeAgo,
 } from '../utils/notificationService';
+import { Icon } from '../icons';
 
 export default function NotificationBell({ userId, unreadCount, onMarkAllRead }) {
   const [open, setOpen]               = useState(false);
@@ -197,7 +198,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
 
             {!loading && notifications.length === 0 && (
               <div style={{ padding: '40px 16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔔</div>
+                <div style={{ marginBottom: '8px' }}><Icon name="bell" size={28} color="var(--app-text-dim)" /></div>
                 <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#9a9a9a' }}>
                   You're all caught up
                 </div>
@@ -205,7 +206,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
             )}
 
             {!loading && notifications.map((notif) => {
-              const meta = NOTIF_META[notif.type] || { icon: '📌', colour: 'var(--app-text-dim)', label: '' };
+              const meta = NOTIF_META[notif.type] || { icon: 'notifFallback', colour: 'var(--app-text-dim)', label: '' };
               return (
                 <div
                   key={notif.id}
@@ -240,7 +241,7 @@ export default function NotificationBell({ userId, unreadCount, onMarkAllRead })
                     flexShrink:     0,
                     marginTop:      '1px',
                   }}>
-                    {meta.icon}
+                    <Icon name={meta.icon} size={16} color={meta.colour} />
                   </div>
 
                   {/* Text */}

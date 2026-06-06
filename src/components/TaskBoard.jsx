@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { Icon } from '../icons';
 import { supabase } from '../supabase';
 import { logActivity } from '../utils/activityLogger';
 import { notifyTaskAssigned, notifyTaskStatusChanged } from '../utils/notificationService';
@@ -721,7 +722,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
           <div ref={modalRef} style={styles.modal}>
             <div style={styles.modalHeader}>
               <h3 style={styles.modalTitle}>Assign Task</h3>
-              <button style={styles.modalClose} onClick={() => setModal(null)}>✕</button>
+              <button style={styles.modalClose} onClick={() => setModal(null)}><Icon name="close" size={16} /></button>
             </div>
             <p style={styles.modalSub}>{modal.taskTitle}</p>
 
@@ -829,7 +830,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                   {importSourceCity || 'All cities'} · Tasks already imported are excluded
                 </p>
               </div>
-              <button style={styles.importClose} onClick={() => setImportOpen(false)}>✕</button>
+              <button style={styles.importClose} onClick={() => setImportOpen(false)}><Icon name="close" size={16} /></button>
             </div>
 
             {/* city pill tabs */}

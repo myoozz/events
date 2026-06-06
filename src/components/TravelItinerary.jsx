@@ -39,7 +39,7 @@ function EmptyState({ icon: Icon, message, sub }) {
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       gap: 8, padding: '32px 16px', color: 'var(--text-tertiary)'
     }}>
-      <Icon size={28} strokeWidth={1.2} />
+      <Icon size={28} strokeWidth={1.5} />
       <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>{message}</p>
       {sub && <p style={{ margin: 0, fontSize: 12 }}>{sub}</p>}
     </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { Icon } from '../icons';
 
 function generateSlug(name) {
   return name
@@ -400,9 +401,9 @@ export default function CategoryManager({ userRole }) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <button onClick={() => handleMove(index, -1)} disabled={index === 0}
-                  style={{ background: 'none', border: 'none', cursor: index === 0 ? 'default' : 'pointer', color: 'var(--app-text-dim-lg)', fontSize: 11, padding: '1px 4px', opacity: index === 0 ? 0.3 : 1 }}>▲</button>
+                  style={{ background: 'none', border: 'none', cursor: index === 0 ? 'default' : 'pointer', color: 'var(--app-text-dim-lg)', fontSize: 11, padding: '1px 4px', opacity: index === 0 ? 0.3 : 1 }}><Icon name="sortUp" size={12} /></button>
                 <button onClick={() => handleMove(index, 1)} disabled={index === categories.length - 1}
-                  style={{ background: 'none', border: 'none', cursor: index === categories.length - 1 ? 'default' : 'pointer', color: 'var(--app-text-dim-lg)', fontSize: 11, padding: '1px 4px', opacity: index === categories.length - 1 ? 0.3 : 1 }}>▼</button>
+                  style={{ background: 'none', border: 'none', cursor: index === categories.length - 1 ? 'default' : 'pointer', color: 'var(--app-text-dim-lg)', fontSize: 11, padding: '1px 4px', opacity: index === categories.length - 1 ? 0.3 : 1 }}><Icon name="sortDown" size={12} /></button>
               </div>
 
               <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: 'var(--app-border)', width: 20, textAlign: 'center' }}>
@@ -435,7 +436,7 @@ export default function CategoryManager({ userRole }) {
                         <>
                           <span style={{ fontSize: 11, color: 'var(--app-text-dim-lg)', marginLeft: 6 }}>({cat.name})</span>
                           <button onClick={() => removeAlias(cat.id)}
-                            style={{ marginLeft: 4, fontSize: 10, color: 'var(--app-text-dim-lg)', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+                            style={{ marginLeft: 4, fontSize: 10, color: 'var(--app-text-dim-lg)', background: 'none', border: 'none', cursor: 'pointer' }}><Icon name="close" size={11} /></button>
                         </>
                       )}
                     </span>
@@ -623,7 +624,7 @@ export default function CategoryManager({ userRole }) {
                       )}
                     </div>
                     <span style={{ fontSize: 12, color: 'var(--app-text-dim-lg)' }}>
-                      {isOpen ? '▲' : '▼'}
+                      {isOpen ? <Icon name="sortUp" size={12} /> : <Icon name="sortDown" size={12} />}
                     </span>
                   </div>
 
@@ -719,12 +720,12 @@ export default function CategoryManager({ userRole }) {
                                   onClick={() => moveStage(type.value, idx, 'up')}
                                   disabled={idx === 0}
                                   style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1, fontSize: 12, padding: '0 3px' }}
-                                >↑</button>
+                                ><Icon name="up" size={12} /></button>
                                 <button
                                   onClick={() => moveStage(type.value, idx, 'down')}
                                   disabled={idx === stages.length - 1}
                                   style={{ background: 'none', border: 'none', cursor: idx === stages.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === stages.length - 1 ? 0.3 : 1, fontSize: 12, padding: '0 3px' }}
-                                >↓</button>
+                                ><Icon name="down" size={12} /></button>
                               </td>
 
                               <td style={{ padding: '7px 8px', textAlign: 'center' }}>

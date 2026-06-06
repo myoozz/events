@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Icon } from '../icons'
 import { supabase } from '../supabase'
 
 // Shared input style
@@ -345,7 +346,7 @@ export default function LoginPage() {
                   background: 'none', border: '0.5px solid var(--border-strong)',
                   borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)',
                 }}>
-                ← Back to sign in
+                <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back to sign in
               </button>
             </form>
           )}
@@ -438,7 +439,7 @@ export default function LoginPage() {
                   background: 'none', border: '0.5px solid var(--border-strong)',
                   borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)',
                 }}>
-                ← Back to sign in
+                <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back to sign in
               </button>
             </form>
           )}
@@ -452,7 +453,7 @@ export default function LoginPage() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 20px', fontSize: '22px',
               }}>
-                ⏳
+                <Icon name="approvals" size={22} color="#bc1723" />
               </div>
               <p style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
                 Welcome to Myoozz Events. OS for your events
@@ -470,7 +471,7 @@ export default function LoginPage() {
                   background: 'none', border: '0.5px solid var(--border-strong)',
                   borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)',
                 }}>
-                ← Back to sign in
+                <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back to sign in
               </button>
             </div>
           )}
@@ -509,7 +510,7 @@ export default function LoginPage() {
                 e.currentTarget.style.borderColor = 'rgba(188,23,35,0.3)'
               }}
             >
-              Request access →
+              Request access <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} />
             </button>
           </div>
         )}

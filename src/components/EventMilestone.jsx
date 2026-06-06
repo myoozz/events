@@ -1,35 +1,36 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { Icon } from '../icons'
 
 const STAGES = [
   {
     key: 'proposal',
     label: 'Proposal',
-    icon: '📋',
+    icon: 'proposal',
     desc: 'Cost sheet built and exported',
   },
   {
     key: 'won',
     label: 'Won',
-    icon: '🏆',
+    icon: 'won',
     desc: 'Client confirmed the project',
   },
   {
     key: 'execution',
     label: 'Execution',
-    icon: '⚡',
+    icon: 'execution',
     desc: 'Tasks assigned with deadlines',
   },
   {
     key: 'production',
     label: 'Production',
-    icon: '🎨',
+    icon: 'production',
     desc: 'Creatives approved, fabrication live',
   },
   {
     key: 'delivered',
     label: 'Delivered',
-    icon: '✅',
+    icon: 'delivered',
     desc: 'All tasks done, event executed',
   },
 ]
@@ -141,7 +142,11 @@ export default function EventMilestone({ event }) {
                   transition: 'all 0.2s',
                   boxShadow: isDone ? `0 2px 8px ${colors.dot}40` : 'none',
                 }}>
-                  {isDone ? stage.icon : isActive ? '◐' : '○'}
+                  {isDone
+                    ? <Icon name={stage.icon} size={18} color={colors.dot} />
+                    : isActive
+                      ? <Icon name="progressActive" size={16} color={colors.dot} />
+                      : '○'}
                 </div>
 
                 {/* Label */}

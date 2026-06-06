@@ -37,13 +37,13 @@ export const NOTIF_TYPES = {
 // ICON + COLOUR MAP (used in NotificationBell)
 // ─────────────────────────────────────────────
 export const NOTIF_META = {
-  task_assigned:       { icon: '📋', colour: '#bc1723', label: 'Task Assigned' },
-  event_assigned:      { icon: '📅', colour: '#2563eb', label: 'Event Assigned' },
-  task_status_changed: { icon: '🔄', colour: '#d97706', label: 'Status Updated' },
-  task_completed:      { icon: '✅', colour: '#16a34a', label: 'Task Completed' },
-  approval_required:   { icon: '⏳', colour: '#bc1723', label: 'Needs Approval' },
-  event_created:       { icon: '🎉', colour: '#7c3aed', label: 'New Event' },
-  rate_card_requested: { icon: '💰', colour: '#d97706', label: 'Rate Requested' },
+  task_assigned:       { icon: 'taskAssigned',  colour: '#bc1723', label: 'Task Assigned' },
+  event_assigned:      { icon: 'calendar',      colour: '#2563eb', label: 'Event Assigned' },
+  task_status_changed: { icon: 'statusChanged', colour: '#d97706', label: 'Status Updated' },
+  task_completed:      { icon: 'taskCompleted', colour: '#16a34a', label: 'Task Completed' },
+  approval_required:   { icon: 'approvals',     colour: '#bc1723', label: 'Needs Approval' },
+  event_created:       { icon: 'newEvent',      colour: '#7c3aed', label: 'New Event' },
+  rate_card_requested: { icon: 'rateRequested', colour: '#d97706', label: 'Rate Requested' },
 };
 
 // ─────────────────────────────────────────────

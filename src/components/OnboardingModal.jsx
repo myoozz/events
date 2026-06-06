@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Icon } from '../icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabase'
 
@@ -237,7 +238,7 @@ export default function OnboardingModal({ userId, tenantId, tenantName, onComple
                 padding: '4px 0',
               }}
             >
-              ← Back
+              <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back
             </button>
           ) : <span />}
           {step < 4 && step > 1 && (
@@ -253,7 +254,7 @@ export default function OnboardingModal({ userId, tenantId, tenantName, onComple
                 padding: '4px 0',
               }}
             >
-              Next →
+              Next <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} />
             </button>
           )}
         </div>
@@ -299,7 +300,7 @@ function Step1({ agencyName, setAgencyName, agencyFee, setAgencyFee, onNext, sav
       </p>
 
       <SolidBtn onClick={onNext} disabled={saving || !agencyName.trim()}>
-        {saving ? 'Saving...' : 'Next →'}
+        {saving ? 'Saving...' : <>Next <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} /></>}
       </SolidBtn>
     </div>
   )
@@ -361,7 +362,7 @@ function Step4({ onFinish }) {
         </p>
       </div>
 
-      <SolidBtn onClick={onFinish}>Start using ME →</SolidBtn>
+      <SolidBtn onClick={onFinish}>Start using ME <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} /></SolidBtn>
     </div>
   )
 }

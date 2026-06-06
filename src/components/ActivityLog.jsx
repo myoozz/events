@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Icon } from '../icons'
 import { supabase } from '../supabase'
 
 export default function ActivityLog() {
@@ -136,7 +137,7 @@ export default function ActivityLog() {
             cursor: 'pointer', color: 'var(--text)',
           }}
         >
-          ↻ Refresh
+          <Icon name="refresh" size={14} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Refresh
         </button>
       </div>
 

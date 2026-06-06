@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Icon } from '../icons'
 import { supabase } from '../supabase'
 
 export default function FeedbackButton({ session }) {
@@ -50,7 +51,7 @@ export default function FeedbackButton({ session }) {
         onMouseOver={e => e.currentTarget.style.transform = 'scale(1.08)'}
         onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
       >
-        💬
+        <Icon name="feedback" size={20} />
       </button>
 
       {/* Feedback panel */}
@@ -94,7 +95,7 @@ export default function FeedbackButton({ session }) {
                   </div>
                   <button onClick={() => setOpen(false)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--text-tertiary)', padding: '0 0 0 8px', flexShrink: 0 }}>
-                    ✕
+                    <Icon name="close" size={16} />
                   </button>
                 </div>
               </div>
@@ -143,7 +144,7 @@ export default function FeedbackButton({ session }) {
                       transition: 'all 0.15s',
                     }}
                   >
-                    {saving ? 'Sending...' : 'Send →'}
+                    {saving ? 'Sending...' : <>Send <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 5 }} /></>}
                   </button>
                 </div>
               </div>

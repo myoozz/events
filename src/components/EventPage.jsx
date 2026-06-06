@@ -10,6 +10,7 @@ import { supabase } from '../supabase'
 import { createNotification } from '../utils/notificationService'
 import AssignEvent from './AssignEvent'
 import TravelItinerary from './TravelItinerary'
+import { Icon } from '../icons'
 
 // ── Tab definitions — single source of truth for bar + bottom nav ──
 const TABS = [
@@ -25,114 +26,62 @@ const TABS = [
 // ── Help content — one entry per tab ──
 const HELP_CONTENT = {
   elements: {
-    icon: '📋',
+    icon: 'elements',
     title: 'Build your cost sheet',
     description: 'Add every element by category. Fill client cost and internal cost to see your margin. Use Import to bring in existing Excel sheets.',
     tip: 'Start with categories — each comes with suggested elements so you never start from zero.',
   },
   export: {
-    icon: '📤',
+    icon: 'export',
     title: 'Preview and export your proposal',
     description: 'See exactly what your client will see. Toggle sections on or off, then download as a formatted Excel.',
     tip: 'Switch between Estimate and Invoice before downloading. Multi-city events get one sheet per city.',
   },
   tasks: {
-    icon: '⚡',
+    icon: 'execution',
     title: 'Project won — now execute',
     description: 'Generate a task for every element. Assign your team, set deadlines, and track to completion. Share a public link with any freelancer — no login needed.',
     tip: 'Set the Category Owner first — they are accountable for everything in that category. Then assign individual elements.',
   },
   production: {
-    icon: '🎨',
+    icon: 'production',
     title: 'Track creative, fabrication and print',
     description: 'Every branded element needs creative approval before it goes to print. Track each stream independently and catch gaps before they become problems.',
     tip: 'Nothing moves to print without client-approved artwork. The system will flag it if someone tries.',
   },
   travel: {
-    icon: '✈️',
+    icon: 'travel',
     title: 'Travel & Itinerary',
     description: 'Build your full MICE itinerary. Add flights, hotels, transfers and day programs city by city.',
     tip: 'Import your day program into the task board once the project is won — no re-entry needed.',
   },
   delivered: {
-    icon: '✅',
+    icon: 'delivered',
     title: 'Event delivered. Well done.',
     description: 'All your documents are ready. Download individually or take everything at once.',
     tip: 'Share the proposal with your client, brief sheets with vendors, and keep the timeline for your records.',
   },
   cuesheet: {
-    icon: '🎬',
+    icon: 'showflow',
     title: 'Build your show flow',
     description: 'Build your minute-by-minute show flow with named screens for each technical department. Add Sound, Light, LED Wall, Main Screen — whatever your setup needs.',
     tip: "Set start time + duration on first row — end fills automatically. Each row inherits the previous row's end time.",
   },
 }
 
-// ── Tab icons — 14×14 SVG, stroke-based, matches mock design system ──
+// ── Tab icons — resolve through the shared icon module (src/icons.jsx). ──
+const TAB_ICON = {
+  elements: 'elements', export: 'export', tasks: 'execution', production: 'production',
+  travel: 'travel', delivered: 'delivered', cuesheet: 'showflow',
+}
 function TabIcon({ tabKey, active }) {
-  const s = {
-    width: 14, height: 14,
-    opacity: active ? 1 : 0.65,
-    flexShrink: 0,
-    display: 'block',
-  }
-  switch (tabKey) {
-    case 'elements':
-      return (
-        <svg style={s} viewBox="0 0 14 14" fill="none">
-          <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-          <line x1="4" y1="5" x2="10" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="4" y1="7.5" x2="10" y2="7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="4" y1="10" x2="7" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      )
-    case 'export':
-      return (
-        <svg style={s} viewBox="0 0 14 14" fill="none">
-          <path d="M7 8.5V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          <path d="M4.5 4.5L7 2l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M2 10v1.5c0 .3.2.5.5.5h9c.3 0 .5-.2.5-.5V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-      )
-    case 'tasks':
-      return (
-        <svg style={s} viewBox="0 0 14 14" fill="none">
-          <path d="M8.5 1.5L3.5 7.5H7l-1.5 5 6-7H8L8.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-        </svg>
-      )
-    case 'production':
-      return (
-        <svg style={s} viewBox="0 0 14 14" fill="none">
-          <path d="M2 5.5l5-3 5 3-5 3-5-3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-          <path d="M2 8.5l5 3 5-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-      )
-    case 'travel':
-      return (
-        <svg style={s} viewBox="0 0 14 14" fill="none">
-          <path d="M7 1C4.8 1 3 2.8 3 5.5c0 3.5 4 7.5 4 7.5s4-4 4-7.5C11 2.8 9.2 1 7 1z" stroke="currentColor" strokeWidth="1.5"/>
-          <circle cx="7" cy="5.5" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
-        </svg>
-      )
-    case 'delivered':
-      return (
-        <svg style={s} viewBox="0 0 14 14" fill="none">
-          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
-          <path d="M4.5 7l2 2 3-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      )
-    case 'cuesheet':
-      return (
-        <svg style={s} viewBox="0 0 14 14" fill="none">
-          <rect x="1.5" y="3.5" width="11" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-          <line x1="1.5" y1="6" x2="12.5" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="4.5" y1="3.5" x2="3.5" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="8" y1="3.5" x2="7" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      )
-    default:
-      return null
-  }
+  return (
+    <Icon
+      name={TAB_ICON[tabKey]}
+      size={14}
+      style={{ opacity: active ? 1 : 0.65, flexShrink: 0, display: 'block' }}
+    />
+  )
 }
 
 // ── Floating help button — collapsed by default, context-aware per tab ──
@@ -171,7 +120,7 @@ function FloatingHelp({ activeTab }) {
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10, gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 15 }}>{help.icon}</span>
+              <Icon name={help.icon} size={16} color="var(--app-accent)" />
               <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', fontFamily: 'var(--font-body)', lineHeight: 1.4 }}>
                 {help.title}
               </span>
@@ -184,7 +133,7 @@ function FloatingHelp({ activeTab }) {
                 lineHeight: 1, flexShrink: 0, marginTop: 1,
               }}
             >
-              ✕
+              <Icon name="close" size={14} />
             </button>
           </div>
 
@@ -516,9 +465,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
               style={{ fontSize: '13px', padding: '3px 8px', border: '1px solid var(--accent)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', outline: 'none', fontFamily: 'var(--font-body)', width: 110 }}
             />
             <button onClick={() => saveField(field)} disabled={savingField} style={{ padding: '3px 8px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '11px' }}>
-              {savingField ? '…' : '✓'}
+              {savingField ? '…' : <Icon name="check" size={12} />}
             </button>
-            <button onClick={() => setEditingField(null)} style={{ padding: '3px 8px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '11px', color: 'var(--text-tertiary)' }}>✕</button>
+            <button onClick={() => setEditingField(null)} style={{ padding: '3px 8px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '11px', color: 'var(--text-tertiary)' }}><Icon name="close" size={12} /></button>
           </div>
         ) : (
           <div
@@ -545,7 +494,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
           marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '6px',
         }}
       >
-        ← All events
+        <Icon name="back" size={14} /> All events
       </button>
 
       {/* ── Pending edits banner — admin sees + approves/rejects manager changes ── */}
@@ -577,7 +526,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
           {/* Event logo */}
           <div style={{ width: 88, height: 88, borderRadius: 10, border: '0.5px dashed var(--border-strong)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer', background: 'var(--bg-secondary)', flexShrink: 0 }}>
-            <span style={{ fontSize: '22px', opacity: 0.3 }}>🏢</span>
+            <span style={{ opacity: 0.3 }}><Icon name="corporate" size={22} color="var(--text-tertiary)" /></span>
             <span style={{ fontSize: '9px', color: 'var(--text-tertiary)', textAlign: 'center', lineHeight: 1.4 }}>Event<br/>logo</span>
           </div>
 
@@ -614,7 +563,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                   <button onClick={() => saveField('event_name')} disabled={savingField} style={{ padding: '5px 12px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500 }}>
                     {savingField ? '…' : 'Save'}
                   </button>
-                  <button onClick={() => setEditingField(null)} style={{ padding: '5px 9px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-tertiary)' }}>✕</button>
+                  <button onClick={() => setEditingField(null)} style={{ padding: '5px 9px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-tertiary)' }}><Icon name="close" size={14} /></button>
                 </div>
               ) : (
                 <h1
@@ -636,7 +585,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                   >
                     {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
                   </select>
-                  <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 8, color: sc.color }}>▾</span>
+                  <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: sc.color }}><Icon name="expand" size={10} /></span>
                   {savingStatus && <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: 6 }}>Saving...</span>}
                 </div>
               ) : (
@@ -931,17 +880,17 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
               <button onClick={() => handleTabChange(prev.key)} style={btnStyle}
                 onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                 onMouseOut={e => e.currentTarget.style.background = 'none'}>
-                ← {prev.label}
+                <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {prev.label}
               </button>
             ) : <div />}
             <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ color: 'var(--state-success)' }}>✓</span> Auto-saved
+              <Icon name="check" size={12} color="var(--state-success)" /> Auto-saved
             </span>
             {next ? (
               <button onClick={() => handleTabChange(next.key)} style={btnStyle}
                 onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                 onMouseOut={e => e.currentTarget.style.background = 'none'}>
-                {next.label} →
+                {next.label} <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} />
               </button>
             ) : <div />}
           </div>

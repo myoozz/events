@@ -2,28 +2,29 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase'
 import { notifyApprovalRequired } from '../utils/notificationService'
 import CityAutocomplete from './CityAutocomplete'
+import { Icon } from '../icons'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const EVENT_TYPES = [
   {
-    label: 'Corporate Events', value: 'corporate', icon: '🏢',
+    label: 'Corporate Events', value: 'corporate', icon: 'corporate',
     sub: ['Conference / Summit', 'Awards Night', 'Team Offsite', 'Town Hall', 'Leadership Meet'],
   },
   {
-    label: 'Brand Activations', value: 'brand_activation', icon: '⚡',
+    label: 'Brand Activations', value: 'brand_activation', icon: 'brandActivation',
     sub: ['Product Launch', 'Press Conference', 'Experiential / Pop-Up', 'Road Show'],
   },
   {
-    label: 'MICE', value: 'mice', icon: '✈️',
+    label: 'MICE', value: 'mice', icon: 'mice',
     sub: ['Incentive Trip', 'International Conference', 'Exhibition Tour', 'FAM Trip'],
   },
   {
-    label: 'Exhibitions & Trade Shows', value: 'exhibition', icon: '🏛️',
+    label: 'Exhibitions & Trade Shows', value: 'exhibition', icon: 'exhibition',
     sub: ['Trade Show', 'Consumer Exhibition', 'Tech Expo', 'Industry Fair'],
   },
   {
-    label: 'Government & Public Events', value: 'government', icon: '🎌',
+    label: 'Government & Public Events', value: 'government', icon: 'government',
     sub: ['State Function', 'Public Ceremony', 'Government Launch', 'Mass Gathering'],
   },
 ]
@@ -301,20 +302,20 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
           </div>
           <div style={{ ...S.body, display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '20px', paddingBottom: '28px' }}>
             <EntryTile
-              icon="💬"
+              icon="guided"
               title="Guide me through it"
               desc="Answer a few questions — ME sets everything up for you."
               onClick={() => { setFlowMode('guided'); setStep(1) }}
               accent
             />
             <EntryTile
-              icon="✏️"
+              icon="edit"
               title="I'll fill it myself"
               desc="Quick form with all fields. Fill what you know now."
               onClick={() => setFlowMode('classic')}
             />
             <EntryTile
-              icon="📄"
+              icon="brief"
               title="I have a brief"
               desc="Paste or upload a client brief — ME reads it for you."
               disabled
@@ -367,7 +368,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
               style={{ ...S.btn, ...S.btnGhost }}
               onClick={() => { setStepError(''); step === 1 ? setFlowMode('entry') : setStep(step - 1) }}
             >
-              ← Back
+              <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back
             </button>
             <button
               id="nef-next"
@@ -380,7 +381,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                 isLastStep ? setStep('preview') : setStep(step + 1)
               }}
             >
-              {isLastStep ? 'Review →' : 'Next →'}
+              {isLastStep ? <>Review <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></> : <>Next <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></>}
             </button>
           </div>
         </div>
@@ -410,7 +411,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                 style={{ ...S.btn, ...S.btnGhost, fontSize: '12px', color: 'var(--app-text-dim-lg)' }}
                 onClick={() => setShowMore(!showMore)}
               >
-                {showMore ? '▾' : '▸'} More details — Agency fee, GST, Proposal date
+                {showMore ? <Icon name="expand" size={12} style={{ verticalAlign: '-2px' }} /> : <Icon name="collapse" size={12} style={{ verticalAlign: '-2px' }} />} More details — Agency fee, GST, Proposal date
               </button>
 
               {showMore && (
@@ -473,14 +474,14 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
           <div style={S.footer}>
             <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => setStep(TOTAL_STEPS)}>
-              ← Edit
+              <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Edit
             </button>
             <button
               style={{ ...S.btn, ...S.btnRed, opacity: loading ? 0.7 : 1 }}
               onClick={handleCreate}
               disabled={loading}
             >
-              {loading ? 'Creating...' : 'Create event →'}
+              {loading ? 'Creating...' : <>Create event <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></>}
             </button>
           </div>
         </div>
@@ -652,7 +653,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
           <div style={S.footer}>
             <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => setFlowMode('entry')}>
-              ← Back
+              <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back
             </button>
             <button
               style={{ ...S.btn, ...S.btnDark, opacity: (!a.eventName.trim() || loading) ? 0.5 : 1 }}
@@ -683,7 +684,7 @@ function EntryTile({ icon, title, desc, onClick, accent, disabled, badge }) {
       }}
       onClick={disabled ? undefined : onClick}
     >
-      <span style={{ fontSize: '20px', marginTop: '2px', flexShrink: 0 }}>{icon}</span>
+      <span style={{ marginTop: '2px', flexShrink: 0 }}><Icon name={icon} size={20} color={accent ? '#fff' : 'var(--app-ink)'} /></span>
       <div style={{ flex: 1, textAlign: 'left' }}>
         <div style={{
           fontWeight: 600, fontSize: '14px', marginBottom: '2px',
@@ -705,9 +706,7 @@ function EntryTile({ icon, title, desc, onClick, accent, disabled, badge }) {
           {desc}
         </div>
       </div>
-      <span style={{ color: accent ? 'rgba(255,255,255,0.3)' : 'var(--app-border)', fontSize: '16px', marginTop: '4px' }}>
-        →
-      </span>
+      <Icon name="next" size={16} color={accent ? 'rgba(255,255,255,0.3)' : 'var(--app-border)'} style={{ marginTop: '4px', flexShrink: 0 }} />
     </button>
   )
 }
@@ -805,7 +804,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                 }}
                 onClick={() => { set('eventType', t.value); set('subCategory', '') }}
               >
-                <span style={{ fontSize: '18px' }}>{t.icon}</span>
+                <Icon name={t.icon} size={20} color={a.eventType === t.value ? 'var(--app-accent)' : 'var(--app-ink)'} />
                 <span style={{
                   fontSize: '12px', fontWeight: 600,
                   color: a.eventType === t.value ? 'var(--app-accent)' : 'var(--app-ink)',
@@ -862,7 +861,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
               fontSize: '13px', color: '#0d4a26',
               display: 'flex', alignItems: 'center', gap: '8px',
             }}>
-              <span style={{ fontSize: '15px' }}>📅</span>
+              <Icon name="calendar" size={15} />
               <span><strong>{execDays}</strong> execution day{execDays > 1 ? 's' : ''}</span>
             </div>
           )}
@@ -1087,7 +1086,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                 </div>
               </div>
               {a.budgetTier === t.value && (
-                <span style={{ color: 'var(--app-accent)', fontSize: '18px', flexShrink: 0 }}>✓</span>
+                <Icon name="check" size={16} color="var(--app-accent)" style={{ flexShrink: 0 }} />
               )}
             </button>
           ))}
@@ -1145,7 +1144,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                 </div>
               </div>
               {a.agencyPocId === u.id && (
-                <span style={{ color: 'var(--app-accent)', fontSize: '16px' }}>✓</span>
+                <Icon name="check" size={16} color="var(--app-accent)" />
               )}
             </button>
           ))}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Icon } from '../icons'
 import { supabase } from '../supabase'
 
 // ─── Color system ─────────────────────────────────────────
@@ -176,12 +177,12 @@ function ProductionRow({ task, teamUsers, onUpdate }) {
           {task.element_name}
           {printAlert && (
             <span style={{ marginLeft: '8px', fontSize: '10px', background: C.red.bg, color: C.red.color, padding: '1px 6px', borderRadius: '10px', fontWeight: 600 }}>
-              ⚠ Print blocked
+              <Icon name="warning" size={10} style={{ verticalAlign: '-1px', marginRight: 3 }} /> Print blocked
             </span>
           )}
           {hasCreativeNote && (
             <span style={{ marginLeft: '8px', fontSize: '10px', background: C.yellow.bg, color: C.yellow.color, padding: '1px 6px', borderRadius: '10px', fontWeight: 600 }}>
-              📝 Needs branding
+              <Icon name="edit" size={10} style={{ verticalAlign: '-1px', marginRight: 3 }} /> Needs branding
             </span>
           )}
         </div>
@@ -262,7 +263,7 @@ function ProductionRow({ task, teamUsers, onUpdate }) {
               onSelect={v => update('print_status', v)} />
             {printBlocked && task.print_status !== 'not_started' && (
               <div style={{ fontSize: '10px', color: C.red.color, marginTop: '3px' }}>
-                ⚠ Awaiting creative approval
+                <Icon name="warning" size={10} style={{ verticalAlign: '-1px', marginRight: 3 }} /> Awaiting creative approval
               </div>
             )}
           </div>
@@ -407,7 +408,7 @@ export default function Production({ event, teamUsers = [] }) {
       {/* Alerts */}
       {creativeBlocked > 0 && (
         <div style={{ padding: '10px 14px', background: C.red.bg, border: `0.5px solid ${C.red.border}`, borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '13px', color: C.red.color, fontWeight: 500 }}>
-          ⚠ {creativeBlocked} element{creativeBlocked > 1 ? 's' : ''} marked as printing without creative approval. Please review.
+          <Icon name="warning" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> {creativeBlocked} element{creativeBlocked > 1 ? 's' : ''} marked as printing without creative approval. Please review.
         </div>
       )}
 
@@ -539,7 +540,7 @@ export default function Production({ event, teamUsers = [] }) {
                 onClick={() => setSelectedCat(null)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--text-tertiary)', padding: '0 4px', lineHeight: 1 }}
               >
-                ✕
+                <Icon name="close" size={16} />
               </button>
             </div>
             <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>

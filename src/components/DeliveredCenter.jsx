@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { Icon } from '../icons'
 import {
   exportProposalExcel,
   exportElementMaster,
@@ -12,42 +13,42 @@ import {
 const DOCS = [
   {
     key: 'proposal',
-    icon: '📄',
+    icon: 'document',
     title: 'Proposal',
     desc: 'Full cost sheet as sent to client — city-wise with agency fee, GST and T&C',
     color: '#1A1917',
   },
   {
     key: 'elements',
-    icon: '📋',
+    icon: 'elements',
     title: 'Element master list',
     desc: 'All elements city-wise with size, qty, specification — in the format you need',
     color: 'var(--state-info)',
   },
   {
     key: 'tasks',
-    icon: '👥',
+    icon: 'users',
     title: 'Task assignment sheet',
     desc: 'Who owns what — category owner, assigned to, deadline, status',
     color: '#5B21B6',
   },
   {
     key: 'production',
-    icon: '🎨',
+    icon: 'production',
     title: 'Production & print list',
     desc: 'Creative, fabrication and print status for every element',
     color: 'var(--state-success)',
   },
   {
     key: 'vendors',
-    icon: '📞',
+    icon: 'phone',
     title: 'Vendor contact sheet',
     desc: 'Element → vendor → contact — ready to share with your team',
     color: 'var(--state-warning)',
   },
   {
     key: 'timeline',
-    icon: '📅',
+    icon: 'timeline',
     title: 'Visual control chart',
     desc: 'Reverse timeline — every task mapped against dates. Your Gantt.',
     color: '#9D174D',
@@ -168,7 +169,7 @@ export default function DeliveredCenter({ event, session }) {
             gap: '12px',
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-              <span style={{ fontSize: '24px', flexShrink: 0 }}>{doc.icon}</span>
+              <span style={{ flexShrink: 0 }}><Icon name={doc.icon} size={24} color={doc.color} /></span>
               <div style={{ flex: 1 }}>
                 <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>{doc.title}</p>
                 <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', lineHeight: 1.6 }}>{doc.desc}</p>
@@ -190,7 +191,7 @@ export default function DeliveredCenter({ event, session }) {
                 transition: 'all 0.15s',
               }}
             >
-              {downloading === doc.key ? 'Downloading...' : '↓ Download'}
+              {downloading === doc.key ? 'Downloading...' : <><Icon name="download" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Download</>}
             </button>
           </div>
         ))}
@@ -220,7 +221,7 @@ export default function DeliveredCenter({ event, session }) {
             opacity: downloading ? 0.7 : 1,
           }}
         >
-          {downloading === 'all' ? 'Downloading all...' : '↓ Download everything'}
+          {downloading === 'all' ? 'Downloading all...' : <><Icon name="download" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Download everything</>}
         </button>
       </div>
 

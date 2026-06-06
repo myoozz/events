@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
+import { Icon } from '../icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabase'
 import NewEventForm from './NewEventForm'
@@ -761,7 +762,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                   }}
                   style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
                 >
-                  ✓ Approve
+                  <Icon name="check" size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Approve
                 </button>
                 <button
                   onClick={async () => {
@@ -810,7 +811,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                 transition={{ duration: 0.3, ease: 'easeOut' }}
                 style={{ border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius)', padding: '60px 40px', textAlign: 'center' }}
               >
-                <div style={{ fontSize: '32px', marginBottom: '12px' }}>📅</div>
+                <div style={{ marginBottom: '12px' }}><Icon name="calendar" size={32} color="var(--text-tertiary)" /></div>
                 <p style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: 'var(--text-tertiary)', fontStyle: 'italic', marginBottom: '8px' }}>
                   {view === 'active' ? 'No events yet.' : 'No archived events.'}
                 </p>

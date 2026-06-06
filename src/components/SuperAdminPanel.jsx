@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabase'
+import { Icon } from '../icons'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
@@ -22,14 +23,14 @@ const PLAN_COLORS = {
 }
 
 const SECTIONS = [
-  { key: 'overview',   label: 'Overview',   icon: '◈' },
-  { key: 'approvals',  label: 'Approvals',  icon: '⏳', badge: true },
-  { key: 'tenants',    label: 'Tenants',    icon: '🏢' },
-  { key: 'users',      label: 'Users',      icon: '👥' },
-  { key: 'credits',    label: 'Credits',    icon: '💳' },
-  { key: 'ratecards',  label: 'Rate Cards', icon: '📋' },
-  { key: 'categories', label: 'Categories', icon: '🏷' },
-  { key: 'analytics',  label: 'Analytics',  icon: '📈' },
+  { key: 'overview',   label: 'Overview',   icon: 'overview' },
+  { key: 'approvals',  label: 'Approvals',  icon: 'approvals', badge: true },
+  { key: 'tenants',    label: 'Tenants',    icon: 'tenants' },
+  { key: 'users',      label: 'Users',      icon: 'users' },
+  { key: 'credits',    label: 'Credits',    icon: 'credits' },
+  { key: 'ratecards',  label: 'Rate Cards', icon: 'ratecards' },
+  { key: 'categories', label: 'Categories', icon: 'categories' },
+  { key: 'analytics',  label: 'Analytics',  icon: 'analytics' },
 ]
 
 const ROLE_LABELS = {
@@ -158,7 +159,7 @@ function SAModal({ open, onClose, title, subtitle, children }) {
               <h3 style={{ fontFamily: FD, fontSize: '22px', fontWeight: 700, color: 'var(--app-ink)', marginBottom: '4px' }}>{title}</h3>
               {subtitle && <p style={{ fontSize: '13px', color: 'var(--app-text-dim-lg)', fontFamily: F }}>{subtitle}</p>}
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--app-text-dim-lg)', fontSize: '18px', padding: '2px', lineHeight: 1 }}>✕</button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--app-text-dim-lg)', fontSize: '18px', padding: '2px', lineHeight: 1 }}><Icon name="close" size={18} /></button>
           </div>
           {children}
         </motion.div>
@@ -224,7 +225,7 @@ function NotificationStrip({ message, type, onDone }) {
       <button onClick={onDone} aria-label="Dismiss" style={{
         background: 'none', border: 'none', cursor: 'pointer', color: fg,
         fontSize: '16px', padding: 0, lineHeight: 1,
-      }}>✕</button>
+      }}><Icon name="close" size={16} /></button>
     </div>
   )
 }
@@ -276,8 +277,8 @@ function SectionOverview({ setActiveSection }) {
 
       {stats.pending > 0 && (
         <div style={{ background: 'var(--state-warning-bg)', border: '0.5px solid var(--state-warning-bg)', borderRadius: '10px', padding: '14px 20px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '14px', color: 'var(--state-warning)', fontFamily: F }}>⚠️ {stats.pending} application(s) awaiting your review.</span>
-          <button onClick={() => setActiveSection('approvals')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: 'var(--app-accent)', fontFamily: F, padding: 0 }}>Go to Approvals →</button>
+          <span style={{ fontSize: '14px', color: 'var(--state-warning)', fontFamily: F }}><Icon name="warning" size={14} style={{ verticalAlign: '-2px', marginRight: 5 }} /> {stats.pending} application(s) awaiting your review.</span>
+          <button onClick={() => setActiveSection('approvals')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: 'var(--app-accent)', fontFamily: F, padding: 0 }}>Go to Approvals <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></button>
         </div>
       )}
 
@@ -389,7 +390,7 @@ function SectionApprovals({ refreshBadge, showToast, showError }) {
         <p style={{ textAlign: 'center', color: 'var(--app-text-dim-lg)', padding: '40px 0', fontFamily: F }}>Loading...</p>
       ) : list.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>✓</div>
+          <div style={{ marginBottom: '12px' }}><Icon name="delivered" size={32} color="var(--state-success)" /></div>
           <p style={{ fontFamily: FD, fontSize: '20px', color: 'var(--app-ink)', marginBottom: '6px' }}>All caught up</p>
           <p style={{ fontSize: '14px', color: 'var(--app-text-dim-lg)', fontFamily: F }}>No pending applications.</p>
         </div>
@@ -443,7 +444,7 @@ function SectionApprovals({ refreshBadge, showToast, showError }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={handleApprove} disabled={mLoading} style={{ ...btnPrimary, flex: 1, opacity: mLoading ? 0.6 : 1 }}>{mLoading ? 'Approving...' : 'Approve & activate →'}</button>
+          <button onClick={handleApprove} disabled={mLoading} style={{ ...btnPrimary, flex: 1, opacity: mLoading ? 0.6 : 1 }}>{mLoading ? 'Approving...' : <>Approve & activate <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></>}</button>
           <button onClick={() => setApproveModal(null)} style={btnSecondary}>Cancel</button>
         </div>
       </SAModal>
@@ -592,7 +593,7 @@ function TenantDetail({ tenant, onBack, showToast, showError }) {
 
   return (
     <div>
-      <button onClick={onBack} style={{ ...btnSecondary, marginBottom: '20px', fontSize: '12px' }}>← Back to Tenants</button>
+      <button onClick={onBack} style={{ ...btnSecondary, marginBottom: '20px', fontSize: '12px' }}><Icon name="back" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Back to Tenants</button>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <span style={{ fontFamily: FD, fontSize: '26px', fontWeight: 700, color: 'var(--app-ink)' }}>{tenant.name}</span>
         <StatusPill status={tenant.status} />
@@ -842,7 +843,7 @@ function SectionTenants({ showToast, showError }) {
                           : '—'}
                       </td>
                       <td style={tdStyle}>
-                        <button onClick={() => setSelected(t)} style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '6px', border: '0.5px solid var(--app-border)', background: 'var(--app-bg)', color: 'var(--app-ink)', cursor: 'pointer', fontFamily: F }}>View →</button>
+                        <button onClick={() => setSelected(t)} style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '6px', border: '0.5px solid var(--app-border)', background: 'var(--app-bg)', color: 'var(--app-ink)', cursor: 'pointer', fontFamily: F }}>View <Icon name="next" size={12} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></button>
                       </td>
                     </tr>
                   )
@@ -975,9 +976,9 @@ function SectionUsers({ showToast, showError }) {
 
       {totalPages > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', fontFamily: F, fontSize: '13px', color: 'var(--app-text-dim-lg)' }}>
-          <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ ...btnSecondary, opacity: page === 0 ? 0.4 : 1 }}>← Prev</button>
+          <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ ...btnSecondary, opacity: page === 0 ? 0.4 : 1 }}><Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Prev</button>
           <span>Page {page + 1} of {totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ ...btnSecondary, opacity: page >= totalPages - 1 ? 0.4 : 1 }}>Next →</button>
+          <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ ...btnSecondary, opacity: page >= totalPages - 1 ? 0.4 : 1 }}>Next <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></button>
         </div>
       )}
     </div>
@@ -1380,7 +1381,7 @@ function SectionRateCards({ showToast }) {
 
           <div style={{ background: 'var(--app-surface)', border: '0.5px solid var(--app-border)', borderRadius: '12px', overflow: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
-              <thead><tr>{['Element Name', 'Category', 'City', 'Rate Min', 'Rate Max', 'Rate Type', 'Source', 'Tenant', '✦', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
+              <thead><tr>{['Element Name', 'Category', 'City', 'Rate Min', 'Rate Max', 'Rate Type', 'Source', 'Tenant', 'Master', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr></thead>
               <tbody>
                 {loading
                   ? <tr><td colSpan={10} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>Loading...</td></tr>
@@ -1399,7 +1400,7 @@ function SectionRateCards({ showToast }) {
                           <td style={tdStyle}>{isEditing ? <select value={editBuffer.rate_type} onChange={e => setEditBuffer(p => ({ ...p, rate_type: e.target.value }))} style={miniInput}>{['per_unit','per_day','lump_sum','per_person','per_sqft'].map(t => <option key={t} value={t}>{t}</option>)}</select> : <span style={{ fontSize: '11px', background: 'var(--app-surface)', color: 'var(--app-text-dim-lg)', padding: '2px 7px', borderRadius: '5px', fontFamily: F }}>{r.rate_type || '—'}</span>}</td>
                           <td style={tdStyle}>{srcTag ? <span style={{ fontSize: '11px', background: srcTag.color + '20', color: srcTag.color, padding: '2px 8px', borderRadius: '5px', fontWeight: 600, fontFamily: F }}>{srcTag.label}</span> : <span style={{ color: 'var(--app-text-dim-lg)' }}>—</span>}</td>
                           <td style={{ ...tdStyle, fontSize: '12px', color: 'var(--app-text-dim-lg)' }}>{r.is_platform_master ? 'Platform Master' : (r.tenants?.name || '—')}</td>
-                          <td style={{ ...tdStyle, textAlign: 'center' }}>{r.is_platform_master ? <span style={{ color: 'var(--app-accent-hover)' }}>✦</span> : '—'}</td>
+                          <td style={{ ...tdStyle, textAlign: 'center' }}>{r.is_platform_master ? <Icon name="master" size={14} color="var(--app-accent-hover)" /> : '—'}</td>
                           <td style={tdStyle}>
                             <div style={{ display: 'flex', gap: '6px' }}>
                               {isEditing ? (
@@ -1409,8 +1410,8 @@ function SectionRateCards({ showToast }) {
                                 </>
                               ) : (
                                 <>
-                                  <button onClick={() => { setEditingId(r.id); setEditBuffer({ element_name: r.element_name, city: r.city || '', rate_min: r.rate_min ?? '', rate_max: r.rate_max ?? '', rate_type: r.rate_type || '' }) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--app-surface)', color: 'var(--app-ink)', fontFamily: F }}>✏</button>
-                                  <button onClick={() => handleDeleteRow(r.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-danger-bg)', color: 'var(--state-danger)', fontFamily: F }}>🗑</button>
+                                  <button onClick={() => { setEditingId(r.id); setEditBuffer({ element_name: r.element_name, city: r.city || '', rate_min: r.rate_min ?? '', rate_max: r.rate_max ?? '', rate_type: r.rate_type || '' }) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--app-surface)', color: 'var(--app-ink)', fontFamily: F }}><Icon name="edit" size={12} /></button>
+                                  <button onClick={() => handleDeleteRow(r.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-danger-bg)', color: 'var(--state-danger)', fontFamily: F }}><Icon name="delete" size={12} /></button>
                                 </>
                               )}
                             </div>
@@ -1425,9 +1426,9 @@ function SectionRateCards({ showToast }) {
 
           {totalPages > 1 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', fontFamily: F, fontSize: '13px', color: 'var(--app-text-dim-lg)' }}>
-              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ ...btnSecondary, opacity: page === 0 ? 0.4 : 1 }}>← Prev</button>
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ ...btnSecondary, opacity: page === 0 ? 0.4 : 1 }}><Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Prev</button>
               <span>Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredRows.length)} of {filteredRows.length} rows</span>
-              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ ...btnSecondary, opacity: page >= totalPages - 1 ? 0.4 : 1 }}>Next →</button>
+              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ ...btnSecondary, opacity: page >= totalPages - 1 ? 0.4 : 1 }}>Next <Icon name="next" size={13} style={{ verticalAlign: '-2px', marginLeft: 4 }} /></button>
             </div>
           )}
         </div>
@@ -1459,7 +1460,7 @@ function SectionRateCards({ showToast }) {
               >
                 <div style={{ fontSize: '14px', fontFamily: F, color: 'var(--app-ink)', marginBottom: '6px' }}>Drop your Excel file here or click to browse</div>
                 <div style={{ fontSize: '12px', fontFamily: F, color: 'var(--app-text-dim-lg)' }}>Accepted format: .xlsx · Download the template from the Templates tab</div>
-                {importFile && <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--state-success)', fontFamily: F }}>📄 {importFile.name}</div>}
+                {importFile && <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--state-success)', fontFamily: F }}><Icon name="document" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {importFile.name}</div>}
               </div>
               <input id="rc-file-input" type="file" accept=".xlsx" style={{ display: 'none' }} onChange={e => { if (e.target.files[0]) handleFileUpload(e.target.files[0]) }} />
             </div>
@@ -1625,7 +1626,7 @@ function SectionRateCards({ showToast }) {
           </div>
           <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <input type="checkbox" id="add-is-master" checked={addForm.is_platform_master} onChange={e => setAddForm(p => ({ ...p, is_platform_master: e.target.checked }))} />
-            <label htmlFor="add-is-master" style={{ fontSize: '13px', fontFamily: F, color: 'var(--app-ink)', cursor: 'pointer' }}>Platform Master row (✦)</label>
+            <label htmlFor="add-is-master" style={{ fontSize: '13px', fontFamily: F, color: 'var(--app-ink)', cursor: 'pointer' }}>Platform Master row</label>
           </div>
           {!addForm.is_platform_master && (
             <div style={{ gridColumn: '1 / -1' }}>
@@ -1878,8 +1879,8 @@ function SectionCategories({ showToast }) {
                       <tr key={c.id}>
                         <td style={tdStyle}>
                           <div style={{ display: 'flex', gap: '4px' }}>
-                            <button onClick={() => handleMove(idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}>▲</button>
-                            <button onClick={() => handleMove(idx, 1)} disabled={idx === cats.length - 1} style={{ background: 'none', border: 'none', cursor: idx === cats.length - 1 ? 'default' : 'pointer', color: idx === cats.length - 1 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}>▼</button>
+                            <button onClick={() => handleMove(idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}><Icon name="sortUp" size={12} /></button>
+                            <button onClick={() => handleMove(idx, 1)} disabled={idx === cats.length - 1} style={{ background: 'none', border: 'none', cursor: idx === cats.length - 1 ? 'default' : 'pointer', color: idx === cats.length - 1 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}><Icon name="sortDown" size={12} /></button>
                           </div>
                         </td>
                         <td style={tdStyle}>
@@ -1887,7 +1888,7 @@ function SectionCategories({ showToast }) {
                             ? <input value={editName} onChange={e => setEditName(e.target.value)} onBlur={() => handleRename(c)} onKeyDown={e => e.key === 'Enter' && handleRename(c)} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid var(--app-border)', borderRadius: '6px', background: 'var(--app-bg)', color: 'var(--app-ink)', outline: 'none' }} autoFocus />
                             : <span onClick={() => { setEditingId(c.id); setEditName(c.name) }} style={{ cursor: 'pointer', color: 'var(--app-ink)', fontWeight: 500 }} title="Click to rename">{c.name}</span>
                           }
-                          {isEdit && <div style={{ fontSize: '11px', color: 'var(--state-warning)', fontFamily: F, marginTop: '3px' }}>⚠ Renaming cascades to elements and rate cards</div>}
+                          {isEdit && <div style={{ fontSize: '11px', color: 'var(--state-warning)', fontFamily: F, marginTop: '3px' }}><Icon name="warning" size={11} style={{ verticalAlign: '-1px', marginRight: 3 }} /> Renaming cascades to elements and rate cards</div>}
                         </td>
                         <td style={{ ...tdStyle, fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: 'var(--app-text-dim-lg)' }}>{c.slug}</td>
                         <td style={tdStyle}>
@@ -1939,7 +1940,7 @@ function SectionCategories({ showToast }) {
                       <span style={{ fontSize: '14px', fontWeight: 600, fontFamily: F, color: 'var(--app-ink)' }}>{formatType(type)}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{ fontSize: '12px', background: 'var(--app-surface)', color: 'var(--app-text-dim-lg)', padding: '2px 10px', borderRadius: '10px', fontFamily: F }}>{stages.length} stages</span>
-                        <span style={{ color: 'var(--app-text-dim-lg)', fontSize: '12px' }}>{isExpanded ? '▲' : '▼'}</span>
+                        <span style={{ color: 'var(--app-text-dim-lg)', fontSize: '12px' }}>{isExpanded ? <Icon name="sortUp" size={12} /> : <Icon name="sortDown" size={12} />}</span>
                       </div>
                     </div>
                     {isExpanded && (
@@ -1953,8 +1954,8 @@ function SectionCategories({ showToast }) {
                                 <tr key={s.id}>
                                   <td style={tdStyle}>
                                     <div style={{ display: 'flex', gap: '4px' }}>
-                                      <button onClick={() => handleSwapStages(stages, idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}>▲</button>
-                                      <button onClick={() => handleSwapStages(stages, idx, 1)} disabled={idx === stages.length - 1} style={{ background: 'none', border: 'none', cursor: idx === stages.length - 1 ? 'default' : 'pointer', color: idx === stages.length - 1 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}>▼</button>
+                                      <button onClick={() => handleSwapStages(stages, idx, -1)} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}><Icon name="sortUp" size={12} /></button>
+                                      <button onClick={() => handleSwapStages(stages, idx, 1)} disabled={idx === stages.length - 1} style={{ background: 'none', border: 'none', cursor: idx === stages.length - 1 ? 'default' : 'pointer', color: idx === stages.length - 1 ? 'var(--app-border)' : 'var(--app-text-dim-lg)', fontSize: '12px', padding: '2px 4px' }}><Icon name="sortDown" size={12} /></button>
                                     </div>
                                   </td>
                                   <td style={tdStyle}>{isEditingS ? <input value={stageEditBuffer.stage_name} onChange={e => setStageEditBuffer(p => ({ ...p, stage_name: e.target.value }))} style={{ fontSize: '13px', fontFamily: F, padding: '4px 8px', border: '0.5px solid var(--app-border)', borderRadius: '6px', background: 'var(--app-bg)', outline: 'none', width: '100%' }} autoFocus /> : s.stage_name}</td>
@@ -1976,8 +1977,8 @@ function SectionCategories({ showToast }) {
                                         </>
                                       ) : (
                                         <>
-                                          <button onClick={() => { setEditingStage(s.id); setStageEditBuffer({ stage_name: s.stage_name, days_before_event: s.days_before_event, is_terminal: s.is_terminal }) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--app-surface)', color: 'var(--app-ink)', fontFamily: F }}>✏</button>
-                                          <button onClick={() => handleDeleteStage(s.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-danger-bg)', color: 'var(--state-danger)', fontFamily: F }}>🗑</button>
+                                          <button onClick={() => { setEditingStage(s.id); setStageEditBuffer({ stage_name: s.stage_name, days_before_event: s.days_before_event, is_terminal: s.is_terminal }) }} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--app-surface)', color: 'var(--app-ink)', fontFamily: F }}><Icon name="edit" size={12} /></button>
+                                          <button onClick={() => handleDeleteStage(s.id)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--state-danger-bg)', color: 'var(--state-danger)', fontFamily: F }}><Icon name="delete" size={12} /></button>
                                         </>
                                       )}
                                     </div>
@@ -2305,7 +2306,7 @@ export default function SuperAdminPanel({ onClose }) {
                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--app-surface)' }}
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'none' }}
               >
-                <span style={{ fontSize: '16px', lineHeight: 1 }}>{s.icon}</span>
+                <Icon name={s.icon} size={16} />
                 <span style={{ flex: 1 }}>{s.label}</span>
                 {s.badge && pendingCount > 0 && (
                   <span style={{ fontSize: '10px', fontWeight: 700, background: isActive ? 'rgba(255,255,255,0.3)' : 'var(--app-accent)', color: '#fff', padding: '1px 6px', borderRadius: '10px', minWidth: '18px', textAlign: 'center' }}>
@@ -2324,7 +2325,7 @@ export default function SuperAdminPanel({ onClose }) {
             onMouseEnter={e => e.currentTarget.style.background = 'var(--app-surface)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
           >
-            ← Exit Admin
+            <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Exit Admin
           </button>
         </div>
       </div>

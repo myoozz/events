@@ -2,6 +2,7 @@
 // Phase E — Analytics  |  Admin only  |  Volume & velocity, no financials
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { Icon } from '../icons'
 import { supabase } from '../supabaseClient'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -322,7 +323,7 @@ export default function AnalyticsDashboard({ userId, userRole }) {
                 outline: 'none',
               }}
             />
-            <span style={{ color: 'var(--app-text-dim-lg)', fontSize: 13 }}>→</span>
+            <Icon name="next" size={13} color="var(--app-text-dim-lg)" />
             <input
               type="date"
               value={customTo}

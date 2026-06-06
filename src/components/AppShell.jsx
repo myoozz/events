@@ -15,82 +15,19 @@ import ActivityLog from './ActivityLog'
 import ProfilePage from './ProfilePage'
 import NotificationBell from './NotificationBell'
 import { fetchUnreadCount, subscribeToNotifications } from '../utils/notificationService'
-import { ShieldCheck } from 'lucide-react'
+import { Icon } from '../icons'
 import SuperAdminPanel from './SuperAdminPanel'
 import OnboardingModal from './OnboardingModal'
 
+// Nav icons resolve through the shared icon module (src/icons.jsx). On the teal
+// rail the scoped --text override makes the active icon white via currentColor.
 const NAV_ITEMS = [
-  {
-    key: 'events',
-    label: 'Events',
-    roles: ['admin', 'manager', 'event_lead', 'team'],
-    icon: (active) => (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <rect x="2" y="2" width="6" height="6" rx="1.5" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} />
-        <rect x="10" y="2" width="6" height="6" rx="1.5" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} opacity="0.5" />
-        <rect x="2" y="10" width="6" height="6" rx="1.5" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} opacity="0.5" />
-        <rect x="10" y="10" width="6" height="6" rx="1.5" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} opacity="0.3" />
-      </svg>
-    ),
-  },
-  {
-    key: 'team',
-    label: 'Team',
-    roles: ['admin', 'manager'],
-    icon: (active) => (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <circle cx="7" cy="6" r="3" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} />
-        <circle cx="13" cy="7" r="2" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} opacity="0.5" />
-        <path d="M1 15c0-3 2.7-5 6-5s6 2 6 5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" strokeLinecap="round" fill="none" />
-        <path d="M13 10c2 0 4 1.5 4 4" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.5" />
-      </svg>
-    ),
-  },
-  {
-    key: 'activitylog',
-    label: 'Activity log',
-    roles: ['admin'],
-    icon: (active) => (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <rect x="3" y="2" width="12" height="14" rx="1.5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none"/>
-        <path d="M6 6h6M6 9h6M6 12h4" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" strokeLinecap="round" opacity={active ? 1 : 0.6}/>
-      </svg>
-    ),
-  },
-  {
-    key: 'feedback',
-    label: 'Feedback',
-    roles: ['admin'],
-    icon: (active) => (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <path d="M2 4a2 2 0 012-2h10a2 2 0 012 2v7a2 2 0 01-2 2H6l-4 3V4z" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-  {
-    key: 'ratecard',
-    label: 'Rate cards',
-    roles: ['admin', 'manager', 'event_lead'],
-    icon: (active) => (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <rect x="2" y="4" width="14" height="10" rx="1.5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none"/>
-        <path d="M6 9h6M6 12h4" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M11 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" fill={active ? 'var(--text)' : 'var(--text-tertiary)'} opacity="0.6"/>
-      </svg>
-    ),
-  },
-  {
-    key: 'categories',
-    label: 'Categories',
-    roles: ['admin'],
-    icon: (active) => (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <rect x="2" y="2" width="6" height="6" rx="1.5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none"/>
-        <rect x="10" y="2" width="6" height="6" rx="1.5" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" fill="none" opacity="0.5"/>
-        <path d="M2 13h14M2 16h8" stroke={active ? 'var(--text)' : 'var(--text-tertiary)'} strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
+  { key: 'events',      label: 'Events',       roles: ['admin', 'manager', 'event_lead', 'team'], icon: 'events' },
+  { key: 'team',        label: 'Team',         roles: ['admin', 'manager'],                        icon: 'team' },
+  { key: 'activitylog', label: 'Activity log', roles: ['admin'],                                   icon: 'activitylog' },
+  { key: 'feedback',    label: 'Feedback',     roles: ['admin'],                                   icon: 'feedback' },
+  { key: 'ratecard',    label: 'Rate cards',   roles: ['admin', 'manager', 'event_lead'],          icon: 'ratecard' },
+  { key: 'categories',  label: 'Categories',   roles: ['admin'],                                   icon: 'categories' },
 ]
 
 const ROLE_LABELS = { admin: 'Admin', manager: 'Project Head', event_lead: 'Manager', team: 'Project Team' }
@@ -300,10 +237,10 @@ export default function AppShell({ session }) {
   // ── Tenant gate: pending_review / waitlisted ──────────────────────────────
   if (tenantInfo?.status === 'pending_review' || tenantInfo?.status === 'waitlisted') {
     const caps = [
-      { icon: '📋', title: 'Event budgets', body: 'Build full budgets with categories, elements, and real-time margins.' },
-      { icon: '✅', title: 'Task boards', body: 'Kanban-style task tracking with assignees, deadlines, and priorities.' },
-      { icon: '✈️', title: 'Travel planning', body: 'Flights, hotels, and rooming lists — all in one itinerary view.' },
-      { icon: '🎬', title: 'Production & cue sheets', body: 'Run-of-show timelines and cue sheets, export-ready in seconds.' },
+      { icon: 'elements',  title: 'Event budgets', body: 'Build full budgets with categories, elements, and real-time margins.' },
+      { icon: 'delivered', title: 'Task boards', body: 'Kanban-style task tracking with assignees, deadlines, and priorities.' },
+      { icon: 'travel',    title: 'Travel planning', body: 'Flights, hotels, and rooming lists — all in one itinerary view.' },
+      { icon: 'showflow',  title: 'Production & cue sheets', body: 'Run-of-show timelines and cue sheets, export-ready in seconds.' },
     ]
     return (
       <div style={{
@@ -334,7 +271,7 @@ export default function AppShell({ session }) {
                 background: 'var(--bg-secondary)', borderRadius: 'var(--radius)',
                 border: '0.5px solid var(--border)', padding: '16px', textAlign: 'left',
               }}>
-                <div style={{ fontSize: '22px', marginBottom: '8px' }}>{c.icon}</div>
+                <div style={{ marginBottom: '8px' }}><Icon name={c.icon} size={22} color="var(--app-accent)" /></div>
                 <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>{c.title}</p>
                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{c.body}</p>
               </div>
@@ -382,8 +319,8 @@ export default function AppShell({ session }) {
             width: '48px', height: '48px', borderRadius: '12px',
             background: 'var(--bg-secondary)', border: '1.5px solid var(--border-strong)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '22px', margin: '0 auto 24px',
-          }}>⏸</div>
+            margin: '0 auto 24px',
+          }}><Icon name="pause" size={22} color="var(--text-secondary)" /></div>
           <p style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
             Your workspace is paused.
           </p>
@@ -557,7 +494,7 @@ export default function AppShell({ session }) {
                   onMouseOver={e => { if (!active) e.currentTarget.style.background = 'var(--bg-secondary)' }}
                   onMouseOut={e => { if (!active) e.currentTarget.style.background = 'none' }}
                 >
-                  {item.icon(active)}
+                  <Icon name={item.icon} size={18} color={active ? 'var(--text)' : 'var(--text-tertiary)'} />
                   {!collapsed && (
                     <span style={{
                       fontSize: '13px',
@@ -595,7 +532,7 @@ export default function AppShell({ session }) {
                   onMouseOver={e => { if (activeTab !== 'super-admin') e.currentTarget.style.background = 'var(--bg-secondary)' }}
                   onMouseOut={e => { if (activeTab !== 'super-admin') e.currentTarget.style.background = 'none' }}
                 >
-                  <ShieldCheck size={16} color={activeTab === 'super-admin' ? 'var(--text)' : 'var(--text-tertiary)'} />
+                  <Icon name="platformAdmin" size={16} color={activeTab === 'super-admin' ? 'var(--text)' : 'var(--text-tertiary)'} />
                   {!collapsed && (
                     <span style={{
                       fontSize: '13px',
@@ -696,12 +633,9 @@ export default function AppShell({ session }) {
               onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
               onMouseOut={e => e.currentTarget.style.background = 'none'}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                {collapsed
-                  ? <path d="M6 4l5 5-5 5" stroke="var(--text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  : <path d="M12 4l-5 5 5 5" stroke="var(--text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                }
-              </svg>
+              {collapsed
+                ? <Icon name="collapse" size={18} color="var(--text-tertiary)" />
+                : <Icon name="chevronLeft" size={18} color="var(--text-tertiary)" />}
               {!collapsed && <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>Collapse</span>}
             </button>
 
@@ -736,10 +670,7 @@ export default function AppShell({ session }) {
               onMouseOver={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
               onMouseOut={e => e.currentTarget.style.background = 'none'}
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M7 3H4a1 1 0 00-1 1v10a1 1 0 001 1h3" stroke="var(--text-tertiary)" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M12 12l3-3-3-3M15 9H7" stroke="var(--text-tertiary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Icon name="signOut" size={18} color="var(--text-tertiary)" />
               {!collapsed && <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>Sign out</span>}
             </button>
           </div>
@@ -756,10 +687,10 @@ export default function AppShell({ session }) {
           zIndex: 100, paddingBottom: 'env(safe-area-inset-bottom)',
         }}>
           {[
-            ...(platformRole !== 'super_admin' ? [{ key: 'events', icon: '📋', label: 'Events' }] : []),
-            ...((userRole === 'admin' || userRole === 'manager') && platformRole !== 'super_admin' ? [{ key: 'team', icon: '👥', label: 'Team' }] : []),
-            ...(userRole === 'admin' ? [{ key: 'activitylog', icon: '📋', label: 'Log' }] : []),
-            ...((userRole === 'admin' || canManageRateCards || platformRole === 'super_admin') ? [{ key: 'ratecard', icon: '₹', label: 'Rates' }] : []),
+            ...(platformRole !== 'super_admin' ? [{ key: 'events', icon: 'events', label: 'Events' }] : []),
+            ...((userRole === 'admin' || userRole === 'manager') && platformRole !== 'super_admin' ? [{ key: 'team', icon: 'team', label: 'Team' }] : []),
+            ...(userRole === 'admin' ? [{ key: 'activitylog', icon: 'activitylog', label: 'Log' }] : []),
+            ...((userRole === 'admin' || canManageRateCards || platformRole === 'super_admin') ? [{ key: 'ratecard', glyph: '₹', label: 'Rates' }] : []),
           ].map(item => (
             <button
               key={item.key}
@@ -771,7 +702,7 @@ export default function AppShell({ session }) {
                 color: activeTab === item.key ? 'var(--text)' : 'var(--text-tertiary)',
               }}
             >
-              <span style={{ fontSize: '18px' }}>{item.icon}</span>
+              {item.icon ? <Icon name={item.icon} size={20} /> : <span style={{ fontSize: '18px' }}>{item.glyph}</span>}
               <span style={{ fontSize: '10px', fontFamily: 'var(--font-body)', fontWeight: activeTab === item.key ? 500 : 400 }}>
                 {item.label}
               </span>
@@ -817,7 +748,7 @@ export default function AppShell({ session }) {
               padding: '6px 12px', color: 'var(--text-tertiary)',
             }}
           >
-            <span style={{ fontSize: '18px' }}>↩</span>
+            <Icon name="signOut" size={18} />
             <span style={{ fontSize: '10px', fontFamily: 'var(--font-body)' }}>Sign out</span>
           </button>
         </div>
