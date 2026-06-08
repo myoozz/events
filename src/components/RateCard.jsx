@@ -1114,7 +1114,7 @@ export default function RateCard({ session, userRole, canManageRateCards = false
                       </div>
 
                       {/* Rate highlight box */}
-                      <div style={{ background: 'var(--app-ink)', borderRadius: '10px', padding: '18px', margin: '16px 0', textAlign: 'center' }}>
+                      <div style={{ background: 'var(--app-ink)', border: '1px solid var(--brand-aqua)', borderRadius: '10px', padding: '18px', margin: '16px 0', textAlign: 'center' }}>
                         <div style={{ fontSize: '24px', fontWeight: 600, color: D.text, marginBottom: '5px', userSelect: 'none' }}>
                           {fmtRange(selectedItem.rate_min, selectedItem.rate_max) || '—'}
                         </div>
