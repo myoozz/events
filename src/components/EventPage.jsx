@@ -901,7 +901,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
       <div style={{
         marginTop: '24px',
         paddingTop: '14px',
-        borderTop: '0.5px solid var(--border)',
+        borderTop: '1px solid var(--brand-teal)',
         textAlign: 'center',
       }}>
         <p style={{
@@ -910,7 +910,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
           lineHeight: 1.6,
           fontFamily: 'var(--font-body)',
         }}>
-          Confidential · Prepared for {currentEvent.clients?.group_name || 'your client'} ·&nbsp;
+          <span style={{ color: 'var(--brand-teal-deep)' }}>Confidential</span> · Prepared for <span style={{ color: 'var(--brand-teal-deep)' }}>{currentEvent.clients?.group_name || 'your client'}</span> ·&nbsp;
           Myoozz Events · Myoozz Consulting Pvt. Ltd.
         </p>
       </div>
