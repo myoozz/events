@@ -119,17 +119,15 @@ serve(async (req) => {
       if (tenant) {
         try {
           const { sendWhatsApp, sendEmail } = await import('../_shared/msg91.ts')
-          const { workspaceApprovedHtml } = await import('../_shared/email-templates.ts')
-
-          await sendWhatsApp(tenant.contact_phone, 'me_workspace_approved', {
-            body_1: { type: 'text', value: tenant.contact_name },
-            body_2: { type: 'text', value: tenant.name },
-            body_3: { type: 'text', value: String(trial_days) },
-          })
+          await sendWhatsApp(tenant.contact_phone, 'me_workspace_approved', [tenant.contact_name, tenant.name, String(trial_days)])
           await sendEmail(
             tenant.contact_email,
-            `${tenant.name}, your ME workspace is ready`,
-            workspaceApprovedHtml(tenant.contact_name, tenant.name, trial_days)
+            'me_workspace_approved_email',
+            {
+              name: tenant.contact_name,
+              company_name: tenant.name,
+              trial_days: String(trial_days),
+            }
           )
         } catch (err) {
           console.error('MSG91 approve error:', err)
@@ -169,12 +167,10 @@ serve(async (req) => {
     if (tenant) {
       try {
         const { sendEmail } = await import('../_shared/msg91.ts')
-        const { waitlistHtml } = await import('../_shared/email-templates.ts')
-
         await sendEmail(
           tenant.contact_email,
-          "You're on the ME waitlist",
-          waitlistHtml(tenant.contact_name, tenant.name)
+          'me_waitlist_email',
+          { name: tenant.contact_name, company_name: tenant.name }
         )
       } catch (err) {
         console.error('MSG91 waitlist error:', err)
