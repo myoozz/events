@@ -9,9 +9,16 @@ interface WAComponents { [key: string]: WAComponent }
 export async function sendWhatsApp(
   to: string,
   templateName: string,
-  components: WAComponents
+  params: string[]
 ): Promise<void> {
   const phone = to.replace(/\D/g, '')
+  const waPhone = phone.startsWith('91') ? phone : '91' + phone
+
+  const components = params.length > 0 ? [{
+    type: 'body',
+    parameters: params.map(value => ({ type: 'text', text: value }))
+  }] : []
+
   const body = {
     integrated_number: MSG91_INTEGRATED_NUMBER,
     content_type: 'template',
@@ -22,10 +29,14 @@ export async function sendWhatsApp(
         name: templateName,
         language: { code: 'en', policy: 'deterministic' },
         namespace: MSG91_NAMESPACE,
-        to_and_components: [{ to: [phone], components }],
+        to_and_components: [{
+          to: [waPhone],
+          components,
+        }],
       },
     },
   }
+
   const res = await fetch(
     'https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/',
     {
@@ -42,14 +53,15 @@ export async function sendWhatsApp(
 
 export async function sendEmail(
   to: string,
-  subject: string,
-  htmlContent: string
+  templateId: string,
+  variables: Record<string, string>
 ): Promise<void> {
   const body = {
     to: [{ email: to }],
-    from: { email: MSG91_FROM_EMAIL, name: 'ME by Myoozz Events' },
-    subject,
-    htmlContent,
+    from: { email: MSG91_FROM_EMAIL, name: 'Myoozz Events' },
+    reply_to: [{ email: 'events@themyoozz.com' }],
+    template_id: templateId,
+    variables: variables,
   }
   const res = await fetch('https://api.msg91.com/api/v5/email/send', {
     method: 'POST',
@@ -58,6 +70,6 @@ export async function sendEmail(
   })
   if (!res.ok) {
     const text = await res.text()
-    console.error(`MSG91 Email error [${subject}]:`, text)
+    console.error(`MSG91 Email error [${templateId}]:`, text)
   }
 }

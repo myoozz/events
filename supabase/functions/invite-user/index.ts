@@ -62,12 +62,15 @@ serve(async (req) => {
     // MSG91 — team invite branded companion email (Supabase invite carries the magic link)
     try {
       const { sendEmail } = await import('../_shared/msg91.ts')
-      const { teamInviteHtml } = await import('../_shared/email-templates.ts')
-
       await sendEmail(
         email,
-        `You've been invited to join ME`,
-        teamInviteHtml('Your team admin', 'your workspace', role, 'https://myoozz.events')
+        'me_team_invite_email',
+        {
+          inviter_name: 'Your team admin',
+          company_name: 'your workspace',
+          role: role,
+          invite_link: 'https://myoozz.events',
+        }
       )
     } catch (err) {
       console.error('MSG91 invite error:', err)

@@ -137,23 +137,22 @@ serve(async (req) => {
     // MSG91 — registration confirm to tenant (WA + email) + email alert to Vikram
     try {
       const { sendWhatsApp, sendEmail } = await import('../_shared/msg91.ts')
-      const { registrationConfirmationHtml, registrationAlertHtml } = await import('../_shared/email-templates.ts')
-
-      await sendWhatsApp(phone, 'me_registration_received', {
-        body_1: { type: 'text', value: contact_name },
-      })
+      await sendWhatsApp(phone, 'me_registration_received', [contact_name])
       await sendEmail(
         email,
-        'Your ME workspace is under review',
-        registrationConfirmationHtml(contact_name, company_name)
+        'me_registration_received_email',
+        { name: contact_name, company_name: company_name }
       )
       await sendEmail(
         'vikram@themyoozz.com',
-        `New registration: ${company_name}`,
-        registrationAlertHtml(
-          company_name, contact_name, email, phone,
-          new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
-        )
+        'me_registration_alert_email',
+        {
+          company_name: company_name,
+          contact_name: contact_name,
+          contact_email: email,
+          contact_phone: phone,
+          signup_time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        }
       )
     } catch (err) {
       console.error('MSG91 register-tenant error:', err)

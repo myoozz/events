@@ -32,24 +32,23 @@ Deno.serve(async () => {
       })
 
       if (daysLeft > 0) {
-        await sendWhatsApp(tenant.contact_phone, 'me_trail_reminder', {
-          body_1: { type: 'text', value: tenant.contact_name },
-          body_2: { type: 'text', value: String(daysLeft) },
-        })
+        await sendWhatsApp(tenant.contact_phone, 'me_trail_reminder', [tenant.contact_name, String(daysLeft)])
         await sendEmail(
           tenant.contact_email,
-          `Your ME trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`,
-          trialReminderHtml(tenant.contact_name, tenant.name, daysLeft, endDate)
+          'me_trial_reminder_email',
+          {
+            name: tenant.contact_name,
+            company_name: tenant.name,
+            days_left: String(daysLeft),
+            trial_end_date: endDate,
+          }
         )
       } else {
-        await sendWhatsApp(tenant.contact_phone, 'me_trail_expired', {
-          body_1: { type: 'text', value: tenant.contact_name },
-          body_2: { type: 'text', value: tenant.name },
-        })
+        await sendWhatsApp(tenant.contact_phone, 'me_trail_expired', [tenant.contact_name, tenant.name])
         await sendEmail(
           tenant.contact_email,
-          'Your ME trial has ended',
-          trialExpiredHtml(tenant.contact_name, tenant.name)
+          'me_trial_expired_email',
+          { name: tenant.contact_name, company_name: tenant.name }
         )
       }
     }
