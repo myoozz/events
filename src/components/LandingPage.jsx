@@ -1,652 +1,462 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import * as Dialog from "@radix-ui/react-dialog";
+import { supabase } from "../supabase";
 
-// ─── Logo mark ───────────────────────────────────────────────────────────────
-function MeLogo({ size = 36 }) {
-  const s = size;
+/* ════════════════════════════════════════════════════════════════════════
+   ME LANDING PAGE — V2  ·  route "/"  ·  editorial-quiet
+   Tokens consumed from the REAL src/index.css :root (--brand-* / --app-*).
+   Nothing is redeclared here. Typography is self-fenced under .lp-v2 so the
+   app's global element defaults (body{font-size:15px}) can't cascade in.
+   Motion = framer-motion v12 only. Prerender-safe: all copy is in the DOM and
+   visible without JS; reveals only animate transform/opacity after mount.
+   Build status: §1–§9 in progress. §10–§12 (Early Access / 2nd teal anchor /
+   footer) follow in the next pass — temporary close at the bottom for now.
+   ════════════════════════════════════════════════════════════════════════ */
+
+const EASE = [0.22, 1, 0.36, 1]; // --ease-out
+const DEMO_URL = "https://demo.myoozz.events";
+
+/* ── Brand mark — single swappable placeholder ───────────────────────────
+   Poppins Black "M" + Fraunces Black Italic "e". Real SVG drops in HERE only.
+   tone="teal" on warm surfaces, tone="soft" on dark surfaces. Never "ME". */
+function MeMark({ size = 22, tone = "teal", className = "" }) {
   return (
-    <svg width={s * 1.6} height={s} viewBox="0 0 64 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* M */}
-      <text x="0" y="34" fontFamily="'DM Sans', sans-serif" fontWeight="800" fontSize="38" fill="#BC1723">M</text>
-      {/* e circle */}
-      <circle cx="52" cy="24" r="12" fill="#d1d5d8"/>
-      {/* e letter */}
-      <text x="46.5" y="29.5" fontFamily="'DM Sans', sans-serif" fontWeight="700" fontSize="14" fill="#BC1723">e</text>
-    </svg>
+    <span
+      className={`lp-v2-memark lp-v2-memark--${tone} ${className}`}
+      style={{ fontSize: size }}
+      role="img"
+      aria-label="Me"
+    >
+      <span className="memark-m" aria-hidden="true">M</span>
+      <span className="memark-e" aria-hidden="true">e</span>
+    </span>
   );
 }
 
-const css = `
-:root {
-  --red: #BC1723;
-  --red-dark: #A4131D;
-  --bg: #FAF8F5;
-  --bg-warm: #F2EFE9;
-  --navy: #16203A;
-  --text: #1A1008;
-  --text-muted: #5F564A;
-  --text-light: #7A7060;
-  --border: #D8D2C8;
-  --border-strong: #C8C2B8;
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
-  --font-logo: 'Poppins', sans-serif;
+/* ── Tier-1 reveal — prerender-safe + reduced-motion ─────────────────────
+   Before mount (prerender / no-JS) OR reduced motion → render plain & visible.
+   After mount → rise y:16→0 + fade, ~0.4s ease-out. */
+function Reveal({ as = "div", children, className = "", style, delay = 0, y = 16, amount = 0.4, once = true }) {
+  const reduce = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted || reduce) {
+    const Tag = as;
+    return <Tag className={className} style={style}>{children}</Tag>;
+  }
+  const M = motion[as] || motion.div;
+  return (
+    <M
+      className={className}
+      style={style}
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once, amount }}
+      transition={{ duration: 0.4, ease: EASE, delay }}
+    >
+      {children}
+    </M>
+  );
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; font-size: 16px; }
-body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-weight: 400; line-height: 1.65; -webkit-font-smoothing: antialiased; }
 
-@keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes float1 { 0%,100% { transform: translateY(0px) rotate(-2deg); } 50% { transform: translateY(-12px) rotate(-2deg); } }
-@keyframes float2 { 0%,100% { transform: translateY(0px) rotate(2.5deg); } 50% { transform: translateY(10px) rotate(2.5deg); } }
-@keyframes float3 { 0%,100% { transform: translateY(0px) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(-1deg); } }
-@keyframes float4 { 0%,100% { transform: translateY(0px) rotate(1.5deg); } 50% { transform: translateY(9px) rotate(1.5deg); } }
-@keyframes scaleIn { from { opacity:0; transform:scale(0.92); } to { opacity:1; transform:scale(1); } }
+/* ── Tier-3 signature line reveal — slowest on the page (§2, §9) ──────────
+   Each child line lands as its own beat. Reduced motion → instant. */
+function LineReveal({ children, className = "", style, delay = 0, amount = 0.6 }) {
+  const reduce = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-.lp-reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
-.lp-reveal.visible { opacity: 1; transform: translateY(0); }
-
-/* ── BAR ── */
-.lp-bar { background: var(--navy); padding: 0 5%; }
-.lp-bar-inner { max-width: 1200px; margin: 0 auto; height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.lp-bar-left { display: flex; align-items: center; gap: 12px; }
-.lp-bar-badge { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; background: var(--red); color: #fff; padding: 3px 8px; border-radius: 3px; }
-.lp-bar-text { font-size: 13px; font-weight: 300; color: rgba(250,250,248,0.7); }
-.lp-bar-right { display: flex; align-items: center; gap: 16px; }
-.lp-bar-cta { font-size: 12.5px; font-weight: 500; color: #fff; text-decoration: none; background: var(--red); padding: 7px 16px; border-radius: 3px; transition: background 0.2s; display: inline-block; }
-.lp-bar-cta:hover { background: var(--red-dark); }
-.lp-bar-close { background: none; border: none; color: rgba(250,250,248,0.35); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; transition: color 0.2s; }
-.lp-bar-close:hover { color: rgba(250,250,248,0.7); }
-
-/* ── HEADER ── */
-.lp-header { position: sticky; top: 0; z-index: 100; background: rgba(250,250,248,0.93); backdrop-filter: blur(12px); border-bottom: 0.5px solid var(--border); padding: 0 5%; }
-.lp-header-inner { max-width: 1200px; margin: 0 auto; height: 64px; display: flex; align-items: center; justify-content: space-between; }
-.lp-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.lp-logo-events { font-family: var(--font-body); font-size: 12px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; margin-left: 2px; }
-.lp-nav { display: flex; align-items: center; gap: 24px; }
-.lp-nav a { font-size: 13.5px; font-weight: 400; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
-.lp-nav a:hover { color: var(--text); }
-.lp-nav-links { display: flex; gap: 28px; }
-.btn-login { font-size: 13.5px; font-weight: 400; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
-.btn-login:hover { color: var(--text); }
-.lp-header-right { display: flex; align-items: center; gap: 20px; }
-.invite-only-hint { font-size: 10.5px; color: var(--text-light); letter-spacing: 0.04em; text-align: right; margin-top: 4px; }
-.lp-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; color: var(--text); }
-.lp-mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99; background: var(--bg); flex-direction: column; padding: 80px 5% 40px; gap: 0; }
-.lp-mobile-menu.open { display: flex; }
-.lp-mobile-menu a, .lp-mobile-menu button { font-size: 22px; font-weight: 300; color: var(--text); text-decoration: none; background: none; border: none; cursor: pointer; text-align: left; padding: 16px 0; border-bottom: 0.5px solid var(--border); font-family: var(--font-body); }
-.lp-mobile-menu .mobile-login { font-size: 14px; color: var(--text-muted); margin-top: 24px; border-bottom: none; padding: 8px 0; }
-.lp-mobile-menu .mobile-invite-hint { font-size: 11px; color: var(--text-light); margin-top: 4px; border-bottom: none; padding: 0; }
-.lp-mobile-close { position: absolute; top: 20px; right: 5%; background: none; border: none; font-size: 26px; color: var(--text-muted); cursor: pointer; }
-.btn-primary { background: var(--red); color: #fff; border: none; padding: 9px 20px; border-radius: 4px; font-family: var(--font-body); font-size: 13.5px; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s, transform 0.15s; }
-.btn-primary:hover { background: var(--red-dark); transform: translateY(-1px); }
-.btn-ghost { background: transparent; color: var(--text); border: 0.5px solid var(--border-strong); padding: 9px 20px; border-radius: 4px; font-family: var(--font-body); font-size: 13.5px; font-weight: 400; cursor: pointer; text-decoration: none; display: inline-block; transition: border-color 0.2s, background 0.2s; }
-.btn-ghost:hover { border-color: var(--text); background: var(--bg-warm); }
-
-/* ── HERO ── */
-.lp-hero-section { position: relative; overflow: hidden; }
-.lp-hero-section::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(26,25,23,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(26,25,23,0.035) 1px, transparent 1px); background-size: 48px 48px; pointer-events: none; z-index: 0; }
-.lp-hero { padding: 90px 5% 72px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
-.hero-grid { display: grid; grid-template-columns: 52% 48%; gap: 48px; align-items: center; margin-bottom: 56px; }
-.hero-eyebrow { font-size: 11.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-bottom: 28px; animation: fadeUp 0.8s ease both; }
-.lp-hero h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(44px, 6.5vw, 80px); line-height: 1.06; letter-spacing: -0.01em; color: var(--text); margin-bottom: 28px; animation: fadeUp 0.8s 0.1s ease both; }
-.lp-hero h1 em { font-style: italic; color: var(--red); }
-.hero-sub { font-size: 18px; font-weight: 300; color: var(--text-muted); max-width: 520px; line-height: 1.75; margin-bottom: 40px; animation: fadeUp 0.8s 0.2s ease both; }
-.hero-ctas { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; animation: fadeUp 0.8s 0.3s ease both; }
-.hero-right { position: relative; height: 420px; animation: fadeIn 1s 0.4s ease both; }
-.doc-card { position: absolute; background: #fff; border-radius: 10px; padding: 18px 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06); min-width: 190px; border: 0.5px solid var(--border); }
-.doc-card-bar { height: 4px; border-radius: 2px; margin-bottom: 14px; width: 36px; }
-.doc-card-bar--red { background: #BC1723; }
-.doc-card-bar--green { background: #22c55e; }
-.doc-card-bar--blue { background: #3b82f6; }
-.doc-card-bar--amber { background: #f59e0b; }
-.doc-card-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); margin-bottom: 4px; }
-.doc-card-sub { font-size: 12px; font-weight: 300; color: var(--text-muted); margin-bottom: 14px; }
-.doc-lines { display: flex; flex-direction: column; gap: 6px; }
-.doc-lines span { height: 7px; border-radius: 4px; background: var(--bg-warm); display: block; }
-.doc-lines span:nth-child(1) { width: 80%; }
-.doc-lines span:nth-child(2) { width: 60%; }
-.doc-lines span:nth-child(3) { width: 70%; }
-.doc-card-1 { top: 16px; left: 8px; animation: float1 4s ease-in-out infinite; }
-.doc-card-2 { top: 0; right: 0; animation: float2 4.5s ease-in-out infinite; }
-.doc-card-3 { bottom: 90px; left: 40px; animation: float3 4.2s ease-in-out infinite; }
-.doc-card-4 { bottom: 60px; right: 20px; animation: float4 3.8s ease-in-out infinite; }
-.hero-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding-top: 32px; border-top: 0.5px solid var(--border); }
-.hero-pills { display: flex; align-items: center; }
-.hero-pill { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); padding: 0 20px; border-right: 0.5px solid var(--border); white-space: nowrap; animation: fadeIn 1s 0.6s ease both; }
-.hero-pill:first-child { padding-left: 0; }
-.hero-pill:last-child { border-right: none; }
-.hero-pill strong { font-family: var(--font-display); font-size: 18px; font-weight: 400; color: var(--red); }
-.hero-tagline { font-size: 11.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-light); animation: fadeIn 1s 0.5s ease both; }
-.hero-bg-text { position: absolute; right: -20px; top: 40px; font-family: var(--font-display); font-size: clamp(120px, 18vw, 220px); font-weight: 300; color: rgba(188,23,35,0.04); line-height: 1; pointer-events: none; user-select: none; letter-spacing: -0.04em; z-index: 0; }
-
-/* ── SECTION SHARED ── */
-.section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-light); margin-bottom: 20px; }
-
-/* ── TRUTH ── */
-.lp-truth { padding: 96px 5%; background: var(--bg); }
-.lp-truth-inner { max-width: 1200px; margin: 0 auto; }
-.lp-truth h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(30px, 4vw, 50px); line-height: 1.15; max-width: 720px; margin-bottom: 64px; }
-.truth-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: var(--border); border: 0.5px solid var(--border); }
-.truth-card { background: var(--bg); padding: 40px 36px; transition: background 0.25s; }
-.truth-card:hover { background: var(--bg-warm); }
-.truth-number { font-family: var(--font-display); font-size: 52px; font-weight: 300; color: rgba(188,23,35,0.15); line-height: 1; margin-bottom: 20px; display: block; }
-.truth-card h3 { font-family: var(--font-body); font-size: 18px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--text); margin-bottom: 14px; line-height: 1.2; }
-.truth-card p { font-family: var(--font-display); font-size: 17px; font-weight: 400; line-height: 1.55; color: var(--text-muted); }
-
-/* ── COMPARISON ── */
-.lp-comparison { padding: 0 5% 0; }
-.lp-comparison-inner { max-width: 1200px; margin: 0 auto; background: var(--navy); border-radius: 10px; overflow: hidden; }
-.comparison-top { padding: 56px 64px 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: end; border-bottom: 0.5px solid rgba(255,255,255,0.08); }
-.comparison-top h2 { font-family: var(--font-display); font-size: clamp(28px, 3.2vw, 42px); font-weight: 400; line-height: 1.15; color: rgba(250,250,248,0.95); }
-.comparison-top h2 em { font-style: italic; color: var(--red); display: block; }
-.comparison-top p { font-size: 15px; font-weight: 300; color: rgba(250,250,248,0.5); line-height: 1.75; }
-.comparison-table { width: 100%; }
-.comparison-table-head { display: grid; grid-template-columns: 1fr 32px 1fr; padding: 16px 64px; border-bottom: 0.5px solid rgba(255,255,255,0.08); }
-.comparison-table-head span { font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
-.col-head-before { color: rgba(250,250,248,0.25); }
-.col-head-after { color: #4ade80; }
-.comparison-row-item { display: grid; grid-template-columns: 1fr 32px 1fr; padding: 14px 64px; border-bottom: 0.5px solid rgba(255,255,255,0.05); transition: background 0.2s; }
-.comparison-row-item:last-child { border-bottom: none; }
-.comparison-row-item:hover { background: rgba(255,255,255,0.03); }
-.col-before { font-size: 14px; font-weight: 300; color: rgba(250,250,248,0.25); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.15); padding-right: 16px; display: flex; align-items: center; }
-.col-arrow { display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.15); font-size: 13px; }
-.col-after { font-size: 14px; font-weight: 500; color: #4ade80; padding-left: 16px; display: flex; align-items: center; }
-
-/* ── SHIFT ── */
-.lp-shift { padding: 96px 5%; background: var(--text); color: var(--bg); overflow: hidden; position: relative; }
-.lp-shift-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-.shift-label { font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(250,250,248,0.4); margin-bottom: 24px; }
-.lp-shift h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(38px, 5vw, 64px); line-height: 1.1; color: var(--bg); margin-bottom: 32px; }
-.lp-shift h2 em { font-style: italic; color: var(--red); }
-.shift-body p { font-size: 16px; font-weight: 300; line-height: 1.8; color: rgba(250,250,248,0.7); margin-bottom: 20px; }
-.shift-body p strong { color: var(--bg); font-weight: 400; }
-.shift-accent { position: absolute; right: 0; bottom: 0; font-family: var(--font-display); font-size: clamp(80px, 14vw, 180px); font-weight: 300; color: rgba(250,250,248,0.03); line-height: 1; pointer-events: none; user-select: none; }
-
-/* ── CAPABILITIES ── */
-.lp-capabilities { padding: 96px 5%; background: var(--bg); }
-.lp-capabilities-inner { max-width: 1200px; margin: 0 auto; }
-.capabilities-header { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 72px; align-items: end; }
-.lp-capabilities h2 { font-family: var(--font-display); font-size: clamp(34px, 4.5vw, 56px); font-weight: 400; line-height: 1.1; }
-.lp-capabilities h2 em { font-style: italic; color: var(--red); }
-.capabilities-intro { font-size: 16px; font-weight: 300; color: var(--text-muted); line-height: 1.7; }
-.capabilities-intro strong { color: var(--text); font-weight: 500; }
-.cap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 0.5px solid var(--border); }
-.cap-card { background: var(--bg); padding: 48px 40px 44px; transition: background 0.25s; }
-.cap-card:hover { background: var(--bg-warm); }
-.cap-number { font-family: var(--font-display); font-size: 72px; font-weight: 300; color: rgba(188,23,35,0.10); line-height: 1; margin-bottom: 12px; display: block; letter-spacing: -0.03em; }
-.cap-card h3 { font-family: var(--font-display); font-size: 26px; font-weight: 500; color: var(--text); margin-bottom: 12px; line-height: 1.15; }
-.cap-card p { font-size: 14.5px; font-weight: 300; color: var(--text-muted); line-height: 1.65; }
-
-/* ── FOR YOU ── */
-.lp-for-you { padding: 96px 5%; background: var(--bg-warm); border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); }
-.lp-for-you-inner { max-width: 900px; margin: 0 auto; text-align: center; }
-.lp-for-you h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(34px, 5vw, 60px); line-height: 1.12; margin-bottom: 28px; }
-.lp-for-you h2 em { font-style: italic; color: var(--red); }
-.for-you-sub { font-size: 17px; font-weight: 300; color: var(--text-muted); line-height: 1.75; max-width: 680px; margin: 0 auto 48px; }
-.for-you-pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.pill { border: 0.5px solid var(--border-strong); padding: 8px 18px; border-radius: 100px; font-size: 13.5px; font-weight: 400; color: var(--text-muted); background: var(--bg); }
-
-/* ── CREDIBILITY ── */
-.lp-credibility { padding: 96px 5%; background: var(--bg); }
-.lp-credibility-inner { max-width: 1200px; margin: 0 auto; }
-.credibility-header { margin-bottom: 64px; }
-.lp-credibility h2 { font-family: var(--font-display); font-size: clamp(30px, 4vw, 48px); font-weight: 400; max-width: 680px; line-height: 1.15; margin-bottom: 16px; }
-.credibility-sub { font-size: 15px; font-weight: 300; color: var(--text-muted); max-width: 560px; }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--border); border: 0.5px solid var(--border); margin-bottom: 60px; }
-.stat-block { background: var(--bg); padding: 36px 32px; }
-.stat-num { font-family: var(--font-display); font-size: 42px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 8px; display: block; }
-.stat-num span { color: var(--red); }
-.stat-label { font-size: 13px; font-weight: 400; color: var(--text-muted); line-height: 1.45; }
-.credibility-statement { display: grid; grid-template-columns: 1fr 2fr; gap: 60px; padding-top: 60px; border-top: 0.5px solid var(--border); align-items: center; }
-.credibility-quote { font-family: var(--font-display); font-size: clamp(22px, 2.8vw, 34px); font-weight: 400; font-style: italic; line-height: 1.3; color: var(--text); }
-.credibility-points { display: flex; flex-direction: column; gap: 20px; }
-.credibility-point { padding-left: 20px; border-left: 1.5px solid var(--red); }
-.credibility-point strong { display: block; font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-.credibility-point span { font-size: 13.5px; font-weight: 300; color: var(--text-muted); line-height: 1.6; }
-
-/* ── PRICING ── */
-.lp-pricing { padding: 96px 5%; background: var(--text); color: var(--bg); }
-.lp-pricing-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-.pricing-label { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(250,250,248,0.35); margin-bottom: 20px; }
-.lp-pricing h2 { font-family: var(--font-display); font-size: clamp(34px, 4.5vw, 56px); font-weight: 400; line-height: 1.1; color: var(--bg); margin-bottom: 20px; }
-.lp-pricing h2 em { font-style: italic; color: var(--red); }
-.pricing-desc { font-size: 16px; font-weight: 300; color: rgba(250,250,248,0.65); line-height: 1.75; margin-bottom: 36px; }
-.pricing-model { display: flex; flex-direction: column; gap: 16px; }
-.pricing-item { display: flex; align-items: flex-start; gap: 14px; padding: 18px 22px; border: 0.5px solid rgba(250,250,248,0.12); border-radius: 4px; transition: border-color 0.2s, background 0.2s; }
-.pricing-item:hover { border-color: rgba(250,250,248,0.25); background: rgba(250,250,248,0.04); }
-.pricing-item-icon { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; margin-top: 5px; }
-.pricing-item-text { font-size: 14px; font-weight: 300; color: rgba(250,250,248,0.8); line-height: 1.6; }
-.pricing-item-text strong { color: var(--bg); font-weight: 500; }
-.pricing-cta-box { display: flex; flex-direction: column; gap: 24px; padding: 48px; border: 0.5px solid rgba(250,250,248,0.12); border-radius: 4px; background: rgba(250,250,248,0.03); }
-.pricing-cta-eyebrow { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--red); }
-.pricing-cta-box h3 { font-family: var(--font-display); font-size: 36px; font-weight: 400; color: var(--bg); line-height: 1.2; }
-.pricing-cta-box p { font-size: 14px; font-weight: 300; color: rgba(250,250,248,0.55); line-height: 1.65; }
-.btn-red-outline { border: 1px solid var(--red); color: var(--red); background: transparent; padding: 12px 24px; border-radius: 4px; font-family: var(--font-body); font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s, color 0.2s; align-self: flex-start; }
-.btn-red-outline:hover { background: var(--red); color: #fff; }
-
-/* ── FOOTER ── */
-.lp-footer { padding: 52px 5% 36px; border-top: 0.5px solid var(--border); background: var(--bg); }
-.lp-footer-inner { max-width: 1200px; margin: 0 auto; }
-.footer-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 40px; margin-bottom: 48px; }
-.footer-brand { display: flex; flex-direction: column; gap: 8px; max-width: 280px; }
-.footer-tagline { font-size: 12px; font-weight: 300; color: var(--text-light); line-height: 1.6; margin-top: 4px; }
-.footer-cols { display: flex; gap: 64px; }
-.footer-col h4 { font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; }
-.footer-col a { display: block; font-size: 13px; font-weight: 300; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: color 0.2s; }
-.footer-col a:hover { color: var(--text); }
-.footer-bottom { border-top: 0.5px solid var(--border); padding-top: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.footer-bottom-left { font-size: 12px; color: var(--text-light); }
-.footer-bottom-right { display: flex; gap: 24px; }
-.footer-bottom-right a { font-size: 12px; color: var(--text-light); text-decoration: none; transition: color 0.2s; }
-.footer-bottom-right a:hover { color: var(--text-muted); }
-
-@media (max-width: 900px) {
-  .lp-nav-links { display: none !important; }
-  .lp-hamburger { display: block; }
-  .lp-header-right { gap: 12px; }
-  .btn-login { display: none; }
-  .btn-primary { display: none; }
-  .invite-only-hint { display: none; }
-  .hero-grid { grid-template-columns: 1fr; }
-  .hero-right { display: none; }
-  .lp-shift-inner { grid-template-columns: 1fr; gap: 40px; }
-  .comparison-top { grid-template-columns: 1fr; gap: 24px; padding: 40px 32px 28px; }
-  .comparison-table-head { padding: 14px 32px; }
-  .comparison-row-item { padding: 14px 32px; }
-  .capabilities-header { grid-template-columns: 1fr; gap: 24px; }
-  .cap-grid { grid-template-columns: repeat(2, 1fr); }
-  .lp-pricing-inner { grid-template-columns: 1fr; gap: 48px; }
-  .credibility-statement { grid-template-columns: 1fr; gap: 32px; }
-  .footer-top { flex-direction: column; }
-  .footer-cols { gap: 40px; }
+  if (!mounted || reduce) {
+    return <div className={className} style={style}>{children}</div>;
+  }
+  return (
+    <motion.div
+      className={className}
+      style={style}
+      initial={{ opacity: 0, y: 22 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount }}
+      transition={{ duration: 0.9, ease: EASE, delay }}
+    >
+      {children}
+    </motion.div>
+  );
 }
-@media (max-width: 600px) {
-  .lp-hero { padding: 64px 5% 48px; }
-  .cap-grid { grid-template-columns: 1fr; }
-  .truth-grid { grid-template-columns: 1fr; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .hero-bg-text { display: none; }
-  .shift-accent { display: none; }
-  .pricing-cta-box { padding: 28px; }
-  .for-you-pills { flex-direction: column; align-items: center; }
-  .hero-pills { display: none; }
-  .lp-bar-text { display: none; }
-  .comparison-table-head { display: none; }
-  .comparison-row-item { grid-template-columns: 1fr; gap: 4px; padding: 14px 24px; }
-  .col-arrow { display: none; }
-  .col-before { font-size: 12px; }
-  .col-after { padding-left: 0; font-size: 13px; }
-  .footer-cols { flex-direction: column; gap: 28px; }
-  .footer-bottom { flex-direction: column; align-items: flex-start; }
-  .btn-demo { display: none; }
+
+/* ── Request-access modal ────────────────────────────────────────────────
+   Radix Dialog. No <form> — onClick submit. Inserts into early_access
+   (status defaults to 'pending'); the admin triages in EarlyAccess.jsx.
+   NOTE: needs an anon INSERT RLS policy on the table to succeed live —
+   until then this degrades to an honest error, never a fake success. */
+function RequestAccessModal({ open, onOpenChange }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [company, setCompany] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | loading | error | done
+  const [err, setErr] = useState("");
+
+  // Reset when the dialog closes so a re-open is clean.
+  useEffect(() => {
+    if (!open) {
+      const t = setTimeout(() => {
+        setName(""); setEmail(""); setPhone(""); setCompany("");
+        setStatus("idle"); setErr("");
+      }, 200);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
+  async function submit() {
+    const e = email.trim();
+    if (!e || !/.+@.+\..+/.test(e)) { setErr("Please enter a valid email address."); return; }
+    setStatus("loading"); setErr("");
+    const { error } = await supabase.from("early_access").insert({
+      full_name: name.trim() || null,
+      email: e,
+      phone: phone.trim() || null,
+      company: company.trim() || null,
+    });
+    if (error) {
+      setStatus("error");
+      setErr("Couldn’t submit just now. Email hello@myoozz.events and we’ll sort it.");
+      return;
+    }
+    setStatus("done");
+  }
+
+  const onKey = (ev) => { if (ev.key === "Enter") submit(); };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="lp-v2-modal-overlay" />
+        <Dialog.Content className="lp-v2-modal" aria-describedby="ra-desc">
+          {status === "done" ? (
+            <div className="lp-v2-modal-done">
+              <Dialog.Title className="lp-v2-modal-title">You’re on the list.</Dialog.Title>
+              <p id="ra-desc" className="lp-v2-modal-sub">
+                We’re letting Event Managers in a few at a time. We’ll reach out personally — keep an eye on your inbox.
+              </p>
+              <Dialog.Close asChild>
+                <button className="lp-v2-btn-primary" type="button">Done</button>
+              </Dialog.Close>
+            </div>
+          ) : (
+            <>
+              <Dialog.Title className="lp-v2-modal-title">Request access</Dialog.Title>
+              <p id="ra-desc" className="lp-v2-modal-sub">
+                Tell us where to reach you. We onboard a few Event Managers at a time.
+              </p>
+              <div className="lp-v2-field">
+                <label htmlFor="ra-name">Your name</label>
+                <input id="ra-name" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={onKey} autoComplete="name" />
+              </div>
+              <div className="lp-v2-field">
+                <label htmlFor="ra-email">Email <span className="req">*</span></label>
+                <input id="ra-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={onKey} autoComplete="email" />
+              </div>
+              <div className="lp-v2-field-row">
+                <div className="lp-v2-field">
+                  <label htmlFor="ra-phone">Phone</label>
+                  <input id="ra-phone" value={phone} onChange={(e) => setPhone(e.target.value)} onKeyDown={onKey} autoComplete="tel" />
+                </div>
+                <div className="lp-v2-field">
+                  <label htmlFor="ra-company">Company</label>
+                  <input id="ra-company" value={company} onChange={(e) => setCompany(e.target.value)} onKeyDown={onKey} autoComplete="organization" />
+                </div>
+              </div>
+              {err && <p className="lp-v2-modal-err">{err}</p>}
+              <div className="lp-v2-modal-actions">
+                <Dialog.Close asChild>
+                  <button className="lp-v2-link" type="button">Not now</button>
+                </Dialog.Close>
+                <button className="lp-v2-btn-primary" type="button" onClick={submit} disabled={status === "loading"}>
+                  {status === "loading" ? "Submitting…" : "Request access"}
+                </button>
+              </div>
+            </>
+          )}
+          <Dialog.Close asChild>
+            <button className="lp-v2-modal-x" type="button" aria-label="Close">×</button>
+          </Dialog.Close>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
 }
-`;
 
 export default function LandingPage() {
-  const [barVisible, setBarVisible] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const reduce = useReducedMotion();
+  const [modalOpen, setModalOpen] = useState(false);
 
+  // Hero H1 micro-parallax — desktop + motion-on only; transform-only (GPU).
+  const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
-    const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;700&family=Poppins:wght@700&display=swap";
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const delay = parseInt(entry.target.dataset.delay || "0", 10);
-            setTimeout(() => entry.target.classList.add("visible"), 60 * delay);
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
-    );
-    document.querySelectorAll(".lp-reveal").forEach((el) => {
-      const siblings = Array.from(el.parentElement.querySelectorAll(".lp-reveal"));
-      el.dataset.delay = siblings.indexOf(el);
-      observer.observe(el);
-    });
-
-    const handleAnchorClick = (e) => {
-      const href = e.currentTarget.getAttribute("href");
-      if (href && href.startsWith("#")) {
-        const target = document.querySelector(href);
-        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: "smooth", block: "start" }); }
-      }
-    };
-    const anchors = document.querySelectorAll('a[href^="#"]');
-    anchors.forEach((a) => a.addEventListener("click", handleAnchorClick));
-
-    return () => {
-      observer.disconnect();
-      anchors.forEach((a) => a.removeEventListener("click", handleAnchorClick));
-    };
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const on = () => setIsDesktop(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
   }, []);
+  const { scrollY } = useScroll();
+  const heroDrift = useTransform(scrollY, [0, 400], [0, -18]);
+  const parallaxOn = isDesktop && !reduce;
 
-  const comparisons = [
-    ["3 hours to format a proposal", "20 minutes, done"],
-    ["Vendor contacts in 12 WhatsApps", "Vendor sheet, one click"],
-    ["Tasks living in your head", "Everyone assigned, deadlines set"],
-    ["Every cost guessed, never tracked", "Every cost tracked, live"],
-    ["Seven files for one event", "Eight documents, one system"],
+  const openModal = () => setModalOpen(true);
+
+  const traps = [
+    ["01", "The rate trap", "The vendor’s rate moved. The client cost is closed. That gap just became yours."],
+    ["02", "The template trap", "A template gets you through one event. A system gets you through every one after it."],
+    ["03", "The memory trap", "Your team can’t execute what only lives in your head. And the day that person leaves — it all leaves with them."],
+    ["04", "The WhatsApp trap", "One event, fourteen threads. Nobody’s sure what’s confirmed, what changed, or what got missed."],
   ];
 
   return (
-    <>
-      <style>{css}</style>
+    <div className="lp-v2">
+      <style>{CSS}</style>
 
-      {/* ANNOUNCEMENT BAR */}
-      {barVisible && (
-        <div className="lp-bar">
-          <div className="lp-bar-inner">
-            <div className="lp-bar-left">
-              <span className="lp-bar-badge">FREE BETA</span>
-              <span className="lp-bar-text">Early adopters get personal onboarding. No billing. No commitment.</span>
-            </div>
-            <div className="lp-bar-right">
-              <button className="lp-bar-cta" style={{ border: "none", cursor: "pointer" }} onClick={() => window.location.href = '/login'}>Request access →</button>
-              <button className="lp-bar-close" onClick={() => setBarVisible(false)} aria-label="Dismiss">×</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <RequestAccessModal open={modalOpen} onOpenChange={setModalOpen} />
 
-      {/* HEADER */}
-      <header className="lp-header">
-        <div className="lp-header-inner">
-          <a href="https://myoozz.events" className="lp-logo">
-            <img src="/logo-me-events.svg" alt="Me Events" height="36" />
+      {/* ── SLIM HEADER ─────────────────────────────────────────────── */}
+      <header className="lp-v2-header">
+        <div className="lp-v2-header-inner">
+          <a href="/" className="lp-v2-brand" aria-label="Me — home">
+            <MeMark size={24} tone="teal" />
           </a>
-          <nav className="lp-nav">
-            <div className="lp-nav-links">
-              <a href="#capabilities">Features</a>
-              <a href="#credibility">Why ME</a>
-              <a href="#pricing">Pricing</a>
-              <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer">Try demo</a>
-            </div>
-            <div className="lp-header-right">
-              <a href="/app" className="btn-login">Login</a>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                <button className="btn-primary" onClick={() => window.location.href = '/login'}>Get access →</button>
-                <span className="invite-only-hint">Registration open · approval required</span>
-              </div>
-              <button className="lp-hamburger" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
-                <svg width="22" height="16" viewBox="0 0 22 16" fill="none"><rect y="0" width="22" height="1.5" rx="1" fill="currentColor"/><rect y="7" width="22" height="1.5" rx="1" fill="currentColor"/><rect y="14" width="22" height="1.5" rx="1" fill="currentColor"/></svg>
-              </button>
-            </div>
+          <nav className="lp-v2-header-nav">
+            <a className="lp-v2-link lp-v2-hide-phone" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Try the demo</a>
+            <a className="lp-v2-link lp-v2-hide-phone" href="/login">Login</a>
+            <button className="lp-v2-btn-primary lp-v2-btn-sm" type="button" onClick={openModal}>Request access</button>
           </nav>
         </div>
       </header>
 
-      {/* MOBILE MENU */}
-      <div className={`lp-mobile-menu${mobileMenuOpen ? " open" : ""}`}>
-        <button className="lp-mobile-close" onClick={() => setMobileMenuOpen(false)}>×</button>
-        <a href="#capabilities" onClick={() => setMobileMenuOpen(false)}>Features</a>
-        <a href="#credibility" onClick={() => setMobileMenuOpen(false)}>Why ME</a>
-        <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
-        <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)}>Try demo ↗</a>
-        <button onClick={() => { setMobileMenuOpen(false); window.location.href = '/login'; }}>Get access →</button>
-        <a href="/app" className="mobile-login">Already have access? Login →</a>
-        <span className="mobile-invite-hint">Registration is by invite only</span>
-      </div>
+      <main>
+        {/* ── §1 HERO ───────────────────────────────────────────────── */}
+        <section className="lp-v2-hero">
+          <div className="lp-v2-inner lp-v2-hero-inner">
+            <Reveal as="p" className="lp-v2-eyebrow" delay={0}>
+              Event management software, built for Event Managers. Not the attendee.
+            </Reveal>
 
-      {/* HERO */}
-      <section className="lp-hero-section">
-        <div className="lp-hero">
-          <div className="hero-grid">
-            <div className="hero-left">
-              <div className="hero-eyebrow">Myoozz Events — Events Operating System</div>
-              <h1>
-                Stop running<br />
-                your <em>events.</em><br />
-                Start running<br />
-                your <em>business.</em>
-              </h1>
-              <p className="hero-sub">ME is your events operating system — your process, structured. Your team, accountable. Your business, visible.</p>
-              <div className="hero-ctas">
-                <button className="btn-primary" onClick={() => window.location.href = '/login'}>Get access →</button>
-                <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer" className="btn-ghost">Try demo ↗</a>
-              </div>
-            </div>
-            <div className="hero-right">
-              <div className="doc-card doc-card-1">
-                <div className="doc-card-bar doc-card-bar--red" />
-                <div className="doc-card-label">Proposal</div>
-                <div className="doc-card-sub">City-wise · Branded</div>
-                <div className="doc-lines"><span /><span /><span /></div>
-              </div>
-              <div className="doc-card doc-card-2">
-                <div className="doc-card-bar doc-card-bar--green" />
-                <div className="doc-card-label">Element Master</div>
-                <div className="doc-card-sub">All scope · City-wise</div>
-                <div className="doc-lines"><span /><span /></div>
-              </div>
-              <div className="doc-card doc-card-3">
-                <div className="doc-card-bar doc-card-bar--blue" />
-                <div className="doc-card-label">Cue Sheet</div>
-                <div className="doc-card-sub">Named screens · Multi-city</div>
-                <div className="doc-lines"><span /><span /><span /></div>
-              </div>
-              <div className="doc-card doc-card-4">
-                <div className="doc-card-bar doc-card-bar--amber" />
-                <div className="doc-card-label">Task Sheet</div>
-                <div className="doc-card-sub">Who · What · Deadline</div>
-                <div className="doc-lines"><span /><span /></div>
-              </div>
-            </div>
-          </div>
-          <div className="hero-bottom">
-            <div className="hero-pills">
-              <div className="hero-pill"><strong>100+</strong>&nbsp;years expertise</div>
-              <div className="hero-pill"><strong>21</strong>&nbsp;categories</div>
-              <div className="hero-pill"><strong>8</strong>&nbsp;documents</div>
-              <div className="hero-pill"><strong>0</strong>&nbsp;logins for staff</div>
-            </div>
-            <div className="hero-tagline">Born in India &nbsp;·&nbsp; Built for the world</div>
-          </div>
-        </div>
-        <div className="hero-bg-text">ME</div>
-      </section>
+            <h1 className="lp-v2-hero-h1">
+              {parallaxOn ? (
+                <motion.span className="lp-v2-hero-h1-wrap" style={{ y: heroDrift }}>
+                  <Reveal as="span" className="lp-v2-hero-line" delay={0.12}>Sweat in the planning.</Reveal>
+                  <Reveal as="span" className="lp-v2-hero-line" delay={0.34}>Don’t bleed on the day.</Reveal>
+                </motion.span>
+              ) : (
+                <span className="lp-v2-hero-h1-wrap">
+                  <Reveal as="span" className="lp-v2-hero-line" delay={0.12}>Sweat in the planning.</Reveal>
+                  <Reveal as="span" className="lp-v2-hero-line" delay={0.34}>Don’t bleed on the day.</Reveal>
+                </span>
+              )}
+            </h1>
 
-      {/* TRUTH */}
-      <section className="lp-truth">
-        <div className="lp-truth-inner">
-          <div className="section-label lp-reveal">The real cost of running events without a system</div>
-          <h2 className="lp-reveal">You didn't lose that margin in a bad decision.<br />You lost it in a Tuesday WhatsApp thread.</h2>
-          <div className="truth-grid">
-            {[
-              ["01","THE RATE TRAP","The vendor's rate changed. The client cost is closed. That gap is yours now."],
-              ["02","THE TEMPLATE RITUAL","A template gets you through one event. ME gets you through every event after that."],
-              ["03","THE OPS DEPENDENCY","Your team can't execute what only lives in your head. And when that person leaves — everything leaves."],
-              ["04","THE WHATSAPP LAYER","Your event plan is scattered across 14 threads. No one knows what's confirmed, what's changed, what's been missed."],
-            ].map(([num, title, body]) => (
-              <div className="truth-card lp-reveal" key={num}>
-                <span className="truth-number">{num}</span>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            <Reveal as="p" className="lp-v2-hero-sub" delay={0.5}>
+              The operating system for the people running the show.
+            </Reveal>
 
-      {/* COMPARISON */}
-      <div style={{ padding: "0 5% 96px" }}>
-        <div className="lp-comparison-inner lp-reveal">
-          <div className="comparison-top">
-            <div>
-              <h2>Excel was built for accountants.<em>You've been borrowing it long enough.</em></h2>
-            </div>
-            <p>The event industry now has its own purpose-built system. Professionals who make the switch quote faster, win more, and execute cleaner.</p>
+            <Reveal className="lp-v2-hero-ctas" delay={0.62}>
+              <button className="lp-v2-btn-primary" type="button" onClick={openModal}>Request access →</button>
+              <a className="lp-v2-link lp-v2-link-strong" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Try the demo</a>
+            </Reveal>
           </div>
-          <div className="comparison-table">
-            <div className="comparison-table-head">
-              <span className="col-head-before">Before ME</span>
-              <span></span>
-              <span className="col-head-after">With ME</span>
-            </div>
-            {comparisons.map(([before, after]) => (
-              <div className="comparison-row-item" key={before}>
-                <span className="col-before">{before}</span>
-                <span className="col-arrow">→</span>
-                <span className="col-after">{after}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+        </section>
 
-      {/* SHIFT */}
-      <section className="lp-shift">
-        <div className="lp-shift-inner">
-          <div>
-            <div className="shift-label lp-reveal">The shift</div>
-            <h2 className="lp-reveal">ME makes <em>you</em><br />look beautiful.</h2>
+        {/* ── §2 MANIFESTO — Tier 3, full-bleed deep teal ───────────────── */}
+        <section className="lp-v2-manifesto">
+          <div className="lp-v2-inner lp-v2-manifesto-inner">
+            <LineReveal className="lp-v2-manifesto-line">The industry built its tools for the audience.</LineReveal>
+            <LineReveal className="lp-v2-manifesto-line" delay={0.08}>That era is ending.</LineReveal>
+            <LineReveal className="lp-v2-manifesto-line" delay={0.16}>Search changed. Commerce changed. How events get run is next.</LineReveal>
+            <LineReveal className="lp-v2-manifesto-line lp-v2-manifesto-final" delay={0.24}>
+              <MeMark size="1em" tone="soft" /> is that change.
+            </LineReveal>
           </div>
-          <div className="shift-body">
-            <p className="lp-reveal"><strong>Big-ticket clients judge you on what you show them, not what you know.</strong> Perception is formed at the proposal, the schedule, the cost sheet. By event day, the decision is already made.</p>
-            <p className="lp-reveal">Your process only works when you're in the room. <strong>ME works even when you're not.</strong></p>
-            <p className="lp-reveal">Stop being the person everything depends on. Start being the person who built the system everything runs on.</p>
-          </div>
-        </div>
-        <div className="shift-accent">System</div>
-      </section>
+        </section>
 
-      {/* CAPABILITIES */}
-      <section className="lp-capabilities" id="capabilities">
-        <div className="lp-capabilities-inner">
-          <div className="capabilities-header">
-            <div>
-              <div className="section-label lp-reveal">What ME does</div>
-              <h2 className="lp-reveal">Every event tool is built for your attendees.<br />ME is built for <em>you.</em></h2>
-            </div>
-            <p className="capabilities-intro lp-reveal">ME — Myoozz Events — is <strong>one system for everything</strong> your event business runs on. No stitching tools together. No switching between Excel and WhatsApp and email. One place. Every event.</p>
+        {/* ── §3 THE TRUTH — warm, editorial numbered list ─────────────── */}
+        <section className="lp-v2-truth">
+          <div className="lp-v2-inner">
+            <Reveal as="p" className="lp-v2-label">The real cost of running without a system</Reveal>
+            <Reveal as="h2" className="lp-v2-h2 lp-v2-truth-h2">
+              You didn’t lose that margin in a bad call. You lost it in a Tuesday WhatsApp thread.
+            </Reveal>
+            <ol className="lp-v2-trap-list">
+              {traps.map(([num, name, body], i) => (
+                <Reveal as="li" className="lp-v2-trap" key={num} delay={i * 0.08}>
+                  <span className="lp-v2-trap-num">{num}</span>
+                  <div className="lp-v2-trap-body">
+                    <h3 className="lp-v2-trap-name">{name}</h3>
+                    <p className="lp-v2-trap-text">{body}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </ol>
           </div>
-          <div className="cap-grid">
-            {[
-              ["01","Element Builder","Every item, every city, every cost — structured, not scattered. Your event scope lives in ME, not in someone's inbox."],
-              ["02","Task Engine","Assign one-to-one. Real accountability, not a WhatsApp thread. Deadlines, status, and ownership — all visible."],
-              ["03","Team Access","Your team works in ME. You see everything. Role-based access so each person sees exactly what they need to."],
-              ["04","Client Documents","Proposals, timelines, show flows — download and use. Every document your client expects, ready in your format."],
-              ["05","Cost Control","Your margins stay yours. Internal rates, confirmed costs, actuals — tracked separately from what the client sees."],
-              ["06","Activity Log","Nothing gets lost in time or in transition. Every change, every decision — timestamped and searchable."],
-            ].map(([num, title, body]) => (
-              <div className="cap-card lp-reveal" key={num}>
-                <span className="cap-number">{num}</span>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* FOR YOU */}
-      <section className="lp-for-you">
-        <div className="lp-for-you-inner">
-          <div className="section-label lp-reveal">Who ME is for</div>
-          <h2 className="lp-reveal">ME is for anyone who runs events<br />and wants to stop running them <em>from memory.</em></h2>
-          <p className="for-you-sub lp-reveal">We don't segment by agency size. We segment by operating mode. If you want to move from busy operator to smart operator — ME is yours.</p>
-          <div className="for-you-pills">
-            {["Agency owners","Independent planners","Ops professionals","Production managers","Corporate event teams","Experiential agencies"].map((label) => (
-              <span key={label} className="pill lp-reveal">{label}</span>
-            ))}
-          </div>
+        {/* ════ §4–§9 follow in commit 2/3 · §10–§12 next pass ════ */}
+        <div className="lp-v2-temp-end">
+          <span>§4–§12 in progress — landing V2 build</span>
         </div>
-      </section>
-
-      {/* CREDIBILITY */}
-      <section className="lp-credibility" id="credibility">
-        <div className="lp-credibility-inner">
-          <div className="credibility-header">
-            <div className="section-label lp-reveal">Why India · Why now</div>
-            <h2 className="lp-reveal">Built for the complexity others couldn't imagine building software for.</h2>
-            <p className="credibility-sub lp-reveal">India is the fastest-growing event software market in the world. And until now, there was no operating system built for the people running those events.</p>
-          </div>
-          <div className="stats-grid">
-            <div className="stat-block lp-reveal"><span className="stat-num">$32<span>B</span></span><span className="stat-label">India events market by 2035 — growing at 7.6% CAGR</span></div>
-            <div className="stat-block lp-reveal"><span className="stat-num">17.9<span>%</span></span><span className="stat-label">CAGR — India is the highest-growth event software market globally</span></div>
-            <div className="stat-block lp-reveal"><span className="stat-num">$1.5<span>B</span></span><span className="stat-label">India event software market by 2033 — from $319M today</span></div>
-            <div className="stat-block lp-reveal"><span className="stat-num">0</span><span className="stat-label">Direct competitors in the internal event operations category in India</span></div>
-          </div>
-          <div className="credibility-statement">
-            <div className="credibility-quote lp-reveal">"Your business runs. You just can't see it running."</div>
-            <div className="credibility-points">
-              <div className="credibility-point lp-reveal"><strong>Multi-city events. Multi-vendor ops.</strong><span>ME is built for the scale and complexity of Indian events — not adapted from a Western SaaS template.</span></div>
-              <div className="credibility-point lp-reveal"><strong>Category creation, not competition.</strong><span>Eventbrite, Cvent, Hopin — all attendee management tools. ME is the first system built for the people running the show.</span></div>
-              <div className="credibility-point lp-reveal"><strong>India-native. Globally ready.</strong><span>Born in Noida. Built for the event professional in Mumbai, Bangalore, Delhi, Dubai, and beyond.</span></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* PRICING */}
-      <section className="lp-pricing" id="pricing">
-        <div className="lp-pricing-inner">
-          <div>
-            <div className="pricing-label lp-reveal">How ME is priced</div>
-            <h2 className="lp-reveal">Simple credits.<br /><em>No surprises.</em></h2>
-            <p className="pricing-desc lp-reveal">No monthly ticking clock. No per-seat confusion. Event Credits — buy a pack, use when you need it. Your team grows, your events scale, your rate never changes.</p>
-            <div className="pricing-model">
-              <div className="pricing-item lp-reveal"><div className="pricing-item-icon" /><span className="pricing-item-text"><strong>Event Credits model</strong> — buy a pack, use when needed. Credits don't expire.</span></div>
-              <div className="pricing-item lp-reveal"><div className="pricing-item-icon" /><span className="pricing-item-text"><strong>No per-seat pricing.</strong> The event industry doesn't think in seats — neither does ME.</span></div>
-              <div className="pricing-item lp-reveal"><div className="pricing-item-icon" /><span className="pricing-item-text"><strong>Tiers:</strong> 5 / 10 / 20 events · Unlimited active for volume agencies.</span></div>
-              <div className="pricing-item lp-reveal"><div className="pricing-item-icon" /><span className="pricing-item-text"><strong>14–30 day trial.</strong> Full access. No credit card required to start.</span></div>
-            </div>
-          </div>
-          <div className="pricing-cta-box" id="get-access">
-            <span className="pricing-cta-eyebrow lp-reveal">Early Adopter Program</span>
-            <h3 className="lp-reveal">Lock your rate.<br />Forever.</h3>
-            <p className="lp-reveal">Early adopters get real pricing with a meaningful discount — locked in for life. As ME grows, your rate doesn't. Be among the first agencies to run on ME.</p>
-            <button className="btn-red-outline lp-reveal" onClick={() => window.location.href = '/login'}>Request access →</button>
-            <p style={{ fontSize: "12px", color: "rgba(250,250,248,0.3)", lineHeight: "1.5" }} className="lp-reveal">No commitment. We'll reach out personally within 24 hours.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="lp-footer">
-        <div className="lp-footer-inner">
-          <div className="footer-top">
-            <div className="footer-brand">
-              <a href="https://myoozz.events" className="lp-logo">
-                <img src="/logo-me-events.svg" alt="Me Events" height="28" />
-              </a>
-              <div className="footer-tagline">My Events. My System.<br />Born in India · Built for the world</div>
-            </div>
-            <div className="footer-cols">
-              <div className="footer-col">
-                <h4>Product</h4>
-                <a href="#capabilities">Features</a>
-                <a href="#pricing">Pricing</a>
-                <a href="https://demo.myoozz.events" target="_blank" rel="noopener noreferrer">Try Demo</a>
-              </div>
-              <div className="footer-col">
-                <h4>Company</h4>
-                <a href="#credibility">About ME</a>
-                <a href="mailto:hello@myoozz.events">Contact</a>
-                <a href="https://myoozzevents.com" target="_blank" rel="noopener noreferrer">myoozzevents.com</a>
-              </div>
-              <div className="footer-col">
-                <h4>Get Access</h4>
-                <a href="/login">Request Access</a>
-                <a href="mailto:hello@myoozz.events">hello@myoozz.events</a>
-              </div>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <div className="footer-bottom-left">© 2026 Myoozz Consulting Pvt. Ltd. &nbsp;·&nbsp; <a href="https://myoozz.events" style={{ color: "inherit", textDecoration: "none" }}>myoozz.events</a></div>
-            <div className="footer-bottom-right">
-              <a href="/privacy-policy">Privacy Policy</a>
-              <a href="/terms">Terms &amp; Conditions</a>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </>
+      </main>
+    </div>
   );
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   STYLES — co-located, all selectors fenced under .lp-v2
+   ════════════════════════════════════════════════════════════════════════ */
+const CSS = `
+/* ── Self-fence: own the type scale so app element defaults don't cascade ── */
+.lp-v2 {
+  background: var(--app-bg);
+  color: var(--app-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.lp-v2 *, .lp-v2 *::before, .lp-v2 *::after { box-sizing: border-box; }
+.lp-v2 h1, .lp-v2 h2, .lp-v2 h3, .lp-v2 p, .lp-v2 ol, .lp-v2 li, .lp-v2 span { margin: 0; }
+.lp-v2 ol { list-style: none; padding: 0; }
+.lp-v2 ::selection { background: var(--brand-teal-soft); color: var(--brand-teal-deep); }
+
+.lp-v2-inner { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+
+/* ── Brand mark placeholder ── */
+.lp-v2-memark { display: inline-flex; align-items: baseline; line-height: 1; letter-spacing: -0.03em; white-space: nowrap; }
+.lp-v2-memark .memark-m { font-family: var(--font-brand); font-weight: 900; }
+.lp-v2-memark .memark-e { font-family: var(--font-sub); font-weight: 900; font-style: italic; margin-left: -0.02em; }
+.lp-v2-memark--teal { color: var(--brand-teal); }
+.lp-v2-memark--soft { color: var(--brand-teal-soft); }
+
+/* ── Shared type roles ── */
+.lp-v2-eyebrow { font-family: var(--font-body); font-size: 13px; font-weight: 500; letter-spacing: 0.04em; color: var(--app-text-dim); max-width: 30em; }
+.lp-v2-label { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--app-text-dim-lg); }
+.lp-v2-h2 { font-family: var(--font-heading); font-weight: 500; font-size: clamp(28px, 4.4vw, 46px); line-height: 1.12; letter-spacing: -0.01em; color: var(--app-ink); }
+
+/* ── Buttons / links ── */
+.lp-v2-btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4em;
+  background: var(--brand-teal); color: #FFFFFF;
+  font-family: var(--font-body); font-size: 15px; font-weight: 500; line-height: 1;
+  border: none; border-radius: var(--radius); padding: 13px 22px; cursor: pointer;
+  transition: background var(--dur-quick) var(--ease-out), transform var(--dur-quick) var(--ease-out);
+}
+.lp-v2-btn-primary:hover { background: var(--brand-teal-deep); transform: translateY(-1px); }
+.lp-v2-btn-primary:active { transform: translateY(0); }
+.lp-v2-btn-primary:disabled { opacity: 0.6; cursor: default; transform: none; }
+.lp-v2-btn-sm { padding: 9px 16px; font-size: 14px; }
+.lp-v2-link {
+  font-family: var(--font-body); font-size: 14px; font-weight: 400; color: var(--app-text-dim);
+  background: none; border: none; padding: 0; cursor: pointer; text-decoration: none;
+  transition: color var(--dur-quick) var(--ease-out);
+}
+.lp-v2-link:hover { color: var(--app-ink); text-decoration: underline; text-underline-offset: 3px; }
+.lp-v2-link-strong { font-size: 15px; font-weight: 500; color: var(--brand-teal); }
+
+/* ── Header ── */
+.lp-v2-header {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--app-bg) 88%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--app-border);
+}
+.lp-v2-header-inner { max-width: 1080px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+.lp-v2-brand { display: inline-flex; align-items: center; text-decoration: none; }
+.lp-v2-header-nav { display: flex; align-items: center; gap: 22px; }
+
+/* ── §1 Hero ── */
+.lp-v2-hero { padding: clamp(72px, 13vh, 168px) 0 clamp(56px, 10vh, 120px); }
+.lp-v2-hero-inner { display: flex; flex-direction: column; }
+.lp-v2-hero .lp-v2-eyebrow { margin-bottom: clamp(28px, 5vh, 56px); }
+.lp-v2-hero-h1 { margin-bottom: clamp(28px, 4vh, 40px); }
+.lp-v2-hero-h1-wrap { display: block; }
+.lp-v2-hero-line {
+  display: block; font-family: var(--font-heading); font-weight: 500;
+  font-size: clamp(40px, 8.5vw, 88px); line-height: 1.02; letter-spacing: -0.02em; color: var(--app-ink);
+}
+.lp-v2-hero-sub { font-family: var(--font-body); font-size: clamp(17px, 2vw, 20px); font-weight: 400; line-height: 1.5; color: var(--app-text-dim); max-width: 30em; margin-bottom: clamp(32px, 5vh, 48px); }
+.lp-v2-hero-ctas { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+
+/* ── §2 Manifesto (Tier 3, full-bleed deep teal) ── */
+.lp-v2-manifesto { background: var(--brand-teal-deep); padding: clamp(96px, 20vh, 220px) 0; }
+.lp-v2-manifesto-inner { max-width: 920px; }
+.lp-v2-manifesto-line {
+  font-family: var(--font-heading); font-weight: 400;
+  font-size: clamp(28px, 5vw, 58px); line-height: 1.16; letter-spacing: -0.01em;
+  color: var(--brand-teal-soft); margin-bottom: clamp(28px, 5vh, 56px);
+}
+.lp-v2-manifesto-final { display: flex; align-items: baseline; gap: 0.28em; flex-wrap: wrap; margin-top: clamp(40px, 8vh, 96px); margin-bottom: 0; font-size: clamp(34px, 6.5vw, 76px); }
+.lp-v2-manifesto-final .lp-v2-memark { font-size: 1.05em; transform: translateY(0.02em); }
+
+/* ── §3 Truth (warm, numbered list) ── */
+.lp-v2-truth { padding: clamp(80px, 14vh, 144px) 0; }
+.lp-v2-truth .lp-v2-label { margin-bottom: 20px; }
+.lp-v2-truth-h2 { max-width: 18em; margin-bottom: clamp(48px, 8vh, 88px); }
+.lp-v2-trap-list { display: flex; flex-direction: column; gap: clamp(36px, 6vh, 64px); }
+.lp-v2-trap { display: grid; grid-template-columns: minmax(64px, 88px) 1fr; gap: clamp(20px, 4vw, 48px); align-items: start; max-width: 900px; }
+.lp-v2-trap-num { font-family: var(--font-mono); font-size: clamp(22px, 3vw, 30px); font-weight: 500; color: var(--brand-teal); line-height: 1; padding-top: 0.18em; }
+.lp-v2-trap-name { font-family: var(--font-heading); font-weight: 600; font-size: clamp(22px, 2.8vw, 30px); line-height: 1.15; color: var(--app-ink); margin-bottom: 10px; }
+.lp-v2-trap-text { font-family: var(--font-body); font-size: 16px; font-weight: 400; line-height: 1.6; color: var(--app-text-dim); max-width: 34em; }
+
+/* ── Request-access modal ── */
+.lp-v2-modal-overlay { position: fixed; inset: 0; z-index: 100; background: var(--modal-overlay); backdrop-filter: blur(var(--modal-blur)); -webkit-backdrop-filter: blur(var(--modal-blur)); }
+.lp-v2-modal {
+  position: fixed; z-index: 101; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: calc(100vw - 32px); max-width: 460px; max-height: calc(100vh - 32px); overflow-y: auto;
+  background: var(--app-bg); border: 0.5px solid var(--app-border); border-radius: var(--radius-lg);
+  box-shadow: var(--elev-3); padding: 32px;
+  font-family: var(--font-body); color: var(--app-ink);
+}
+.lp-v2-modal-title { font-family: var(--font-heading); font-weight: 600; font-size: 28px; line-height: 1.15; color: var(--app-ink); margin-bottom: 8px; }
+.lp-v2-modal-sub { font-size: 14px; line-height: 1.55; color: var(--app-text-dim); margin-bottom: 22px; }
+.lp-v2-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; flex: 1; }
+.lp-v2-field-row { display: flex; gap: 14px; }
+.lp-v2-field label { font-size: 12px; font-weight: 500; color: var(--app-text-dim); }
+.lp-v2-field label .req { color: var(--brand-teal); }
+.lp-v2-field input {
+  font-family: var(--font-body); font-size: 15px; color: var(--app-ink);
+  background: #FFFFFF; border: 0.5px solid var(--app-border); border-radius: var(--radius-sm);
+  padding: 10px 12px; outline: none; transition: border-color var(--dur-quick) var(--ease-out);
+}
+.lp-v2-field input:focus { border-color: var(--brand-teal); box-shadow: 0 0 0 3px var(--brand-teal-dim); }
+.lp-v2-modal-err { font-size: 13px; color: var(--state-danger); margin: 4px 0 12px; line-height: 1.5; }
+.lp-v2-modal-actions { display: flex; align-items: center; justify-content: flex-end; gap: 20px; margin-top: 22px; }
+.lp-v2-modal-done { text-align: left; }
+.lp-v2-modal-done .lp-v2-btn-primary { margin-top: 22px; }
+.lp-v2-modal-x { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 24px; line-height: 1; color: var(--app-text-dim-lg); cursor: pointer; padding: 4px; }
+.lp-v2-modal-x:hover { color: var(--app-ink); }
+
+/* ── Temporary build close (removed when §4–§12 land) ── */
+.lp-v2-temp-end { padding: 80px 24px; text-align: center; border-top: 0.5px dashed var(--app-border); }
+.lp-v2-temp-end span { font-family: var(--font-mono); font-size: 12px; color: var(--app-text-dim-lg); letter-spacing: 0.04em; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .lp-v2-hide-phone { display: none; }
+  .lp-v2-field-row { flex-direction: column; gap: 0; }
+  .lp-v2-trap { grid-template-columns: 1fr; gap: 8px; }
+  .lp-v2-trap-num { padding-top: 0; }
+  .lp-v2-hero-ctas { gap: 18px; }
+}
+
+/* ── Reduced motion: stop any token-driven transitions ── */
+@media (prefers-reduced-motion: reduce) {
+  .lp-v2 * { transition: none !important; animation: none !important; }
+  .lp-v2 html { scroll-behavior: auto; }
+}
+
+/* ── Radix dialog enter/exit (CSS; disabled under reduced motion above) ── */
+@keyframes lpv2-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lpv2-modal-in { from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+.lp-v2-modal-overlay[data-state="open"] { animation: lpv2-overlay-in var(--dur-modal-in) var(--ease-out); }
+.lp-v2-modal[data-state="open"] { animation: lpv2-modal-in var(--dur-modal-in) var(--ease-out); }
+`;
