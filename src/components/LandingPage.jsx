@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent, useInView, useReducedMotion, animate } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { supabase } from "../supabase";
+import meMarkSvg from "../assets/brand/me-mark.svg?raw";
 
 /* ════════════════════════════════════════════════════════════════════════
    ME LANDING PAGE — V2  ·  route "/"  ·  editorial-quiet
@@ -24,13 +25,11 @@ function MeMark({ size = 22, tone = "teal", className = "" }) {
   return (
     <span
       className={`lp-v2-memark lp-v2-memark--${tone} ${className}`}
-      style={{ fontSize: size }}
+      style={{ width: size, height: size }}
       role="img"
       aria-label="Me"
-    >
-      <span className="memark-m" aria-hidden="true">M</span>
-      <span className="memark-e" aria-hidden="true">e</span>
-    </span>
+      dangerouslySetInnerHTML={{ __html: meMarkSvg }}
+    />
   );
 }
 
@@ -727,9 +726,8 @@ const CSS = `
 .lp-v2-inner { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 
 /* ── Brand mark placeholder ── */
-.lp-v2-memark { display: inline-flex; align-items: baseline; line-height: 1; letter-spacing: -0.03em; white-space: nowrap; }
-.lp-v2-memark .memark-m { font-family: var(--font-brand); font-weight: 900; }
-.lp-v2-memark .memark-e { font-family: var(--font-sub); font-weight: 900; font-style: italic; margin-left: -0.02em; }
+.lp-v2-memark { display: inline-flex; align-items: center; justify-content: center; line-height: 0; vertical-align: -0.14em; }
+.lp-v2-memark svg { width: 100%; height: 100%; display: block; }
 .lp-v2-memark--teal { color: var(--brand-teal); }
 .lp-v2-memark--soft { color: var(--brand-teal-soft); }
 
