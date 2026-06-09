@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent, useInView, useReducedMotion, animate } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { supabase } from "../supabase";
 
@@ -472,6 +472,106 @@ function SectionLifecycle({ enableSticky }) {
   );
 }
 
+/* ── Count-up — one sanctioned count-up (§8), once, prerender-safe ──────── */
+function CountUp({ value, prefix = "", suffix = "", decimals = 0 }) {
+  const reduce = useReducedMotion();
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.6 });
+  const [mounted, setMounted] = useState(false);
+  const [display, setDisplay] = useState(value); // final value = no-JS / prerender baseline
+  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    if (!mounted || reduce) { setDisplay(value); return; }
+    if (!inView) { setDisplay(0); return; }
+    const controls = animate(0, value, {
+      duration: 1.1, ease: EASE,
+      onUpdate: (v) => setDisplay(v),
+    });
+    return () => controls.stop();
+  }, [mounted, inView, value, reduce]);
+  return <span ref={ref}>{prefix}{display.toFixed(decimals)}{suffix}</span>;
+}
+
+/* ── §7 WHO ME IS FOR — a pause ─────────────────────────────────────────── */
+function SectionWhoFor() {
+  return (
+    <section className="lp-v2-who">
+      <div className="lp-v2-inner lp-v2-who-inner">
+        <Reveal as="h2" className="lp-v2-h2 lp-v2-who-h2">
+          For the people who run the event. Not the ones who attend it.
+        </Reveal>
+        <Reveal className="lp-v2-who-body" delay={0.08}>
+          <p>Me isn’t for selling tickets or scanning badges. If your job is the audience, there are tools for that.</p>
+          <p>Me is for the person responsible for everything the audience never sees — the brief, the budget, the build, the final mile. The one who makes it look effortless.</p>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ── §8 data ── */
+const STATS = [
+  { kind: "num", value: 32, prefix: "$", suffix: "B", decimals: 0, label: "India’s events market by 2035, growing at 7.6% a year." },
+  { kind: "num", value: 17.9, suffix: "%", decimals: 1, label: "the annual growth of India’s event-software market: the fastest-rising in Asia-Pacific." },
+  { kind: "text", text: "First", label: "the first operating system built for the Event Manager, not the attendee." },
+];
+
+/* ── §8 WHY INDIA. WHY NOW. ─────────────────────────────────────────────── */
+function SectionWhyIndia() {
+  return (
+    <section className="lp-v2-why">
+      <div className="lp-v2-inner">
+        <Reveal as="p" className="lp-v2-label">Why India. Why now.</Reveal>
+        <Reveal as="h2" className="lp-v2-h2 lp-v2-why-h2">
+          The fastest-growing event market in the world finally has a system built for the people running it.
+        </Reveal>
+        <Reveal as="p" className="lp-v2-lead lp-v2-why-lead">
+          India runs more events, in more cities, with more moving parts than almost anywhere. And until now, the people running them were doing it on borrowed tools — spreadsheets built for accountants, chat apps built for friends.
+        </Reveal>
+        <div className="lp-v2-stats">
+          {STATS.map((s, i) => (
+            <Reveal className="lp-v2-stat" key={i} delay={i * 0.1}>
+              <span className="lp-v2-stat-num">
+                {s.kind === "num"
+                  ? <CountUp value={s.value} prefix={s.prefix || ""} suffix={s.suffix || ""} decimals={s.decimals} />
+                  : s.text}
+              </span>
+              <span className="lp-v2-stat-label">{s.label}</span>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal as="p" className="lp-v2-why-category">
+          The big platforms manage the audience — tickets, check-in, the guest list. None were built for the people running the show. That’s the system Me is. Born in India, built for the Event Managers of the world.
+        </Reveal>
+        <Reveal as="p" className="lp-v2-why-source">
+          Market figures — Expert Market Research, Grand View Research, 2025–26.
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ── §9 BACKSTAGE CRESCENDO — Tier 3, deep teal, emotional peak ──────────── */
+function SectionCrescendo() {
+  return (
+    <section className="lp-v2-crescendo">
+      <div className="lp-v2-inner lp-v2-crescendo-inner">
+        <LineReveal className="lp-v2-crescendo-h2">The best Event Managers are the ones you never notice.</LineReveal>
+        <LineReveal className="lp-v2-crescendo-p" delay={0.06}>When it works, no one sees the work. The client doesn’t see the 2am call, the vendor who fell through, the plan you rebuilt twice. They see a flawless event and think it was easy.</LineReveal>
+        <LineReveal className="lp-v2-crescendo-p" delay={0.1}>That’s the job. To carry all of it, and make it look like nothing.</LineReveal>
+        <LineReveal className="lp-v2-crescendo-p" delay={0.1}>Me carries it with you. Every element, every cost, every task, every change — held in one place, so it’s not all on you and your memory anymore.</LineReveal>
+        <div className="lp-v2-crescendo-pivot">
+          <LineReveal className="lp-v2-crescendo-pivot-line is-before">Stop being the person everything depends on.</LineReveal>
+          <LineReveal className="lp-v2-crescendo-pivot-line is-after" delay={0.1}>Start being the person who built the system everything runs on.</LineReveal>
+        </div>
+        <LineReveal className="lp-v2-crescendo-final" amount={0.7}>
+          You still won’t be the one they applaud. But you’ll be the one who was never afraid.
+        </LineReveal>
+      </div>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const reduce = useReducedMotion();
   const [modalOpen, setModalOpen] = useState(false);
@@ -591,9 +691,14 @@ export default function LandingPage() {
         <SectionEventDayHonesty />
         <SectionLifecycle enableSticky={enableSticky} />
 
-        {/* ════ §7–§9 + §10–§12 follow ════ */}
+        {/* ── §7 · §8 · §9 ─────────────────────────────────────────────── */}
+        <SectionWhoFor />
+        <SectionWhyIndia />
+        <SectionCrescendo />
+
+        {/* ════ §10–§12 (Early Access · 2nd teal anchor · footer) — next pass ════ */}
         <div className="lp-v2-temp-end">
-          <span>§7–§12 in progress — landing V2 build</span>
+          <span>§10–§12 in progress — landing V2 build</span>
         </div>
       </main>
     </div>
@@ -756,6 +861,36 @@ const CSS = `
 .lp-v2-underneath-line { font-family: var(--font-body); font-size: 14px; line-height: 1.55; color: var(--app-text-dim-lg); max-width: 28em; }
 .lp-v2-life-payoff { font-family: var(--font-heading); font-size: clamp(26px, 3.6vw, 40px); font-weight: 500; line-height: 1.2; color: var(--app-ink); max-width: 16em; margin-top: clamp(40px, 6vh, 64px); }
 
+/* ── §7 Who Me is for (a pause) ── */
+.lp-v2-who { padding: clamp(72px, 12vh, 128px) 0; }
+.lp-v2-who-inner { max-width: 760px; }
+.lp-v2-who-h2 { margin-bottom: 28px; max-width: 16em; }
+.lp-v2-who-body p { font-family: var(--font-body); font-size: 17px; line-height: 1.7; color: var(--app-text-dim); margin-bottom: 18px; max-width: 38em; }
+.lp-v2-who-body p:last-child { margin-bottom: 0; }
+
+/* ── §8 Why India. Why now. ── */
+.lp-v2-why { padding: clamp(80px, 14vh, 144px) 0; }
+.lp-v2-why .lp-v2-label { margin-bottom: 20px; }
+.lp-v2-why-h2 { max-width: 18em; margin-bottom: 28px; }
+.lp-v2-why-lead { margin-bottom: clamp(48px, 8vh, 80px); }
+.lp-v2-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(28px, 5vw, 56px); padding: clamp(40px, 6vh, 64px) 0; border-top: 0.5px solid var(--app-border); border-bottom: 0.5px solid var(--app-border); }
+.lp-v2-stat { display: flex; flex-direction: column; gap: 14px; }
+.lp-v2-stat-num { font-family: var(--font-mono); font-size: clamp(40px, 6vw, 72px); font-weight: 500; line-height: 1; color: var(--brand-teal); letter-spacing: -0.02em; }
+.lp-v2-stat-label { font-family: var(--font-body); font-size: 14px; line-height: 1.5; color: var(--app-text-dim); max-width: 22em; }
+.lp-v2-why-category { font-family: var(--font-heading); font-size: clamp(20px, 2.6vw, 28px); font-weight: 400; line-height: 1.35; color: var(--app-ink); max-width: 30em; margin: clamp(48px, 8vh, 80px) 0 clamp(20px, 3vh, 28px); }
+.lp-v2-why-source { font-family: var(--font-body); font-size: 12px; color: var(--app-text-dim-lg); }
+
+/* ── §9 Backstage crescendo (Tier 3, deep teal) ── */
+.lp-v2-crescendo { background: var(--brand-teal-deep); padding: clamp(96px, 20vh, 220px) 0; }
+.lp-v2-crescendo-inner { max-width: 900px; }
+.lp-v2-crescendo-h2 { font-family: var(--font-heading); font-weight: 400; font-size: clamp(30px, 5vw, 60px); line-height: 1.14; letter-spacing: -0.01em; color: var(--brand-teal-soft); margin-bottom: clamp(40px, 7vh, 72px); }
+.lp-v2-crescendo-p { font-family: var(--font-heading); font-weight: 400; font-size: clamp(20px, 2.8vw, 30px); line-height: 1.4; color: color-mix(in srgb, var(--brand-teal-soft) 82%, transparent); margin-bottom: clamp(24px, 4vh, 40px); max-width: 30em; }
+.lp-v2-crescendo-pivot { margin: clamp(48px, 8vh, 88px) 0; }
+.lp-v2-crescendo-pivot-line { font-family: var(--font-heading); font-size: clamp(24px, 3.4vw, 40px); line-height: 1.25; max-width: 22em; }
+.lp-v2-crescendo-pivot-line.is-before { color: color-mix(in srgb, var(--brand-teal-soft) 55%, transparent); font-weight: 400; }
+.lp-v2-crescendo-pivot-line.is-after { color: var(--brand-teal-soft); font-weight: 500; }
+.lp-v2-crescendo-final { font-family: var(--font-heading); font-weight: 400; font-size: clamp(28px, 4.6vw, 56px); line-height: 1.2; color: #FFFFFF; max-width: 18em; margin-top: clamp(80px, 16vh, 200px); }
+
 /* ── Request-access modal ── */
 .lp-v2-modal-overlay { position: fixed; inset: 0; z-index: 100; background: var(--modal-overlay); backdrop-filter: blur(var(--modal-blur)); -webkit-backdrop-filter: blur(var(--modal-blur)); }
 .lp-v2-modal {
@@ -790,6 +925,7 @@ const CSS = `
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .lp-v2-underneath { grid-template-columns: 1fr; gap: 16px; }
+  .lp-v2-stats { grid-template-columns: 1fr; gap: 32px; }
 }
 @media (max-width: 600px) {
   .lp-v2-hide-phone { display: none; }
