@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent, useReducedMotion } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { supabase } from "../supabase";
 
@@ -9,9 +9,9 @@ import { supabase } from "../supabase";
    Nothing is redeclared here. Typography is self-fenced under .lp-v2 so the
    app's global element defaults (body{font-size:15px}) can't cascade in.
    Motion = framer-motion v12 only. Prerender-safe: all copy is in the DOM and
-   visible without JS; reveals only animate transform/opacity after mount.
-   Build status: §1–§9 in progress. §10–§12 (Early Access / 2nd teal anchor /
-   footer) follow in the next pass — temporary close at the bottom for now.
+   visible without JS; reveals only animate transform/opacity after mount;
+   sticky scroll-tells are a desktop-only enhancement over a static baseline.
+   Build status: §1–§6 done. §7–§9 + §10–§12 follow — temporary close below.
    ════════════════════════════════════════════════════════════════════════ */
 
 const EASE = [0.22, 1, 0.36, 1]; // --ease-out
@@ -85,6 +85,21 @@ function LineReveal({ children, className = "", style, delay = 0, amount = 0.6 }
   );
 }
 
+/* ── Product screenshot slot — captioned placeholder, swappable later ─────
+   Image drops in at the .lp-v2-slot-frame. App Red is the product-layer cue
+   (top accent + dot) — the only place red appears on this page. */
+function ProductSlot({ caption, aspect = "16 / 9", size = "lg" }) {
+  return (
+    <Reveal className={`lp-v2-slot lp-v2-slot--${size}`}>
+      <div className="lp-v2-slot-frame" style={{ aspectRatio: aspect }}>
+        <span className="lp-v2-slot-dot" aria-hidden="true" />
+        <span className="lp-v2-slot-label">Product preview — screenshot coming</span>
+      </div>
+      <p className="lp-v2-slot-caption">{caption}</p>
+    </Reveal>
+  );
+}
+
 /* ── Request-access modal ────────────────────────────────────────────────
    Radix Dialog. No <form> — onClick submit. Inserts into early_access
    (status defaults to 'pending'); the admin triages in EarlyAccess.jsx.
@@ -98,7 +113,7 @@ function RequestAccessModal({ open, onOpenChange }) {
   const [status, setStatus] = useState("idle"); // idle | loading | error | done
   const [err, setErr] = useState("");
 
-  // Reset when the dialog closes so a re-open is clean.
+  // Reset shortly after close so a re-open is clean.
   useEffect(() => {
     if (!open) {
       const t = setTimeout(() => {
@@ -188,11 +203,281 @@ function RequestAccessModal({ open, onOpenChange }) {
   );
 }
 
+/* ── §4 data ── */
+const SVS_ROWS = [
+  ["Built for", "The attendee", "The Event Manager"],
+  ["Covers", "One slice", "The whole event business"],
+  ["Lives", "Beside your work, one more login", "Where the work actually happens"],
+  ["Your team", "Stitches it together in Excel + WhatsApp", "Works inside one system"],
+  ["On event day", "You’re still reconciling", "You walk in ready — nothing left to figure out"],
+  ["When the key person leaves", "The knowledge leaves too", "It stays in the system"],
+];
+
+/* A single comparison row whose reveal is driven by the pinned section's
+   scroll progress (rows fill in top-to-bottom). */
+function CompareRow({ progress, index, total }) {
+  const span = 1 / (total + 1);
+  const start = index * span;
+  const end = start + span * 1.6;
+  const opacity = useTransform(progress, [start, end], [0.18, 1]);
+  const y = useTransform(progress, [start, end], [10, 0]);
+  const [label, before, after] = SVS_ROWS[index];
+  return (
+    <motion.div className="lp-v2-cmp-row" style={{ opacity, y }}>
+      <span className="lp-v2-cmp-label">{label}</span>
+      <span className="lp-v2-cmp-before">{before}</span>
+      <span className="lp-v2-cmp-after">{after}</span>
+    </motion.div>
+  );
+}
+
+/* ── §4 SOFTWARE vs OPERATING SYSTEM — Tier 2 sticky + product slot #1 ──── */
+function SectionSoftwareVsOS({ enableSticky }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const meOpacity = useTransform(scrollYProgress, [0.8, 0.98], [0.25, 1]); // "Me" header settles LAST
+  const meY = useTransform(scrollYProgress, [0.8, 0.98], [8, 0]);
+
+  const intro = (
+    <>
+      <Reveal as="p" className="lp-v2-label">Software vs. operating system</Reveal>
+      <Reveal as="h2" className="lp-v2-h2 lp-v2-svs-h2">
+        Every event tool is software you add. <em>Me is the system it all runs on.</em>
+      </Reveal>
+      <Reveal as="p" className="lp-v2-lead">
+        You’ve been told you need more tools — one for proposals, one for tasks, one for costs. So you stitched them together with Excel and WhatsApp, and became the integration yourself. Me isn’t another tool in the stack. Me is the stack.
+      </Reveal>
+    </>
+  );
+
+  const closer = (
+    <>
+      <Reveal as="p" className="lp-v2-svs-closer">
+        Other platforms are built for the attendee. Me is built for Event Managers. They manage the audience. Me prepares you to run the show.
+      </Reveal>
+      <ProductSlot caption="Event workspace — scope, cost, team, tasks, all in one place." />
+    </>
+  );
+
+  if (!enableSticky) {
+    // Static two-column table (mobile / reduced motion) — "Me" already settled.
+    return (
+      <section className="lp-v2-svs" ref={ref}>
+        <div className="lp-v2-inner">
+          {intro}
+          <div className="lp-v2-cmp">
+            <div className="lp-v2-cmp-head">
+              <span className="lp-v2-cmp-label" />
+              <span className="lp-v2-cmp-h-before">Event software</span>
+              <span className="lp-v2-cmp-h-after"><MeMark size="0.9em" tone="teal" /></span>
+            </div>
+            {SVS_ROWS.map(([label, before, after]) => (
+              <div className="lp-v2-cmp-row" key={label}>
+                <span className="lp-v2-cmp-label">{label}</span>
+                <span className="lp-v2-cmp-before">{before}</span>
+                <span className="lp-v2-cmp-after">{after}</span>
+              </div>
+            ))}
+          </div>
+          {closer}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="lp-v2-svs">
+      <div className="lp-v2-inner">{intro}</div>
+      <div className="lp-v2-svs-scroll" ref={ref}>
+        <div className="lp-v2-svs-pin">
+          <div className="lp-v2-inner">
+            <div className="lp-v2-cmp">
+              <div className="lp-v2-cmp-head">
+                <span className="lp-v2-cmp-label" />
+                <span className="lp-v2-cmp-h-before">Event software</span>
+                <motion.span className="lp-v2-cmp-h-after" style={{ opacity: meOpacity, y: meY }}>
+                  <MeMark size="0.9em" tone="teal" />
+                </motion.span>
+              </div>
+              {SVS_ROWS.map((row, i) => (
+                <CompareRow key={row[0]} progress={scrollYProgress} index={i} total={SVS_ROWS.length} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="lp-v2-inner">{closer}</div>
+    </section>
+  );
+}
+
+/* ── §5 EVENT-DAY HONESTY — the quietest section ─────────────────────────── */
+function SectionEventDayHonesty() {
+  return (
+    <section className="lp-v2-honesty">
+      <div className="lp-v2-inner lp-v2-honesty-inner">
+        <Reveal as="p" className="lp-v2-label">What Me won’t do</Reveal>
+        <Reveal as="h2" className="lp-v2-h2 lp-v2-honesty-h2">
+          Me won’t run your event. That’s your job — and you’re good at it.
+        </Reveal>
+        <Reveal className="lp-v2-honesty-body">
+          <p>No system replaces what you’ve learned running real events. The instinct on the floor, the call you make when a vendor no-shows, the read on a client’s face — that’s craft. It’s yours. No software earns that, and any that claims to is lying to you.</p>
+          <p>Event day isn’t for planning. It’s for execution. We’re not on the console with you — that’s your moment.</p>
+          <p>What Me does is everything before that moment. Scope locked, costs tracked, tasks owned, team aligned — so you walk in with nothing left to figure out.</p>
+        </Reveal>
+        <Reveal as="p" className="lp-v2-honesty-close">
+          The more you sweat in the planning, the less you bleed when the show is live.
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ── §6 data ── */
+const PHASES = [
+  { key: "Win", title: "Win it", steps: [
+    ["Brief", "Capture what the client wants, structured from the first conversation."],
+    ["Scope & cost", "Build every element, every city — and know the right rate before you quote."],
+    ["Propose & win", "Turn it into a document the client says yes to."],
+  ] },
+  { key: "Build", title: "Build it", steps: [
+    ["Build your team", "The right people on the event, by role and by city. Built once, there for the next one."],
+    ["Plan & assign", "Everyone knows what they own, and by when."],
+    ["Produce", "Branding, build, procurement — tracked to delivery."],
+    ["Logistics", "Travel, stay, movement — handled."],
+  ] },
+  { key: "Run", title: "Run it", steps: [
+    ["Coordinate", "The final mile. Confirm every vendor, absorb the last-minute asks, watch the pieces lock into place — until everyone’s on ground."],
+    ["Run", "Every cue, every screen, every moment — mapped before the doors open."],
+    ["Hand off", "Everything delivered, gathered, done."],
+  ] },
+  { key: "Repeat", title: "Repeat it", blurb: "Every event makes the next one faster. Last event’s work carries forward — start where you ended. Clone a similar event, keep what fits. Your elements, your team, your rates — already there, already yours." },
+];
+
+const UNDERNEATH = [
+  "Smart where it helps. Heavy lifting where it saves you time, out of the way where your judgment matters.",
+  "You own your data. Secured, private to your workspace, there whenever you need it.",
+  "Nothing slips. Every change, every decision, timestamped — and a nudge when something needs you.",
+  "Your workspace gets smarter as you work.",
+];
+
+function PhaseContent({ phase }) {
+  return (
+    <div className="lp-v2-phase">
+      <span className="lp-v2-phase-kicker">{phase.title}</span>
+      {phase.steps ? (
+        <ul className="lp-v2-phase-steps">
+          {phase.steps.map(([name, body]) => (
+            <li key={name}>
+              <span className="lp-v2-phase-step-name">{name}</span>
+              <span className="lp-v2-phase-step-body">{body}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="lp-v2-phase-blurb">{phase.blurb}</p>
+      )}
+    </div>
+  );
+}
+
+const REPEAT_SLOT = "Start where you ended — clone a past event, carry forward elements, team, rates.";
+
+/* ── §6 LIFECYCLE — Tier 2 sticky, vertical-pinned + product slot #2 ─────── */
+function SectionLifecycle({ enableSticky }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const [active, setActive] = useState(0);
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    if (!enableSticky) return;
+    const i = Math.min(PHASES.length - 1, Math.max(0, Math.floor(v * PHASES.length)));
+    setActive(i);
+  });
+
+  const intro = (
+    <>
+      <Reveal as="p" className="lp-v2-label">From brief to happy client</Reveal>
+      <Reveal as="h2" className="lp-v2-h2 lp-v2-life-h2">
+        Your whole event, in one system. From the first brief to the final handover.
+      </Reveal>
+    </>
+  );
+
+  const underneath = (
+    <div className="lp-v2-underneath">
+      {UNDERNEATH.map((t, i) => (
+        <Reveal as="p" className="lp-v2-underneath-line" key={i} delay={i * 0.06}>{t}</Reveal>
+      ))}
+    </div>
+  );
+
+  const payoff = (
+    <Reveal as="p" className="lp-v2-life-payoff">
+      By event day, there’s nothing left to chase. You walk in fearless. The event runs flawless.
+    </Reveal>
+  );
+
+  if (!enableSticky) {
+    // Static vertical sequence — all phases & steps present.
+    return (
+      <section className="lp-v2-life" ref={ref}>
+        <div className="lp-v2-inner">
+          {intro}
+          <div className="lp-v2-life-seq">
+            {PHASES.map((p) => <PhaseContent phase={p} key={p.key} />)}
+            <ProductSlot size="md" caption={REPEAT_SLOT} />
+          </div>
+          {underneath}
+          {payoff}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="lp-v2-life">
+      <div className="lp-v2-inner">{intro}</div>
+      <div className="lp-v2-life-scroll" ref={ref}>
+        <div className="lp-v2-life-pin">
+          <div className="lp-v2-inner lp-v2-life-stage">
+            <div className="lp-v2-life-rail" aria-hidden="true">
+              {PHASES.map((p, i) => (
+                <span key={p.key} className={`lp-v2-life-rail-item${i === active ? " is-active" : ""}`}>{p.title}</span>
+              ))}
+            </div>
+            <div className="lp-v2-life-frame">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={PHASES[active].key}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -16 }}
+                  transition={{ duration: 0.4, ease: EASE }}
+                >
+                  <PhaseContent phase={PHASES[active]} />
+                  {PHASES[active].key === "Repeat" && (
+                    <ProductSlot size="md" caption={REPEAT_SLOT} />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="lp-v2-inner">
+        {underneath}
+        {payoff}
+      </div>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const reduce = useReducedMotion();
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Hero H1 micro-parallax — desktop + motion-on only; transform-only (GPU).
+  // Desktop gate for heavy motion (parallax, sticky scroll-tells).
+  // Starts false → static, fully-visible baseline (prerender-safe); enhances after mount.
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
@@ -204,6 +489,7 @@ export default function LandingPage() {
   const { scrollY } = useScroll();
   const heroDrift = useTransform(scrollY, [0, 400], [0, -18]);
   const parallaxOn = isDesktop && !reduce;
+  const enableSticky = isDesktop && !reduce;
 
   const openModal = () => setModalOpen(true);
 
@@ -300,9 +586,14 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ════ §4–§9 follow in commit 2/3 · §10–§12 next pass ════ */}
+        {/* ── §4 · §5 · §6 ─────────────────────────────────────────────── */}
+        <SectionSoftwareVsOS enableSticky={enableSticky} />
+        <SectionEventDayHonesty />
+        <SectionLifecycle enableSticky={enableSticky} />
+
+        {/* ════ §7–§9 + §10–§12 follow ════ */}
         <div className="lp-v2-temp-end">
-          <span>§4–§12 in progress — landing V2 build</span>
+          <span>§7–§12 in progress — landing V2 build</span>
         </div>
       </main>
     </div>
@@ -324,8 +615,8 @@ const CSS = `
   text-rendering: optimizeLegibility;
 }
 .lp-v2 *, .lp-v2 *::before, .lp-v2 *::after { box-sizing: border-box; }
-.lp-v2 h1, .lp-v2 h2, .lp-v2 h3, .lp-v2 p, .lp-v2 ol, .lp-v2 li, .lp-v2 span { margin: 0; }
-.lp-v2 ol { list-style: none; padding: 0; }
+.lp-v2 h1, .lp-v2 h2, .lp-v2 h3, .lp-v2 p, .lp-v2 ol, .lp-v2 ul, .lp-v2 li, .lp-v2 span { margin: 0; }
+.lp-v2 ol, .lp-v2 ul { list-style: none; padding: 0; }
 .lp-v2 ::selection { background: var(--brand-teal-soft); color: var(--brand-teal-deep); }
 
 .lp-v2-inner { width: 100%; max-width: 1080px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
@@ -341,6 +632,8 @@ const CSS = `
 .lp-v2-eyebrow { font-family: var(--font-body); font-size: 13px; font-weight: 500; letter-spacing: 0.04em; color: var(--app-text-dim); max-width: 30em; }
 .lp-v2-label { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--app-text-dim-lg); }
 .lp-v2-h2 { font-family: var(--font-heading); font-weight: 500; font-size: clamp(28px, 4.4vw, 46px); line-height: 1.12; letter-spacing: -0.01em; color: var(--app-ink); }
+.lp-v2-h2 em { font-style: italic; color: var(--brand-teal); }
+.lp-v2-lead { font-family: var(--font-body); font-size: 17px; line-height: 1.6; color: var(--app-text-dim); max-width: 38em; }
 
 /* ── Buttons / links ── */
 .lp-v2-btn-primary {
@@ -395,7 +688,7 @@ const CSS = `
   color: var(--brand-teal-soft); margin-bottom: clamp(28px, 5vh, 56px);
 }
 .lp-v2-manifesto-final { display: flex; align-items: baseline; gap: 0.28em; flex-wrap: wrap; margin-top: clamp(40px, 8vh, 96px); margin-bottom: 0; font-size: clamp(34px, 6.5vw, 76px); }
-.lp-v2-manifesto-final .lp-v2-memark { font-size: 1.05em; transform: translateY(0.02em); }
+.lp-v2-manifesto-final .lp-v2-memark { font-size: 1.05em; }
 
 /* ── §3 Truth (warm, numbered list) ── */
 .lp-v2-truth { padding: clamp(80px, 14vh, 144px) 0; }
@@ -406,6 +699,62 @@ const CSS = `
 .lp-v2-trap-num { font-family: var(--font-mono); font-size: clamp(22px, 3vw, 30px); font-weight: 500; color: var(--brand-teal); line-height: 1; padding-top: 0.18em; }
 .lp-v2-trap-name { font-family: var(--font-heading); font-weight: 600; font-size: clamp(22px, 2.8vw, 30px); line-height: 1.15; color: var(--app-ink); margin-bottom: 10px; }
 .lp-v2-trap-text { font-family: var(--font-body); font-size: 16px; font-weight: 400; line-height: 1.6; color: var(--app-text-dim); max-width: 34em; }
+
+/* ── §4 Software vs OS ── */
+.lp-v2-svs { padding: clamp(80px, 14vh, 144px) 0; }
+.lp-v2-svs .lp-v2-label { margin-bottom: 20px; }
+.lp-v2-svs-h2 { max-width: 16em; margin-bottom: 28px; }
+.lp-v2-svs .lp-v2-lead { margin-bottom: 8px; }
+.lp-v2-svs-scroll { height: 200vh; }
+.lp-v2-svs-pin { position: sticky; top: 0; min-height: 100vh; display: flex; align-items: center; }
+.lp-v2-cmp { width: 100%; max-width: 900px; margin: clamp(40px,7vh,72px) 0 0; border-top: 0.5px solid var(--app-border); }
+.lp-v2-cmp-head, .lp-v2-cmp-row { display: grid; grid-template-columns: minmax(110px, 1fr) 1fr 1.25fr; gap: clamp(16px, 3vw, 40px); padding: 18px 0; border-bottom: 0.5px solid var(--app-border); align-items: baseline; }
+.lp-v2-cmp-head { padding: 14px 0; }
+.lp-v2-cmp-h-before { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--app-text-dim-lg); }
+.lp-v2-cmp-h-after { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand-teal); display: inline-flex; }
+.lp-v2-cmp-label { font-family: var(--font-body); font-size: 12px; font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase; color: var(--app-text-dim-lg); }
+.lp-v2-cmp-before { font-family: var(--font-body); font-size: 15px; line-height: 1.4; color: var(--app-text-dim-lg); }
+.lp-v2-cmp-after { font-family: var(--font-heading); font-size: clamp(18px, 2.2vw, 25px); font-weight: 500; line-height: 1.2; color: var(--app-ink); }
+.lp-v2-svs-closer { font-family: var(--font-heading); font-size: clamp(20px, 2.6vw, 30px); font-weight: 400; font-style: italic; line-height: 1.3; color: var(--app-ink); max-width: 24em; margin: clamp(56px, 9vh, 96px) 0 clamp(36px, 6vh, 56px); }
+
+/* ── Product slot ── */
+.lp-v2-slot { margin: clamp(28px, 5vh, 48px) auto 0; max-width: 1000px; }
+.lp-v2-slot--md { max-width: 600px; margin-left: 0; }
+.lp-v2-slot-frame { position: relative; width: 100%; background: var(--app-surface); border: 1px solid var(--app-border); border-top: 3px solid var(--app-accent); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; gap: 10px; overflow: hidden; }
+.lp-v2-slot-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--app-accent); flex-shrink: 0; }
+.lp-v2-slot-label { font-family: var(--font-mono); font-size: 12px; color: var(--app-text-dim-lg); letter-spacing: 0.04em; }
+.lp-v2-slot-caption { font-family: var(--font-body); font-size: 13px; color: var(--app-text-dim); margin-top: 12px; }
+
+/* ── §5 Event-day honesty (quietest) ── */
+.lp-v2-honesty { background: var(--app-surface); padding: clamp(88px, 16vh, 160px) 0; }
+.lp-v2-honesty-inner { max-width: 760px; }
+.lp-v2-honesty .lp-v2-label { margin-bottom: 20px; }
+.lp-v2-honesty-h2 { margin-bottom: 36px; max-width: 16em; }
+.lp-v2-honesty-body p { font-family: var(--font-body); font-size: 17px; line-height: 1.7; color: var(--app-text-dim); margin-bottom: 22px; max-width: 40em; }
+.lp-v2-honesty-body p:last-child { margin-bottom: 0; }
+.lp-v2-honesty-close { font-family: var(--font-heading); font-size: clamp(22px, 3vw, 32px); font-weight: 400; font-style: italic; line-height: 1.3; color: var(--app-ink); margin-top: clamp(40px, 7vh, 72px); max-width: 20em; }
+
+/* ── §6 Lifecycle ── */
+.lp-v2-life { padding: clamp(80px, 14vh, 144px) 0; }
+.lp-v2-life .lp-v2-label { margin-bottom: 20px; }
+.lp-v2-life-h2 { max-width: 18em; margin-bottom: clamp(40px, 7vh, 72px); }
+.lp-v2-life-scroll { height: 360vh; }
+.lp-v2-life-pin { position: sticky; top: 0; min-height: 100vh; display: flex; align-items: center; }
+.lp-v2-life-stage { display: grid; grid-template-columns: 150px 1fr; gap: clamp(24px, 5vw, 72px); align-items: center; width: 100%; }
+.lp-v2-life-rail { display: flex; flex-direction: column; gap: 14px; }
+.lp-v2-life-rail-item { font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--app-text-dim-lg); opacity: 0.5; transition: opacity var(--dur-reveal) var(--ease-out), color var(--dur-reveal) var(--ease-out); }
+.lp-v2-life-rail-item.is-active { opacity: 1; color: var(--brand-teal); }
+.lp-v2-life-frame { min-height: 340px; }
+.lp-v2-phase-kicker { display: block; font-family: var(--font-heading); font-size: clamp(28px, 4vw, 44px); font-weight: 500; color: var(--app-ink); margin-bottom: 24px; }
+.lp-v2-phase-steps { display: flex; flex-direction: column; gap: 18px; }
+.lp-v2-phase-steps li { display: flex; flex-direction: column; gap: 4px; max-width: 40em; }
+.lp-v2-phase-step-name { font-family: var(--font-body); font-size: 15px; font-weight: 600; color: var(--app-ink); }
+.lp-v2-phase-step-body { font-family: var(--font-body); font-size: 15px; line-height: 1.55; color: var(--app-text-dim); }
+.lp-v2-phase-blurb { font-family: var(--font-heading); font-size: clamp(20px, 2.6vw, 28px); font-weight: 400; line-height: 1.4; color: var(--app-ink); max-width: 24em; }
+.lp-v2-life-seq { display: flex; flex-direction: column; gap: clamp(40px, 7vh, 72px); margin-bottom: clamp(48px, 8vh, 80px); }
+.lp-v2-underneath { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 40px; padding: clamp(40px, 7vh, 72px) 0 0; margin-top: clamp(40px, 6vh, 64px); border-top: 0.5px solid var(--app-border); }
+.lp-v2-underneath-line { font-family: var(--font-body); font-size: 14px; line-height: 1.55; color: var(--app-text-dim-lg); max-width: 28em; }
+.lp-v2-life-payoff { font-family: var(--font-heading); font-size: clamp(26px, 3.6vw, 40px); font-weight: 500; line-height: 1.2; color: var(--app-ink); max-width: 16em; margin-top: clamp(40px, 6vh, 64px); }
 
 /* ── Request-access modal ── */
 .lp-v2-modal-overlay { position: fixed; inset: 0; z-index: 100; background: var(--modal-overlay); backdrop-filter: blur(var(--modal-blur)); -webkit-backdrop-filter: blur(var(--modal-blur)); }
@@ -430,31 +779,37 @@ const CSS = `
 .lp-v2-field input:focus { border-color: var(--brand-teal); box-shadow: 0 0 0 3px var(--brand-teal-dim); }
 .lp-v2-modal-err { font-size: 13px; color: var(--state-danger); margin: 4px 0 12px; line-height: 1.5; }
 .lp-v2-modal-actions { display: flex; align-items: center; justify-content: flex-end; gap: 20px; margin-top: 22px; }
-.lp-v2-modal-done { text-align: left; }
 .lp-v2-modal-done .lp-v2-btn-primary { margin-top: 22px; }
 .lp-v2-modal-x { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 24px; line-height: 1; color: var(--app-text-dim-lg); cursor: pointer; padding: 4px; }
 .lp-v2-modal-x:hover { color: var(--app-ink); }
 
-/* ── Temporary build close (removed when §4–§12 land) ── */
+/* ── Temporary build close (removed when §7–§12 land) ── */
 .lp-v2-temp-end { padding: 80px 24px; text-align: center; border-top: 0.5px dashed var(--app-border); }
 .lp-v2-temp-end span { font-family: var(--font-mono); font-size: 12px; color: var(--app-text-dim-lg); letter-spacing: 0.04em; }
 
 /* ── Responsive ── */
+@media (max-width: 900px) {
+  .lp-v2-underneath { grid-template-columns: 1fr; gap: 16px; }
+}
 @media (max-width: 600px) {
   .lp-v2-hide-phone { display: none; }
   .lp-v2-field-row { flex-direction: column; gap: 0; }
   .lp-v2-trap { grid-template-columns: 1fr; gap: 8px; }
   .lp-v2-trap-num { padding-top: 0; }
   .lp-v2-hero-ctas { gap: 18px; }
+  .lp-v2-cmp-head { display: none; }
+  .lp-v2-cmp-row { grid-template-columns: 1fr; gap: 4px; padding: 16px 0; }
+  .lp-v2-cmp-before { order: 2; }
+  .lp-v2-cmp-after { order: 3; }
+  .lp-v2-slot--md { margin-left: auto; }
 }
 
-/* ── Reduced motion: stop any token-driven transitions ── */
+/* ── Reduced motion: stop token-driven transitions/animations ── */
 @media (prefers-reduced-motion: reduce) {
   .lp-v2 * { transition: none !important; animation: none !important; }
-  .lp-v2 html { scroll-behavior: auto; }
 }
 
-/* ── Radix dialog enter/exit (CSS; disabled under reduced motion above) ── */
+/* ── Radix dialog enter (CSS; disabled under reduced motion above) ── */
 @keyframes lpv2-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes lpv2-modal-in { from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 .lp-v2-modal-overlay[data-state="open"] { animation: lpv2-overlay-in var(--dur-modal-in) var(--ease-out); }
