@@ -96,7 +96,7 @@ function ProductSlot({ src, alt = "", caption, size = "lg", tone = "warm" }) {
     <Reveal className={`lp-v2-slot lp-v2-slot--${size} lp-v2-slot--${tone}`}>
       <div className="lp-v2-slot-frame">
         {src
-          ? <img src={src} alt={alt} loading="lazy" decoding="async" />
+          ? <img src={src} alt={alt} decoding="async" />
           : <span className="lp-v2-slot-label">Product preview — screenshot coming</span>}
       </div>
       {caption && <p className="lp-v2-slot-caption">{caption}</p>}
@@ -418,7 +418,9 @@ function SectionLifecycle({ enableSticky }) {
   const [active, setActive] = useState(0);
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     if (!enableSticky) return;
-    const i = Math.min(PHASES.length - 1, Math.max(0, Math.floor(v * PHASES.length)));
+    // Map phases into the stuck window (~0–0.82) so the LAST phase (Repeat)
+    // gets a real on-screen dwell before the pin releases at progress 1.
+    const i = Math.min(PHASES.length - 1, Math.max(0, Math.floor((v / 0.82) * PHASES.length)));
     setActive(i);
   });
 
@@ -900,7 +902,7 @@ const CSS = `
 .lp-v2-phase-kicker { display: block; font-family: var(--font-heading); font-size: clamp(28px, 4vw, 44px); font-weight: 500; color: var(--app-ink); margin-bottom: 24px; }
 .lp-v2-phase-steps { display: flex; flex-direction: column; gap: 18px; }
 .lp-v2-phase-steps li { display: flex; flex-direction: column; gap: 4px; max-width: 40em; }
-.lp-v2-phase-step-name { font-family: var(--font-body); font-size: 15px; font-weight: 600; color: var(--app-ink); }
+.lp-v2-phase-step-name { font-family: var(--font-heading); font-size: 20px; font-weight: 600; line-height: 1.2; color: var(--app-ink); }
 .lp-v2-phase-step-body { font-family: var(--font-body); font-size: 15px; line-height: 1.55; color: var(--app-text-dim); }
 .lp-v2-phase-blurb { font-family: var(--font-heading); font-size: clamp(20px, 2.6vw, 28px); font-weight: 400; line-height: 1.4; color: var(--app-ink); max-width: 24em; }
 .lp-v2-life-seq { display: flex; flex-direction: column; gap: clamp(40px, 7vh, 72px); margin-bottom: clamp(48px, 8vh, 80px); }
