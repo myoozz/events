@@ -450,7 +450,7 @@ function SectionLifecycle({ enableSticky }) {
   if (!enableSticky) {
     // Static vertical sequence — all phases & steps present.
     return (
-      <section className="lp-v2-life" ref={ref}>
+      <section className="lp-v2-life" id="features" ref={ref}>
         <div className="lp-v2-inner">
           {intro}
           <div className="lp-v2-life-seq">
@@ -471,7 +471,7 @@ function SectionLifecycle({ enableSticky }) {
   }
 
   return (
-    <section className="lp-v2-life">
+    <section className="lp-v2-life" id="features">
       <div className="lp-v2-inner">{intro}</div>
       <div className="lp-v2-life-scroll" ref={ref}>
         <div className="lp-v2-life-pin">
@@ -609,6 +609,100 @@ function SectionCrescendo() {
   );
 }
 
+/* ── §10 EARLY ACCESS — warm, the ask ───────────────────────────────────── */
+function SectionEarlyAccess({ openModal }) {
+  return (
+    <section className="lp-v2-early" id="early-access">
+      <div className="lp-v2-inner lp-v2-early-inner">
+        <Reveal as="p" className="lp-v2-label">Early access</Reveal>
+        <Reveal as="h2" className="lp-v2-h2 lp-v2-early-h2">Me isn’t finished. That’s exactly why you want in now.</Reveal>
+        <Reveal as="p" className="lp-v2-early-body">
+          We’re letting Event Managers in a few at a time — so we can build this with you, fix fast, and shape Me around how you actually run events. It’s early. Some edges are rough. But the ones who get in now help decide what it becomes — and keep founder benefits for good.
+        </Reveal>
+        <Reveal as="p" className="lp-v2-early-onramp">
+          You don’t start from scratch — unless you want to. Me walks you through your first event step by step, or start from a cost sheet you already have. Either way, you’re only ever filling in what only you know.
+        </Reveal>
+        <Reveal className="lp-v2-early-action">
+          <button className="lp-v2-btn-primary" type="button" onClick={openModal}>Request access →</button>
+          <span className="lp-v2-early-spots">We open a limited number of spots each week.</span>
+        </Reveal>
+        <Reveal as="p" className="lp-v2-early-skip">
+          Have a code from someone already inside?{" "}
+          <button className="lp-v2-link lp-v2-link-strong" type="button" onClick={openModal}>Skip the line.</button>
+        </Reveal>
+        <Reveal as="p" className="lp-v2-early-reassure">No card. No commitment. We’ll reach out personally as your spot opens.</Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ── §11 GOING INTERNATIONAL — Horizon hero, third deep-teal anchor ──────── */
+function SectionInternational({ openModal, enableParallax }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const driftY = useTransform(scrollYProgress, [0, 1], [44, -44]);
+  return (
+    <section className="lp-v2-intl" ref={ref}>
+      <div className="lp-v2-inner lp-v2-intl-inner">
+        <Reveal as="p" className="lp-v2-label lp-v2-intl-label">Built in India. Going global.</Reveal>
+        {enableParallax ? (
+          <motion.h2 className="lp-v2-h2 lp-v2-intl-h2" style={{ y: driftY }}>Wherever you run events, Me is coming.</motion.h2>
+        ) : (
+          <h2 className="lp-v2-h2 lp-v2-intl-h2">Wherever you run events, Me is coming.</h2>
+        )}
+        <Reveal as="p" className="lp-v2-intl-body">
+          Me works today, wherever you are. A regional experience — tuned to your market — arrives in Beta 2. Get in now, and you’ll be first when it lands.
+        </Reveal>
+        <Reveal className="lp-v2-intl-cta">
+          <button className="lp-v2-btn-primary lp-v2-btn-on-dark" type="button" onClick={openModal}>Request access →</button>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ── §12 FOOTER — deep-teal close ────────────────────────────────────────── */
+function Footer() {
+  return (
+    <footer className="lp-v2-footer">
+      <div className="lp-v2-inner lp-v2-footer-inner">
+        <div className="lp-v2-footer-top">
+          <div className="lp-v2-footer-brand">
+            <p className="lp-v2-footer-tagline">
+              <MeMark size="1.05em" tone="soft" /> My Events. My System. Born in India, built for the Event Managers of the world.
+            </p>
+            <p className="lp-v2-footer-maker">
+              Built by Myoozz Consulting.{" "}
+              <a href="https://myoozz.events" target="_blank" rel="noopener noreferrer" className="lp-v2-footer-link">Visit Myoozz →</a>
+            </p>
+          </div>
+          <div className="lp-v2-footer-cols">
+            <div className="lp-v2-footer-col">
+              <h4>Product</h4>
+              <a href="#features">Features</a>
+              <a href="#early-access">Early Access</a>
+              <a href={DEMO_URL} target="_blank" rel="noopener noreferrer">Try the Demo</a>
+            </div>
+            <div className="lp-v2-footer-col">
+              <h4>Company</h4>
+              <a href="mailto:hello@myoozz.events">Contact</a>
+              <a href="mailto:hello@myoozz.events">hello@myoozz.events</a>
+            </div>
+            <div className="lp-v2-footer-col">
+              <h4>Legal</h4>
+              <a href="/privacy">Privacy</a>
+              <a href="/terms">Terms</a>
+            </div>
+          </div>
+        </div>
+        <div className="lp-v2-footer-bottom">
+          <span>© 2026 Myoozz Consulting Pvt. Ltd. · myoozz.events</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 export default function LandingPage() {
   const reduce = useReducedMotion();
   const [modalOpen, setModalOpen] = useState(false);
@@ -735,11 +829,13 @@ export default function LandingPage() {
         <SectionWhyIndia />
         <SectionCrescendo />
 
-        {/* ════ §10–§12 (Early Access · 2nd teal anchor · footer) — next pass ════ */}
-        <div className="lp-v2-temp-end">
-          <span>§10–§12 in progress — landing V2 build</span>
-        </div>
+        {/* ── §10 · §11 ─────────────────────────────────────────────────── */}
+        <SectionEarlyAccess openModal={openModal} />
+        <SectionInternational openModal={openModal} enableParallax={parallaxOn} />
       </main>
+
+      {/* ── §12 ─────────────────────────────────────────────────────────── */}
+      <Footer />
     </div>
   );
 }
@@ -939,6 +1035,46 @@ const CSS = `
 .lp-v2-crescendo-pivot-line.is-before { color: color-mix(in srgb, var(--brand-teal-soft) 55%, transparent); font-weight: 400; }
 .lp-v2-crescendo-pivot-line.is-after { color: var(--brand-teal-soft); font-weight: 500; }
 .lp-v2-crescendo-final { font-family: var(--font-heading); font-weight: 400; font-size: clamp(28px, 4.6vw, 56px); line-height: 1.2; color: #FFFFFF; max-width: 18em; margin-top: clamp(80px, 16vh, 200px); }
+
+/* ── On-dark primary button (teal-soft fill for deep-teal surfaces) ── */
+.lp-v2-btn-primary.lp-v2-btn-on-dark { background: var(--brand-teal-soft); color: var(--brand-teal-deep); }
+.lp-v2-btn-primary.lp-v2-btn-on-dark:hover { background: #FFFFFF; }
+
+/* ── §10 Early access (warm) ── */
+.lp-v2-early { padding: clamp(80px, 14vh, 144px) 0; }
+.lp-v2-early-inner { max-width: 760px; }
+.lp-v2-early .lp-v2-label { margin-bottom: 20px; }
+.lp-v2-early-h2 { margin-bottom: 28px; max-width: 16em; }
+.lp-v2-early-body { font-family: var(--font-body); font-size: 17px; line-height: 1.7; color: var(--app-text-dim); max-width: 40em; margin-bottom: 24px; }
+.lp-v2-early-onramp { font-family: var(--font-body); font-size: 16px; line-height: 1.65; color: var(--app-text-dim); max-width: 40em; margin-bottom: 36px; }
+.lp-v2-early-action { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; }
+.lp-v2-early-spots { font-family: var(--font-body); font-size: 13px; color: var(--app-text-dim-lg); }
+.lp-v2-early-skip { font-family: var(--font-body); font-size: 14px; color: var(--app-text-dim); margin-bottom: 28px; }
+.lp-v2-early-reassure { font-family: var(--font-body); font-size: 13px; color: var(--app-text-dim-lg); }
+
+/* ── §11 Going international (Horizon — deep-teal-to-dawn) ── */
+.lp-v2-intl { position: relative; overflow: hidden; background: var(--brand-teal-deep); padding: clamp(100px, 20vh, 220px) 0; }
+.lp-v2-intl::before { content: ""; position: absolute; inset: 0; background: radial-gradient(130% 90% at 50% 128%, rgba(27,154,170,0.50), rgba(0,95,115,0.22) 42%, transparent 66%); pointer-events: none; }
+.lp-v2-intl-inner { position: relative; z-index: 1; max-width: 900px; }
+.lp-v2-intl-label { color: var(--brand-teal-soft); opacity: 0.72; margin-bottom: 24px; }
+.lp-v2-intl-h2 { color: #FFFFFF; font-size: clamp(34px, 6vw, 72px); font-weight: 400; line-height: 1.08; margin-bottom: 28px; max-width: 14em; }
+.lp-v2-intl-body { font-family: var(--font-body); font-size: clamp(16px, 1.8vw, 19px); line-height: 1.6; color: var(--brand-teal-soft); max-width: 34em; margin-bottom: 36px; }
+
+/* ── §12 Footer (deep teal) ── */
+.lp-v2-footer { background: var(--brand-teal-deep); padding: clamp(56px, 9vh, 88px) 0 clamp(28px, 4vh, 40px); }
+.lp-v2-footer-top { display: flex; justify-content: space-between; gap: clamp(40px, 8vw, 96px); flex-wrap: wrap; margin-bottom: clamp(40px, 7vh, 64px); }
+.lp-v2-footer-brand { max-width: 30em; }
+.lp-v2-footer-tagline { font-family: var(--font-heading); font-size: clamp(18px, 2.2vw, 24px); font-weight: 400; line-height: 1.4; color: var(--brand-teal-soft); margin-bottom: 16px; }
+.lp-v2-footer-tagline .lp-v2-memark { margin-right: 0.3em; vertical-align: -0.16em; }
+.lp-v2-footer-maker { font-family: var(--font-body); font-size: 14px; color: color-mix(in srgb, var(--brand-teal-soft) 70%, transparent); }
+.lp-v2-footer-link { color: var(--brand-aqua); text-decoration: none; }
+.lp-v2-footer-link:hover { color: var(--brand-teal-soft); text-decoration: underline; }
+.lp-v2-footer-cols { display: flex; gap: clamp(32px, 6vw, 72px); flex-wrap: wrap; }
+.lp-v2-footer-col h4 { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in srgb, var(--brand-teal-soft) 55%, transparent); margin-bottom: 14px; }
+.lp-v2-footer-col a { display: block; font-family: var(--font-body); font-size: 14px; color: var(--brand-teal-soft); text-decoration: none; margin-bottom: 10px; transition: color var(--dur-quick) var(--ease-out); }
+.lp-v2-footer-col a:hover { color: #FFFFFF; }
+.lp-v2-footer-bottom { border-top: 0.5px solid rgba(224,242,247,0.15); padding-top: 24px; }
+.lp-v2-footer-bottom span { font-family: var(--font-body); font-size: 12px; color: color-mix(in srgb, var(--brand-teal-soft) 50%, transparent); }
 
 /* ── Request-access modal ── */
 .lp-v2-modal-overlay { position: fixed; inset: 0; z-index: 100; background: var(--modal-overlay); backdrop-filter: blur(var(--modal-blur)); -webkit-backdrop-filter: blur(var(--modal-blur)); }
