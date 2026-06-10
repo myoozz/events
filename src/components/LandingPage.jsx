@@ -3,6 +3,10 @@ import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent, 
 import * as Dialog from "@radix-ui/react-dialog";
 import { supabase } from "../supabase";
 import meMarkSvg from "../assets/brand/me-mark.svg?raw";
+import dashboardShot from "../assets/landing/dashboard.png";
+import elementsShot from "../assets/landing/elements.png";
+import tasksShot from "../assets/landing/tasks.png";
+import rateLibraryShot from "../assets/landing/rate-library.png";
 
 /* ════════════════════════════════════════════════════════════════════════
    ME LANDING PAGE — V2  ·  route "/"  ·  editorial-quiet
@@ -87,15 +91,40 @@ function LineReveal({ children, className = "", style, delay = 0, amount = 0.6 }
 /* ── Product screenshot slot — captioned placeholder, swappable later ─────
    Image drops in at the .lp-v2-slot-frame. App Red is the product-layer cue
    (top accent + dot) — the only place red appears on this page. */
-function ProductSlot({ caption, aspect = "16 / 9", size = "lg" }) {
+function ProductSlot({ src, alt = "", caption, size = "lg", tone = "warm" }) {
   return (
-    <Reveal className={`lp-v2-slot lp-v2-slot--${size}`}>
-      <div className="lp-v2-slot-frame" style={{ aspectRatio: aspect }}>
-        <span className="lp-v2-slot-dot" aria-hidden="true" />
-        <span className="lp-v2-slot-label">Product preview — screenshot coming</span>
+    <Reveal className={`lp-v2-slot lp-v2-slot--${size} lp-v2-slot--${tone}`}>
+      <div className="lp-v2-slot-frame">
+        {src
+          ? <img src={src} alt={alt} loading="lazy" decoding="async" />
+          : <span className="lp-v2-slot-label">Product preview — screenshot coming</span>}
       </div>
-      <p className="lp-v2-slot-caption">{caption}</p>
+      {caption && <p className="lp-v2-slot-caption">{caption}</p>}
     </Reveal>
+  );
+}
+
+/* ── §1 hero product shot — scroll-tilt (desktop + motion on) ───────────── */
+function HeroShot({ enable, src }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const rotateX = useTransform(scrollYProgress, [0, 0.45], [13, 0]);
+  const yDrift = useTransform(scrollYProgress, [0, 1], [0, -48]);
+  if (!enable) {
+    return (
+      <div className="lp-v2-hero-shot" ref={ref}>
+        <div className="lp-v2-hero-shot-frame">
+          <img src={src} alt="Me — your events dashboard" loading="lazy" decoding="async" />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="lp-v2-hero-shot" ref={ref} style={{ perspective: "1400px" }}>
+      <motion.div className="lp-v2-hero-shot-frame" style={{ rotateX, y: yDrift, transformOrigin: "50% 100%" }}>
+        <img src={src} alt="Me — your events dashboard" loading="lazy" decoding="async" />
+      </motion.div>
+    </div>
   );
 }
 
@@ -254,7 +283,7 @@ function SectionSoftwareVsOS({ enableSticky }) {
       <Reveal as="p" className="lp-v2-svs-closer">
         Other platforms are built for the attendee. Me is built for Event Managers. They manage the audience. Me prepares you to run the show.
       </Reveal>
-      <ProductSlot caption="Event workspace — scope, cost, team, tasks, all in one place." />
+      <ProductSlot src={elementsShot} alt="Me — event elements with vendor rates and live subtotals" caption="Every element, every city — costed before you quote." />
     </>
   );
 
@@ -423,8 +452,14 @@ function SectionLifecycle({ enableSticky }) {
         <div className="lp-v2-inner">
           {intro}
           <div className="lp-v2-life-seq">
-            {PHASES.map((p) => <PhaseContent phase={p} key={p.key} />)}
-            <ProductSlot size="md" caption={REPEAT_SLOT} />
+            {PHASES.map((p) => (
+              <div className="lp-v2-life-seq-item" key={p.key}>
+                <PhaseContent phase={p} />
+                {p.key === "Build" && (
+                  <ProductSlot src={tasksShot} alt="Me — task board across the event team" size="md" />
+                )}
+              </div>
+            ))}
           </div>
           {underneath}
           {payoff}
@@ -454,8 +489,8 @@ function SectionLifecycle({ enableSticky }) {
                   transition={{ duration: 0.4, ease: EASE }}
                 >
                   <PhaseContent phase={PHASES[active]} />
-                  {PHASES[active].key === "Repeat" && (
-                    <ProductSlot size="md" caption={REPEAT_SLOT} />
+                  {(PHASES[active].key === "Build" || PHASES[active].key === "Run") && (
+                    <ProductSlot src={tasksShot} alt="Me — task board across the event team" size="pin" />
                   )}
                 </motion.div>
               </AnimatePresence>
@@ -542,6 +577,7 @@ function SectionWhyIndia() {
         <Reveal as="p" className="lp-v2-why-category">
           The big platforms manage the audience — tickets, check-in, the guest list. None were built for the people running the show. That’s the system Me is. Born in India, built for the Event Managers of the world.
         </Reveal>
+        <ProductSlot src={rateLibraryShot} alt="Me — Rate Intelligence Library: 239 benchmarks across Indian cities" caption="239 rate benchmarks across every major Indian city — the proprietary library behind every quote." tone="dark" />
         <Reveal as="p" className="lp-v2-why-source">
           Market figures — Expert Market Research, Grand View Research, 2025–26.
         </Reveal>
@@ -649,6 +685,8 @@ export default function LandingPage() {
               <button className="lp-v2-btn-primary" type="button" onClick={openModal}>Request access →</button>
               <a className="lp-v2-link lp-v2-link-strong" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Try the demo</a>
             </Reveal>
+
+            <HeroShot enable={enableSticky} src={dashboardShot} />
           </div>
         </section>
 
@@ -822,11 +860,22 @@ const CSS = `
 
 /* ── Product slot ── */
 .lp-v2-slot { margin: clamp(28px, 5vh, 48px) auto 0; max-width: 1000px; }
-.lp-v2-slot--md { max-width: 600px; margin-left: 0; }
-.lp-v2-slot-frame { position: relative; width: 100%; background: var(--app-surface); border: 1px solid var(--app-border); border-top: 3px solid var(--app-accent); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; gap: 10px; overflow: hidden; }
-.lp-v2-slot-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--app-accent); flex-shrink: 0; }
+.lp-v2-slot--md { max-width: 640px; margin-left: 0; }
+.lp-v2-slot--pin { max-width: 660px; margin-top: 24px; }
+.lp-v2-slot-frame { position: relative; width: 100%; min-height: 96px; background: var(--app-surface); border: 1px solid var(--app-border); border-top: 3px solid var(--app-accent); border-radius: var(--radius); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.lp-v2-slot-frame img { display: block; width: 100%; height: auto; }
+.lp-v2-slot--pin .lp-v2-slot-frame img { max-height: 290px; object-fit: cover; object-position: left top; }
+.lp-v2-slot--dark .lp-v2-slot-frame { background: var(--app-ratecard-dark); border-color: rgba(255,255,255,0.10); border-top-color: var(--app-accent); }
 .lp-v2-slot-label { font-family: var(--font-mono); font-size: 12px; color: var(--app-text-dim-lg); letter-spacing: 0.04em; }
 .lp-v2-slot-caption { font-family: var(--font-body); font-size: 13px; color: var(--app-text-dim); margin-top: 12px; }
+
+/* ── §1 hero product shot (scroll-tilt) ── */
+.lp-v2-hero-shot { width: 100%; max-width: 980px; margin-top: clamp(40px, 7vh, 80px); }
+.lp-v2-hero-shot-frame { border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--app-border); box-shadow: var(--elev-3); will-change: transform; }
+.lp-v2-hero-shot-frame img { display: block; width: 100%; height: auto; }
+
+/* ── §6 static seq item ── */
+.lp-v2-life-seq-item { display: flex; flex-direction: column; gap: 24px; }
 
 /* ── §5 Event-day honesty (quietest) ── */
 .lp-v2-honesty { background: var(--app-surface); padding: clamp(88px, 16vh, 160px) 0; }
