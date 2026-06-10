@@ -722,6 +722,10 @@ export default function LandingPage() {
   const parallaxOn = isDesktop && !reduce;
   const enableSticky = isDesktop && !reduce;
 
+  // D2 — header condenses once you scroll past the top of the hero.
+  const [condensed, setCondensed] = useState(false);
+  useMotionValueEvent(scrollY, "change", (v) => setCondensed(v > 120));
+
   const openModal = () => setModalOpen(true);
 
   const traps = [
@@ -738,10 +742,10 @@ export default function LandingPage() {
       <RequestAccessModal open={modalOpen} onOpenChange={setModalOpen} />
 
       {/* ── SLIM HEADER ─────────────────────────────────────────────── */}
-      <header className="lp-v2-header">
+      <header className={`lp-v2-header${condensed ? " is-condensed" : ""}`}>
         <div className="lp-v2-header-inner">
           <a href="/" className="lp-v2-brand" aria-label="Me — home">
-            <MeMark size={24} tone="teal" />
+            <MeMark size={condensed ? 26 : 36} tone="teal" />
           </a>
           <nav className="lp-v2-header-nav">
             <a className="lp-v2-link lp-v2-hide-phone" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Try the demo</a>
@@ -897,11 +901,18 @@ const CSS = `
 /* ── Header ── */
 .lp-v2-header {
   position: sticky; top: 0; z-index: 50;
-  background: color-mix(in srgb, var(--app-bg) 88%, transparent);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  border-bottom: 0.5px solid var(--app-border);
+  background: transparent;
+  border-bottom: 0.5px solid transparent;
+  transition: background var(--dur-reveal) var(--ease-out), border-color var(--dur-reveal) var(--ease-out);
 }
-.lp-v2-header-inner { max-width: 1080px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+.lp-v2-header.is-condensed {
+  background: color-mix(in srgb, var(--app-bg) 86%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom-color: var(--app-border);
+}
+.lp-v2-header-inner { max-width: 1080px; margin: 0 auto; padding: 0 24px; height: 88px; display: flex; align-items: center; justify-content: space-between; transition: height var(--dur-reveal) var(--ease-out); }
+.lp-v2-header.is-condensed .lp-v2-header-inner { height: 60px; }
+.lp-v2-header .lp-v2-memark { transition: width var(--dur-reveal) var(--ease-out), height var(--dur-reveal) var(--ease-out); }
 .lp-v2-brand { display: inline-flex; align-items: center; text-decoration: none; }
 .lp-v2-header-nav { display: flex; align-items: center; gap: 22px; }
 
