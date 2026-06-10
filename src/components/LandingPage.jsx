@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent, useInView, useReducedMotion, animate } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useMotionValueEvent, useInView, useReducedMotion, animate } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { supabase } from "../supabase";
 import meMarkSvg from "../assets/brand/me-mark.svg?raw";
@@ -109,20 +109,25 @@ function MacBookKeyboard() {
   );
 }
 
-function MacBook({ src, alt = "", variant = "slot", scrollOut = false }) {
+function MacBook({ src, alt = "", variant = "slot", fey = null }) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const lidRotate = useTransform(scrollYProgress, [0.04, 0.42], [14, 0]);
-  const shotScale = useTransform(scrollYProgress, [0.04, 0.42], [1.12, 1]);
+  const lidRotateIn = useTransform(scrollYProgress, [0.04, 0.42], [14, 0]);
+  const shotScaleIn = useTransform(scrollYProgress, [0.04, 0.42], [1.12, 1]);
   const liftY = useTransform(scrollYProgress, [0, 1], [34, -34]);
+
+  const lidStyle = fey
+    ? { rotateX: fey.lidRotate, transformOrigin: "50% 100%", transformPerspective: 1800 }
+    : { rotateX: lidRotateIn, y: liftY, transformOrigin: "50% 100%", transformPerspective: 1600 };
+  const shotStyle = fey ? { scale: fey.screenScale } : { scale: shotScaleIn };
 
   const lid = (
     <div className="lp-v2-mb-lid">
       <div className="lp-v2-mb-bezel">
         <span className="lp-v2-mb-cam" aria-hidden="true" />
         <div className="lp-v2-mb-screen">
-          {scrollOut
-            ? <motion.img className="lp-v2-mb-shot" src={src} alt={alt} decoding="async" style={{ scale: shotScale }} />
+          {fey
+            ? <motion.img className="lp-v2-mb-shot" src={src} alt={alt} decoding="async" style={shotStyle} />
             : <img className="lp-v2-mb-shot" src={src} alt={alt} decoding="async" />}
         </div>
       </div>
@@ -130,11 +135,9 @@ function MacBook({ src, alt = "", variant = "slot", scrollOut = false }) {
   );
 
   return (
-    <div className={`lp-v2-mb lp-v2-mb--${variant}`} ref={ref}>
-      {scrollOut ? (
-        <motion.div className="lp-v2-mb-lidwrap" style={{ rotateX: lidRotate, y: liftY, transformOrigin: "50% 100%", transformPerspective: 1600 }}>
-          {lid}
-        </motion.div>
+    <div className={`lp-v2-mb lp-v2-mb--${variant}`} ref={fey ? null : ref}>
+      {fey ? (
+        <motion.div className="lp-v2-mb-lidwrap" style={lidStyle}>{lid}</motion.div>
       ) : (
         <div className="lp-v2-mb-lidwrap">{lid}</div>
       )}
@@ -181,9 +184,52 @@ function ProductSlot({ src, alt = "", caption, size = "lg", tone = "warm" }) {
   );
 }
 
-/* ── §1 hero showpiece — the MacBook with scroll-out motion ─────────────── */
-function HeroShot({ enable, src }) {
-  return <MacBook variant="hero" scrollOut={enable} src={src} alt="Me — your events dashboard" />;
+/* ── §1 hero showpiece — Full Fey scroll-out ──────────────────────────────
+   Pinned region: as you scroll, the laptop scales up + the lid opens + the
+   screen content scales so it "comes out of the screen" to near-fill the
+   viewport while the hero text scrolls away above. Desktop + motion only;
+   static MacBook under reduced motion / mobile. */
+function HeroMacBook({ enable, src }) {
+  const ref = useRef(null);
+  // Manual progress from the fey region's own position — reliable, unlike
+  // useScroll({target}) which was binding to document scroll here.
+  const mbScale = useMotionValue(0.86);
+  const lidRotate = useMotionValue(24);
+  const screenScale = useMotionValue(1);
+  useEffect(() => {
+    if (!enable) return;
+    const el = ref.current;
+    const update = () => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const range = Math.max(1, rect.height - window.innerHeight);
+      const p = Math.min(1, Math.max(0, -rect.top / range)); // 0 at pin start → 1 at pin release
+      mbScale.set(0.86 + 0.46 * p);
+      lidRotate.set(24 * (1 - Math.min(1, p / 0.42)));
+      screenScale.set(1 + 0.3 * Math.min(1, Math.max(0, (p - 0.08) / 0.6)));
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => { window.removeEventListener("scroll", update); window.removeEventListener("resize", update); };
+  }, [enable]);
+
+  if (!enable) {
+    return (
+      <div className="lp-v2-hero-static">
+        <MacBook variant="hero" src={src} alt="Me — your events dashboard" />
+      </div>
+    );
+  }
+  return (
+    <div className="lp-v2-hero-fey" ref={ref}>
+      <div className="lp-v2-hero-fey-pin">
+        <motion.div className="lp-v2-hero-fey-mb" style={{ scale: mbScale }}>
+          <MacBook variant="hero" src={src} alt="Me — your events dashboard" fey={{ lidRotate, screenScale }} />
+        </motion.div>
+      </div>
+    </div>
+  );
 }
 
 /* ── Request-access modal ────────────────────────────────────────────────
@@ -843,9 +889,8 @@ export default function LandingPage() {
               <button className="lp-v2-btn-primary" type="button" onClick={openModal}>Request access →</button>
               <a className="lp-v2-link lp-v2-link-strong" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Try the demo</a>
             </Reveal>
-
-            <HeroShot enable={enableSticky} src={dashboardShot} />
           </div>
+          <HeroMacBook enable={enableSticky} src={dashboardShot} />
         </section>
 
         {/* ── §2 MANIFESTO — Tier 3, full-bleed deep teal ───────────────── */}
@@ -1061,6 +1106,13 @@ const CSS = `
 .lp-v2-mb--pin .lp-v2-mb-krow i { height: 10px; }
 .lp-v2-mb--pin .lp-v2-mb-trackpad { height: 36px; }
 .lp-v2-mb--pin .lp-v2-mb-bezel { padding: 9px 9px 10px; }
+
+/* ── §1 hero Fey scroll-out region ── */
+.lp-v2-hero-static { margin-top: clamp(40px, 7vh, 80px); }
+.lp-v2-hero-fey { height: 200vh; margin-top: clamp(16px, 3vh, 40px); }
+.lp-v2-hero-fey-pin { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.lp-v2-hero-fey-mb { width: 100%; max-width: 960px; transform-origin: 50% 58%; will-change: transform; }
+.lp-v2-hero-fey-mb .lp-v2-mb { margin: 0 auto; }
 
 /* ── Phone device frame (B4 — awaiting real mobile screens) ── */
 .lp-v2-phone { width: 100%; max-width: 300px; margin: 0 auto; filter: drop-shadow(0 20px 36px rgba(26,16,8,0.20)); }
