@@ -355,7 +355,7 @@ function SectionSoftwareVsOS({ enableSticky }) {
             <div className="lp-v2-cmp-head">
               <span className="lp-v2-cmp-label" />
               <span className="lp-v2-cmp-h-before">Event software</span>
-              <span className="lp-v2-cmp-h-after"><MeMark size="0.9em" tone="teal" /></span>
+              <span className="lp-v2-cmp-h-after"><MeMark size={28} tone="teal" /></span>
             </div>
             {SVS_ROWS.map(([label, before, after]) => (
               <div className="lp-v2-cmp-row" key={label}>
@@ -382,7 +382,7 @@ function SectionSoftwareVsOS({ enableSticky }) {
                 <span className="lp-v2-cmp-label" />
                 <span className="lp-v2-cmp-h-before">Event software</span>
                 <motion.span className="lp-v2-cmp-h-after" style={{ opacity: meOpacity, y: meY }}>
-                  <MeMark size="0.9em" tone="teal" />
+                  <MeMark size={28} tone="teal" />
                 </motion.span>
               </div>
               {SVS_ROWS.map((row, i) => (
@@ -1016,13 +1016,15 @@ const CSS = `
 .lp-v2-svs-scroll { height: 200vh; }
 .lp-v2-svs-pin { position: sticky; top: 0; min-height: 100vh; display: flex; align-items: center; }
 .lp-v2-cmp { width: 100%; max-width: 900px; margin: clamp(40px,7vh,72px) 0 0; border-top: 0.5px solid var(--app-border); }
-.lp-v2-cmp-head, .lp-v2-cmp-row { display: grid; grid-template-columns: minmax(110px, 1fr) 1fr 1.25fr; gap: clamp(16px, 3vw, 40px); padding: 18px 0; border-bottom: 0.5px solid var(--app-border); align-items: baseline; }
-.lp-v2-cmp-head { padding: 14px 0; }
+.lp-v2-cmp-head, .lp-v2-cmp-row { display: grid; grid-template-columns: minmax(110px, 0.9fr) 1fr 1.3fr; gap: clamp(16px, 3vw, 40px); align-items: center; }
+.lp-v2-cmp-row { padding: 7px 0; }
+.lp-v2-cmp-head { padding: 4px 0 16px; align-items: end; border-bottom: 0.5px solid var(--app-border); margin-bottom: 8px; }
 .lp-v2-cmp-h-before { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--app-text-dim-lg); }
 .lp-v2-cmp-h-after { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand-teal); display: inline-flex; }
 .lp-v2-cmp-label { font-family: var(--font-body); font-size: 12px; font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase; color: var(--app-text-dim-lg); }
 .lp-v2-cmp-before { font-family: var(--font-body); font-size: 15px; line-height: 1.4; color: var(--app-text-dim-lg); }
-.lp-v2-cmp-after { font-family: var(--font-heading); font-size: clamp(18px, 2.2vw, 25px); font-weight: 500; line-height: 1.2; color: var(--app-ink); }
+.lp-v2-cmp-after { font-family: var(--font-heading); font-size: clamp(17px, 2vw, 23px); font-weight: 500; line-height: 1.22; color: var(--app-ink); background: var(--app-bg); border: 0.5px solid var(--app-border); border-radius: var(--radius-md); box-shadow: var(--elev-2); padding: 13px 18px; transition: transform var(--dur-reveal) var(--ease-out), box-shadow var(--dur-reveal) var(--ease-out); }
+.lp-v2-cmp-after:hover { transform: translateY(-3px); box-shadow: var(--elev-3); }
 .lp-v2-svs-closer { font-family: var(--font-heading); font-size: clamp(20px, 2.6vw, 30px); font-weight: 400; font-style: italic; line-height: 1.3; color: var(--app-ink); max-width: 24em; margin: clamp(56px, 9vh, 96px) 0 clamp(36px, 6vh, 56px); }
 
 /* ── Product slot ── */
@@ -1215,7 +1217,7 @@ const CSS = `
   .lp-v2-trap-num { padding-top: 0; }
   .lp-v2-hero-ctas { gap: 18px; }
   .lp-v2-cmp-head { display: none; }
-  .lp-v2-cmp-row { grid-template-columns: 1fr; gap: 4px; padding: 16px 0; }
+  .lp-v2-cmp-row { grid-template-columns: 1fr; gap: 10px; padding: 12px 0; }
   .lp-v2-cmp-before { order: 2; }
   .lp-v2-cmp-after { order: 3; }
   .lp-v2-slot--md { margin-left: auto; }
