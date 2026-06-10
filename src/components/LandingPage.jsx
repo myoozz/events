@@ -191,22 +191,28 @@ function ProductSlot({ src, alt = "", caption, size = "lg", tone = "warm" }) {
    static MacBook under reduced motion / mobile. */
 function HeroMacBook({ enable, src }) {
   const ref = useRef(null);
-  // Manual progress from the fey region's own position — reliable, unlike
-  // useScroll({target}) which was binding to document scroll here.
-  const mbScale = useMotionValue(0.86);
-  const lidRotate = useMotionValue(24);
-  const screenScale = useMotionValue(1);
+  // Faithful port of the Aceternity "Fey.com MacBook Scroll" — fixed lid-back
+  // (rotateX -25°, origin bottom) + an overlaying screen (origin top) that
+  // unfolds: scaleX 1.2→1.5, scaleY 0.6→1.5, rotateX -28→0, translateY 0→1500.
+  // Progress driven manually (offset start→end-start: -rect.top / height).
+  const scaleX = useMotionValue(1.2);
+  const scaleY = useMotionValue(0.6);
+  const rotateX = useMotionValue(-28);
+  const translateY = useMotionValue(0);
   useEffect(() => {
     if (!enable) return;
     const el = ref.current;
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
     const update = () => {
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      const range = Math.max(1, rect.height - window.innerHeight);
-      const p = Math.min(1, Math.max(0, -rect.top / range)); // 0 at pin start → 1 at pin release
-      mbScale.set(0.86 + 0.46 * p);
-      lidRotate.set(24 * (1 - Math.min(1, p / 0.42)));
-      screenScale.set(1 + 0.3 * Math.min(1, Math.max(0, (p - 0.08) / 0.6)));
+      const p = clamp(-rect.top / Math.max(1, rect.height), 0, 1);
+      const e = clamp(p / 0.3, 0, 1); // [0, 0.3] scale/open window
+      scaleX.set(lerp(1.2, 1.5, e));
+      scaleY.set(lerp(0.6, 1.5, e));
+      rotateX.set(p < 0.12 ? -28 : lerp(-28, 0, clamp((p - 0.12) / (0.3 - 0.12), 0, 1)));
+      translateY.set(lerp(0, 1500, p));
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -222,11 +228,25 @@ function HeroMacBook({ enable, src }) {
     );
   }
   return (
-    <div className="lp-v2-hero-fey" ref={ref}>
-      <div className="lp-v2-hero-fey-pin">
-        <motion.div className="lp-v2-hero-fey-mb" style={{ scale: mbScale }}>
-          <MacBook variant="hero" src={src} alt="Me — your events dashboard" fey={{ lidRotate, screenScale }} />
+    <div className="lp-v2-msb" ref={ref}>
+      <div className="lp-v2-msb-lidwrap">
+        <div className="lp-v2-msb-lidback">
+          <div className="lp-v2-msb-lidback-inner"><MeMark size={30} tone="soft" /></div>
+        </div>
+        <motion.div className="lp-v2-msb-screen" style={{ scaleX, scaleY, rotateX, y: translateY }}>
+          <div className="lp-v2-msb-screen-bg" />
+          <img className="lp-v2-msb-screen-img" src={src} alt="Me — your events dashboard" decoding="async" />
         </motion.div>
+      </div>
+      <div className="lp-v2-msb-base">
+        <div className="lp-v2-msb-abovekeys"><div className="lp-v2-msb-notch" /></div>
+        <div className="lp-v2-msb-keysrow">
+          <span className="lp-v2-msb-speaker" />
+          <div className="lp-v2-msb-keypad"><MacBookKeyboard /></div>
+          <span className="lp-v2-msb-speaker" />
+        </div>
+        <div className="lp-v2-msb-trackpad" />
+        <div className="lp-v2-msb-lip" />
       </div>
     </div>
   );
@@ -1107,12 +1127,27 @@ const CSS = `
 .lp-v2-mb--pin .lp-v2-mb-trackpad { height: 36px; }
 .lp-v2-mb--pin .lp-v2-mb-bezel { padding: 9px 9px 10px; }
 
-/* ── §1 hero Fey scroll-out region ── */
+/* ── §1 hero — MacBook Scroll (ported from Aceternity Fey.com Macbook Scroll) ── */
 .lp-v2-hero-static { margin-top: clamp(40px, 7vh, 80px); }
-.lp-v2-hero-fey { height: 200vh; margin-top: clamp(16px, 3vh, 40px); }
-.lp-v2-hero-fey-pin { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.lp-v2-hero-fey-mb { width: 100%; max-width: 960px; transform-origin: 50% 58%; will-change: transform; }
-.lp-v2-hero-fey-mb .lp-v2-mb { margin: 0 auto; }
+.lp-v2-msb { min-height: 200vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; perspective: 800px; padding: clamp(40px, 9vh, 200px) 0; }
+.lp-v2-msb-lidwrap { position: relative; z-index: 2; perspective: 800px; }
+.lp-v2-msb-lidback { position: relative; height: 12rem; width: 32rem; border-radius: 1rem; background: #0b0b0d; padding: 0.5rem; transform: perspective(800px) rotateX(-25deg) translateZ(0); transform-origin: bottom; transform-style: preserve-3d; box-shadow: 0 2px 0 2px #171717 inset; }
+.lp-v2-msb-lidback-inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem; background: #0b0b0d; }
+.lp-v2-msb-screen { position: absolute; inset: 0; height: 24rem; width: 32rem; border-radius: 1rem; background: #0b0b0d; padding: 0.5rem; transform-style: preserve-3d; transform-origin: top; will-change: transform; }
+.lp-v2-msb-screen-bg { position: absolute; inset: 0; border-radius: 0.5rem; background: #1c1c1e; }
+.lp-v2-msb-screen-img { position: absolute; inset: 0; height: 100%; width: 100%; border-radius: 0.5rem; object-fit: cover; object-position: left top; }
+.lp-v2-msb-base { position: relative; z-index: 1; height: 22rem; width: 32rem; overflow: hidden; border-radius: 1rem; background: #272729; }
+.lp-v2-msb-abovekeys { position: relative; height: 2.5rem; width: 100%; }
+.lp-v2-msb-notch { position: absolute; left: 0; right: 0; margin: 0 auto; height: 1rem; width: 80%; background: #050505; }
+.lp-v2-msb-keysrow { position: relative; display: flex; align-items: flex-start; }
+.lp-v2-msb-speaker { width: 10%; height: 10rem; margin-top: 0.5rem; background-image: radial-gradient(circle, #08080a 0.5px, transparent 0.5px); background-size: 3px 3px; }
+.lp-v2-msb-keypad { width: 80%; }
+.lp-v2-msb-keypad .lp-v2-mb-keys { background: #050505; box-shadow: none; border-radius: 6px; padding: 6px; gap: 3px; margin: 0 0.25rem; }
+.lp-v2-msb-keypad .lp-v2-mb-krow { gap: 3px; }
+.lp-v2-msb-keypad .lp-v2-mb-krow i { height: 11px; border-radius: 3px; background: #0a090d; box-shadow: 0 0 0 0.5px rgba(255,255,255,0.05); }
+.lp-v2-msb-keypad .lp-v2-mb-space { flex: 6; }
+.lp-v2-msb-trackpad { margin: 0.25rem auto; height: 8rem; width: 40%; border-radius: 0.75rem; box-shadow: 0 0 1px 1px rgba(0,0,0,0.13) inset; }
+.lp-v2-msb-lip { position: absolute; left: 0; right: 0; bottom: 0; margin: 0 auto; height: 0.5rem; width: 5rem; border-top-left-radius: 1.5rem; border-top-right-radius: 1.5rem; background: linear-gradient(to top, #272729, #050505); }
 
 /* ── Phone device frame (B4 — awaiting real mobile screens) ── */
 .lp-v2-phone { width: 100%; max-width: 300px; margin: 0 auto; filter: drop-shadow(0 20px 36px rgba(26,16,8,0.20)); }
