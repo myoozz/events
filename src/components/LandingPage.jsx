@@ -91,41 +91,99 @@ function LineReveal({ children, className = "", style, delay = 0, amount = 0.6 }
 /* ── Product screenshot slot — captioned placeholder, swappable later ─────
    Image drops in at the .lp-v2-slot-frame. App Red is the product-layer cue
    (top accent + dot) — the only place red appears on this page. */
-function ProductSlot({ src, alt = "", caption, size = "lg", tone = "warm" }) {
+/* ── MacBook device frame ─────────────────────────────────────────────────
+   Realistic silhouette (lid + bezel + keyboard deck + trackpad), re-skinned to
+   neutral device greys. scrollOut → the lid opens + screen scales as it enters
+   (hero showpiece only, desktop + motion on). Static bezel everywhere else. */
+function MacBookKeyboard() {
+  const rows = [13, 13, 13, 12, 11];
   return (
-    <Reveal className={`lp-v2-slot lp-v2-slot--${size} lp-v2-slot--${tone}`}>
-      <div className="lp-v2-slot-frame">
-        {src
-          ? <img src={src} alt={alt} decoding="async" />
-          : <span className="lp-v2-slot-label">Product preview — screenshot coming</span>}
+    <div className="lp-v2-mb-keys" aria-hidden="true">
+      {rows.map((n, r) => (
+        <div className="lp-v2-mb-krow" key={r}>
+          {Array.from({ length: n }).map((_, k) => <i key={k} />)}
+        </div>
+      ))}
+      <div className="lp-v2-mb-krow lp-v2-mb-krow--space"><i /><i className="lp-v2-mb-space" /><i /></div>
+    </div>
+  );
+}
+
+function MacBook({ src, alt = "", variant = "slot", scrollOut = false }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const lidRotate = useTransform(scrollYProgress, [0.04, 0.42], [14, 0]);
+  const shotScale = useTransform(scrollYProgress, [0.04, 0.42], [1.12, 1]);
+  const liftY = useTransform(scrollYProgress, [0, 1], [34, -34]);
+
+  const lid = (
+    <div className="lp-v2-mb-lid">
+      <div className="lp-v2-mb-bezel">
+        <span className="lp-v2-mb-cam" aria-hidden="true" />
+        <div className="lp-v2-mb-screen">
+          {scrollOut
+            ? <motion.img className="lp-v2-mb-shot" src={src} alt={alt} decoding="async" style={{ scale: shotScale }} />
+            : <img className="lp-v2-mb-shot" src={src} alt={alt} decoding="async" />}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className={`lp-v2-mb lp-v2-mb--${variant}`} ref={ref}>
+      {scrollOut ? (
+        <motion.div className="lp-v2-mb-lidwrap" style={{ rotateX: lidRotate, y: liftY, transformOrigin: "50% 100%", transformPerspective: 1600 }}>
+          {lid}
+        </motion.div>
+      ) : (
+        <div className="lp-v2-mb-lidwrap">{lid}</div>
+      )}
+      <div className="lp-v2-mb-deck" aria-hidden="true">
+        <div className="lp-v2-mb-hinge" />
+        <MacBookKeyboard />
+        <div className="lp-v2-mb-trackpad" />
+        <div className="lp-v2-mb-lip" />
+      </div>
+    </div>
+  );
+}
+
+/* ── Phone device frame (B4) ──────────────────────────────────────────────
+   Ready to receive REAL portrait mobile app screens (Vikram provides them).
+   Not wired to any desktop shot — desktop tables look cramped in a phone. */
+function PhoneFrame({ src, alt = "", caption }) {
+  return (
+    <Reveal className="lp-v2-slot lp-v2-slot--phone">
+      <div className="lp-v2-phone">
+        <div className="lp-v2-phone-body">
+          <span className="lp-v2-phone-island" aria-hidden="true" />
+          <div className="lp-v2-phone-screen">
+            {src
+              ? <img src={src} alt={alt} decoding="async" />
+              : <span className="lp-v2-phone-label">Mobile app screen — coming</span>}
+          </div>
+        </div>
       </div>
       {caption && <p className="lp-v2-slot-caption">{caption}</p>}
     </Reveal>
   );
 }
 
-/* ── §1 hero product shot — scroll-tilt (desktop + motion on) ───────────── */
-function HeroShot({ enable, src }) {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const rotateX = useTransform(scrollYProgress, [0, 0.45], [13, 0]);
-  const yDrift = useTransform(scrollYProgress, [0, 1], [0, -48]);
-  if (!enable) {
-    return (
-      <div className="lp-v2-hero-shot" ref={ref}>
-        <div className="lp-v2-hero-shot-frame">
-          <img src={src} alt="Me — your events dashboard" loading="lazy" decoding="async" />
-        </div>
-      </div>
-    );
-  }
+function ProductSlot({ src, alt = "", caption, size = "lg", tone = "warm" }) {
+  const variant = size === "pin" ? "pin" : (size === "md" ? "md" : "slot");
   return (
-    <div className="lp-v2-hero-shot" ref={ref} style={{ perspective: "1400px" }}>
-      <motion.div className="lp-v2-hero-shot-frame" style={{ rotateX, y: yDrift, transformOrigin: "50% 100%" }}>
-        <img src={src} alt="Me — your events dashboard" loading="lazy" decoding="async" />
-      </motion.div>
-    </div>
+    <Reveal className={`lp-v2-slot lp-v2-slot--${size} lp-v2-slot--${tone}`}>
+      {src
+        ? <MacBook src={src} alt={alt} variant={variant} />
+        : <div className="lp-v2-slot-frame"><span className="lp-v2-slot-label">Product preview — screenshot coming</span></div>}
+      {caption && <p className="lp-v2-slot-caption">{caption}</p>}
+    </Reveal>
   );
+}
+
+/* ── §1 hero showpiece — the MacBook with scroll-out motion ─────────────── */
+function HeroShot({ enable, src }) {
+  return <MacBook variant="hero" scrollOut={enable} src={src} alt="Me — your events dashboard" />;
 }
 
 /* ── Request-access modal ────────────────────────────────────────────────
@@ -978,10 +1036,37 @@ const CSS = `
 .lp-v2-slot-label { font-family: var(--font-mono); font-size: 12px; color: var(--app-text-dim-lg); letter-spacing: 0.04em; }
 .lp-v2-slot-caption { font-family: var(--font-body); font-size: 13px; color: var(--app-text-dim); margin-top: 12px; }
 
-/* ── §1 hero product shot (scroll-tilt) ── */
-.lp-v2-hero-shot { width: 100%; max-width: 980px; margin-top: clamp(40px, 7vh, 80px); }
-.lp-v2-hero-shot-frame { border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--app-border); box-shadow: var(--elev-3); will-change: transform; }
-.lp-v2-hero-shot-frame img { display: block; width: 100%; height: auto; }
+/* ── MacBook device frame ── */
+.lp-v2-mb { width: 100%; max-width: 880px; margin: 0 auto; filter: drop-shadow(0 34px 54px rgba(26,16,8,0.20)); }
+.lp-v2-mb--hero { max-width: 960px; margin: clamp(40px, 7vh, 80px) auto 0; }
+.lp-v2-mb--md { max-width: 600px; margin: 0; }
+.lp-v2-mb--pin { max-width: 480px; margin: 0; filter: drop-shadow(0 18px 30px rgba(26,16,8,0.16)); }
+.lp-v2-mb-lidwrap { will-change: transform; }
+.lp-v2-mb-lid { background: linear-gradient(160deg, #4c4c50, #2e2e31); border-radius: 16px 16px 4px 4px; padding: 8px 8px 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 1px 2px rgba(0,0,0,0.3); }
+.lp-v2-mb-bezel { position: relative; background: #0b0b0d; border-radius: 9px 9px 2px 2px; padding: 14px 14px 16px; }
+.lp-v2-mb-cam { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #3c3c44, #141418); }
+.lp-v2-mb-screen { aspect-ratio: 16 / 10; border-radius: 1px; overflow: hidden; background: var(--app-surface); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.6); }
+.lp-v2-mb-shot { display: block; width: 100%; height: 100%; object-fit: cover; object-position: left top; }
+.lp-v2-mb-deck { position: relative; width: 102%; margin-left: -1%; }
+.lp-v2-mb-hinge { height: 10px; background: linear-gradient(#1d1d20, #3a3a3e 50%, #141416); border-radius: 0 0 2px 2px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); margin: 0 2%; }
+.lp-v2-mb-keys { background: linear-gradient(#d4d0c9, #bbb7af); border-radius: 2px 2px 0 0; padding: 16px 5% 8px; display: flex; flex-direction: column; gap: 5px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
+.lp-v2-mb-krow { display: flex; gap: 5px; justify-content: center; }
+.lp-v2-mb-krow i { flex: 1; height: 15px; border-radius: 3px; background: linear-gradient(#35353b, #222226); box-shadow: 0 1px 1px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05); }
+.lp-v2-mb-space { flex: 6 !important; }
+.lp-v2-mb-trackpad { width: 32%; height: 52px; margin: 12px auto 0; background: linear-gradient(#cbc7bf, #d6d2cb); border-radius: 7px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.10), inset 0 3px 6px rgba(0,0,0,0.04); }
+.lp-v2-mb-lip { height: 12px; background: linear-gradient(#c6c2ba, #a4a098); border-radius: 0 0 13px 13px; position: relative; box-shadow: inset 0 1px 0 rgba(255,255,255,0.45); }
+.lp-v2-mb-lip::after { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 12%; height: 6px; background: #959189; border-radius: 0 0 7px 7px; }
+.lp-v2-mb--pin .lp-v2-mb-krow i { height: 10px; }
+.lp-v2-mb--pin .lp-v2-mb-trackpad { height: 36px; }
+.lp-v2-mb--pin .lp-v2-mb-bezel { padding: 9px 9px 10px; }
+
+/* ── Phone device frame (B4 — awaiting real mobile screens) ── */
+.lp-v2-phone { width: 100%; max-width: 300px; margin: 0 auto; filter: drop-shadow(0 20px 36px rgba(26,16,8,0.20)); }
+.lp-v2-phone-body { position: relative; background: linear-gradient(160deg, #3a3a3d, #222225); border-radius: 40px; padding: 10px; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.06); }
+.lp-v2-phone-island { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 32%; height: 22px; background: #050506; border-radius: 14px; z-index: 2; }
+.lp-v2-phone-screen { position: relative; aspect-ratio: 9 / 19.5; border-radius: 30px; overflow: hidden; background: var(--app-surface); display: flex; align-items: center; justify-content: center; }
+.lp-v2-phone-screen img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.lp-v2-phone-label { font-family: var(--font-mono); font-size: 11px; color: var(--app-text-dim-lg); text-align: center; padding: 0 16px; }
 
 /* ── §6 static seq item ── */
 .lp-v2-life-seq-item { display: flex; flex-direction: column; gap: 24px; }
