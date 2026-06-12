@@ -577,7 +577,7 @@ export default function LandingPage() {
         <section className="hero">
           <div className="hero-glow" aria-hidden="true" />
           <div className="wrap">
-            <Rv as="p" className="label center">Event management software, built for Event Managers</Rv>
+            <Rv as="p" className="label center">Event management software, built for Event Managers.</Rv>
             <h1>
               <Rv as="span" d={1} className="l1">It’s your event.</Rv>
               <Rv as="span" d={2} className="l2">Walk in fearless.</Rv>
