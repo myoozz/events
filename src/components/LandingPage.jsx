@@ -367,37 +367,43 @@ function GlobalSection({ active, onAccess }) {
   );
 }
 
-/* ── §10 access card (no <form> tag; insert attempt is honest about failure) ── */
+/* ── §10 access card (no <form> tag; never shows success unless the insert
+   actually succeeded). States: idle | busy | ok | dup | err. ── */
 function AccessCard() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [state, setState] = useState("idle"); // idle | busy | ok | err
+  const [trap, setTrap] = useState(""); // honeypot — humans never see it
+  const [state, setState] = useState("idle");
+  const [emailBad, setEmailBad] = useState(false);
   const emailRef = useRef(null);
 
   async function submit() {
     const e = email.trim();
     if (!e || !/.+@.+\..+/.test(e)) {
-      setState("err");
+      setEmailBad(true);
       emailRef.current?.focus();
       return;
     }
+    setEmailBad(false);
+    if (trap.trim()) { setState("ok"); return; } // bot filled the honeypot — silent no-op
     setState("busy");
-    /* invite code rides in `company` as a labelled stash until the
-       early_access table grows a proper column (separate task, B9) */
     const { error } = await supabase.from("early_access").insert({
       full_name: name.trim() || null,
       email: e,
-      company: code.trim() ? `[invite:${code.trim()}]` : null,
+      invite_code: code.trim() || null,
+      status: "pending",
     });
-    setState(error ? "err" : "ok");
+    if (!error) { setState("ok"); return; }
+    if (error.code === "23505") { setState("dup"); return; } // unique lower(email)
+    setState("err"); // keep their input; offer retry + mail fallback
   }
 
-  if (state === "ok") {
+  if (state === "ok" || state === "dup") {
     return (
       <div className="ok show">
         <div className="tick">✓</div>
-        <p className="ok-hd">You’re on the list.</p>
+        <p className="ok-hd">{state === "dup" ? "You’re already on the list — we’ve got you." : "You’re on the list."}</p>
         <p className="ok-sub">We’ll reach out personally as your spot opens.</p>
       </div>
     );
@@ -407,16 +413,20 @@ function AccessCard() {
       <p className="card-title">Request an invite</p>
       <p className="card-sub">We open a limited number of spots each week.</p>
       <label htmlFor="accName">Name</label>
-      <input id="accName" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
+      <input id="accName" type="text" autoComplete="name" maxLength={120} value={name} onChange={(e) => setName(e.target.value)} />
       <label htmlFor="accEmail">Email *</label>
-      <input id="accEmail" ref={emailRef} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={state === "err" ? "is-err" : ""} />
+      <input id="accEmail" ref={emailRef} type="email" autoComplete="email" maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} className={emailBad ? "is-err" : ""} />
       <label htmlFor="accCode">Invite code <span className="soft">(have one? you skip the line)</span></label>
-      <input id="accCode" type="text" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} />
+      <input id="accCode" type="text" autoComplete="off" maxLength={64} value={code} onChange={(e) => setCode(e.target.value)} />
+      <input className="hp-field" type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" value={trap} onChange={(e) => setTrap(e.target.value)} />
       <button type="button" className="btn" onClick={submit} disabled={state === "busy"}>
-        {state === "busy" ? "Sending…" : "Request an invite →"}
+        {state === "busy" ? "Sending…" : state === "err" ? "Try again →" : "Request an invite →"}
       </button>
+      {emailBad && (
+        <p className="fine err-line">That email doesn’t look right — check it and try again.</p>
+      )}
       {state === "err" && (
-        <p className="fine err-line">Couldn’t submit just now — check the email, or write to hello@myoozz.events.</p>
+        <p className="fine err-line">Couldn’t submit just now — try again, or write to <a className="err-mail" href="mailto:hello@myoozz.events">hello@myoozz.events</a> and we’ll add you by hand.</p>
       )}
       <p className="fine">No card. No commitment. We’ll reach out personally as your spot opens.</p>
     </div>
@@ -1117,6 +1127,9 @@ const CSS = `
 .me-v3 .access .btn{width:100%;justify-content:center;margin-top:26px;border-radius:10px}
 .me-v3 .access .fine{font-size:12.5px;color:var(--v3-dim);text-align:center;margin-top:14px}
 .me-v3 .access .err-line{color:#E8A0A8}
+.me-v3 .access .err-mail{color:#E8A0A8;text-decoration:underline}
+/* honeypot: off-screen (not display:none — bots skip hidden fields) */
+.me-v3 .access .hp-field{position:absolute;left:-9999px;top:auto;width:1px;height:1px;opacity:0;pointer-events:none}
 .me-v3 .access .ok{text-align:center;padding:32px 0}
 .me-v3 .access .ok .tick{font-size:40px;color:var(--acc)}
 .me-v3 .access .ok .ok-hd{font-family:var(--fd);font-size:22px;color:var(--v3-white);margin-top:10px}

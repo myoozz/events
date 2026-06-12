@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabase'
 import { Icon } from '../icons'
+import EarlyAccess from './EarlyAccess'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
@@ -25,6 +26,7 @@ const PLAN_COLORS = {
 const SECTIONS = [
   { key: 'overview',   label: 'Overview',   icon: 'overview' },
   { key: 'approvals',  label: 'Approvals',  icon: 'approvals', badge: true },
+  { key: 'earlyaccess', label: 'Early Access', icon: 'list' },
   { key: 'tenants',    label: 'Tenants',    icon: 'tenants' },
   { key: 'users',      label: 'Users',      icon: 'users' },
   { key: 'credits',    label: 'Credits',    icon: 'credits' },
@@ -2259,6 +2261,7 @@ export default function SuperAdminPanel({ onClose }) {
   const sectionMap = {
     overview:   <SectionOverview setActiveSection={setActiveSection} />,
     approvals:  <SectionApprovals refreshBadge={fetchBadge} showToast={showToast} showError={showError} />,
+    earlyaccess: <EarlyAccess />,
     tenants:    <SectionTenants showToast={showToast} showError={showError} />,
     users:      <SectionUsers showToast={showToast} showError={showError} />,
     credits:    <SectionCredits showToast={showToast} showError={showError} />,
