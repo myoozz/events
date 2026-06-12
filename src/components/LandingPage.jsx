@@ -44,18 +44,10 @@ function MeMark({ className = "", size }) {
   );
 }
 
-/* ── Typed "Me" for INLINE copy use (Vikram, 12 Jun): the logo SVG in body
-   copy reads badly — inline mentions are typeset (Poppins M + Fraunces
-   italic e); the SVG logo stays only in true logo slots (header, laptop
-   boot screen, phone screens, footer brand). ── */
-function MeType({ className = "" }) {
-  return (
-    <span className={`me-type ${className}`} aria-label="Me">
-      <span className="m" aria-hidden="true">M</span>
-      <span className="e" aria-hidden="true">e</span>
-    </span>
-  );
-}
+/* NAMING LAW (Vikram, pass 2, 12 Jun): wordmark ONLY in logo slots (header,
+   laptop boot screen, device placeholders, footer). In copy the product is
+   "Myoozz Events" in identity/claim lines, "it" thereafter — no inline mark,
+   no typed-mark in sentences. (The former MeType inline component is gone.) */
 
 /* ── Hydration gate: pre-JS the page renders complete and visible ── */
 function useHydrated() {
@@ -177,15 +169,17 @@ function LapStage({ active }) {
   );
 }
 
-/* ── §4 convergence: the tools dock onto the Me platform ── */
-const SCATTER = [[-300, -110, -7], [230, -150, 6], [-150, -205, 4], [300, -30, -5], [-40, -60, 2]];
+/* ── §4 convergence: the tools dock onto the platform ──
+   Scatter Y is bounded so tiles never ride over the headline; each tile gets
+   its own progress window so the docking visibly SEQUENCES. ── */
+const SCATTER = [[-300, -80, -7], [230, -105, 6], [-150, -130, 4], [300, -30, -5], [-40, -55, 2]];
 const DOCK = [[-190, 52, 0], [-95, 52, 0], [0, 52, 0], [95, 52, 0], [190, 52, 0]];
 const TILES = [
-  { k: "chat", label: "CHATS", svg: <svg viewBox="0 0 34 34"><path d="M5 7h18a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H12l-7 5V10a3 3 0 0 1 3-3z" /></svg> },
-  { k: "sheet", label: "SHEETS", svg: <svg viewBox="0 0 34 34"><rect x="5" y="5" width="24" height="24" rx="2" /><path d="M5 13h24M13 5v24" /></svg> },
-  { k: "deck", label: "DECKS", svg: <svg viewBox="0 0 34 34"><rect x="5" y="6" width="24" height="16" rx="2" /><path d="M17 22v6M12 28h10" /></svg> },
-  { k: "mail", label: "MAIL", svg: <svg viewBox="0 0 34 34"><rect x="4" y="8" width="26" height="18" rx="3" /><path d="M4 10l13 9 13-9" /></svg> },
-  { k: "login", label: "+1 LOGIN", svg: <svg viewBox="0 0 34 34"><rect x="7" y="14" width="20" height="14" rx="3" /><path d="M11 14v-4a6 6 0 0 1 12 0v4" /></svg> },
+  { k: "chat", label: "Chats", svg: <svg viewBox="0 0 34 34"><path d="M5 7h18a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H12l-7 5V10a3 3 0 0 1 3-3z" /></svg> },
+  { k: "sheet", label: "Sheets", svg: <svg viewBox="0 0 34 34"><rect x="5" y="5" width="24" height="24" rx="2" /><path d="M5 13h24M13 5v24" /></svg> },
+  { k: "deck", label: "Proposals", svg: <svg viewBox="0 0 34 34"><rect x="5" y="6" width="24" height="16" rx="2" /><path d="M17 22v6M12 28h10" /></svg> },
+  { k: "mail", label: "Mail", svg: <svg viewBox="0 0 34 34"><rect x="4" y="8" width="26" height="18" rx="3" /><path d="M4 10l13 9 13-9" /></svg> },
+  { k: "login", label: "One more login", svg: <svg viewBox="0 0 34 34"><rect x="7" y="14" width="20" height="14" rx="3" /><path d="M11 14v-4a6 6 0 0 1 12 0v4" /></svg> },
 ];
 const PAIRS = [
   ["Built for the attendee", "Built for Event Managers"],
@@ -199,7 +193,8 @@ function Convergence({ active }) {
   const tileTransforms = TILES.map((_, i) =>
     /* eslint-disable-next-line react-hooks/rules-of-hooks -- TILES is a module constant; order is stable */
     useTransform(p, (v) => {
-      const c = clamp01(v / 0.42);
+      const w0 = i * 0.05, w1 = 0.42 + i * 0.045; // staggered per-tile window
+      const c = clamp01((v - w0) / (w1 - w0));
       const e = 1 - Math.pow(1 - c, 3);
       const s = SCATTER[i], d = DOCK[i];
       return `translate(-50%,-50%) translate(${lerp(s[0], d[0], e)}px,${lerp(s[1], d[1], e)}px) rotate(${lerp(s[2], 0, e)}deg) scale(${lerp(1, 0.82, e)})`;
@@ -219,15 +214,16 @@ function Convergence({ active }) {
       <section className="cmp-pin">
         <div className="wrap">
           <p className="label">Software vs. operating system</p>
-          <h2>Every event tool is software you add. <em className="accent-i">Me is the system it all runs on.</em></h2>
+          <h2>Every event tool is software you add. <em className="accent-i">Myoozz Events is the system it all runs on.</em></h2>
           <div className="os-visual">
+            <p className="os-cap" aria-hidden="true">The stack you juggle today.</p>
             {TILES.map((t, i) => (
               <motion.div key={t.k} className={`tile t-${t.k}`} style={active ? { transform: tileTransforms[i] } : undefined}>
                 {t.svg}<span>{t.label}</span>
               </motion.div>
             ))}
             <div className={`os-platform${glow ? " glow" : ""}`}>
-              <MeType className="mark-soft" /><small>The system it all runs on</small>
+              <b>One system.</b><small>The whole lifecycle.</small>
             </div>
           </div>
           <div className="pairs">
@@ -237,7 +233,7 @@ function Convergence({ active }) {
               </div>
             ))}
           </div>
-          <p className={`cmp-closer${closerOn ? " on" : ""}`}>They manage the audience. <em>Me prepares you to run the show.</em></p>
+          <p className={`cmp-closer${closerOn ? " on" : ""}`}>They manage the audience. <em>It prepares you to run the show.</em></p>
         </div>
       </section>
     </div>
@@ -274,6 +270,25 @@ const PHASES = [
   { title: "Repeat it", repeat: true },
 ];
 
+/* ── the REAL product pipeline as the section's spine: the tracker every
+   event runs on (Proposal→Won→Execution→Production→Delivered, green nodes).
+   Win = Proposal→Won · Build = Execution · Run = Production→Delivered ·
+   Repeat = after (all delivered, carry forward). ── */
+const PIPE_STAGES = ["Proposal", "Won", "Execution", "Production", "Delivered"];
+const PHASE_SPAN = [[0, 1], [2, 2], [3, 4], [0, 4]];
+
+function PipelineStrip({ span }) {
+  return (
+    <div className="pipe" aria-hidden="true">
+      {PIPE_STAGES.map((s, i) => (
+        <span key={s} className={`pipe-node${i >= span[0] && i <= span[1] ? " on" : ""}`}>
+          <i />{s}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function Lifecycle({ active }) {
   const ref = useRef(null);
   const p = usePinProgress(ref, active);
@@ -283,10 +298,10 @@ function Lifecycle({ active }) {
   });
 
   const shots = [
-    <figure className="f-lap" key="s0"><div className="f-lid"><img src={elementsShot} alt="Scoping and costing every element of an event in Me" /></div><div className="f-base" /></figure>,
-    <figure className="f-lap" key="s1"><div className="f-lid"><img src={tasksShot} alt="Tasks assigned across the team in Me" /></div><div className="f-base" /></figure>,
+    <figure className="f-lap" key="s0"><div className="f-lid"><img src={elementsShot} alt="Scoping and costing every element of an event in Myoozz Events" /></div><div className="f-base" /></figure>,
+    <figure className="f-lap" key="s1"><div className="f-lid"><img src={tasksShot} alt="Tasks assigned across the team in Myoozz Events" /></div><div className="f-base" /></figure>,
     <PhonePlaceholder key="s2" />,
-    <figure className="f-lap" key="s3"><div className="f-lid"><img src={dashboardShot} alt="All your events on the Me dashboard" /></div><div className="f-base" /></figure>,
+    <figure className="f-lap" key="s3"><div className="f-lid"><img src={dashboardShot} alt="All your events on the Myoozz Events dashboard" /></div><div className="f-base" /></figure>,
   ];
 
   return (
@@ -303,6 +318,7 @@ function Lifecycle({ active }) {
               <div key={ph.title} className={`phase${i === idx ? " on" : ""}`}>
                 <span className="ghost" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
                 <h3>{ph.title}</h3>
+                <PipelineStrip span={PHASE_SPAN[i]} />
                 {ph.repeat ? (
                   <div className="step step--wide">
                     <span>Every event makes the next one faster. Clone a similar event, keep what fits. Your elements, your team, your rates — already there, already yours. <b>Start where you ended.</b></span>
@@ -355,8 +371,8 @@ function GlobalSection({ active, onAccess }) {
       <div className="wrap grid2">
         <div className="g-copy">
           <Rv as="p" className="label">Built in India. Going global.</Rv>
-          <Rv as="h2" d={1}>Wherever you run events, <MeType className="mark-white" /> is coming.</Rv>
-          <Rv as="p" d={2} className="lead">Me works today, wherever you are. Your market’s edition arrives in Beta 2 — get in now and you’re first when it lands.</Rv>
+          <Rv as="h2" d={1}>Your market is next.</Rv>
+          <Rv as="p" d={2} className="lead">Tuned for your region — leave your email and you’re first when your market’s edition lands.</Rv>
           <Rv as="div" d={3}><button type="button" className="btn" onClick={onAccess}>Request access →</button></Rv>
         </div>
         <Rv d={2} className="g-phone">
@@ -546,8 +562,7 @@ export default function LandingPage() {
           <div className="wrap">
             <Rv as="p" className="label center">Event management software, built for Event Managers</Rv>
             <h1>
-              <Rv as="span" d={1} className="l1">Sweat in the planning.</Rv>
-              <Rv as="span" d={2} className="l2">Don’t bleed on the day.</Rv>
+              <Rv as="span" d={1} className="l1">Walk in fearless.</Rv>
             </h1>
             <Rv as="p" d={3} className="sub">The operating system for the people running the show.</Rv>
             <Rv as="div" d={4} className="ctas">
@@ -555,7 +570,7 @@ export default function LandingPage() {
               <a className="link-quiet" href="#demo" onClick={openDemo}><span className="play">▶</span>Watch the demo</a>
             </Rv>
             <Rv as="div" d={4} className="hero-meta">
-              <span>A web app</span><i /><span>Nothing to install</span><i /><span>Any device</span>
+              <span>Laptop at the desk, tablet at the venue, phone on the ground — same workspace, every screen.</span>
             </Rv>
           </div>
         </section>
@@ -567,28 +582,27 @@ export default function LandingPage() {
         <AnchorLines
           className="manif"
           lines={[
-            { cls: "l-a", node: "The industry built its tools for the audience." },
-            { cls: "l-b", node: "That era is ending." },
-            { cls: "l-c", node: "Search changed. Commerce changed. How events get run is next." },
-            { cls: "final", node: <><MeType className="mark-soft" /> is that change.</> },
+            { cls: "l-a", node: "The audience got tools. The client got tools." },
+            { cls: "l-b", node: "The one running the whole show was never seen." },
+            { cls: "final", node: "Myoozz Events — this one is built for you." },
           ]}
         />
 
         {/* §3 THE TRUTH — sticky stacked trap cards */}
         <section className="sec">
           <div className="wrap">
-            <Rv as="p" className="label">The real cost of running without a system</Rv>
+            <Rv as="p" className="label">Event by event, nothing adds up</Rv>
             <Rv as="h2" d={1}>You didn’t lose that margin in a bad call. You lost it in a Tuesday WhatsApp thread.</Rv>
             <div className="stack">
               {[
-                ["01 — THE RATE TRAP", "The rate trap", "The vendor’s rate moved. The client cost is closed. That gap just became yours.",
+                ["01 — THE RATES", "The rates", "Every rate you negotiated, gone with the thread it lived in.",
                   <svg viewBox="0 0 48 48" key="i"><path d="M8 14h32v18a4 4 0 0 1-4 4H20l-8 6v-6h-1a3 3 0 0 1-3-3z" /><path d="M16 22h16M16 28h10" /></svg>],
-                ["02 — THE TEMPLATE TRAP", "The template trap", "A template gets you through one event. A system gets you through every one after it.",
-                  <svg viewBox="0 0 48 48" key="i"><rect x="8" y="8" width="32" height="32" rx="3" /><path d="M8 18h32M18 8v32M8 28h32" /></svg>],
-                ["03 — THE MEMORY TRAP", "The memory trap", "Your team can’t execute what only lives in your head. And the day that person leaves — it all leaves with them.",
-                  <svg viewBox="0 0 48 48" key="i"><path d="M24 8a12 12 0 0 1 12 12c0 5-3 8-3 12H15c0-4-3-7-3-12A12 12 0 0 1 24 8z" /><path d="M19 38h10M21 42h6" /></svg>],
-                ["04 — THE WHATSAPP TRAP", "The WhatsApp trap", "One event, fourteen threads. Nobody’s sure what’s confirmed, what changed, or what got missed.",
+                ["02 — THE PEOPLE", "The people", "The crew that delivered at 2am — their names live in someone’s phone.",
                   <svg viewBox="0 0 48 48" key="i"><path d="M10 10h22a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H18l-8 6V14a4 4 0 0 1 4-4h-4z" /><path d="M30 22h8a4 4 0 0 1 4 4v8l-6-4h-6" /></svg>],
+                ["03 — THE LEARNINGS", "The learnings", "What went wrong, what saved you — never written down.",
+                  <svg viewBox="0 0 48 48" key="i"><path d="M24 8a12 12 0 0 1 12 12c0 5-3 8-3 12H15c0-4-3-7-3-12A12 12 0 0 1 24 8z" /><path d="M19 38h10M21 42h6" /></svg>],
+                ["04 — THE STORIES", "The stories", "Every event ends as one slide in a credentials deck.",
+                  <svg viewBox="0 0 48 48" key="i"><rect x="8" y="8" width="32" height="32" rx="3" /><path d="M8 18h32M18 8v32M8 28h32" /></svg>],
               ].map(([num, h, body, icon]) => (
                 <div className="trap" key={num}>
                   <div className="ic">{icon}</div>
@@ -602,20 +616,28 @@ export default function LandingPage() {
         {/* §4 SOFTWARE vs OS — convergence */}
         <Convergence active={motionOn} />
 
-        {/* RATE INTELLIGENCE — first product plate (D3: stays, counts stripped) */}
+        {/* KNOWLEDGE BASE — first product plate (was rate intelligence;
+            D3 crop interim unchanged; predictive-cost card moved here from §8) */}
         <section className="rates">
           <div className="wrap grid2">
             <div>
-              <Rv as="p" className="label">Proprietary · Rate intelligence</Rv>
+              <Rv as="p" className="label">Your knowledge base</Rv>
               <Rv as="h2" d={1}>Every element, every city — costed before you quote.</Rv>
-              <Rv as="p" d={2} className="lead">LED walls, line arrays, truss spans, crew — benchmarked against live rates across your cities. The number you put in front of a client stops being a guess and becomes a decision.</Rv>
-              <Rv as="p" d={3} className="fine-note"><em>Live benchmarks</em> · all major Indian cities</Rv>
+              <Rv as="p" d={2} className="lead">Your own knowledge base — rates, elements, people — growing with every event, alongside live benchmarks.</Rv>
+              <Rv as="p" d={3} className="kb-punch">Never depend on one person for a rate again.</Rv>
             </div>
-            <Rv d={2} className="rate-shot">
+            <Rv d={2} className="kb-col">
               {/* header strip CSS-cropped: baked-in counts stay off-page (D3)
                   — drop .crop when the clean re-export lands */}
-              <div className="rate-crop">
-                <img src={rateLibraryShot} alt="The Rate Intelligence Library in Me — live rate benchmarks by city" />
+              <div className="rate-shot">
+                <div className="rate-crop">
+                  <img src={rateLibraryShot} alt="The Rate Intelligence Library in Myoozz Events — live rate benchmarks by city" />
+                </div>
+              </div>
+              <div className="vignette">
+                <p className="v-label"><i />Predictive cost</p>
+                <div className="v-row"><b>LED wall · 12ft × 8ft · Mumbai</b><span>₹16,800–₹19,400</span></div>
+                <p className="v-quote">It doesn’t just suggest the element. <em>It suggests the cost.</em></p>
               </div>
             </Rv>
           </div>
@@ -624,11 +646,11 @@ export default function LandingPage() {
         {/* §5 WHAT ME WON'T DO */}
         <section className="honest">
           <div className="wrap">
-            <Rv as="p" className="label">What Me won’t do</Rv>
-            <Rv as="h2" d={1}>Me won’t run your event. That’s your job — and you’re good at it.</Rv>
+            <Rv as="p" className="label">What it won’t do</Rv>
+            <Rv as="h2" d={1}>Myoozz Events won’t run your event. That’s your job — and you’re good at it.</Rv>
             <Rv as="p" d={2} className="craft">The instinct on the floor. The call when a vendor no-shows. The read on a client’s face. That’s craft — and <em>no AI replaces it</em>. You’re not the one being automated. You’re the one being armed.</Rv>
-            <Rv as="p" d={3} className="plain">Me does everything before that moment — scope locked, costs tracked, team aligned — so you walk in with nothing left to figure out.</Rv>
-            <Rv as="p" d={4} className="echo">The more you sweat in the planning, the less you bleed when the show is live.</Rv>
+            <Rv as="p" d={3} className="plain">It does everything before that moment — scope locked, costs tracked, team aligned — so you walk in with nothing left to figure out.</Rv>
+            <Rv as="p" d={4} className="echo">It works for you. It will never be you.</Rv>
           </div>
         </section>
 
@@ -657,9 +679,10 @@ export default function LandingPage() {
         {/* §7 WHO ME IS FOR */}
         <section className="sec">
           <div className="wrap">
-            <Rv as="p" className="label">Who Me is for</Rv>
+            <Rv as="p" className="label">Who it’s for</Rv>
             <Rv as="h2" d={1}>For the people who run the event. Not the ones who attend it.</Rv>
-            <Rv as="p" d={2} className="lead">Me is for the person responsible for everything the audience never sees — the brief, the budget, the build, the final mile. <br /><em className="who-em">The one who makes it look effortless.</em></Rv>
+            <Rv as="p" d={2} className="lead">Myoozz Events is for the person responsible for everything the audience never sees — the brief, the budget, the build, the final mile. <br /><em className="who-em">The one who makes it look effortless.</em></Rv>
+            <Rv as="p" d={3} className="who-punch">Built by Event Managers, for Event Managers.</Rv>
           </div>
         </section>
 
@@ -696,14 +719,9 @@ export default function LandingPage() {
                 <Stat key={n} n={n} body={body} />
               ))}
             </div>
-            <Rv as="p" className="cat">The big platforms manage the audience — tickets, check-in, the guest list. None were built for the people running the show. That’s the system Myoozz Events is.</Rv>
+            <Rv as="p" className="cat">None were built for the people running the show. Myoozz Events is that system.</Rv>
             <Rv as="p" d={1} className="next">India first. The world next.</Rv>
-            <Rv d={2} className="vignette">
-              <p className="v-label"><i />Predictive cost</p>
-              <div className="v-row"><b>LED wall · 12ft × 8ft · Mumbai</b><span>₹16,800–₹19,400</span></div>
-              <p className="v-quote">Me doesn’t just suggest the element. <em>It suggests the cost.</em></p>
-            </Rv>
-            <Rv as="p" d={3} className="src">Market figures — Expert Market Research, Grand View Research, 2025–26.</Rv>
+            <Rv as="p" d={2} className="src">Market figures — Expert Market Research, Grand View Research, 2025–26.</Rv>
           </div>
         </section>
 
@@ -713,7 +731,7 @@ export default function LandingPage() {
           lines={[
             { cls: "ln-hd", node: "The best Event Managers are the ones you never notice." },
             { cls: "ln-md", node: <>The client doesn’t see the 2am call, the vendor who fell through, the plan you rebuilt twice. <br />That’s the job — to carry all of it, and make it look like nothing.</> },
-            { cls: "ln-md", node: "Me carries it with you — every element, every cost, every change — so it’s not all on you and your memory anymore." },
+            { cls: "ln-md", node: "Myoozz Events carries it with you — every element, every cost, every change — so it’s not all on you and your memory anymore." },
             { cls: "ln-pv", node: <><span className="dim">Stop being the person everything depends on.</span> <br /><span className="pivot">Start being the person who built the system everything runs on.</span></> },
             { cls: "final", node: <>You still won’t be the one they applaud. <br />But you’ll be the one who was <em>never afraid</em>.</> },
           ]}
@@ -723,10 +741,7 @@ export default function LandingPage() {
         <section className="access" id="access">
           <div className="wrap grid2">
             <div>
-              <Rv as="p" className="label">Invite-only early access</Rv>
-              <Rv as="h2" d={1} className="access-h2">Me isn’t finished. That’s exactly why you want in now.</Rv>
-              <Rv as="p" d={2} className="lead">Access opens to a few Event Managers each week, so we build this with you and fix fast. The ones inside now shape what Me becomes — and keep founder benefits for good.</Rv>
-              <Rv as="p" d={3} className="lead lead--tight">You don’t start from scratch. Me walks you through your first event, or starts from a cost sheet you already have.</Rv>
+              <Rv as="h2" d={1} className="access-h2">Invite-only. We open a few spots each week.</Rv>
             </div>
             <Rv d={2} className="card">
               <AccessCard />
@@ -741,7 +756,7 @@ export default function LandingPage() {
       {/* §12 FOOTER */}
       <footer className="foot">
         <div className="wrap">
-          <p className="tag">My Events. My System. <span className="tag-dim">Born in India, built for the Event Managers of the world.</span></p>
+          <p className="tag">Myoozz Events. <span className="tag-dim">Born in India, built for the Event Managers of the world.</span></p>
           <div className="cols">
             <div>
               <MeMark className="mark-soft foot-mark" />
@@ -817,9 +832,7 @@ const CSS = `
 .me-v3 .mark-acc{color:var(--acc)}
 .me-v3 .mark-white{color:#fff}
 /* ── typed "Me" for inline copy (logo fonts, set as text) ── */
-.me-v3 .me-type{font-weight:900;letter-spacing:-.02em;white-space:nowrap}
-.me-v3 .me-type .m{font-family:'Poppins',var(--fb);font-weight:900}
-.me-v3 .me-type .e{font-family:'Fraunces',var(--fd);font-style:italic;font-weight:900}
+/* (typed inline mark removed — naming law pass 2: no mark in sentences) */
 
 /* ── eyebrow grammar — ONE standard (B4) ── */
 .me-v3 .label{font-family:var(--fm);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
@@ -852,12 +865,13 @@ const CSS = `
 .me-v3 .hdr{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
   padding:0 5vw;height:84px;background:transparent;transition:all .3s var(--ease)}
 .me-v3 .mark-btn{background:none;border:none;cursor:pointer;padding:0;line-height:0}
-.me-v3 .hdr-mark{font-size:30px;transition:font-size .3s var(--ease)}
-.me-v3 .hdr.dense{top:14px;left:50%;right:auto;transform:translateX(-50%);width:min(92vw,860px);height:56px;
-  padding:0 12px 0 22px;border-radius:999px;background:rgba(7,13,16,.78);
+.me-v3 .hdr-mark{font-size:34px;transition:font-size .3s var(--ease)}
+.me-v3 .hdr.dense{top:14px;left:50%;right:auto;transform:translateX(-50%);width:min(92vw,860px);height:58px;
+  padding:0 12px 0 22px;border-radius:999px;background:rgba(14,23,28,.88);
+  border:1px solid var(--v3-line-strong);
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  box-shadow:0 1px 0 rgba(224,242,247,.06) inset,0 14px 44px -14px rgba(0,0,0,.7),0 0 0 1px var(--v3-line)}
-.me-v3 .hdr.dense .hdr-mark{font-size:22px}
+  box-shadow:0 1px 0 rgba(224,242,247,.08) inset,0 18px 50px -16px rgba(0,0,0,.75)}
+.me-v3 .hdr.dense .hdr-mark{font-size:26px}
 .me-v3 .hdr nav{display:flex;align-items:center;gap:26px;font-size:14.5px;font-weight:500}
 .me-v3 .hdr nav a:not(.btn){color:var(--v3-body);text-decoration:none;cursor:pointer;transition:color .15s}
 .me-v3 .hdr nav a:not(.btn):hover{color:var(--v3-soft)}
@@ -872,9 +886,8 @@ const CSS = `
 .me-v3 .hero h1 .l2{font-style:italic;font-weight:500;color:var(--acc)}
 .me-v3 .hero .sub{font-size:clamp(17px,1.55vw,21px);color:var(--v3-body);margin:26px auto 34px;max-width:620px}
 .me-v3 .hero .ctas{display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap}
-.me-v3 .hero-meta{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:38px;
-  font-family:var(--fm);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--v3-dim)}
-.me-v3 .hero-meta i{width:4px;height:4px;border-radius:50%;background:var(--v3-dim);font-style:normal}
+.me-v3 .hero-meta{display:flex;align-items:center;justify-content:center;margin:38px auto 0;max-width:780px;
+  font-family:var(--fm);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--v3-dim);line-height:1.8;text-align:center}
 
 /* ── signature laptop story ── */
 .me-v3 .lap-stage{height:300vh;position:relative}
@@ -911,15 +924,19 @@ const CSS = `
 .me-v3 .anchor .line{font-family:var(--fd);line-height:1.3;font-weight:500;max-width:900px;margin-bottom:3.5vh;position:relative}
 .me-v3.js .anchor .line{opacity:0;transform:translateY(22px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
 .me-v3.js .anchor .line.in{opacity:1;transform:none}
-.me-v3 .manif .l-a{font-size:clamp(24px,2.8vw,38px)}
+/* manifesto — type-ramp law: all lines one size; the middle line is the
+   single designated big one */
+.me-v3 .manif .l-a{font-size:clamp(22px,2.6vw,34px)}
 .me-v3 .manif .l-b{font-size:clamp(44px,6vw,84px);font-weight:600;color:#fff;font-style:italic;margin:2vh 0 3vh;line-height:1.05}
-.me-v3 .manif .l-c{font-size:clamp(20px,2.2vw,30px)}
+.me-v3 .anchor.manif .line.final{font-size:clamp(22px,2.6vw,34px)}
 .me-v3 .anchor .line.final{margin-top:5vh;font-size:clamp(30px,3.8vw,52px);font-weight:600;color:#fff}
 .me-v3 .anchor .line.final em{color:var(--acc);font-style:italic}
 .me-v3 .anchor .me-mark{font-size:.95em}
-.me-v3 .ln-hd{font-size:clamp(30px,4vw,52px);color:#fff;font-weight:600}
+/* crescendo — statement wall: all lines one size; the FINAL line is the
+   single designated big one (it keeps the .anchor .line.final size) */
+.me-v3 .ln-hd{font-size:clamp(17px,1.5vw,20px);color:#fff;font-weight:600}
 .me-v3 .ln-md{font-size:clamp(17px,1.5vw,20px)}
-.me-v3 .ln-pv{font-size:clamp(20px,2.2vw,28px)}
+.me-v3 .ln-pv{font-size:clamp(17px,1.5vw,20px)}
 .me-v3 .ln-pv .dim{opacity:.72}
 .me-v3 .ln-pv .pivot{color:#fff;font-weight:600}
 
@@ -929,6 +946,9 @@ const CSS = `
 .me-v3 .sec .lead,.me-v3 .rates .lead,.me-v3 .access .lead,.me-v3 .global .lead{font-size:clamp(16px,1.35vw,19px);max-width:620px;margin-top:22px}
 .me-v3 .sec .lead em,.me-v3 .accent-i{color:var(--acc);font-style:italic}
 .me-v3 .who-em{font-size:19px}
+/* the practitioner line — ad-weight (same display size as the section h2) */
+.me-v3 .who-punch{font-family:var(--fd);font-style:italic;font-weight:600;font-size:clamp(32px,4vw,54px);
+  line-height:1.12;color:var(--acc);margin-top:36px;letter-spacing:-.01em}
 .me-v3 .grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:6vw;align-items:start}
 
 /* ── traps: sticky stacked cards ── */
@@ -943,7 +963,7 @@ const CSS = `
   border:1px solid rgba(27,154,170,.18);display:flex;align-items:center;justify-content:center}
 .me-v3 .trap .ic svg{width:46px;height:46px;stroke:var(--acc);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .me-v3 .trap .num{font-family:var(--fm);font-size:12.5px;color:var(--v3-dim);letter-spacing:.16em;margin-bottom:8px;display:block}
-.me-v3 .trap h3{font-size:28px;margin-bottom:8px}
+.me-v3 .trap h3{font-family:var(--fb);font-size:17px;font-weight:600;margin-bottom:8px}
 .me-v3 .trap p{max-width:620px}
 
 /* ── convergence ── */
@@ -963,15 +983,20 @@ const CSS = `
   background:linear-gradient(160deg,#0E4252 0%,#062633 100%);border:1px solid rgba(53,194,209,.3);
   box-shadow:0 0 0 1px rgba(53,194,209,.08),0 0 70px -18px rgba(53,194,209,.25);transition:box-shadow .6s var(--ease)}
 .me-v3 .os-platform.glow{box-shadow:0 0 0 1px rgba(53,194,209,.2),0 0 110px -10px rgba(53,194,209,.5)}
-.me-v3 .os-platform .me-mark{font-size:34px}
+.me-v3 .os-platform b{display:block;font-family:var(--fb);font-size:18px;font-weight:600;color:#fff}
 .me-v3 .os-platform small{display:block;font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.65;margin-top:6px}
+.me-v3 .os-cap{position:absolute;top:-6px;left:50%;transform:translateX(-50%);font-family:var(--fm);font-size:12px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--v3-dim);white-space:nowrap}
+/* tiles never ride over the headline: copy sits above the visual layer */
+.me-v3 .cmp-pin .label,.me-v3 .cmp-pin h2{position:relative;z-index:2}
+.me-v3 .os-visual{z-index:1}
 .me-v3 .pairs{margin-top:36px}
 .me-v3 .pair{display:grid;grid-template-columns:1fr 1.3fr;gap:26px;padding:14px 0;border-top:1px solid var(--v3-line)}
 .me-v3.js .pair{opacity:.1;transform:translateY(8px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
 .me-v3.js .pair.on{opacity:1;transform:none}
 .me-v3 .pair .old{color:var(--v3-dim);font-size:15.5px;text-decoration:line-through;text-decoration-color:rgba(98,128,138,.5);padding-top:4px}
-.me-v3 .pair .new{font-family:var(--fd);font-size:clamp(18px,1.9vw,24px);color:var(--v3-white);font-weight:600}
-.me-v3 .cmp-closer{margin-top:36px;font-family:var(--fd);font-size:clamp(19px,2vw,25px);color:var(--v3-white);max-width:760px}
+.me-v3 .pair .new{font-family:var(--fb);font-size:16px;color:var(--v3-white);font-weight:600}
+.me-v3 .cmp-closer{margin-top:36px;font-family:var(--fb);font-size:16.5px;font-weight:500;color:var(--v3-white);max-width:760px}
 .me-v3.js .cmp-closer{opacity:0;transform:translateY(14px);transition:all .6s var(--ease)}
 .me-v3.js .cmp-closer.on{opacity:1;transform:none}
 .me-v3 .cmp-closer em{color:var(--acc);font-style:italic}
@@ -992,10 +1017,14 @@ const CSS = `
 /* ── honesty ── */
 .me-v3 .honest{background:var(--v3-surface);padding:140px 0;border-top:1px solid var(--v3-line)}
 .me-v3 .honest h2{max-width:780px;font-size:clamp(32px,4vw,54px)}
-.me-v3 .honest .craft{font-family:var(--fd);font-size:clamp(20px,2.2vw,28px);color:var(--v3-soft);line-height:1.45;max-width:760px;margin-top:30px}
+.me-v3 .honest .craft{font-size:16.5px;color:var(--v3-soft);line-height:1.7;max-width:680px;margin-top:30px}
 .me-v3 .honest .craft em{color:var(--acc);font-style:italic}
+.me-v3 .honest .plain{font-size:16.5px}
 .me-v3 .honest .plain{margin-top:26px;max-width:620px}
-.me-v3 .honest .echo{font-family:var(--fd);font-style:italic;font-size:clamp(20px,2vw,26px);color:var(--acc);margin-top:44px}
+.me-v3 .honest .echo{font-style:italic;font-size:16.5px;color:var(--acc);margin-top:40px;font-weight:500}
+/* knowledge base */
+.me-v3 .kb-punch{font-size:16.5px;font-weight:500;color:var(--acc);margin-top:26px}
+.me-v3 .kb-col .vignette{margin-top:24px;max-width:none}
 
 /* ── lifecycle ── */
 .me-v3 .sec--lifeintro{padding-bottom:0}
@@ -1014,7 +1043,14 @@ const CSS = `
   color:rgba(27,154,170,.1);line-height:1;font-weight:500;pointer-events:none}
 .me-v3 .phase h3{font-size:clamp(36px,4vw,54px);margin-bottom:26px}
 .me-v3 .step{padding:15px 0;border-top:1px solid var(--v3-line);max-width:560px;display:grid;grid-template-columns:165px 1fr;gap:18px}
-.me-v3 .step b{font-family:var(--fd);font-weight:600;font-size:19px;color:var(--v3-white)}
+.me-v3 .step b{font-family:var(--fb);font-weight:600;font-size:15px;color:var(--v3-white)}
+/* the real product pipeline — the section's spine (green tracker nodes) */
+.me-v3 .pipe{display:flex;align-items:center;margin:-8px 0 24px;flex-wrap:wrap;row-gap:8px}
+.me-v3 .pipe-node{display:flex;align-items:center;font-family:var(--fm);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--v3-dim);white-space:nowrap}
+.me-v3 .pipe-node i{width:8px;height:8px;border-radius:50%;background:var(--v3-line-strong);margin-right:6px;font-style:normal;transition:background .3s,box-shadow .3s}
+.me-v3 .pipe-node+.pipe-node::before{content:"";width:22px;height:1px;background:var(--v3-line-strong);margin:0 9px}
+.me-v3 .pipe-node.on{color:#7DD8A0}
+.me-v3 .pipe-node.on i{background:#34C06B;box-shadow:0 0 8px rgba(52,192,107,.5)}
 .me-v3 .step span{font-size:15px}
 .me-v3 .step--wide{grid-template-columns:1fr}
 .me-v3 .step--wide span{font-size:16.5px;max-width:560px}
@@ -1045,7 +1081,8 @@ const CSS = `
 .me-v3 .phone-screen small{font-family:var(--fm);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;padding:0 14px;text-align:center}
 
 /* ── payoff ── */
-.me-v3 .payoff{padding:120px 0;text-align:center;border-top:1px solid var(--v3-line)}
+/* payoff closes the lifecycle — anchored, not a floating orphan */
+.me-v3 .payoff{padding:36px 0 110px;text-align:center;border-top:0}
 .me-v3 .payoff>.wrap>p:last-child,.me-v3 .payoff p.rv:last-child{font-family:var(--fd);font-size:clamp(25px,2.9vw,40px);
   color:var(--v3-white);font-weight:600;max-width:840px;margin:0 auto;line-height:1.25}
 .me-v3 .payoff em{color:var(--acc);font-style:italic}
@@ -1053,8 +1090,8 @@ const CSS = `
   border-bottom:1px solid var(--v3-line);text-align:left;margin:0 0 90px}
 .me-v3 .under-strip>div{padding:26px 26px 26px 0;border-right:1px solid var(--v3-line);margin-right:26px}
 .me-v3 .under-strip>div:last-child{border-right:0;margin-right:0}
-.me-v3 .under-strip b{display:block;color:var(--v3-white);font-size:14.5px;margin-bottom:5px}
-.me-v3 .under-strip p{font-size:13.5px;line-height:1.55}
+.me-v3 .under-strip b{display:block;color:var(--v3-white);font-size:14px;margin-bottom:5px;font-weight:600}
+.me-v3 .under-strip p{font-size:14px;line-height:1.55}
 
 /* ── anywhere: the one light section ── */
 .me-v3 .anywhere{background:var(--v3-warm-bg);color:var(--v3-warm-dim);padding:140px 0}
@@ -1066,7 +1103,7 @@ const CSS = `
   border-bottom:1px solid var(--v3-warm-border);margin-top:56px}
 .me-v3 .aw-points>div{padding:28px 28px 28px 0;border-right:1px solid var(--v3-warm-border);margin-right:28px}
 .me-v3 .aw-points>div:last-child{border-right:0;margin-right:0}
-.me-v3 .aw-points b{display:block;font-family:var(--fd);font-size:21px;color:var(--v3-warm-ink);font-weight:600;margin-bottom:6px}
+.me-v3 .aw-points b{display:block;font-family:var(--fb);font-size:16px;color:var(--v3-warm-ink);font-weight:600;margin-bottom:6px}
 .me-v3 .aw-points p{font-size:14.5px;line-height:1.6}
 .me-v3 .aw-devices{position:relative;margin-top:80px;padding-bottom:40px}
 .me-v3 .aw-devices .f-lap{max-width:760px;margin:0 auto}
@@ -1083,8 +1120,8 @@ const CSS = `
 .me-v3.js .stat .n{filter:blur(14px);opacity:0;transition:filter 1s var(--ease),opacity 1s var(--ease)}
 .me-v3.js .stat.on .n{filter:blur(0);opacity:1}
 .me-v3 .stat p{margin-top:10px;font-size:14px;max-width:260px}
-.me-v3 .india .cat{font-family:var(--fd);font-size:clamp(19px,2vw,25px);color:var(--v3-soft);max-width:800px;line-height:1.45}
-.me-v3 .india .next{font-family:var(--fd);font-style:italic;font-size:clamp(20px,2.2vw,28px);color:#fff;margin-top:24px}
+.me-v3 .india .cat{font-size:17px;color:var(--v3-soft);max-width:720px;line-height:1.65;font-weight:500}
+.me-v3 .india .next{font-style:italic;font-size:17px;color:#fff;margin-top:20px;font-weight:500}
 .me-v3 .india .src{font-size:12px;color:var(--v3-dim);margin-top:18px}
 .me-v3 .vignette{margin-top:56px;max-width:560px;background:linear-gradient(165deg,var(--v3-card-a),var(--v3-card-b));
   border:1px solid rgba(53,194,209,.25);border-radius:16px;padding:26px 30px 24px;
@@ -1095,7 +1132,7 @@ const CSS = `
 .me-v3 .vignette .v-row{display:flex;justify-content:space-between;gap:20px;align-items:baseline;padding:11px 0;border-top:1px solid var(--v3-line)}
 .me-v3 .vignette .v-row b{color:var(--v3-white);font-weight:500;font-size:15.5px}
 .me-v3 .vignette .v-row span{font-family:var(--fm);color:var(--acc);font-size:15px}
-.me-v3 .vignette .v-quote{margin-top:18px;font-family:var(--fd);font-size:20px;color:var(--v3-soft);line-height:1.4}
+.me-v3 .vignette .v-quote{margin-top:18px;font-size:15px;color:var(--v3-soft);line-height:1.55}
 .me-v3 .vignette .v-quote em{color:var(--acc);font-style:italic}
 
 /* ── access ── */
@@ -1105,7 +1142,7 @@ const CSS = `
 .me-v3 .access .card{background:linear-gradient(165deg,var(--v3-card-a) 0%,var(--v3-card-b) 100%);
   border:1px solid rgba(27,154,170,.25);border-radius:16px;padding:40px;
   box-shadow:0 0 0 1px rgba(27,154,170,.08),0 0 60px -18px rgba(27,154,170,.22),0 40px 90px -40px rgba(0,0,0,.9)}
-.me-v3 .card-title{font-family:var(--fd);font-size:25px;color:var(--v3-white);font-weight:600}
+.me-v3 .card-title{font-family:var(--fb);font-size:17px;color:var(--v3-white);font-weight:600}
 .me-v3 .card-sub{font-size:13.5px;margin-top:6px}
 .me-v3 .access label{display:block;font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--v3-dim);margin:18px 0 7px;font-weight:500}
