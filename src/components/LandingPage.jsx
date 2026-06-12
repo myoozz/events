@@ -31,6 +31,21 @@ const EASE = [0.22, 1, 0.36, 1];
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 
+/* FAQ — answers assembled from ratified copy only. These strings are
+   mirrored verbatim in index.html's FAQPage JSON-LD: edit BOTH together. */
+const FAQS = [
+  ["What is Myoozz Events?",
+    "Myoozz Events is the operating system for Event Managers — scope, cost, team, tasks and rates for the whole event business in one workspace. Built in India, going global."],
+  ["Is Myoozz Events for event attendees?",
+    "No. It’s built for the people who run the event, not the ones who attend it. The big platforms manage the audience — Myoozz Events prepares you to run the show."],
+  ["Does it run my event on the day?",
+    "No — Myoozz Events won’t run your event. That’s your job, and you’re good at it. It does everything before that moment — scope locked, costs tracked, team aligned — so you walk in with nothing left to figure out."],
+  ["Which cities and markets does it cover?",
+    "It works today, wherever you are, with live rate benchmarks across all major Indian cities. Your market’s edition arrives in Beta 2. India first. The world next."],
+  ["How do I get access?",
+    "Access is invite-only — we open a few spots each week. Request an invite with your name and email; have a code from someone already inside and you skip the line. No card. No commitment."],
+];
+
 /* ── The Me mark — single swappable point (recolors via currentColor) ── */
 function MeMark({ className = "", size }) {
   return (
@@ -777,6 +792,20 @@ export default function LandingPage() {
 
         {/* §11 GOING GLOBAL */}
         <GlobalSection active={motionOn} onAccess={goAccess} />
+
+        {/* FAQ — footer-adjacent; the visible text IS the FAQPage JSON-LD
+            content in index.html (schema must match what readers see) */}
+        <section className="faq">
+          <div className="wrap">
+            <Rv as="p" className="label">Questions</Rv>
+            {FAQS.map(([q, a]) => (
+              <details className="faq-item" key={q}>
+                <summary>{q}</summary>
+                <p>{a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
       </main>
 
       {/* §12 FOOTER */}
@@ -1212,6 +1241,19 @@ const CSS = `
 .me-v3 .g-copy .btn{margin-top:30px}
 .me-v3 .g-phone{display:flex;justify-content:center;align-items:flex-end}
 .me-v3 .g-phone .f-phone{margin-bottom:-64px;box-shadow:0 -20px 90px -30px rgba(122,208,219,.45),0 36px 80px -28px rgba(0,0,0,.8)}
+
+/* ── FAQ (footer-adjacent; matches FAQPage JSON-LD) ── */
+.me-v3 .faq{padding:90px 0 110px;border-top:1px solid var(--v3-line)}
+.me-v3 .faq .label{margin-bottom:28px}
+.me-v3 .faq-item{border-top:1px solid var(--v3-line);max-width:760px}
+.me-v3 .faq-item:last-of-type{border-bottom:1px solid var(--v3-line)}
+.me-v3 .faq-item summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;justify-content:space-between;gap:18px;
+  padding:17px 0;font-size:15.5px;font-weight:600;color:var(--v3-white);transition:color .15s}
+.me-v3 .faq-item summary::-webkit-details-marker{display:none}
+.me-v3 .faq-item summary::after{content:"+";font-family:var(--fm);font-size:15px;color:var(--v3-dim);flex:none;transition:transform .2s var(--ease)}
+.me-v3 .faq-item[open] summary::after{transform:rotate(45deg);color:var(--acc)}
+.me-v3 .faq-item summary:hover{color:var(--acc)}
+.me-v3 .faq-item p{font-size:15px;line-height:1.65;color:var(--v3-body);padding:0 0 18px;max-width:640px}
 
 /* ── footer ── */
 .me-v3 .foot{background:var(--v3-foot);color:rgba(224,242,247,.75);padding:96px 0 46px}

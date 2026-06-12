@@ -1,0 +1,15 @@
+# myoozz.events — all crawlers welcome
+User-agent: *
+Allow: /
+
+# AI answer engines — explicitly allowed (AEO)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+Sitemap: https://myoozz.events/sitemap.xml
