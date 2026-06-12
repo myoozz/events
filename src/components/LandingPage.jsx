@@ -270,21 +270,36 @@ const PHASES = [
   { title: "Repeat it", repeat: true },
 ];
 
-/* ── the REAL product pipeline as the section's spine: the tracker every
-   event runs on (Proposal→Won→Execution→Production→Delivered, green nodes).
-   Win = Proposal→Won · Build = Execution · Run = Production→Delivered ·
-   Repeat = after (all delivered, carry forward). ── */
-const PIPE_STAGES = ["Proposal", "Won", "Execution", "Production", "Delivered"];
-const PHASE_SPAN = [[0, 1], [2, 2], [3, 4], [0, 4]];
+/* ── ONE persistent spine for the whole section — the app's real pipeline
+   vocabulary, verbatim: Brief → Elements → Proposal → Won │ Execution →
+   Production │ Show Flow → Delivered ↺. Rendered once, never re-mounted;
+   the active phase lights its node group + bracket label. Repeat lights no
+   new nodes — it animates the loop arrow (Delivered → Brief) with the whole
+   journey lit. Mobile/static: a vertical stepper, all groups shown. ── */
+const SPINE_GROUPS = [
+  { phase: "Win it", nodes: ["Brief", "Elements", "Proposal", "Won"] },
+  { phase: "Build it", nodes: ["Execution", "Production"] },
+  { phase: "Run it", nodes: ["Show Flow", "Delivered"] },
+];
 
-function PipelineStrip({ span }) {
+function LifeSpine({ activeIdx, staticAll }) {
+  const groupOn = (gi) => staticAll || activeIdx === gi || activeIdx === 3;
   return (
-    <div className="pipe" aria-hidden="true">
-      {PIPE_STAGES.map((s, i) => (
-        <span key={s} className={`pipe-node${i >= span[0] && i <= span[1] ? " on" : ""}`}>
-          <i />{s}
-        </span>
+    <div className="spine" aria-hidden="true">
+      {SPINE_GROUPS.map((g, gi) => (
+        <div key={g.phase} className={`spine-group${groupOn(gi) ? " on" : ""}`}>
+          <div className="spine-nodes">
+            {g.nodes.map((n) => (
+              <span key={n} className="spine-node"><i />{n}</span>
+            ))}
+          </div>
+          <span className="spine-bracket">{g.phase}</span>
+        </div>
       ))}
+      <div className={`spine-loop${staticAll || activeIdx === 3 ? " on" : ""}`}>
+        <svg viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1" /><path d="M20.5 2.5v4h-4" /></svg>
+        <span className="spine-bracket">Repeat it</span>
+      </div>
     </div>
   );
 }
@@ -306,19 +321,21 @@ function Lifecycle({ active }) {
 
   return (
     <div className="life-stage" ref={ref}>
+      {/* stable order: rail → spine (persistent, never re-mounted) → phase
+          content | device shot. Phase content swaps; spine and layout don't. */}
       <div className="life-pin">
-        <div className="life-left">
-          <div className="rail" aria-hidden="true">
-            {PHASES.map((ph, i) => (
-              <span key={ph.title} className={i === idx ? "on" : ""}><i />{ph.title}</span>
-            ))}
-          </div>
+        <div className="rail" aria-hidden="true">
+          {PHASES.map((ph, i) => (
+            <span key={ph.title} className={i === idx ? "on" : ""}><i />{ph.title}</span>
+          ))}
+        </div>
+        <LifeSpine activeIdx={idx} staticAll={!active} />
+        <div className="life-row">
           <div className="phases">
             {PHASES.map((ph, i) => (
               <div key={ph.title} className={`phase${i === idx ? " on" : ""}`}>
                 <span className="ghost" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
                 <h3>{ph.title}</h3>
-                <PipelineStrip span={PHASE_SPAN[i]} />
                 {ph.repeat ? (
                   <div className="step step--wide">
                     <span>Every event makes the next one faster. Clone a similar event, keep what fits. Your elements, your team, your rates — already there, already yours. <b>Start where you ended.</b></span>
@@ -331,11 +348,11 @@ function Lifecycle({ active }) {
               </div>
             ))}
           </div>
-        </div>
-        <div className="shots" aria-hidden="true">
-          {shots.map((node, i) => (
-            <div key={i} className={`shot${i === idx ? " on" : ""}`}>{node}</div>
-          ))}
+          <div className="shots" aria-hidden="true">
+            {shots.map((node, i) => (
+              <div key={i} className={`shot${i === idx ? " on" : ""}`}>{node}</div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -562,7 +579,8 @@ export default function LandingPage() {
           <div className="wrap">
             <Rv as="p" className="label center">Event management software, built for Event Managers</Rv>
             <h1>
-              <Rv as="span" d={1} className="l1">Walk in fearless.</Rv>
+              <Rv as="span" d={1} className="l1">It’s your event.</Rv>
+              <Rv as="span" d={2} className="l2">Walk in fearless.</Rv>
             </h1>
             <Rv as="p" d={3} className="sub">The operating system for the people running the show.</Rv>
             <Rv as="div" d={4} className="ctas">
@@ -1029,9 +1047,10 @@ const CSS = `
 /* ── lifecycle ── */
 .me-v3 .sec--lifeintro{padding-bottom:0}
 .me-v3 .life-stage{height:500vh}
-.me-v3 .life-pin{position:sticky;top:0;min-height:100vh;display:grid;grid-template-columns:.9fr 1.1fr;gap:5vw;
-  align-items:center;padding:100px 6vw 40px;max-width:calc(var(--max) + 12vw);margin:0 auto;overflow:clip}
-.me-v3 .rail{display:flex;gap:22px;margin-bottom:34px}
+.me-v3 .life-pin{position:sticky;top:0;min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  padding:90px 6vw 40px;max-width:calc(var(--max) + 12vw);margin:0 auto;overflow:clip}
+.me-v3 .life-row{display:grid;grid-template-columns:.9fr 1.1fr;gap:5vw;align-items:center;width:100%}
+.me-v3 .rail{display:flex;gap:22px;margin-bottom:22px}
 .me-v3 .rail span{font-size:14.5px;color:var(--v3-dim);font-weight:500;display:flex;align-items:center;gap:9px;transition:color .3s}
 .me-v3 .rail span i{width:7px;height:7px;border-radius:50%;background:var(--v3-line-strong);transition:background .3s;font-style:normal}
 .me-v3 .rail span.on{color:var(--acc);font-weight:700}
@@ -1044,18 +1063,28 @@ const CSS = `
 .me-v3 .phase h3{font-size:clamp(36px,4vw,54px);margin-bottom:26px}
 .me-v3 .step{padding:15px 0;border-top:1px solid var(--v3-line);max-width:560px;display:grid;grid-template-columns:165px 1fr;gap:18px}
 .me-v3 .step b{font-family:var(--fb);font-weight:600;font-size:15px;color:var(--v3-white)}
-/* the real product pipeline — the section's spine (green tracker nodes) */
-.me-v3 .pipe{display:flex;align-items:center;margin:-8px 0 24px;flex-wrap:wrap;row-gap:8px}
-.me-v3 .pipe-node{display:flex;align-items:center;font-family:var(--fm);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--v3-dim);white-space:nowrap}
-.me-v3 .pipe-node i{width:8px;height:8px;border-radius:50%;background:var(--v3-line-strong);margin-right:6px;font-style:normal;transition:background .3s,box-shadow .3s}
-.me-v3 .pipe-node+.pipe-node::before{content:"";width:22px;height:1px;background:var(--v3-line-strong);margin:0 9px}
-.me-v3 .pipe-node.on{color:#7DD8A0}
-.me-v3 .pipe-node.on i{background:#34C06B;box-shadow:0 0 8px rgba(52,192,107,.5)}
+/* ── the persistent section spine — the app's real pipeline, one line at
+   desktop; active phase lights its group + bracket; Repeat animates the loop ── */
+.me-v3 .spine{display:flex;align-items:flex-start;flex-wrap:nowrap;margin:0 0 44px;width:100%}
+.me-v3 .spine-group{display:flex;flex-direction:column;gap:7px}
+.me-v3 .spine-group+.spine-group,.me-v3 .spine-loop{margin-left:16px;padding-left:16px;border-left:1px solid var(--v3-line)}
+.me-v3 .spine-nodes{display:flex;align-items:center}
+.me-v3 .spine-node{display:flex;align-items:center;font-family:var(--fm);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--v3-dim);white-space:nowrap;transition:color .3s}
+.me-v3 .spine-node i{width:7px;height:7px;border-radius:50%;background:var(--v3-line-strong);margin-right:5px;font-style:normal;transition:background .3s,box-shadow .3s}
+.me-v3 .spine-node+.spine-node::before{content:"";width:14px;height:1px;background:var(--v3-line-strong);margin:0 7px}
+.me-v3 .spine-bracket{font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--v3-dim);opacity:.55;transition:color .3s,opacity .3s}
+.me-v3 .spine-group.on .spine-node{color:#7DD8A0}
+.me-v3 .spine-group.on .spine-node i{background:#34C06B;box-shadow:0 0 8px rgba(52,192,107,.5)}
+.me-v3 .spine-group.on .spine-bracket,.me-v3 .spine-loop.on .spine-bracket{color:#7DD8A0;opacity:1}
+.me-v3 .spine-loop{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.me-v3 .spine-loop svg{width:15px;height:15px;fill:none;stroke:var(--v3-line-strong);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .3s}
+.me-v3 .spine-loop.on svg{stroke:#34C06B;animation:me-v3-loop .9s var(--ease)}
+@keyframes me-v3-loop{from{transform:rotate(-360deg)}to{transform:rotate(0)}}
 .me-v3 .step span{font-size:15px}
 .me-v3 .step--wide{grid-template-columns:1fr}
 .me-v3 .step--wide span{font-size:16.5px;max-width:560px}
 .me-v3 .step--wide b{font-size:16.5px;display:inline}
-.me-v3 .shots{position:relative;height:min(60vh,560px)}
+.me-v3 .shots{position:relative;height:min(52vh,470px)}
 .me-v3 .shot{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .me-v3.js .shot{opacity:0;transform:translateY(16px) scale(.985);transition:opacity .55s var(--ease),transform .55s var(--ease)}
 .me-v3.js .shot.on{opacity:1;transform:none}
@@ -1212,8 +1241,10 @@ const CSS = `
 
 /* ── responsive ── */
 @media(max-width:920px){
-  .me-v3 .life-pin{grid-template-columns:1fr;gap:30px;align-content:center;padding-top:80px}
-  .me-v3 .shots{height:46vh;min-height:300px}
+  .me-v3 .life-pin{padding-top:80px}
+  .me-v3 .life-row{grid-template-columns:1fr;gap:30px}
+  .me-v3 .shots{height:42vh;min-height:280px}
+  .me-v3 .spine{flex-wrap:wrap;row-gap:14px}
   .me-v3 .rates .grid2,.me-v3 .access .grid2,.me-v3 .global .grid2{grid-template-columns:1fr;gap:44px}
   .me-v3 .foot .cols{grid-template-columns:1fr 1fr}
   .me-v3 .aw-points{grid-template-columns:1fr}
@@ -1252,6 +1283,13 @@ const CSS = `
   .me-v3 .life-stage{height:auto}
   .me-v3 .life-pin{position:relative;min-height:0;padding:60px 6vw 0}
   .me-v3 .rail,.me-v3 .shots{display:none}
+  /* spine → vertical stepper grouped by the three brackets + loop */
+  .me-v3 .spine{flex-direction:column;align-items:stretch;gap:18px;margin-bottom:46px}
+  .me-v3 .spine-group,.me-v3 .spine-loop{flex-direction:column-reverse;border-left:1px solid var(--v3-line);
+    margin-left:0;padding-left:14px;gap:10px}
+  .me-v3 .spine-nodes{flex-direction:column;align-items:flex-start;gap:9px}
+  .me-v3 .spine-node+.spine-node::before{display:none}
+  .me-v3 .spine-loop{flex-direction:row;align-items:center;gap:9px}
   .me-v3 .phase{display:block;margin-bottom:60px;animation:none}
   .me-v3 .phase .ghost{top:-50px}
   .me-v3.js .stat .n{filter:none;opacity:1}
@@ -1263,6 +1301,7 @@ const CSS = `
   .me-v3 .lap-logo,.me-v3 .lap-dark{display:none!important}
   .me-v3 .lap-stage,.me-v3 .cmp-stage,.me-v3 .life-stage{height:auto}
   .me-v3 .lap-pin,.me-v3 .cmp-pin,.me-v3 .life-pin{position:relative;height:auto;min-height:0}
+  .me-v3 .spine-loop svg{animation:none!important}
   .me-v3 .phase{display:block!important;margin-bottom:54px;animation:none!important}
   .me-v3 .rail,.me-v3 .shots{display:none}
   .me-v3 .tile{transform:none!important;position:relative;left:auto;top:auto;display:inline-block;margin:6px}
