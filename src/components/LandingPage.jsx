@@ -44,6 +44,19 @@ function MeMark({ className = "", size }) {
   );
 }
 
+/* ── Typed "Me" for INLINE copy use (Vikram, 12 Jun): the logo SVG in body
+   copy reads badly — inline mentions are typeset (Poppins M + Fraunces
+   italic e); the SVG logo stays only in true logo slots (header, laptop
+   boot screen, phone screens, footer brand). ── */
+function MeType({ className = "" }) {
+  return (
+    <span className={`me-type ${className}`} aria-label="Me">
+      <span className="m" aria-hidden="true">M</span>
+      <span className="e" aria-hidden="true">e</span>
+    </span>
+  );
+}
+
 /* ── Hydration gate: pre-JS the page renders complete and visible ── */
 function useHydrated() {
   const [h, setH] = useState(false);
@@ -148,7 +161,7 @@ function LapStage({ active }) {
         <div className="laptop">
           <motion.div className="lap-lid" style={active ? { transform: lidTransform } : undefined}>
             <span className="lap-screen">
-              <img src={dashboardShot} alt="The Me dashboard — your events, tasks, budget and team on one screen" />
+              <img src={dashboardShot} alt="The Myoozz Events dashboard — your events, tasks, budget and team on one screen" />
               <motion.span className="lap-logo" style={active ? { opacity: logoOpacity } : undefined} aria-hidden="true">
                 <MeMark className="mark-soft" />
               </motion.span>
@@ -214,7 +227,7 @@ function Convergence({ active }) {
               </motion.div>
             ))}
             <div className={`os-platform${glow ? " glow" : ""}`}>
-              <MeMark className="mark-soft" /><small>The system it all runs on</small>
+              <MeType className="mark-soft" /><small>The system it all runs on</small>
             </div>
           </div>
           <div className="pairs">
@@ -342,7 +355,7 @@ function GlobalSection({ active, onAccess }) {
       <div className="wrap grid2">
         <div className="g-copy">
           <Rv as="p" className="label">Built in India. Going global.</Rv>
-          <Rv as="h2" d={1}>Wherever you run events, <MeMark className="mark-white" /> is coming.</Rv>
+          <Rv as="h2" d={1}>Wherever you run events, <MeType className="mark-white" /> is coming.</Rv>
           <Rv as="p" d={2} className="lead">Me works today, wherever you are. Your market’s edition arrives in Beta 2 — get in now and you’re first when it lands.</Rv>
           <Rv as="div" d={3}><button type="button" className="btn" onClick={onAccess}>Request access →</button></Rv>
         </div>
@@ -429,7 +442,7 @@ function DemoModal({ open, onClose }) {
             src={`https://www.youtube-nocookie.com/embed/${YT_ID}?autoplay=1&rel=0`}
             allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
-            title="Me — demo"
+            title="Myoozz Events — demo"
           />
         ) : (
           <div className="ph">The demo lands here — drop the YouTube ID at the top of LandingPage.jsx.</div>
@@ -557,7 +570,7 @@ export default function LandingPage() {
             { cls: "l-a", node: "The industry built its tools for the audience." },
             { cls: "l-b", node: "That era is ending." },
             { cls: "l-c", node: "Search changed. Commerce changed. How events get run is next." },
-            { cls: "final", node: <><MeMark className="mark-soft" /> is that change.</> },
+            { cls: "final", node: <><MeType className="mark-soft" /> is that change.</> },
           ]}
         />
 
@@ -655,14 +668,14 @@ export default function LandingPage() {
           <div className="wrap">
             <Rv as="p" className="label">It’s a web app</Rv>
             <Rv as="h2" d={1}>Open a browser. You’re in.</Rv>
-            <Rv as="p" d={2} className="lead">Me lives on the web, not on a device. <b>Nothing to install, nothing to update</b> — and no “it only works on my laptop.” Wherever the show takes you, your workspace is already there.</Rv>
+            <Rv as="p" d={2} className="lead">Myoozz Events lives on the web, not on a device. <b>Nothing to install, nothing to update</b> — and no “it only works on my laptop.” Wherever the show takes you, your workspace is already there.</Rv>
             <Rv as="div" d={3} className="aw-points">
               <div><b>Any device</b><p>Laptop at the desk, tablet at the venue, phone on the ground — same workspace, every screen.</p></div>
               <div><b>Always current</b><p>Every login is the latest version. No updates to chase, no IT to call.</p></div>
               <div><b>Yours, everywhere</b><p>Lock the laptop at 6pm, pick up the phone backstage at 6:05. Your work travels with you.</p></div>
             </Rv>
             <Rv className="aw-devices">
-              <figure className="f-lap"><div className="f-lid"><img src={dashboardShot} alt="Me on a laptop" /></div><div className="f-base" /></figure>
+              <figure className="f-lap"><div className="f-lid"><img src={dashboardShot} alt="Myoozz Events on a laptop" /></div><div className="f-base" /></figure>
               <PhonePlaceholder caption="" className="aw-phone" />
             </Rv>
             <Rv as="p" className="aw-cap">One workspace · every device · always in sync</Rv>
@@ -683,7 +696,7 @@ export default function LandingPage() {
                 <Stat key={n} n={n} body={body} />
               ))}
             </div>
-            <Rv as="p" className="cat">The big platforms manage the audience — tickets, check-in, the guest list. None were built for the people running the show. That’s the system Me is.</Rv>
+            <Rv as="p" className="cat">The big platforms manage the audience — tickets, check-in, the guest list. None were built for the people running the show. That’s the system Myoozz Events is.</Rv>
             <Rv as="p" d={1} className="next">India first. The world next.</Rv>
             <Rv d={2} className="vignette">
               <p className="v-label"><i />Predictive cost</p>
@@ -797,12 +810,16 @@ const CSS = `
 .me-v3 section{position:relative}
 .me-v3 ::selection{background:rgba(53,194,209,.35);color:#fff}
 
-/* ── the Me mark (svg inline, currentColor) ── */
+/* ── the Me mark (svg logo — logo slots only) ── */
 .me-v3 .me-mark{display:inline-flex;line-height:0;vertical-align:-0.12em}
 .me-v3 .me-mark svg{height:1em;width:auto}
 .me-v3 .mark-soft{color:var(--v3-soft)}
 .me-v3 .mark-acc{color:var(--acc)}
 .me-v3 .mark-white{color:#fff}
+/* ── typed "Me" for inline copy (logo fonts, set as text) ── */
+.me-v3 .me-type{font-weight:900;letter-spacing:-.02em;white-space:nowrap}
+.me-v3 .me-type .m{font-family:'Poppins',var(--fb);font-weight:900}
+.me-v3 .me-type .e{font-family:'Fraunces',var(--fd);font-style:italic;font-weight:900}
 
 /* ── eyebrow grammar — ONE standard (B4) ── */
 .me-v3 .label{font-family:var(--fm);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
