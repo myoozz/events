@@ -6,24 +6,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Myoozz Events is the operating system for Event Managers — scope, cost, team, tasks and rates for the whole event business in one workspace. Built in India, going global. Invite-only early access." />
     <title>Myoozz Events — the operating system for Event Managers</title>
+    <link rel="canonical" href="https://myoozz.events/" />
+    <meta name="robots" content="noindex, nofollow" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@900&family=Fraunces:ital,opsz,wght@1,9..144,900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Myoozz Events",
-      "alternateName": "Me",
-      "description": "The operating system for Event Managers — scope, cost, team, tasks and rates for the whole event business in one workspace.",
-      "url": "https://myoozz.events",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "publisher": {
-        "@type": "Organization",
-        "name": "Myoozz Consulting Pvt. Ltd.",
-        "url": "https://myoozz.com"
-      }
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://myoozz.events/#app",
+          "name": "Myoozz Events",
+          "alternateName": "Me",
+          "description": "The operating system for Event Managers — scope, cost, team, tasks and rates for the whole event business in one workspace.",
+          "url": "https://myoozz.events",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "publisher": { "@id": "https://myoozz.com/#org" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://myoozz.com/#org",
+          "name": "Myoozz Consulting Pvt. Ltd.",
+          "url": "https://myoozz.com",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Noida",
+            "addressCountry": "IN"
+          },
+          "founder": {
+            "@type": "Person",
+            "name": "Vikram Singh Parmar"
+          },
+          "sameAs": ["https://myoozz.events"]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://myoozz.events/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is Myoozz Events?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Myoozz Events is the operating system for Event Managers — scope, cost, team, tasks and rates for the whole event business in one workspace. Built in India, going global." }
+            },
+            {
+              "@type": "Question",
+              "name": "Is Myoozz Events for event attendees?",
+              "acceptedAnswer": { "@type": "Answer", "text": "No. It’s built for the people who run the event, not the ones who attend it. The big platforms manage the audience — Myoozz Events prepares you to run the show." }
+            },
+            {
+              "@type": "Question",
+              "name": "Does it run my event on the day?",
+              "acceptedAnswer": { "@type": "Answer", "text": "No — Myoozz Events won’t run your event. That’s your job, and you’re good at it. It does everything before that moment — scope locked, costs tracked, team aligned — so you walk in with nothing left to figure out." }
+            },
+            {
+              "@type": "Question",
+              "name": "Which cities and markets does it cover?",
+              "acceptedAnswer": { "@type": "Answer", "text": "It works today, wherever you are, with live rate benchmarks across all major Indian cities. Your market’s edition arrives in Beta 2. India first. The world next." }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I get access?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Access is invite-only — we open a few spots each week. Request an invite with your name and email; have a code from someone already inside and you skip the line. No card. No commitment." }
+            }
+          ]
+        }
+      ]
     }
     </script>
 </head>

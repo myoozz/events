@@ -31,6 +31,21 @@ const EASE = [0.22, 1, 0.36, 1];
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 
+/* FAQ — answers assembled from ratified copy only. These strings are
+   mirrored verbatim in index.html's FAQPage JSON-LD: edit BOTH together. */
+const FAQS = [
+  ["What is Myoozz Events?",
+    "Myoozz Events is the operating system for Event Managers — scope, cost, team, tasks and rates for the whole event business in one workspace. Built in India, going global."],
+  ["Is Myoozz Events for event attendees?",
+    "No. It’s built for the people who run the event, not the ones who attend it. The big platforms manage the audience — Myoozz Events prepares you to run the show."],
+  ["Does it run my event on the day?",
+    "No — Myoozz Events won’t run your event. That’s your job, and you’re good at it. It does everything before that moment — scope locked, costs tracked, team aligned — so you walk in with nothing left to figure out."],
+  ["Which cities and markets does it cover?",
+    "It works today, wherever you are, with live rate benchmarks across all major Indian cities. Your market’s edition arrives in Beta 2. India first. The world next."],
+  ["How do I get access?",
+    "Access is invite-only — we open a few spots each week. Request an invite with your name and email; have a code from someone already inside and you skip the line. No card. No commitment."],
+];
+
 /* ── The Me mark — single swappable point (recolors via currentColor) ── */
 function MeMark({ className = "", size }) {
   return (
@@ -282,10 +297,13 @@ const SPINE_GROUPS = [
   { phase: "Run it", nodes: ["Show Flow", "Delivered"] },
 ];
 
+/* The spine is the section's single structural header (the legacy rail is
+   gone): nodes on top, group stroke, group label beneath — the map; the
+   ghost numeral + h3 below remain the current location. */
 function LifeSpine({ activeIdx, staticAll }) {
   const groupOn = (gi) => staticAll || activeIdx === gi || activeIdx === 3;
   return (
-    <div className="spine" aria-hidden="true">
+    <div className="spine">
       {SPINE_GROUPS.map((g, gi) => (
         <div key={g.phase} className={`spine-group${groupOn(gi) ? " on" : ""}`}>
           <div className="spine-nodes">
@@ -324,11 +342,6 @@ function Lifecycle({ active }) {
       {/* stable order: rail → spine (persistent, never re-mounted) → phase
           content | device shot. Phase content swaps; spine and layout don't. */}
       <div className="life-pin">
-        <div className="rail" aria-hidden="true">
-          {PHASES.map((ph, i) => (
-            <span key={ph.title} className={i === idx ? "on" : ""}><i />{ph.title}</span>
-          ))}
-        </div>
         <LifeSpine activeIdx={idx} staticAll={!active} />
         <div className="life-row">
           <div className="phases">
@@ -400,37 +413,43 @@ function GlobalSection({ active, onAccess }) {
   );
 }
 
-/* ── §10 access card (no <form> tag; insert attempt is honest about failure) ── */
+/* ── §10 access card (no <form> tag; never shows success unless the insert
+   actually succeeded). States: idle | busy | ok | dup | err. ── */
 function AccessCard() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [state, setState] = useState("idle"); // idle | busy | ok | err
+  const [trap, setTrap] = useState(""); // honeypot — humans never see it
+  const [state, setState] = useState("idle");
+  const [emailBad, setEmailBad] = useState(false);
   const emailRef = useRef(null);
 
   async function submit() {
     const e = email.trim();
     if (!e || !/.+@.+\..+/.test(e)) {
-      setState("err");
+      setEmailBad(true);
       emailRef.current?.focus();
       return;
     }
+    setEmailBad(false);
+    if (trap.trim()) { setState("ok"); return; } // bot filled the honeypot — silent no-op
     setState("busy");
-    /* invite code rides in `company` as a labelled stash until the
-       early_access table grows a proper column (separate task, B9) */
     const { error } = await supabase.from("early_access").insert({
       full_name: name.trim() || null,
       email: e,
-      company: code.trim() ? `[invite:${code.trim()}]` : null,
+      invite_code: code.trim() || null,
+      status: "pending",
     });
-    setState(error ? "err" : "ok");
+    if (!error) { setState("ok"); return; }
+    if (error.code === "23505") { setState("dup"); return; } // unique lower(email)
+    setState("err"); // keep their input; offer retry + mail fallback
   }
 
-  if (state === "ok") {
+  if (state === "ok" || state === "dup") {
     return (
       <div className="ok show">
         <div className="tick">✓</div>
-        <p className="ok-hd">You’re on the list.</p>
+        <p className="ok-hd">{state === "dup" ? "You’re already on the list — we’ve got you." : "You’re on the list."}</p>
         <p className="ok-sub">We’ll reach out personally as your spot opens.</p>
       </div>
     );
@@ -440,16 +459,20 @@ function AccessCard() {
       <p className="card-title">Request an invite</p>
       <p className="card-sub">We open a limited number of spots each week.</p>
       <label htmlFor="accName">Name</label>
-      <input id="accName" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
+      <input id="accName" type="text" autoComplete="name" maxLength={120} value={name} onChange={(e) => setName(e.target.value)} />
       <label htmlFor="accEmail">Email *</label>
-      <input id="accEmail" ref={emailRef} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={state === "err" ? "is-err" : ""} />
+      <input id="accEmail" ref={emailRef} type="email" autoComplete="email" maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} className={emailBad ? "is-err" : ""} />
       <label htmlFor="accCode">Invite code <span className="soft">(have one? you skip the line)</span></label>
-      <input id="accCode" type="text" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} />
+      <input id="accCode" type="text" autoComplete="off" maxLength={64} value={code} onChange={(e) => setCode(e.target.value)} />
+      <input className="hp-field" type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" value={trap} onChange={(e) => setTrap(e.target.value)} />
       <button type="button" className="btn" onClick={submit} disabled={state === "busy"}>
-        {state === "busy" ? "Sending…" : "Request an invite →"}
+        {state === "busy" ? "Sending…" : state === "err" ? "Try again →" : "Request an invite →"}
       </button>
+      {emailBad && (
+        <p className="fine err-line">That email doesn’t look right — check it and try again.</p>
+      )}
       {state === "err" && (
-        <p className="fine err-line">Couldn’t submit just now — check the email, or write to hello@myoozz.events.</p>
+        <p className="fine err-line">Couldn’t submit just now — try again, or write to <a className="err-mail" href="mailto:hello@myoozz.events">hello@myoozz.events</a> and we’ll add you by hand.</p>
       )}
       <p className="fine">No card. No commitment. We’ll reach out personally as your spot opens.</p>
     </div>
@@ -769,6 +792,20 @@ export default function LandingPage() {
 
         {/* §11 GOING GLOBAL */}
         <GlobalSection active={motionOn} onAccess={goAccess} />
+
+        {/* FAQ — footer-adjacent; the visible text IS the FAQPage JSON-LD
+            content in index.html (schema must match what readers see) */}
+        <section className="faq">
+          <div className="wrap">
+            <Rv as="p" className="label">Questions</Rv>
+            {FAQS.map(([q, a]) => (
+              <details className="faq-item" key={q}>
+                <summary>{q}</summary>
+                <p>{a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
       </main>
 
       {/* §12 FOOTER */}
@@ -1049,33 +1086,32 @@ const CSS = `
 .me-v3 .life-stage{height:500vh}
 .me-v3 .life-pin{position:sticky;top:0;min-height:100vh;display:flex;flex-direction:column;justify-content:center;
   padding:90px 6vw 40px;max-width:calc(var(--max) + 12vw);margin:0 auto;overflow:clip}
-.me-v3 .life-row{display:grid;grid-template-columns:.9fr 1.1fr;gap:5vw;align-items:center;width:100%}
-.me-v3 .rail{display:flex;gap:22px;margin-bottom:22px}
-.me-v3 .rail span{font-size:14.5px;color:var(--v3-dim);font-weight:500;display:flex;align-items:center;gap:9px;transition:color .3s}
-.me-v3 .rail span i{width:7px;height:7px;border-radius:50%;background:var(--v3-line-strong);transition:background .3s;font-style:normal}
-.me-v3 .rail span.on{color:var(--acc);font-weight:700}
-.me-v3 .rail span.on i{background:var(--acc)}
+.me-v3 .life-row{display:grid;grid-template-columns:.9fr 1.1fr;gap:5vw;align-items:start;width:100%}
+/* (legacy rail deleted — the spine is the single source of section structure) */
 .me-v3 .phase{display:none;position:relative}
 .me-v3 .phase.on{display:block;animation:me-v3-ph .6s var(--ease)}
 @keyframes me-v3-ph{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-.me-v3 .phase .ghost{position:absolute;top:-84px;right:0;font-family:var(--fm);font-size:clamp(90px,10vw,150px);
+.me-v3 .phase .ghost{position:absolute;top:-64px;right:0;font-family:var(--fm);font-size:clamp(90px,10vw,150px);
   color:rgba(27,154,170,.1);line-height:1;font-weight:500;pointer-events:none}
 .me-v3 .phase h3{font-size:clamp(36px,4vw,54px);margin-bottom:26px}
 .me-v3 .step{padding:15px 0;border-top:1px solid var(--v3-line);max-width:560px;display:grid;grid-template-columns:165px 1fr;gap:18px}
 .me-v3 .step b{font-family:var(--fb);font-weight:600;font-size:15px;color:var(--v3-white)}
 /* ── the persistent section spine — the app's real pipeline, one line at
    desktop; active phase lights its group + bracket; Repeat animates the loop ── */
-.me-v3 .spine{display:flex;align-items:flex-start;flex-wrap:nowrap;margin:0 0 44px;width:100%}
+.me-v3 .spine{display:flex;align-items:flex-start;flex-wrap:nowrap;margin:0 0 56px;width:100%}
 .me-v3 .spine-group{display:flex;flex-direction:column;gap:7px}
 .me-v3 .spine-group+.spine-group,.me-v3 .spine-loop{margin-left:16px;padding-left:16px;border-left:1px solid var(--v3-line)}
 .me-v3 .spine-nodes{display:flex;align-items:center}
 .me-v3 .spine-node{display:flex;align-items:center;font-family:var(--fm);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--v3-dim);white-space:nowrap;transition:color .3s}
 .me-v3 .spine-node i{width:7px;height:7px;border-radius:50%;background:var(--v3-line-strong);margin-right:5px;font-style:normal;transition:background .3s,box-shadow .3s}
 .me-v3 .spine-node+.spine-node::before{content:"";width:14px;height:1px;background:var(--v3-line-strong);margin:0 7px}
-.me-v3 .spine-bracket{font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--v3-dim);opacity:.55;transition:color .3s,opacity .3s}
+/* bracket architecture: nodes on top → group stroke → group label beneath */
+.me-v3 .spine-bracket{display:block;width:100%;border-top:1px solid var(--v3-line-strong);padding-top:7px;text-align:center;
+  font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--v3-dim);opacity:.7;font-weight:500;
+  transition:color .3s,opacity .3s,border-color .3s}
 .me-v3 .spine-group.on .spine-node{color:#7DD8A0}
 .me-v3 .spine-group.on .spine-node i{background:#34C06B;box-shadow:0 0 8px rgba(52,192,107,.5)}
-.me-v3 .spine-group.on .spine-bracket,.me-v3 .spine-loop.on .spine-bracket{color:#7DD8A0;opacity:1}
+.me-v3 .spine-group.on .spine-bracket,.me-v3 .spine-loop.on .spine-bracket{color:#7DD8A0;opacity:1;font-weight:600;border-top-color:rgba(52,192,107,.55)}
 .me-v3 .spine-loop{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .me-v3 .spine-loop svg{width:15px;height:15px;fill:none;stroke:var(--v3-line-strong);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .3s}
 .me-v3 .spine-loop.on svg{stroke:#34C06B;animation:me-v3-loop .9s var(--ease)}
@@ -1183,6 +1219,9 @@ const CSS = `
 .me-v3 .access .btn{width:100%;justify-content:center;margin-top:26px;border-radius:10px}
 .me-v3 .access .fine{font-size:12.5px;color:var(--v3-dim);text-align:center;margin-top:14px}
 .me-v3 .access .err-line{color:#E8A0A8}
+.me-v3 .access .err-mail{color:#E8A0A8;text-decoration:underline}
+/* honeypot: off-screen (not display:none — bots skip hidden fields) */
+.me-v3 .access .hp-field{position:absolute;left:-9999px;top:auto;width:1px;height:1px;opacity:0;pointer-events:none}
 .me-v3 .access .ok{text-align:center;padding:32px 0}
 .me-v3 .access .ok .tick{font-size:40px;color:var(--acc)}
 .me-v3 .access .ok .ok-hd{font-family:var(--fd);font-size:22px;color:var(--v3-white);margin-top:10px}
@@ -1202,6 +1241,19 @@ const CSS = `
 .me-v3 .g-copy .btn{margin-top:30px}
 .me-v3 .g-phone{display:flex;justify-content:center;align-items:flex-end}
 .me-v3 .g-phone .f-phone{margin-bottom:-64px;box-shadow:0 -20px 90px -30px rgba(122,208,219,.45),0 36px 80px -28px rgba(0,0,0,.8)}
+
+/* ── FAQ (footer-adjacent; matches FAQPage JSON-LD) ── */
+.me-v3 .faq{padding:90px 0 110px;border-top:1px solid var(--v3-line)}
+.me-v3 .faq .label{margin-bottom:28px}
+.me-v3 .faq-item{border-top:1px solid var(--v3-line);max-width:760px}
+.me-v3 .faq-item:last-of-type{border-bottom:1px solid var(--v3-line)}
+.me-v3 .faq-item summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;justify-content:space-between;gap:18px;
+  padding:17px 0;font-size:15.5px;font-weight:600;color:var(--v3-white);transition:color .15s}
+.me-v3 .faq-item summary::-webkit-details-marker{display:none}
+.me-v3 .faq-item summary::after{content:"+";font-family:var(--fm);font-size:15px;color:var(--v3-dim);flex:none;transition:transform .2s var(--ease)}
+.me-v3 .faq-item[open] summary::after{transform:rotate(45deg);color:var(--acc)}
+.me-v3 .faq-item summary:hover{color:var(--acc)}
+.me-v3 .faq-item p{font-size:15px;line-height:1.65;color:var(--v3-body);padding:0 0 18px;max-width:640px}
 
 /* ── footer ── */
 .me-v3 .foot{background:var(--v3-foot);color:rgba(224,242,247,.75);padding:96px 0 46px}
@@ -1282,9 +1334,10 @@ const CSS = `
   .me-v3 .os-platform.glow{box-shadow:0 0 0 1px rgba(53,194,209,.2),0 0 70px -14px rgba(53,194,209,.4)}
   .me-v3 .life-stage{height:auto}
   .me-v3 .life-pin{position:relative;min-height:0;padding:60px 6vw 0}
-  .me-v3 .rail,.me-v3 .shots{display:none}
+  .me-v3 .shots{display:none}
   /* spine → vertical stepper grouped by the three brackets + loop */
   .me-v3 .spine{flex-direction:column;align-items:stretch;gap:18px;margin-bottom:46px}
+  .me-v3 .spine-bracket{border-top:0;padding-top:0;text-align:left;width:auto}
   .me-v3 .spine-group,.me-v3 .spine-loop{flex-direction:column-reverse;border-left:1px solid var(--v3-line);
     margin-left:0;padding-left:14px;gap:10px}
   .me-v3 .spine-nodes{flex-direction:column;align-items:flex-start;gap:9px}
@@ -1303,7 +1356,8 @@ const CSS = `
   .me-v3 .lap-pin,.me-v3 .cmp-pin,.me-v3 .life-pin{position:relative;height:auto;min-height:0}
   .me-v3 .spine-loop svg{animation:none!important}
   .me-v3 .phase{display:block!important;margin-bottom:54px;animation:none!important}
-  .me-v3 .rail,.me-v3 .shots{display:none}
+  .me-v3 .shots{display:none}
+  .me-v3 .spine-bracket{border-top:0;padding-top:0;text-align:left;width:auto}
   .me-v3 .tile{transform:none!important;position:relative;left:auto;top:auto;display:inline-block;margin:6px}
   .me-v3 .os-visual{height:auto;padding-bottom:150px}
   .me-v3 .g-horizon{transform:translateX(-50%)!important}
