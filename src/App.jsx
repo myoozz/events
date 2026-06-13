@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import LandingPage    from './components/LandingPage'
+import GatePage       from './components/GatePage'
 import PublicTask     from './components/PublicTask'
 import LoginPage      from './components/LoginPage'
 import AppShell       from './components/AppShell'
@@ -132,7 +132,7 @@ export default function App() {
         <Routes>
 
           {/* ── Public pages ── */}
-          <Route path="/"            element={<LandingPage />} />
+          <Route path="/"            element={<GatePage />} />
           <Route path="/login"       element={
             (session && !isPasswordSetupFlow) ? <Navigate to={postLoginDestination()} replace /> : <LoginPage />
           } />
