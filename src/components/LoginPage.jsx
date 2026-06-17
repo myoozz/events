@@ -126,21 +126,27 @@ export default function LoginPage() {
     // App.jsx onAuthStateChange handles redirect to /app
   }
 
-  // ── Forgot password — sends reset email ────────────────────
+  // ── Forgot password — sends reset email via our own edge function ──
+  // Code-controlled link (no dashboard template). Anti-enumeration: identical
+  // response whether or not the account exists.
   async function handleForgotPassword(e) {
     e.preventDefault()
     if (!email.trim()) { setError('Enter your email address first.'); return }
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/login`,
-    })
-    setLoading(false)
-    if (error) {
-      setError(error.message)
-    } else {
-      setSuccess(`Password reset link sent to ${email}. Check your inbox and click the link to set a new password.`)
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      await fetch(`${supabaseUrl}/functions/v1/request-password-reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
+        body: JSON.stringify({ email: email.trim(), origin: window.location.origin }),
+      })
+    } catch {
+      // swallow — generic message shown regardless (don't reveal failures or existence)
     }
+    setLoading(false)
+    setSuccess(`If an account exists for ${email}, a password reset link is on its way. Check your inbox and click the link to set a new password.`)
   }
 
   // ── Set password (from invite or reset link) ───────────────
