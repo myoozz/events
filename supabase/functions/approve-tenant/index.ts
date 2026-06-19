@@ -115,6 +115,36 @@ serve(async (req) => {
         )
       }
 
+      // ── Grant events app_access to the tenant's users (inline upsert; mirrors users.role).
+      //    Approval is the access boundary, so this is where new tenants get in. ──
+      const { data: approver, error: approverErr } = await supabase
+        .from('users').select('id').eq('auth_id', user.id).single()
+      if (approverErr) console.error('approve-tenant: approver lookup failed (granted_by will be null):', approverErr.message)
+
+      const { data: tenantUsers, error: tenantUsersErr } = await supabase
+        .from('users').select('id, role').eq('tenant_id', tenant_id).not('role', 'is', null)
+      if (tenantUsersErr) {
+        console.error('approve-tenant: tenantUsers fetch failed; tenant is active but grants not written:', tenantUsersErr.message)
+        return new Response(
+          JSON.stringify({ success: false, error: 'Tenant activated but could not read users to grant access; re-approve to retry: ' + tenantUsersErr.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+
+      if (tenantUsers && tenantUsers.length) {
+        const grants = tenantUsers.map((u) => ({
+          user_id: u.id, app: 'events', role: u.role, granted_by: approver?.id ?? null,
+        }))
+        const { error: grantError } = await supabase
+          .from('app_access').upsert(grants, { onConflict: 'user_id,app' })
+        if (grantError) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Tenant activated but access grant failed; re-approve to retry: ' + grantError.message }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          )
+        }
+      }
+
       // MSG91 — workspace approved (WA + email)
       if (tenant) {
         try {
