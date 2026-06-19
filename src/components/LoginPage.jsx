@@ -98,6 +98,10 @@ export default function LoginPage() {
   const widgetIdRef = useRef(null)
   const [cfToken, setCfToken] = useState(null)
 
+  // --- Resend cooldown ---
+  const [resendIn, setResendIn] = useState(0)
+  const resendTimerRef = useRef(null)
+
   // On mount — check if this is an invite or recovery link
   useEffect(() => {
     const tokenType = getUrlTokenType()
@@ -115,15 +119,16 @@ export default function LoginPage() {
   }, [])
 
   useEffect(() => {
-    if (!TURNSTILE_SITE_KEY || mode !== 'login') return
-    window.__cfReady = () => {
-      if (widgetIdRef.current != null) return
+    if (!TURNSTILE_SITE_KEY) return
+    const renderWidget = () => {
+      if (!turnstileRef.current || widgetIdRef.current != null || !window.turnstile) return
       widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
         sitekey: TURNSTILE_SITE_KEY,
         callback: (t) => setCfToken(t),
       })
     }
-    if (window.turnstile) { window.__cfReady() }
+    window.__cfReady = renderWidget
+    if (window.turnstile) renderWidget()
     else if (!document.getElementById('cf-turnstile-script')) {
       const s = document.createElement('script')
       s.id = 'cf-turnstile-script'
@@ -131,13 +136,31 @@ export default function LoginPage() {
       s.async = true; s.defer = true
       document.head.appendChild(s)
     }
-  }, [mode])
+    return () => {
+      if (window.turnstile && widgetIdRef.current != null) {
+        try { window.turnstile.remove(widgetIdRef.current) } catch {}
+      }
+      widgetIdRef.current = null
+      try { delete window.__cfReady } catch {}
+    }
+  }, [])
 
   function resetCaptcha() {
     if (TURNSTILE_SITE_KEY && window.turnstile && widgetIdRef.current != null) {
       setCfToken(null); window.turnstile.reset(widgetIdRef.current)
     }
   }
+
+  function startResendCooldown() {
+    setResendIn(30)
+    clearInterval(resendTimerRef.current)
+    resendTimerRef.current = setInterval(() => {
+      setResendIn((s) => { if (s <= 1) { clearInterval(resendTimerRef.current); return 0 } return s - 1 })
+    }, 1000)
+  }
+
+  // Clear resend timer on unmount
+  useEffect(() => () => clearInterval(resendTimerRef.current), [])
 
   // ── Send OTP ────────────────────────────────────────────────
   async function handleSendCode(e) {
@@ -157,6 +180,7 @@ export default function LoginPage() {
         : error.message)
       return
     }
+    startResendCooldown()
     setMode('otp')
   }
 
@@ -264,8 +288,8 @@ export default function LoginPage() {
           borderRadius: 'var(--radius)', padding: '32px',
         }}>
 
-          {/* ── LOGIN FORM (email step) ── */}
-          {mode === 'login' && (
+          {/* ── LOGIN FORM (email step) — always mounted; hidden via CSS when not active ── */}
+          <div style={{ display: mode === 'login' ? 'block' : 'none' }}>
             <form onSubmit={handleSendCode}>
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Email</label>
@@ -287,10 +311,10 @@ export default function LoginPage() {
                 {loading ? 'Sending...' : 'Send code'}
               </button>
             </form>
-          )}
+          </div>
 
-          {/* ── OTP VERIFY FORM ── */}
-          {mode === 'otp' && (
+          {/* ── OTP VERIFY FORM — always mounted; hidden via CSS when not active ── */}
+          <div style={{ display: mode === 'otp' ? 'block' : 'none' }}>
             <form onSubmit={handleVerify}>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: 1.6 }}>
                 Enter the 6-digit code we sent to <strong>{email}</strong>.
@@ -322,16 +346,16 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleSendCode}
-                disabled={loading}
+                disabled={loading || resendIn > 0}
                 style={{
                   width: '100%', marginTop: '10px', padding: '10px',
                   fontSize: '13px', fontFamily: 'var(--font-body)',
                   background: 'none', border: '0.5px solid var(--border-strong)',
-                  borderRadius: 'var(--radius-sm)', cursor: loading ? 'not-allowed' : 'pointer',
+                  borderRadius: 'var(--radius-sm)', cursor: (loading || resendIn > 0) ? 'not-allowed' : 'pointer',
                   color: 'var(--text)',
                 }}
               >
-                Resend code
+                {resendIn > 0 ? `Resend code (${resendIn}s)` : 'Resend code'}
               </button>
 
               {/* Back to email step */}
@@ -348,7 +372,7 @@ export default function LoginPage() {
                 <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Use a different email
               </button>
             </form>
-          )}
+          </div>
 
           {/* ── SET PASSWORD FORM (invite or reset) ── */}
           {mode === 'setpassword' && (
