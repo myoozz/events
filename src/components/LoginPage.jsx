@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Icon } from '../icons'
 import { supabase } from '../supabase'
 
@@ -80,18 +80,23 @@ function getUrlTokenHash() {
   return params.get('token_hash') || null
 }
 
+const TURNSTILE_SITE_KEY = '0x4AAAAAADnhp7DQPweu84iy'  // matches Supabase Auth → Bot & Abuse
+const APP_HOME = '/app'
+
 export default function LoginPage() {
-  const [mode, setMode] = useState('login') // 'login' | 'forgot' | 'setpassword' | 'register' | 'pending'
+  const [mode, setMode] = useState('login') // 'login' | 'otp' | 'setpassword'
   const [email, setEmail] = useState('')
+  const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [companyName, setCompanyName] = useState('')
-  const [contactName, setContactName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [designation, setDesignation] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  // --- Turnstile (explicit render; tokens are single-use → reset after every send) ---
+  const turnstileRef = useRef(null)
+  const widgetIdRef = useRef(null)
+  const [cfToken, setCfToken] = useState(null)
 
   // On mount — check if this is an invite or recovery link
   useEffect(() => {
@@ -109,44 +114,71 @@ export default function LoginPage() {
     }
   }, [])
 
-  // ── Normal login ────────────────────────────────────────────
-  async function handleLogin(e) {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      if (error.message.toLowerCase().includes('invalid login')) {
-        setError('Incorrect email or password. Try again, or use Forgot password.')
-      } else {
-        setError(error.message)
-      }
-      setLoading(false)
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY || mode !== 'login') return
+    window.__cfReady = () => {
+      if (widgetIdRef.current != null) return
+      widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: (t) => setCfToken(t),
+      })
     }
-    // App.jsx onAuthStateChange handles redirect to /app
+    if (window.turnstile) { window.__cfReady() }
+    else if (!document.getElementById('cf-turnstile-script')) {
+      const s = document.createElement('script')
+      s.id = 'cf-turnstile-script'
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__cfReady'
+      s.async = true; s.defer = true
+      document.head.appendChild(s)
+    }
+  }, [mode])
+
+  function resetCaptcha() {
+    if (TURNSTILE_SITE_KEY && window.turnstile && widgetIdRef.current != null) {
+      setCfToken(null); window.turnstile.reset(widgetIdRef.current)
+    }
   }
 
-  // ── Forgot password — sends reset email via our own edge function ──
-  // Code-controlled link (no dashboard template). Anti-enumeration: identical
-  // response whether or not the account exists.
-  async function handleForgotPassword(e) {
+  // ── Send OTP ────────────────────────────────────────────────
+  async function handleSendCode(e) {
     e.preventDefault()
-    if (!email.trim()) { setError('Enter your email address first.'); return }
-    setLoading(true)
     setError('')
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      await fetch(`${supabaseUrl}/functions/v1/request-password-reset`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${anonKey}` },
-        body: JSON.stringify({ email: email.trim(), origin: window.location.origin }),
-      })
-    } catch {
-      // swallow — generic message shown regardless (don't reveal failures or existence)
-    }
+    if (TURNSTILE_SITE_KEY && !cfToken) { setError('Please complete the "I\'m human" check, then try again.'); return }
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false, captchaToken: cfToken || undefined },
+    })
+    resetCaptcha()
     setLoading(false)
-    setSuccess(`If an account exists for ${email}, a password reset link is on its way. Check your inbox and click the link to set a new password.`)
+    if (error) {
+      setError(/signups? not allowed|not allowed for otp|user not found/i.test(error.message)
+        ? "We couldn't find an account for that email. Ask your admin for an invite, or request access below."
+        : error.message)
+      return
+    }
+    setMode('otp')
+  }
+
+  // ── Verify OTP ──────────────────────────────────────────────
+  async function handleVerify(e) {
+    e.preventDefault()
+    if (!/^\d{6}$/.test(code)) { setError('Enter the 6-digit code from your email.'); return }
+    setLoading(true); setError('')
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' })
+    if (error) { setLoading(false); setError('That code is invalid or expired. Try again or resend.'); return }
+
+    // Post-verify greet read (RLS users_read_own = email = auth.email(); safe post-GAP-1).
+    const { data: profile } = await supabase
+      .from('users').select('full_name, status').eq('auth_id', data.user.id).maybeSingle()
+    setLoading(false)
+    if (!profile) setSuccess("Signed in, but your profile isn't set up yet. Please contact your admin.")
+    else if (profile.status && profile.status !== 'active') setSuccess(`Your account status is "${profile.status}". Contact your admin.`)
+
+    const params = new URLSearchParams(window.location.search)
+    const cb = params.get('callbackUrl')
+    const dest = (cb && cb.startsWith('/')) ? cb : APP_HOME
+    setTimeout(() => { window.location.href = dest }, 1000)
   }
 
   // ── Set password (from invite or reset link) ───────────────
@@ -200,72 +232,19 @@ export default function LoginPage() {
     }, 1500)
   }
 
-  // ── Register new tenant ────────────────────────────────────
-  async function handleRegister(e) {
-    e.preventDefault()
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.')
-      return
-    }
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
-      return
-    }
-    setLoading(true)
-    setError('')
-
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      const res = await fetch(`${supabaseUrl}/functions/v1/register-tenant`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${anonKey}`,
-        },
-        body: JSON.stringify({
-          company_name: companyName.trim(),
-          contact_name: contactName.trim(),
-          email: email.trim(),
-          phone: phone.trim(),
-          password,
-          ...(designation.trim() && { designation: designation.trim() }),
-        }),
-      })
-
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        setError(res.status === 409
-          ? 'This email is already registered. Try signing in instead.'
-          : (data.error || 'Registration failed. Please try again.'))
-        setLoading(false)
-        return
-      }
-
-      setLoading(false)
-      setMode('pending')
-    } catch {
-      setError('Something went wrong. Please try again.')
-      setLoading(false)
-    }
-  }
-
   // ── Logo / header ───────────────────────────────────────────
   const Header = () => (
     <div style={{ textAlign: 'center', marginBottom: '40px' }}>
       <div style={{
-        fontFamily: 'var(--font-display)', fontSize: '24px',
+        fontFamily: 'var(--font-heading)', fontSize: '24px',
         fontWeight: 500, color: 'var(--text)', marginBottom: '8px',
       }}>
         events <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>by myoozz</span>
       </div>
       <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
         {mode === 'login' && 'Sign in to your account'}
-        {mode === 'forgot' && 'Reset your password'}
+        {mode === 'otp' && 'Check your email'}
         {mode === 'setpassword' && 'Set your password'}
-        {mode === 'register' && 'Create your organisation account'}
-        {mode === 'pending' && 'Registration received'}
       </p>
     </div>
   )
@@ -285,74 +264,88 @@ export default function LoginPage() {
           borderRadius: 'var(--radius)', padding: '32px',
         }}>
 
-          {/* ── LOGIN FORM ── */}
+          {/* ── LOGIN FORM (email step) ── */}
           {mode === 'login' && (
-            <form onSubmit={handleLogin}>
+            <form onSubmit={handleSendCode}>
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="you@myoozz.com" required style={inputStyle} />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value.trim().toLowerCase())}
+                  placeholder="you@myoozz.com"
+                  required
+                  style={inputStyle}
+                />
               </div>
 
-              <div style={{ marginBottom: '8px' }}>
-                <label style={labelStyle}>Password</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••" required style={inputStyle} />
-              </div>
-
-              {/* Forgot password link */}
-              <div style={{ textAlign: 'right', marginBottom: '24px' }}>
-                <button type="button" onClick={() => { setMode('forgot'); setError(''); setSuccess('') }}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    fontSize: '12px', color: 'var(--text-tertiary)',
-                    fontFamily: 'var(--font-body)', padding: 0,
-                  }}
-                  onMouseOver={e => e.currentTarget.style.color = 'var(--text)'}
-                  onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
-                >
-                  Forgot password?
-                </button>
-              </div>
+              <div ref={turnstileRef} id="cf-turnstile" style={{ marginTop: 14 }} />
 
               {error && <ErrorBox message={error} />}
 
-              <button type="submit" disabled={loading} style={primaryBtn(loading)}>
-                {loading ? 'Signing in...' : 'Sign in'}
+              <button type="submit" disabled={loading} style={{ ...primaryBtn(loading), marginTop: 20 }}>
+                {loading ? 'Sending...' : 'Send code'}
               </button>
             </form>
           )}
 
-          {/* ── FORGOT PASSWORD FORM ── */}
-          {mode === 'forgot' && (
-            <form onSubmit={handleForgotPassword}>
+          {/* ── OTP VERIFY FORM ── */}
+          {mode === 'otp' && (
+            <form onSubmit={handleVerify}>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: 1.6 }}>
-                Enter your email and we'll send you a link to set a new password.
+                Enter the 6-digit code we sent to <strong>{email}</strong>.
               </p>
 
               <div style={{ marginBottom: '24px' }}>
-                <label style={labelStyle}>Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="you@myoozz.com" required style={inputStyle} />
+                <label style={labelStyle}>Verification code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={code}
+                  onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  maxLength={6}
+                  required
+                  style={{ ...inputStyle, letterSpacing: '0.3em', fontSize: '18px', textAlign: 'center' }}
+                  autoFocus
+                />
               </div>
 
               {error && <ErrorBox message={error} />}
               {success && <SuccessBox message={success} />}
 
-              {!success && (
-                <button type="submit" disabled={loading} style={primaryBtn(loading)}>
-                  {loading ? 'Sending...' : 'Send reset link'}
-                </button>
-              )}
+              <button type="submit" disabled={loading} style={primaryBtn(loading)}>
+                {loading ? 'Verifying...' : 'Verify & sign in'}
+              </button>
 
-              <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess('') }}
+              {/* Resend control */}
+              <button
+                type="button"
+                onClick={handleSendCode}
+                disabled={loading}
                 style={{
                   width: '100%', marginTop: '10px', padding: '10px',
                   fontSize: '13px', fontFamily: 'var(--font-body)',
                   background: 'none', border: '0.5px solid var(--border-strong)',
-                  borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)',
-                }}>
-                <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back to sign in
+                  borderRadius: 'var(--radius-sm)', cursor: loading ? 'not-allowed' : 'pointer',
+                  color: 'var(--text)',
+                }}
+              >
+                Resend code
+              </button>
+
+              {/* Back to email step */}
+              <button
+                type="button"
+                onClick={() => { setMode('login'); setCode(''); setError(''); setSuccess('') }}
+                style={{
+                  width: '100%', marginTop: '10px', padding: '10px',
+                  fontSize: '13px', fontFamily: 'var(--font-body)',
+                  background: 'none', border: 'none',
+                  cursor: 'pointer', color: 'var(--text-tertiary)',
+                }}
+              >
+                <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Use a different email
               </button>
             </form>
           )}
@@ -387,104 +380,9 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* ── REGISTER FORM ── */}
-          {mode === 'register' && (
-            <form onSubmit={handleRegister}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>Company / Organisation name</label>
-                <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
-                  placeholder="Acme Events Pvt Ltd" required style={inputStyle} />
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>Your name</label>
-                <input type="text" value={contactName} onChange={e => setContactName(e.target.value)}
-                  placeholder="Full name" required style={inputStyle} />
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>Designation (optional)</label>
-                <input type="text" value={designation} onChange={e => setDesignation(e.target.value)}
-                  placeholder="e.g. Director, Production Head" style={inputStyle} />
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>Work email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="you@company.com" required style={inputStyle} />
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>Phone</label>
-                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                  placeholder="+91 98765 43210" required style={inputStyle} />
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>Password</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="At least 8 characters" required style={inputStyle} />
-              </div>
-
-              <div style={{ marginBottom: '24px' }}>
-                <label style={labelStyle}>Confirm password</label>
-                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="Same password again" required style={inputStyle} />
-              </div>
-
-              {error && <ErrorBox message={error} />}
-
-              <button type="submit" disabled={loading} style={primaryBtn(loading)}>
-                {loading ? 'Submitting...' : 'Request access'}
-              </button>
-
-              <button type="button" onClick={() => { setMode('login'); setError('') }}
-                style={{
-                  width: '100%', marginTop: '10px', padding: '10px',
-                  fontSize: '13px', fontFamily: 'var(--font-body)',
-                  background: 'none', border: '0.5px solid var(--border-strong)',
-                  borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)',
-                }}>
-                <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back to sign in
-              </button>
-            </form>
-          )}
-
-          {/* ── PENDING STATE (post-registration) ── */}
-          {mode === 'pending' && (
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                width: '48px', height: '48px', borderRadius: '50%',
-                background: 'rgba(188,23,35,0.12)', border: '1.5px solid rgba(188,23,35,0.35)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 20px', fontSize: '22px',
-              }}>
-                <Icon name="approvals" size={22} color="#bc1723" />
-              </div>
-              <p style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
-                Welcome to Myoozz Events. OS for your events
-              </p>
-              <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', marginBottom: '14px' }}>
-                We're glad you're here.
-              </p>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '24px' }}>
-                We are preparing your workspace. We'll reach out to <strong>{email}</strong> personally — no auto-emails, no bots. Expect to hear from us soon.
-              </p>
-              <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess('') }}
-                style={{
-                  width: '100%', padding: '10px',
-                  fontSize: '13px', fontFamily: 'var(--font-body)',
-                  background: 'none', border: '0.5px solid var(--border-strong)',
-                  borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text)',
-                }}>
-                <Icon name="back" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Back to sign in
-              </button>
-            </div>
-          )}
-
         </div>
 
-        {(mode === 'login' || mode === 'forgot') && (
+        {(mode === 'login' || mode === 'otp') && (
           <div style={{ textAlign: 'center', marginTop: '24px' }}>
             <p style={{
               fontSize: '12px', color: 'var(--text-tertiary)',
@@ -494,7 +392,7 @@ export default function LoginPage() {
             </p>
             <button
               type="button"
-              onClick={() => { setMode('register'); setError(''); setSuccess('') }}
+              onClick={() => { window.location.href = '/' }}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                 padding: '10px 20px',
