@@ -17,8 +17,11 @@ test('suspended is denied regardless of role/grant', () => {
     { allowed: false, suspended: true, reason: 'suspended' },
   )
 })
+test('falsy events role → denied (pins the truthiness contract)', () => {
+  assert.deepEqual(evaluateAccess({ app_roles: { events: false } }), { allowed: false, suspended: false, reason: 'no-grant' })
+})
 test('empty / missing claims → denied, not a crash', () => {
+  assert.deepEqual(evaluateAccess(null), { allowed: false, suspended: false, reason: 'no-grant' })
   assert.equal(evaluateAccess(undefined).allowed, false)
   assert.equal(evaluateAccess({}).allowed, false)
-  assert.equal(evaluateAccess(null).reason, 'no-grant')
 })
