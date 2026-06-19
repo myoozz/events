@@ -16,6 +16,9 @@ const GATE_CSS = `
 .gate-logo{display:inline-flex;align-items:center;color:var(--gf);}
 .gate-logo svg{height:26px;width:auto;display:block;}
 .gate-ident{font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;letter-spacing:.04em;color:var(--gd);}
+.gate-top-right{display:inline-flex;align-items:center;gap:14px;}
+.gate-signin{font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;letter-spacing:.04em;color:var(--gd);text-decoration:none;border:1px solid var(--gl);border-radius:8px;padding:6px 13px;transition:color .18s ease,border-color .18s ease;}
+.gate-signin:hover{color:var(--gf);border-color:var(--gfa);}
 .gate-main{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:640px;margin:0 auto;width:100%;padding:48px 0;}
 .gate-eyebrow{font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;line-height:1.5;text-transform:uppercase;letter-spacing:.18em;color:var(--gfa);margin:0 0 20px;}
 .gate-title{font-family:var(--font-heading,Georgia,serif);font-weight:600;font-size:clamp(30px,5.2vw,52px);line-height:1.08;letter-spacing:-.01em;margin:0 0 22px;color:var(--gf);max-width:15ch;}
@@ -98,7 +101,10 @@ export default function GatePage() {
       <div className="gate">
         <header className="gate-top">
           <span className="gate-logo" role="img" aria-label="Me" dangerouslySetInnerHTML={{ __html: meMarkSvg }} />
-          <span className="gate-ident">Myoozz Events</span>
+          <span className="gate-top-right">
+            <span className="gate-ident">Myoozz Events</span>
+            <a href="/login" className="gate-signin">Sign in</a>
+          </span>
         </header>
 
         <main className="gate-main">
