@@ -11,8 +11,16 @@ test('null caller → 401', () => {
   assert.deepEqual(authorizeInvite(null, { tenantId: T1, role: 'team' }), { ok: false, status: 401, error: 'Not authenticated' })
 })
 
-test('suspended caller → 403', () => {
-  assert.equal(authorizeInvite(caller({ status: 'suspended' }), { tenantId: T1, role: 'team' }).status, 403)
+test('suspended caller → 403 (full shape)', () => {
+  assert.deepEqual(
+    authorizeInvite(caller({ status: 'suspended' }), { tenantId: T1, role: 'team' }),
+    { ok: false, status: 403, error: 'Account suspended' },
+  )
+})
+
+test('null / missing target → 400', () => {
+  assert.equal(authorizeInvite(caller(), null).status, 400)
+  assert.equal(authorizeInvite(caller(), { tenantId: T1 }).status, 400) // no role key
 })
 
 test('invalid/non-events target role → 400 (even for super_admin)', () => {
@@ -52,5 +60,8 @@ test('cross-tenant grant denied for non-super_admin', () => {
 
 test('GRANTS/EVENTS_ROLES shape guards', () => {
   assert.deepEqual(EVENTS_ROLES, ['admin', 'manager', 'event_lead', 'team'])
+  assert.deepEqual(GRANTS.admin, ['admin', 'manager', 'event_lead', 'team'])
   assert.deepEqual(GRANTS.manager, ['event_lead', 'team'])
+  assert.deepEqual(GRANTS.event_lead, ['team'])
+  assert.deepEqual(GRANTS.team, [])
 })
