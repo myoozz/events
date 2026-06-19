@@ -93,6 +93,10 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  // --- Focus refs for persistent-form step switching ---
+  const emailRef = useRef(null)
+  const codeRef = useRef(null)
+
   // --- Turnstile (explicit render; tokens are single-use → reset after every send) ---
   const turnstileRef = useRef(null)
   const widgetIdRef = useRef(null)
@@ -161,6 +165,12 @@ export default function LoginPage() {
 
   // Clear resend timer on unmount
   useEffect(() => () => clearInterval(resendTimerRef.current), [])
+
+  // Focus the active input whenever the step changes
+  useEffect(() => {
+    if (mode === 'login') emailRef.current?.focus()
+    else if (mode === 'otp') codeRef.current?.focus()
+  }, [mode])
 
   // ── Send OTP ────────────────────────────────────────────────
   async function handleSendCode(e) {
@@ -294,6 +304,7 @@ export default function LoginPage() {
               <div style={{ marginBottom: '20px' }}>
                 <label style={labelStyle}>Email</label>
                 <input
+                  ref={emailRef}
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value.trim().toLowerCase())}
@@ -323,6 +334,7 @@ export default function LoginPage() {
               <div style={{ marginBottom: '24px' }}>
                 <label style={labelStyle}>Verification code</label>
                 <input
+                  ref={codeRef}
                   type="text"
                   inputMode="numeric"
                   value={code}
@@ -331,7 +343,6 @@ export default function LoginPage() {
                   maxLength={6}
                   required
                   style={{ ...inputStyle, letterSpacing: '0.3em', fontSize: '18px', textAlign: 'center' }}
-                  autoFocus
                 />
               </div>
 
