@@ -5,6 +5,7 @@ import GatePage       from './components/GatePage'
 import PublicTask     from './components/PublicTask'
 import LoginPage      from './components/LoginPage'
 import AppShell       from './components/AppShell'
+import AccessGate    from './components/AccessGate'
 import PrivacyPolicy  from './components/PrivacyPolicy'
 import TermsOfUse     from './components/TermsOfUse'
 
@@ -145,12 +146,16 @@ export default function App() {
           {/* ── Protected app ── */}
           <Route path="/app" element={
             <ProtectedRoute session={session} loading={loading}>
-              <AppShell session={session} />
+              <AccessGate session={session}>
+                <AppShell session={session} />
+              </AccessGate>
             </ProtectedRoute>
           } />
           <Route path="/app/*" element={
             <ProtectedRoute session={session} loading={loading}>
-              <AppShell session={session} />
+              <AccessGate session={session}>
+                <AppShell session={session} />
+              </AccessGate>
             </ProtectedRoute>
           } />
 
