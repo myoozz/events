@@ -23,13 +23,13 @@ function NoAccessScreen({ suspended }) {
     : "Your account isn't provisioned for Myoozz Events yet. Ask your admin for access, or request early access below."
   const signOut = async () => { await supabase.auth.signOut(); window.location.href = '/login' }
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center',
+    <div role="main" style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center',
       justifyContent: 'center', fontFamily: 'var(--font-body)', padding: '24px' }}>
       <div style={{ width: '100%', maxWidth: '420px', textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', fontWeight: 600,
-          color: 'var(--text)', marginBottom: '12px' }}>{title}</div>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', fontWeight: 600,
+          color: 'var(--text)', marginTop: 0, marginBottom: '12px' }}>{title}</h1>
         <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '28px' }}>{body}</p>
-        <button onClick={signOut} style={{ width: '100%', padding: '11px', fontSize: '14px', fontWeight: 500,
+        <button type="button" onClick={signOut} style={{ width: '100%', padding: '11px', fontSize: '14px', fontWeight: 500,
           fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none',
           borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}>Sign out</button>
         <div style={{ marginTop: '16px', fontSize: '13px', color: 'var(--text-tertiary)' }}>
