@@ -345,7 +345,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     budget_tier: 'Budget tier', seating_format: 'Seating format',
     proposal_due_date: 'Proposal due', agency_fee_percent: 'Agency fee', gst_percent: 'GST',
   }
-  const ROLE_LABELS_MAP = { admin: 'Admin', manager: 'Project Head', event_lead: 'Manager', team: 'Project Team', staff: 'Staff' }
+  const ROLE_LABELS_MAP = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team', staff: 'Staff' }
 
   function startEdit(field, value) { setEditingField(field); setEditValue(value ?? '') }
 
@@ -679,13 +679,21 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                         })}
                       </div>
                     )}
-                    <button onClick={() => setShowTeamPopover(p => !p)} style={{ fontSize: '11px', color: 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', padding: 0, whiteSpace: 'nowrap' }}>
-                      {assignedTo.length === 0 ? '—' : `${assignedTo.length}`}
-                    </button>
-                    {canAssign && (
-                      <button onClick={() => setShowAssignModal(true)} style={{ fontSize: '10px', color: 'var(--text-tertiary)', background: 'none', border: '0.5px dashed var(--border-strong)', borderRadius: 99, padding: '1px 6px', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
-                        {assignedTo.length === 0 ? '+' : '+ Manage'}
+                    {assignedTo.length === 0 ? (
+                      <button onClick={() => setShowAssignModal(true)} style={{ fontSize: '11px', color: 'var(--app-accent)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', padding: 0, whiteSpace: 'nowrap', fontWeight: 500 }}>
+                        Add team →
                       </button>
+                    ) : (
+                      <>
+                        <button onClick={() => setShowTeamPopover(p => !p)} style={{ fontSize: '11px', color: 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', padding: 0, whiteSpace: 'nowrap' }}>
+                          {assignedTo.length}
+                        </button>
+                        {canAssign && (
+                          <button onClick={() => setShowAssignModal(true)} style={{ fontSize: '10px', color: 'var(--text-tertiary)', background: 'none', border: '0.5px dashed var(--border-strong)', borderRadius: 99, padding: '1px 6px', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
+                            + Manage
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                   {showTeamPopover && assignedTo.length > 0 && (
@@ -719,6 +727,46 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
       {/* Milestone stepper */}
       <EventMilestone event={event} />
 
+      {/* ── Stage banner — rendered once, above the tabs (admin only) ── */}
+      {isAdmin && (() => {
+        const s =
+          status === 'delivered'       ? 'delivered'  :
+          status === 'production'      ? 'production' :
+          proposalStatus === 'won'     ? (taskCount === null || taskCount === 0 ? 'won' : 'execution') :
+          proposalStatus === 'submitted' ? 'submitted' :
+          'proposal'
+
+        const cfg = {
+          proposal:   { tc: 'var(--state-success)', h: 'Proposal stage.',       btn: 'Submit Proposal',          fn: handleSubmitProposal },
+          submitted:  { tc: 'var(--state-info)',    h: 'Proposal submitted.',    btn: 'Mark as Won',              fn: handleMarkAsWon },
+          won:        { tc: 'var(--state-warning)', h: 'You won this one.',      btn: 'Import to Execution →',    fn: () => { setActiveTab('tasks'); setRefreshKey(k => k + 1) } },
+          execution:  { tc: 'var(--state-warning)', h: 'Execution in progress.', btn: 'Send Reminder',            fn: handleSendReminder },
+          production: { tc: 'var(--state-danger)',  h: 'Production is live.',    btn: 'Mark Production Complete', fn: () => setShowProdModal(true) },
+          delivered:  { tc: 'var(--state-success)', h: 'Delivered.',             btn: 'Download All Documents',   fn: () => { setActiveTab('delivered'); setRefreshKey(k => k + 1) } },
+        }[s]
+
+        if (!cfg) return null
+
+        return (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
+            minHeight: 40, padding: '6px 14px', marginBottom: 16,
+            background: 'var(--bg)', border: '0.5px solid var(--border)', borderLeft: `3px solid ${cfg.tc}`,
+            borderRadius: 'var(--radius-sm)',
+          }}>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: cfg.tc }}>{cfg.h}</p>
+            <button onClick={cfg.fn} disabled={savingProposal} style={{
+              padding: '5px 12px', fontSize: 12, fontWeight: 500, fontFamily: 'var(--font-body)',
+              background: 'none', color: cfg.tc, border: `0.5px solid ${cfg.tc}`,
+              borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+              opacity: savingProposal ? 0.6 : 1, flexShrink: 0, whiteSpace: 'nowrap',
+            }}>
+              {savingProposal ? 'Saving…' : cfg.btn}
+            </button>
+          </div>
+        )
+      })()}
+
       {/* ── Tab bar ── */}
       <div style={{
         display: 'flex',
@@ -747,94 +795,6 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
           )
         })}
       </div>
-
-      {isAdmin && (() => {
-        const s =
-          status === 'delivered'       ? 'delivered'  :
-          status === 'production'      ? 'production' :
-          proposalStatus === 'won'     ? (taskCount === null || taskCount === 0 ? 'won' : 'execution') :
-          proposalStatus === 'submitted' ? 'submitted' :
-          'proposal'
-
-        const cfg = {
-          proposal: {
-            bc: '#b7e4c7', tc: '#2d6a4f',
-            h: 'Proposal stage.',
-            sub: 'Fill your elements and costs, then submit when ready. Every element you remember today can be billed to the client.',
-            btn: 'Submit Proposal',
-            fn: handleSubmitProposal,
-          },
-          submitted: {
-            bc: '#bdd7f5', tc: 'var(--state-info)',
-            h: 'Proposal submitted.',
-            sub: 'Waiting for client confirmation. Mark as Won when they confirm.',
-            btn: 'Mark as Won',
-            fn: handleMarkAsWon,
-          },
-          won: {
-            bc: 'var(--state-warning-bg)', tc: 'var(--state-warning)',
-            h: 'You won this one.',
-            sub: 'Export your approved elements to Execution and assign your team. Real work begins now — let\'s plan it together and delegate.',
-            btn: 'Import to Execution →',
-            fn: () => { setActiveTab('tasks'); setRefreshKey(k => k + 1) },
-          },
-          execution: {
-            bc: 'var(--state-warning-bg)', tc: 'var(--state-warning)',
-            h: 'Execution in progress.',
-            sub: 'Track what\'s happening on your project, city by city. Production begins when all tasks are done.',
-            btn: 'Send Reminder',
-            fn: handleSendReminder,
-          },
-          production: {
-            bc: '#fbbcbd', tc: 'var(--state-danger)',
-            h: 'Production is live.',
-            sub: 'Your team is on ground. Things are getting done — keep a close eye on timelines.',
-            btn: 'Mark Production Complete',
-            fn: () => setShowProdModal(true),
-          },
-          delivered: {
-            bc: '#b7e4c7', tc: '#2d6a4f',
-            h: 'Delivered.',
-            sub: 'Download your complete document set for records and client handover. You were prepared — go deliver a great event.',
-            btn: 'Download All Documents',
-            fn: () => { setActiveTab('delivered'); setRefreshKey(k => k + 1) },
-          },
-        }[s]
-
-        if (!cfg) return null
-
-        return (
-          <div style={{
-            borderLeft: `3px solid ${cfg.bc}`,
-            background: 'var(--bg)',
-            padding: '8px 16px 8px 14px',
-            marginBottom: 16,
-            borderRadius: '0 8px 8px 0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
-            flexWrap: 'wrap',
-          }}>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: cfg.tc }}>
-              {cfg.h}
-            </p>
-            <button
-              onClick={cfg.fn}
-              disabled={savingProposal}
-              style={{
-                padding: '4px 10px', fontSize: 12, fontWeight: 500,
-                fontFamily: 'var(--font-body)',
-                background: cfg.tc, color: '#fff',
-                border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                opacity: savingProposal ? 0.6 : 1, flexShrink: 0, whiteSpace: 'nowrap',
-              }}
-            >
-              {savingProposal ? 'Saving…' : cfg.btn}
-            </button>
-          </div>
-        )
-      })()}
 
       {/* ── Tab content ── */}
       {activeTab === 'elements' && (

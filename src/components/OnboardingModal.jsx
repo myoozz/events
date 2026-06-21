@@ -330,7 +330,7 @@ function Step3({ onInvite, onLater }) {
         Bring in your team.
       </h2>
       <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 28px', lineHeight: 1.55 }}>
-        Invite Project Heads and Managers. They get assigned events. Your team works in ME. You see everything.
+        Invite Managers and Event Leads. They get assigned events. Your team works in ME. You see everything.
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <SolidBtn onClick={onInvite}>Invite team members</SolidBtn>

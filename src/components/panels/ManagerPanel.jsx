@@ -136,7 +136,7 @@ export default function ManagerPanel({ userId, onOpenEvent }) {
   return (
     <div style={{ fontFamily: F }}>
       <PanelStyle />
-      <h1 style={{ fontFamily: FD, fontSize: '28px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '4px', letterSpacing: '-0.3px' }}>Manager</h1>
+      <h1 style={{ fontFamily: FD, fontSize: '28px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '4px', letterSpacing: '-0.3px' }}>Event Lead</h1>
       <p style={{ fontFamily: F, fontSize: '13px', color: C.dim, marginBottom: '24px' }}>The events you're driving and the tasks on your plate.</p>
 
       <StatStrip
