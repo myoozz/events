@@ -35,9 +35,9 @@ const SECTIONS = [
 
 const ROLE_LABELS = {
   admin: 'Admin',
-  manager: 'Project Head',
-  event_lead: 'Manager',
-  team: 'Project Team',
+  manager: 'Manager',
+  event_lead: 'Event Lead',
+  team: 'Team',
   staff: 'Staff',
 }
 

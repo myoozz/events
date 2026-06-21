@@ -22,14 +22,14 @@ import OnboardingModal from './OnboardingModal'
 // rail the scoped --text override makes the active icon white via currentColor.
 const NAV_ITEMS = [
   { key: 'events',      label: 'Events',       roles: ['admin', 'manager', 'event_lead', 'team'], icon: 'events' },
-  { key: 'team',        label: 'Team',         roles: ['admin', 'manager'],                        icon: 'team' },
+  { key: 'team',        label: 'Team',         roles: ['admin', 'manager', 'event_lead', 'team'],  icon: 'team' },
   { key: 'activitylog', label: 'Activity log', roles: ['admin'],                                   icon: 'activitylog' },
   { key: 'feedback',    label: 'Feedback',     roles: ['admin'],                                   icon: 'feedback' },
   { key: 'ratecard',    label: 'Rate cards',   roles: ['admin', 'manager', 'event_lead'],          icon: 'ratecard' },
   { key: 'categories',  label: 'Categories',   roles: ['admin'],                                   icon: 'categories' },
 ]
 
-const ROLE_LABELS = { admin: 'Admin', manager: 'Project Head', event_lead: 'Manager', team: 'Project Team' }
+const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team' }
 const ROLE_COLORS = {
   admin:      { bg: 'var(--green-light)', color: 'var(--green)' },
   manager:    { bg: 'var(--state-info-bg)',            color: 'var(--state-info)'      },
@@ -687,7 +687,7 @@ export default function AppShell({ session }) {
         }}>
           {[
             ...(platformRole !== 'super_admin' ? [{ key: 'events', icon: 'events', label: 'Events' }] : []),
-            ...((userRole === 'admin' || userRole === 'manager') && platformRole !== 'super_admin' ? [{ key: 'team', icon: 'team', label: 'Team' }] : []),
+            ...(platformRole !== 'super_admin' ? [{ key: 'team', icon: 'team', label: 'Team' }] : []),
             ...(userRole === 'admin' ? [{ key: 'activitylog', icon: 'activitylog', label: 'Log' }] : []),
             ...((userRole === 'admin' || canManageRateCards || platformRole === 'super_admin') ? [{ key: 'ratecard', glyph: '₹', label: 'Rates' }] : []),
           ].map(item => (
@@ -800,7 +800,7 @@ export default function AppShell({ session }) {
           {activeTab === 'analytics' && (
         <AnalyticsDashboard userId={userId} userRole={userRole} />
       )}
-      {activeTab === 'team' && (userRole === 'admin' || userRole === 'manager') && platformRole !== 'super_admin' && (
+      {activeTab === 'team' && platformRole !== 'super_admin' && (
             <UserManagement
               session={session}
               userRole={userRole}

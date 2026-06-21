@@ -37,9 +37,9 @@ const STAGES = [
 
 // Colors matching app color system
 const STAGE_COLORS = {
-  done:    { bg: 'var(--state-success-bg)', border: 'var(--state-success)', text: 'var(--state-success)', dot: 'var(--state-success)' },
-  active:  { bg: '#FFF7ED', border: 'var(--state-warning)', text: 'var(--state-warning)', dot: 'var(--state-warning)' },
-  pending: { bg: 'var(--bg-secondary)', border: 'var(--border)', text: 'var(--text-tertiary)', dot: 'var(--border-strong)' },
+  done:    { bg: 'var(--state-success)', border: 'var(--state-success)', icon: '#fff',               text: 'var(--state-success)' },
+  active:  { bg: 'var(--app-bg)',        border: 'var(--app-accent)',    icon: 'var(--app-accent)',   text: 'var(--app-accent)' },
+  pending: { bg: 'var(--app-bg)',        border: 'var(--app-border)',    icon: 'var(--app-text-dim)', text: 'var(--app-text-dim)' },
 }
 
 async function computeMilestones(event) {
@@ -136,17 +136,12 @@ export default function EventMilestone({ event }) {
                 <div style={{
                   width: '36px', height: '36px', borderRadius: '50%',
                   background: colors.bg,
-                  border: `2px solid ${colors.dot}`,
+                  border: `2px solid ${colors.border}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: isDone ? '16px' : '14px',
                   transition: 'all 0.2s',
-                  boxShadow: isDone ? `0 2px 8px ${colors.dot}40` : 'none',
+                  boxShadow: isDone ? 'var(--elev-1)' : 'none',
                 }}>
-                  {isDone
-                    ? <Icon name={stage.icon} size={18} color={colors.dot} />
-                    : isActive
-                      ? <Icon name="progressActive" size={16} color={colors.dot} />
-                      : '○'}
+                  <Icon name={stage.icon} size={18} color={colors.icon} />
                 </div>
 
                 {/* Label */}
@@ -172,9 +167,7 @@ export default function EventMilestone({ event }) {
               {!isLast && (
                 <div style={{
                   flex: 1, height: '2px', marginTop: '17px',
-                  background: achieved.has(STAGES[i + 1]?.key) || isDone
-                    ? 'var(--state-success)'
-                    : isActive ? 'var(--state-warning)' : 'var(--border)',
+                  background: isDone ? 'var(--state-success)' : 'var(--app-border)',
                   transition: 'background 0.3s',
                 }} />
               )}

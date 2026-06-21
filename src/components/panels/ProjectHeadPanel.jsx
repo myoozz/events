@@ -171,7 +171,7 @@ export default function ProjectHeadPanel({ userId, onOpenEvent }) {
   return (
     <div style={{ fontFamily: F }}>
       <PanelStyle />
-      <h1 style={{ fontFamily: FD, fontSize: '28px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '4px', letterSpacing: '-0.3px' }}>Project Head</h1>
+      <h1 style={{ fontFamily: FD, fontSize: '28px', fontWeight: 600, color: 'var(--app-ink)', marginBottom: '4px', letterSpacing: '-0.3px' }}>Manager</h1>
       <p style={{ fontFamily: F, fontSize: '13px', color: C.dim, marginBottom: '24px' }}>Your events, your team's workload, and what's due this week.</p>
 
       <StatStrip

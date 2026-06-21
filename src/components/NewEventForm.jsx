@@ -1139,8 +1139,8 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                   fontSize: '10px', color: 'var(--app-text-dim-lg)',
                   textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1px',
                 }}>
-                  {u.role === 'manager'    ? 'Project Head' :
-                   u.role === 'event_lead' ? 'Manager'      : u.role}
+                  {u.role === 'manager'    ? 'Manager' :
+                   u.role === 'event_lead' ? 'Event Lead'   : u.role}
                 </div>
               </div>
               {a.agencyPocId === u.id && (

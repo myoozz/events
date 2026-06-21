@@ -21,6 +21,9 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
     : ['team'] // event_lead can only invite team
 
   const defaultInviteRole = userRole === 'admin' ? 'team' : userRole === 'manager' ? 'event_lead' : 'team'
+  const isAdmin = userRole === 'admin'
+  const isManager = userRole === 'manager'
+  const canInvite = isAdmin || isManager  // manager invites are framed as approval requests (UI only)
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -66,7 +69,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
       })
       if (inviteError) throw inviteError
 
-      setSuccess(`✓ Invite sent to ${form.email}. They'll be guided to complete their profile when they first log in.`)
+      setSuccess(isManager ? `✓ Request sent to your Admin for ${form.email}.` : `✓ Invite sent to ${form.email}. They'll be guided to complete their profile when they first log in.`)
       await logUserInvited(form.email, form.role)
 
       setForm({ fullName: '', email: '', role: 'team', base_city: '', phone: '' })
@@ -170,18 +173,25 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
               · {users.length} {users.length === 1 ? 'member' : 'members'}
             </span>
           </h2>
+          {isManager && (
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+              Invite requests require Admin approval
+            </p>
+          )}
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          style={{
-            padding: '10px 20px', fontSize: '13px', fontWeight: 500,
-            fontFamily: 'var(--font-body)', background: 'var(--text)',
-            color: 'var(--bg)', border: 'none',
-            borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-          }}
-        >
-          + Invite team member
-        </button>
+        {canInvite && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            style={{
+              padding: '10px 20px', fontSize: '13px', fontWeight: 500,
+              fontFamily: 'var(--font-body)', background: 'var(--text)',
+              color: 'var(--bg)', border: 'none',
+              borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+            }}
+          >
+            {isManager ? '+ Request team member' : '+ Invite team member'}
+          </button>
+        )}
       </div>
 
       {success && (
@@ -199,9 +209,14 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
           border: '0.5px solid var(--border)', borderRadius: 'var(--radius)',
           padding: '24px', marginBottom: '24px', background: 'var(--bg-secondary)',
         }}>
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 500, color: 'var(--text)', marginBottom: '20px' }}>
-            Invite a team member
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 500, color: 'var(--text)', marginBottom: isManager ? '8px' : '20px' }}>
+            {isManager ? 'Request a team member' : 'Invite a team member'}
           </h3>
+          {isManager && (
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--state-info)', marginBottom: '20px' }}>
+              Invite requests are sent to your Admin for approval.
+            </p>
+          )}
           <form onSubmit={handleInvite}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
               <div>
@@ -353,7 +368,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                   borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                 }}
               >
-                {saving ? 'Sending invite...' : 'Send invite'}
+                {saving ? (isManager ? 'Sending request...' : 'Sending invite...') : (isManager ? 'Send request' : 'Send invite')}
               </button>
             </div>
           </form>
@@ -364,8 +379,10 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
       <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid var(--border)' }}>
         {[
           { key: 'active',    label: 'Active',          count: users.length },
-          { key: 'suspended', label: 'Suspended',        count: suspendedUsers.length },
-          { key: 'expired',   label: 'Expired Invites',  count: expiredUsers.length },
+          ...(isAdmin ? [
+            { key: 'suspended', label: 'Suspended',        count: suspendedUsers.length },
+            { key: 'expired',   label: 'Expired Invites',  count: expiredUsers.length },
+          ] : []),
         ].map(tab => (
           <button
             key={tab.key}
@@ -514,19 +531,30 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                           {resendMsg[u.id]}
                         </span>
                       )}
-                      <select
-                        value={u.role}
-                        onChange={e => handleRoleChange(u.id, e.target.value)}
-                        style={{
-                          padding: '5px 10px', fontSize: '12px', fontFamily: 'var(--font-body)',
+                      {isAdmin ? (
+                        <select
+                          value={u.role}
+                          onChange={e => handleRoleChange(u.id, e.target.value)}
+                          style={{
+                            padding: '5px 10px', fontSize: '12px', fontFamily: 'var(--font-body)',
+                            background: u.role === 'admin' ? 'var(--state-success-bg)' : u.role === 'manager' ? 'var(--state-info-bg)' : u.role === 'event_lead' ? 'var(--state-warning-bg)' : 'var(--app-surface)',
+                            color: u.role === 'admin' ? 'var(--state-success)' : u.role === 'manager' ? 'var(--state-info)' : u.role === 'event_lead' ? 'var(--state-warning)' : 'var(--app-text-dim)',
+                            border: '0.5px solid var(--border)', borderRadius: '20px',
+                            cursor: 'pointer', outline: 'none', fontWeight: 500,
+                          }}
+                        >
+                          {inviteableRoles.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                        </select>
+                      ) : (
+                        <span style={{
+                          padding: '4px 12px', fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: 500, whiteSpace: 'nowrap',
                           background: u.role === 'admin' ? 'var(--state-success-bg)' : u.role === 'manager' ? 'var(--state-info-bg)' : u.role === 'event_lead' ? 'var(--state-warning-bg)' : 'var(--app-surface)',
                           color: u.role === 'admin' ? 'var(--state-success)' : u.role === 'manager' ? 'var(--state-info)' : u.role === 'event_lead' ? 'var(--state-warning)' : 'var(--app-text-dim)',
-                          border: '0.5px solid var(--border)', borderRadius: '20px',
-                          cursor: 'pointer', outline: 'none', fontWeight: 500,
-                        }}
-                      >
-                        {inviteableRoles.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
-                      </select>
+                          borderRadius: '20px',
+                        }}>
+                          {ROLE_LABELS[u.role] || u.role}
+                        </span>
+                      )}
                       {userRole === 'admin' && (
                         <label title="Allow this member to view the agency rate card library" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', userSelect: 'none' }}>
                           <input
@@ -538,18 +566,20 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                           <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>Rate Cards Access</span>
                         </label>
                       )}
-                      <button
-                        onClick={() => suspendUser(u.id, u.email)}
-                        style={{
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          fontSize: '13px', color: 'var(--state-danger)',
-                          fontFamily: 'var(--font-body)', padding: '4px 8px',
-                        }}
-                        onMouseOver={e => e.currentTarget.style.opacity = '0.7'}
-                        onMouseOut={e => e.currentTarget.style.opacity = '1'}
-                      >
-                        Suspend
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => suspendUser(u.id, u.email)}
+                          style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            fontSize: '13px', color: 'var(--state-danger)',
+                            fontFamily: 'var(--font-body)', padding: '4px 8px',
+                          }}
+                          onMouseOver={e => e.currentTarget.style.opacity = '0.7'}
+                          onMouseOut={e => e.currentTarget.style.opacity = '1'}
+                        >
+                          Suspend
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
