@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Dashboard from './Dashboard'
 import UserManagement from './UserManagement'
-import TeamView from './TeamView'
 import AnalyticsDashboard from './AnalyticsDashboard'
 import RateCard from './RateCard'
 import CategoryManager from './CategoryManager'
@@ -802,19 +801,12 @@ export default function AppShell({ session }) {
         <AnalyticsDashboard userId={userId} userRole={userRole} />
       )}
       {activeTab === 'team' && (userRole === 'admin' || userRole === 'manager') && platformRole !== 'super_admin' && (
-            <div>
-              <TeamView
-                userId={session?.user?.id}
-                userRole={userRole}
-                onViewProfile={openProfile}
-              />
-              <UserManagement
-                session={session}
-                userRole={userRole}
-                tenantId={tenantId}
-                onViewProfile={openProfile}
-              />
-            </div>
+            <UserManagement
+              session={session}
+              userRole={userRole}
+              tenantId={tenantId}
+              onViewProfile={openProfile}
+            />
           )}
           {activeTab === 'activitylog' && userRole === 'admin' && (
             <ActivityLog />

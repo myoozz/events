@@ -4,11 +4,11 @@ import { Icon } from '../icons'
 import { logUserInvited } from '../utils/activityLogger'
 
 const ROLES = ['admin', 'manager', 'event_lead', 'team']
-const ROLE_LABELS = { admin: 'Admin', manager: 'Project Head', event_lead: 'Manager', team: 'Project Team' }
+const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team' }
 const ROLE_DESC = {
   admin: 'Full access — all events, costs, margins, team management',
-  manager: 'Creates & manages events — elements, proposals, assigns Managers and Project Team',
-  event_lead: 'Delegated authority per event — scope set by Project Head on assignment',
+  manager: 'Creates & manages events — elements, proposals, assigns Event Leads and Team',
+  event_lead: 'Delegated authority per event — scope set by the Manager on assignment',
   team: 'Task execution only — assigned tasks, notes, no event-level access',
 }
 
@@ -31,6 +31,8 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
   const [activeTab, setActiveTab] = useState('active')
   const [suspendedUsers, setSuspendedUsers] = useState([])
   const [expiredUsers, setExpiredUsers] = useState([])
+  const [filterRole, setFilterRole] = useState('all')
+  const [search, setSearch] = useState('')
 
   useEffect(() => { fetchUsers() }, [])
 
@@ -148,16 +150,26 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
     setTimeout(() => setResendMsg(prev => ({ ...prev, [userId]: '' })), 4000)
   }
 
+  const q = search.trim().toLowerCase()
+  const filteredUsers = users.filter(u => {
+    const matchRole = filterRole === 'all' || u.role === filterRole
+    const matchSearch = !q ||
+      (u.full_name || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q) ||
+      (u.base_city || '').toLowerCase().includes(q)
+    return matchRole && matchSearch
+  })
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.3px', marginBottom: '6px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.3px' }}>
             Team
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 400, color: 'var(--text-tertiary)', marginLeft: '10px' }}>
+              · {users.length} {users.length === 1 ? 'member' : 'members'}
+            </span>
           </h2>
-          <p style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>
-            {users.length} {users.length === 1 ? 'member' : 'members'}
-          </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -382,6 +394,43 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
         ))}
       </div>
 
+      {/* Role filter + search — Active list only */}
+      {activeTab === 'active' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+          {['all', ...ROLES].map(r => {
+            const on = filterRole === r
+            return (
+              <button
+                key={r}
+                onClick={() => setFilterRole(r)}
+                style={{
+                  fontFamily: 'var(--font-body)', fontSize: '12px', fontWeight: 500,
+                  padding: '5px 14px', borderRadius: '100px', cursor: 'pointer',
+                  border: on ? '1px solid var(--app-accent)' : '1px solid var(--app-border)',
+                  background: on ? 'var(--app-accent)' : 'var(--app-surface)',
+                  color: on ? '#fff' : 'var(--app-text-dim)',
+                  transition: 'all 0.12s',
+                }}
+              >
+                {r === 'all' ? 'All' : ROLE_LABELS[r]}
+              </button>
+            )
+          })}
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search name, email or city…"
+            style={{
+              flex: 1, minWidth: '160px', maxWidth: '260px', marginLeft: 'auto',
+              padding: '6px 12px', fontSize: '13px', fontFamily: 'var(--font-body)',
+              background: 'var(--app-bg)', color: 'var(--app-ink)',
+              border: '0.5px solid var(--app-border)', borderRadius: 'var(--radius-sm)',
+              outline: 'none',
+            }}
+          />
+        </div>
+      )}
+
       {loading ? (
         <p style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>Loading team...</p>
       ) : (
@@ -392,9 +441,13 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                 <p style={{ fontFamily: 'var(--font-display)', fontSize: '20px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No active members yet.</p>
                 <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginTop: '6px' }}>Invite someone to start collaborating on events.</p>
               </div>
+            ) : filteredUsers.length === 0 ? (
+              <div style={{ border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius)', padding: '40px', textAlign: 'center' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>No members match this filter.</p>
+              </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {users.map(u => (
+                {filteredUsers.map(u => (
                   <div
                     key={u.id}
                     style={{
@@ -466,8 +519,8 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                         onChange={e => handleRoleChange(u.id, e.target.value)}
                         style={{
                           padding: '5px 10px', fontSize: '12px', fontFamily: 'var(--font-body)',
-                          background: u.role === 'admin' ? 'var(--green-light)' : u.role === 'manager' ? 'var(--state-info-bg)' : u.role === 'event_lead' ? 'var(--state-warning-bg)' : 'var(--bg-secondary)',
-                          color: u.role === 'admin' ? 'var(--green)' : u.role === 'manager' ? 'var(--state-info)' : u.role === 'event_lead' ? 'var(--state-warning)' : 'var(--text-secondary)',
+                          background: u.role === 'admin' ? 'var(--state-success-bg)' : u.role === 'manager' ? 'var(--state-info-bg)' : u.role === 'event_lead' ? 'var(--state-warning-bg)' : 'var(--app-surface)',
+                          color: u.role === 'admin' ? 'var(--state-success)' : u.role === 'manager' ? 'var(--state-info)' : u.role === 'event_lead' ? 'var(--state-warning)' : 'var(--app-text-dim)',
                           border: '0.5px solid var(--border)', borderRadius: '20px',
                           cursor: 'pointer', outline: 'none', fontWeight: 500,
                         }}
@@ -475,7 +528,7 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                         {inviteableRoles.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                       </select>
                       {userRole === 'admin' && (
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', userSelect: 'none' }}>
+                        <label title="Allow this member to view the agency rate card library" style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', userSelect: 'none' }}>
                           <input
                             type='checkbox'
                             checked={!!u.can_manage_rate_cards}
@@ -486,30 +539,14 @@ export default function UserManagement({ session, userRole = 'admin', tenantId, 
                         </label>
                       )}
                       <button
-                        onClick={() => handleResend(u.id, u.email)}
-                        disabled={resending === u.id}
-                        title="Resend invite email"
-                        style={{
-                          padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
-                          background: 'none', border: '0.5px solid var(--border-strong)',
-                          borderRadius: 'var(--radius-sm)', cursor: resending === u.id ? 'wait' : 'pointer',
-                          color: 'var(--text-secondary)', opacity: resending === u.id ? 0.5 : 1,
-                          transition: 'all 0.15s',
-                        }}
-                        onMouseOver={e => { if (resending !== u.id) e.currentTarget.style.borderColor = 'var(--text)' }}
-                        onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
-                      >
-                        {resending === u.id ? 'Sending...' : <><Icon name="refresh" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Resend invite</>}
-                      </button>
-                      <button
                         onClick={() => suspendUser(u.id, u.email)}
                         style={{
                           background: 'none', border: 'none', cursor: 'pointer',
-                          fontSize: '13px', color: 'var(--text-tertiary)',
+                          fontSize: '13px', color: 'var(--state-danger)',
                           fontFamily: 'var(--font-body)', padding: '4px 8px',
                         }}
-                        onMouseOver={e => e.currentTarget.style.color = 'var(--state-danger)'}
-                        onMouseOut={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                        onMouseOver={e => e.currentTarget.style.opacity = '0.7'}
+                        onMouseOut={e => e.currentTarget.style.opacity = '1'}
                       >
                         Suspend
                       </button>
