@@ -40,6 +40,7 @@
   --font-heading: 'Cormorant Garamond', Georgia, serif;
   --font-body:    'DM Sans', system-ui, sans-serif;
   --font-mono:    'DM Mono', ui-monospace, monospace;
+  --font-display: 'Cormorant Garamond', Georgia, serif;  /* legacy alias of --font-heading — still referenced by ~21 components */
 
   /* 6 · TYPE SCALE (available; element sizes not globally rewired this migration) */
   --t-display-size: 40px;  --t-display-lh: 48px;
