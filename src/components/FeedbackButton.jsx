@@ -7,17 +7,20 @@ export default function FeedbackButton({ session }) {
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(false)
 
   async function handleSubmit() {
     if (!message.trim()) return
     setSaving(true)
-    await supabase.from('feedback').insert({
+    setError(false)
+    const { error: insertError } = await supabase.from('feedback').insert({
       submitted_by: session?.user?.email || 'anonymous',
       screen: window.location.pathname,
       message: message.trim(),
       status: 'new',
     })
     setSaving(false)
+    if (insertError) { setError(true); return }
     setSubmitted(true)
     setMessage('')
     setTimeout(() => { setSubmitted(false); setOpen(false) }, 3000)
@@ -103,7 +106,7 @@ export default function FeedbackButton({ session }) {
               <div style={{ padding: '16px 20px 20px' }}>
                 <textarea
                   value={message}
-                  onChange={e => setMessage(e.target.value)}
+                  onChange={e => { setMessage(e.target.value); if (error) setError(false) }}
                   placeholder="Type anything — a bug, a missing feature, an idea, even a complaint. All of it helps us build better."
                   rows={5}
                   autoFocus
@@ -125,8 +128,8 @@ export default function FeedbackButton({ session }) {
                   onBlur={e => e.target.style.border = '0.5px solid var(--border)'}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                  <p style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
-                    When we ship it — you'll know first.
+                  <p style={{ fontSize: '11px', color: error ? 'var(--state-danger)' : 'var(--text-tertiary)' }}>
+                    {error ? "Couldn't send — try again" : "When we ship it — you'll know first."}
                   </p>
                   <button
                     onClick={handleSubmit}

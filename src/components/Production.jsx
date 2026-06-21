@@ -74,6 +74,26 @@ function getFabLabel(status) { return FABRICATION_STATUSES.find(s => s.key === s
 function getPrintLabel(status) { return PRINT_STATUSES.find(s => s.key === status) || PRINT_STATUSES[0] }
 function getProcLabel(status) { return PROCUREMENT_STATUSES.find(s => s.key === status) || PROCUREMENT_STATUSES[0] }
 
+// True when an element's production is finished (stream-based completion).
+function isElementComplete(t) {
+  return (
+    t.fabrication_status === 'done' ||
+    (t.element_type === 'procurement' && t.print_status === 'done') ||
+    (t.element_type === 'creative' && t.creative_status === 'file_sent')
+  )
+}
+
+// Progress-bar styling by completion %. Red is reserved for overdue only —
+// 0% is neutral grey (no false urgency), never red.
+function getProgressStyle(pct, overdue) {
+  if (overdue)    return { bg: 'var(--state-danger)',     color: '#fff' }
+  if (pct >= 100) return { bg: 'var(--state-success)',    color: '#fff' }
+  if (pct >= 90)  return { bg: 'var(--state-success-bg)', color: 'var(--state-success)' }
+  if (pct >= 50)  return { bg: 'var(--state-warning-bg)', color: 'var(--state-warning)' }
+  if (pct >= 1)   return { bg: 'var(--state-info-bg)',    color: 'var(--state-info)' }
+  return { bg: 'var(--app-border)', color: 'var(--app-text-dim)' }
+}
+
 // ─── Status pill ──────────────────────────────────────────
 function StatusPill({ statuses, current, onSelect, blocked, blockMsg, isQC }) {
   const [open, setOpen] = useState(false)
@@ -408,7 +428,7 @@ export default function Production({ event, teamUsers = [] }) {
       {/* Alerts */}
       {creativeBlocked > 0 && (
         <div style={{ padding: '10px 14px', background: C.red.bg, border: `0.5px solid ${C.red.border}`, borderRadius: 'var(--radius-sm)', marginBottom: '16px', fontSize: '13px', color: C.red.color, fontWeight: 500 }}>
-          <Icon name="warning" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> {creativeBlocked} element{creativeBlocked > 1 ? 's' : ''} marked as printing without creative approval. Please review.
+          <Icon name="warning" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> {creativeBlocked} task{creativeBlocked > 1 ? 's' : ''} marked as printing without creative approval. Please review.
         </div>
       )}
 
@@ -426,7 +446,7 @@ export default function Production({ event, teamUsers = [] }) {
           </button>
         )}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', fontSize: '12px', color: 'var(--text-tertiary)', alignItems: 'center' }}>
-          <span>{total} elements</span>
+          <span>{total} tasks</span>
           {needsAttention > 0 && <span style={{ color: C.red.color, fontWeight: 500 }}>· {needsAttention} need attention</span>}
         </div>
       </div>
@@ -468,17 +488,13 @@ export default function Production({ event, teamUsers = [] }) {
       {/* Category cards grid */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
         {Object.entries(grouped).map(([category, catTasks]) => {
-          const catDone = catTasks.filter(t =>
-            t.fabrication_status === 'done' ||
-            (t.element_type === 'procurement' && t.print_status === 'done') ||
-            (t.element_type === 'creative' && t.creative_status === 'file_sent')
-          ).length
+          const catDone = catTasks.filter(isElementComplete).length
           const allDone = catDone === catTasks.length && catTasks.length > 0
           const inProgress = catDone > 0 && !allDone
           const dotColor = allDone ? 'var(--state-success)' : inProgress ? 'var(--state-warning)' : 'var(--app-text-dim-lg)'
-          const done = catTasks.filter(t => t.status === 'done').length
-          const pct = catTasks.length > 0 ? Math.round((done / catTasks.length) * 100) : 0
-          const pctColor = pct === 100 ? 'var(--state-success)' : pct >= 70 ? 'var(--state-info)' : pct >= 30 ? 'var(--state-warning)' : 'var(--app-accent)'
+          const pct = catTasks.length > 0 ? Math.round((catDone / catTasks.length) * 100) : 0
+          const overdue = catTasks.some(t => !isElementComplete(t) && t.due_date && new Date(t.due_date) < new Date())
+          const ps = getProgressStyle(pct, overdue)
 
           return (
             <div
@@ -498,16 +514,16 @@ export default function Production({ event, teamUsers = [] }) {
                     {category}
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
-                    {catTasks.length} element{catTasks.length !== 1 ? 's' : ''} · {catDone}/{catTasks.length} done
+                    {catTasks.length} task{catTasks.length !== 1 ? 's' : ''} · {catDone}/{catTasks.length} done
                   </div>
                 </div>
                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: dotColor, flexShrink: 0, marginTop: 4 }} />
               </div>
               <div style={{
                 marginTop: '2px',
-                background: pctColor,
-                color: '#fff',
-                borderRadius: '6px',
+                background: ps.bg,
+                color: ps.color,
+                borderRadius: 'var(--radius-md)',
                 padding: '8px 0',
                 textAlign: 'center',
                 fontWeight: 600,
@@ -515,7 +531,7 @@ export default function Production({ event, teamUsers = [] }) {
                 letterSpacing: '0.3px',
                 cursor: 'default',
               }}>
-                {pct}% Done · {done}/{catTasks.length} tasks
+                {overdue ? 'Overdue · ' : ''}{pct}% Done · {catDone}/{catTasks.length} tasks
               </div>
             </div>
           )
