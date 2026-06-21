@@ -988,6 +988,18 @@ function CategoryBlock({
 // CITY ELEMENTS — main per-city component
 // Phase F: viewMode state, category_config, all new handlers
 // ─────────────────────────────────────────────
+function MoreItem({ icon, label, onClick, danger }){
+  return (
+    <button onClick={onClick}
+      style={{display:'flex',alignItems:'center',gap:'8px',width:'100%',textAlign:'left',padding:'9px 14px',fontSize:'12px',fontFamily:'var(--font-body)',background:'none',border:'none',borderBottom:'0.5px solid var(--border)',cursor:'pointer',color:danger?'var(--state-danger)':'var(--app-ink)'}}
+      onMouseOver={e=>e.currentTarget.style.background='var(--bg-secondary)'}
+      onMouseOut={e=>e.currentTarget.style.background='none'}
+    >
+      <Icon name={icon} size={13}/> {label}
+    </button>
+  )
+}
+
 function CityElements({ event, city, userRole, teamUsers }){
   const [categories,setCategories]=useState([])
   const [loading,setLoading]=useState(true)
@@ -1015,6 +1027,11 @@ function CityElements({ event, city, userRole, teamUsers }){
   const [viewMode,setViewMode]=useState(()=>{
     try{ return localStorage.getItem('myoozz_element_view')||'grid' }catch{ return 'grid' }
   })
+  const [moreOpen,setMoreOpen]=useState(false)
+  const [clearConfirm,setClearConfirm]=useState(false)
+  const [copyTarget,setCopyTarget]=useState('__all__')
+  const [copyModalOpen,setCopyModalOpen]=useState(false)
+  const [copying,setCopying]=useState(false)
 
   const w=useWindowSize()
   const isAdmin=userRole==='admin'
@@ -1025,6 +1042,36 @@ function CityElements({ event, city, userRole, teamUsers }){
     const next=viewMode==='grid'?'cards':'grid'
     setViewMode(next)
     try{ localStorage.setItem('myoozz_element_view',next) }catch{}
+  }
+  function setViewModePersist(mode){
+    setViewMode(mode)
+    try{ localStorage.setItem('myoozz_element_view',mode) }catch{}
+  }
+  async function executeCopyToCities(){
+    setCopying(true)
+    const {data:els}=await supabase.from('elements').select('*').eq('event_id',event.id).eq('city',city)
+    if(!els||!els.length){ alert('No elements in '+city+' to copy.'); setCopying(false); return }
+    const others=eventCities.filter(c=>c!==city)
+    const targets=copyTarget==='__all__'?others:[copyTarget]
+    for(const tgt of targets){
+      const {data:existing}=await supabase.from('elements').select('id').eq('event_id',event.id).eq('city',tgt)
+      if(existing&&existing.length>0){
+        if(!window.confirm(`${tgt} already has elements. Replace with ${city}'s?`)) continue
+        await supabase.from('elements').delete().eq('event_id',event.id).eq('city',tgt)
+      }
+      await supabase.from('elements').insert(els.map(el=>({
+        event_id:event.id,city:tgt,category:el.category,
+        element_name:el.element_name,size:el.size,size_unit:el.size_unit,
+        finish:el.finish,qty:el.qty,days:el.days,rate:el.rate,
+        lump_sum:el.lump_sum,amount:el.amount,internal_rate:el.internal_rate,
+        internal_lump:el.internal_lump,internal_amount:el.internal_amount,
+        source:el.source,cost_status:el.cost_status,
+        bundled:el.bundled,sort_order:el.sort_order,
+        is_option:el.is_option||false,option_group:el.option_group||null,
+      })))
+    }
+    alert(`Copied from ${city} to ${copyTarget==='__all__'?'all other cities':copyTarget}.`)
+    setCopying(false); setCopyModalOpen(false)
   }
 
   useEffect(()=>{ loadElements() },[event.id,city])
@@ -1224,7 +1271,6 @@ function CityElements({ event, city, userRole, teamUsers }){
   }
 
   async function clearAllElements(){
-    if(!window.confirm('Clear ALL elements in '+city+'? This cannot be undone.')) return
     await supabase.from('elements').delete().eq('event_id',event.id).eq('city',city)
     setCategories([])
   }
@@ -1508,50 +1554,105 @@ function CityElements({ event, city, userRole, teamUsers }){
 
       {/* Top action bar */}
       {categories.length>0&&(
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
-          <button onClick={()=>setShowCategoryPicker(true)} style={{padding:'7px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'#2c2518'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',gap:'8px',flexWrap:'wrap'}}>
+          <button onClick={()=>setShowCategoryPicker(true)} style={{padding:'7px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'var(--app-accent)'}}>
             + Add category
           </button>
           <div style={{display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap'}}>
             {saving&&<span style={{fontSize:'12px',color:'var(--text-tertiary)',fontStyle:'italic'}}>Saving…</span>}
-            {/* Grid / Cards toggle pair */}
-            <div style={{display:'flex',border:'1px solid rgba(0,0,0,0.14)',borderRadius:'4px',overflow:'hidden'}}>
-              <button onClick={()=>{setViewMode('grid');try{localStorage.setItem('myoozz_element_view','grid')}catch{}}}
-                style={{padding:'5px 10px',fontSize:'12px',fontFamily:'var(--font-body)',background:viewMode==='grid'?'rgba(0,0,0,0.07)':'none',border:'none',color:viewMode==='grid'?'var(--text)':'var(--text-tertiary)',cursor:'pointer',fontWeight:viewMode==='grid'?500:400}}
-              ><Icon name="grid" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Grid</button>
-              <button onClick={()=>{setViewMode('cards');try{localStorage.setItem('myoozz_element_view','cards')}catch{}}}
-                style={{padding:'5px 10px',fontSize:'12px',fontFamily:'var(--font-body)',background:viewMode==='cards'?'rgba(0,0,0,0.07)':'none',border:'none',borderLeft:'1px solid rgba(0,0,0,0.14)',color:viewMode==='cards'?'var(--text)':'var(--text-tertiary)',cursor:'pointer',fontWeight:viewMode==='cards'?500:400}}
-              ><Icon name="cards" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Cards</button>
+            {/* Segmented view toggle: Grid | Cards | Sheet */}
+            <div style={{display:'flex',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
+              {[{k:'grid',l:'Grid',ic:'grid'},{k:'cards',l:'Cards',ic:'cards'},{k:'sheet',l:'Sheet',ic:'settings'}].map((seg,i)=>{
+                const on=seg.k!=='sheet'&&viewMode===seg.k
+                return (
+                  <button key={seg.k}
+                    onClick={()=>seg.k==='sheet'?setShowSheetSettings(true):setViewModePersist(seg.k)}
+                    style={{padding:'5px 12px',fontSize:'12px',fontFamily:'var(--font-body)',background:on?'var(--app-ink)':'none',color:on?'#fff':'var(--app-text-dim)',border:'none',borderLeft:i>0?'1px solid var(--app-border)':'none',cursor:'pointer',fontWeight:on?500:400}}
+                  ><Icon name={seg.ic} size={12} color={on?'#fff':'var(--app-text-dim)'} style={{ verticalAlign: '-2px', marginRight: 4 }} />{seg.l}</button>
+                )
+              })}
             </div>
-            <button onClick={()=>setShowImport(true)} style={{fontSize:'12px',fontWeight:500,color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}><Icon name="upload" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Import more</button>
-            <button onClick={()=>setShowSheetSettings(true)} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}><Icon name="settings" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Sheet</button>
-            <button onClick={handleDownloadElementMaster} style={{fontSize:'12px',fontWeight:500,color:'#fff',background:'var(--app-accent)',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}><Icon name="download" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Download list</button>
-            <button onClick={downloadTemplate} style={{fontSize:'12px',color:'#2c2518',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',padding:'5px 12px',cursor:'pointer',fontFamily:'var(--font-body)'}}><Icon name="download" size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Template</button>
-            <button onClick={clearAllElements} style={{fontSize:'12px',color:'var(--app-accent)',background:'none',border:'1px solid var(--app-accent)',borderRadius:'var(--radius-sm)',cursor:'pointer',fontFamily:'var(--font-body)',marginLeft:'8px',padding:'5px 10px'}}>Clear all</button>
+            {/* More actions */}
+            <div style={{position:'relative'}}>
+              <button onClick={()=>setMoreOpen(o=>!o)} title="More actions"
+                style={{padding:'4px 11px',fontSize:'16px',lineHeight:1,fontFamily:'var(--font-body)',background:'none',border:'1px solid var(--app-border)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'var(--app-text-dim)'}}
+              >⋮</button>
+              {moreOpen&&(
+                <>
+                  <div style={{position:'fixed',inset:0,zIndex:98}} onClick={()=>setMoreOpen(false)}/>
+                  <div style={{position:'absolute',top:'100%',right:0,marginTop:'4px',background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius-sm)',boxShadow:'var(--elev-2)',zIndex:99,minWidth:'210px',overflow:'hidden'}}>
+                    <MoreItem icon="upload" label="Import more" onClick={()=>{setMoreOpen(false);setShowImport(true)}}/>
+                    <MoreItem icon="download" label="Download list" onClick={()=>{setMoreOpen(false);handleDownloadElementMaster()}}/>
+                    <MoreItem icon="download" label="Template" onClick={()=>{setMoreOpen(false);downloadTemplate()}}/>
+                    {isMultiCity&&<MoreItem icon="repeat" label="Copy elements to another city →" onClick={()=>{setMoreOpen(false);setCopyModalOpen(true)}}/>}
+                    <div style={{borderTop:'0.5px solid var(--border)'}}/>
+                    <MoreItem icon="delete" label="Clear all" danger onClick={()=>{setMoreOpen(false);setClearConfirm(true)}}/>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Category jump pills */}
+      {/* Clear-all confirm dialog */}
+      {clearConfirm&&(
+        <div style={{position:'fixed',inset:0,background:'rgba(26,25,21,0.45)',zIndex:500,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}} onClick={()=>setClearConfirm(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius)',padding:'24px',maxWidth:'420px',width:'100%'}}>
+            <h3 style={{fontFamily:'var(--font-display)',fontSize:'18px',fontWeight:500,color:'var(--text)',marginBottom:'8px'}}>Clear all elements?</h3>
+            <p style={{fontSize:'13px',color:'var(--text-tertiary)',lineHeight:1.6,marginBottom:'20px'}}>This permanently removes every element in <strong style={{color:'var(--text)'}}>{city}</strong>. This cannot be undone.</p>
+            <div style={{display:'flex',gap:'10px',justifyContent:'flex-end'}}>
+              <button onClick={()=>setClearConfirm(false)} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'var(--text)'}}>Cancel</button>
+              <button onClick={()=>{setClearConfirm(false);clearAllElements()}} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--state-danger)',color:'#fff',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer'}}>Clear all</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Copy elements to another city */}
+      {copyModalOpen&&(
+        <div style={{position:'fixed',inset:0,background:'rgba(26,25,21,0.45)',zIndex:500,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}} onClick={()=>setCopyModalOpen(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:'var(--bg)',border:'0.5px solid var(--border)',borderRadius:'var(--radius)',padding:'24px',maxWidth:'420px',width:'100%'}}>
+            <h3 style={{fontFamily:'var(--font-display)',fontSize:'18px',fontWeight:500,color:'var(--text)',marginBottom:'8px'}}>Copy elements to another city</h3>
+            <p style={{fontSize:'13px',color:'var(--text-tertiary)',lineHeight:1.6,marginBottom:'16px'}}>Copy every element from <strong style={{color:'var(--text)'}}>{city}</strong> to:</p>
+            <select value={copyTarget} onChange={e=>setCopyTarget(e.target.value)} style={{width:'100%',fontSize:'13px',padding:'9px 12px',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',cursor:'pointer',marginBottom:'20px'}}>
+              <option value="__all__">All other cities</option>
+              {eventCities.filter(c=>c!==city).map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+            <div style={{display:'flex',gap:'10px',justifyContent:'flex-end'}}>
+              <button onClick={()=>setCopyModalOpen(false)} style={{padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',background:'none',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',cursor:'pointer',color:'var(--text)'}}>Cancel</button>
+              <button onClick={executeCopyToCities} disabled={copying} style={{padding:'8px 16px',fontSize:'13px',fontWeight:500,fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'#fff',border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',opacity:copying?0.5:1}}>{copying?'Copying…':'Copy elements'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category jump pills — single-row horizontal scroll, "All" pinned left */}
       {categories.length>0&&(
-        <div style={{display:'flex',gap:'6px',marginBottom:'8px',flexWrap:'wrap',alignItems:'center'}}>
-          {['__all__',...categories.map(c=>c.name)].map(pill=>(
-            <button key={pill} onClick={()=>{
-              setActivePill(pill)
-              if(pill==='__all__'){
-                window.scrollTo({top:0,behavior:'smooth'})
-              } else {
+        <div style={{position:'relative',marginBottom:'8px'}}>
+          <div style={{display:'flex',gap:'6px',alignItems:'center',overflowX:'auto',scrollbarWidth:'none',msOverflowStyle:'none',paddingRight:'28px'}}>
+            <button onClick={()=>{ setActivePill('__all__'); window.scrollTo({top:0,behavior:'smooth'}) }} style={{
+              position:'sticky',left:0,flexShrink:0,zIndex:1,
+              padding:'4px 12px',fontSize:'12px',fontFamily:'var(--font-body)',
+              border:'1px solid var(--app-border)',borderRadius:'20px',cursor:'pointer',whiteSpace:'nowrap',
+              background:activePill==='__all__'?'var(--app-ink)':'var(--bg)',
+              color:activePill==='__all__'?'#fff':'var(--text-secondary)',
+            }}>All</button>
+            {categories.map(c=>c.name).map(pill=>(
+              <button key={pill} onClick={()=>{
+                setActivePill(pill)
                 const el=document.getElementById('cat-block-'+pill)
                 if(el){ el.scrollIntoView({behavior:'smooth',block:'start'}); setHighlightedCat(pill); setTimeout(()=>setHighlightedCat(null),1500) }
-              }
-            }} style={{
-              padding:'4px 12px',fontSize:'12px',fontFamily:'var(--font-body)',
-              border:'1px solid var(--app-border)',borderRadius:'20px',cursor:'pointer',
-              background:activePill===pill?'var(--app-ink)':'none',
-              color:activePill===pill?'#fff':'var(--text-secondary)',
-              ...(pill==='__all__'?{marginRight:'8px'}:{}),
-            }}>{pill==='__all__'?'All':pill}</button>
-          ))}
+              }} style={{
+                flexShrink:0,
+                padding:'4px 12px',fontSize:'12px',fontFamily:'var(--font-body)',
+                border:'1px solid var(--app-border)',borderRadius:'20px',cursor:'pointer',whiteSpace:'nowrap',
+                background:activePill===pill?'var(--app-ink)':'none',
+                color:activePill===pill?'#fff':'var(--text-secondary)',
+              }}>{pill}</button>
+            ))}
+          </div>
+          <div style={{position:'absolute',top:0,right:0,bottom:0,width:'28px',pointerEvents:'none',background:'linear-gradient(to right, transparent, var(--bg))'}}/>
         </div>
       )}
 
@@ -1829,84 +1930,20 @@ function CityElements({ event, city, userRole, teamUsers }){
 export default function ElementBuilder({ event, userRole, teamUsers }){
   const cities=event.cities?.length>0?event.cities:['General']
   const [activeCity,setActiveCity]=useState(cities[0])
-  const [copyFrom,setCopyFrom]=useState(cities[0]||'')
-  const [copyTo,setCopyTo]=useState('__all__')
-  const [copying,setCopying]=useState(false)
-
-  async function executeCopy(){
-    if(!copyFrom) return
-    setCopying(true)
-    const {data:elements}=await supabase.from('elements').select('*').eq('event_id',event.id).eq('city',copyFrom)
-    if(!elements||!elements.length){ alert('No elements in '+copyFrom+' to copy.'); setCopying(false); return }
-    const targets=copyTo==='__all__'?cities.filter(c=>c!==copyFrom):[copyTo]
-    for(const tgt of targets){
-      const {data:existing}=await supabase.from('elements').select('id').eq('event_id',event.id).eq('city',tgt)
-      if(existing&&existing.length>0){
-        if(!window.confirm(`${tgt} already has elements. Replace with ${copyFrom}'s?`)) continue
-        await supabase.from('elements').delete().eq('event_id',event.id).eq('city',tgt)
-      }
-      await supabase.from('elements').insert(elements.map(el=>({
-        event_id:event.id,city:tgt,category:el.category,
-        element_name:el.element_name,size:el.size,size_unit:el.size_unit,
-        finish:el.finish,qty:el.qty,days:el.days,rate:el.rate,
-        lump_sum:el.lump_sum,amount:el.amount,internal_rate:el.internal_rate,
-        internal_lump:el.internal_lump,internal_amount:el.internal_amount,
-        source:el.source,cost_status:el.cost_status,
-        bundled:el.bundled,sort_order:el.sort_order,
-        is_option:el.is_option||false,option_group:el.option_group||null,
-      })))
-    }
-    const toLabel=copyTo==='__all__'?'all other cities':copyTo
-    alert(`Copied from ${copyFrom} to ${toLabel}.`)
-    setCopying(false)
-  }
-
   return(
     <div>
       {cities.length>1&&(
-        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'20px',flexWrap:'wrap'}}>
-          <div style={{display:'flex',border:'0.5px solid var(--border)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
-            {cities.map(city=>(
-              <button key={city} onClick={()=>setActiveCity(city)} style={{
-                padding:'7px 18px',fontSize:'13px',
-                fontWeight:activeCity===city?500:400,
-                fontFamily:'var(--font-body)',
-                background:activeCity===city?'var(--text)':'var(--bg)',
-                color:activeCity===city?'var(--bg)':'var(--text-tertiary)',
-                border:'none',borderRight:'0.5px solid var(--border)',cursor:'pointer',
-              }}>{city}</button>
-            ))}
-          </div>
-          <div style={{display:'flex',alignItems:'center',gap:'6px',flexWrap:'wrap'}}>
-            <span style={{fontSize:'12px',color:'var(--text-tertiary)',fontFamily:'var(--font-body)'}}>Copy elements</span>
-            <span style={{fontSize:'12px',color:'var(--text-tertiary)'}}>from</span>
-            <select
-              value={copyFrom}
-              onChange={e=>setCopyFrom(e.target.value)}
-              style={{fontSize:'12px',padding:'6px 10px',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',cursor:'pointer'}}
-            >
-              {cities.map(c=><option key={c} value={c}>{c}</option>)}
-            </select>
-            <span style={{fontSize:'12px',color:'var(--text-tertiary)'}}><Icon name="next" size={12} style={{ verticalAlign: '-2px', marginRight: 3 }} /> to</span>
-            <select
-              value={copyTo}
-              onChange={e=>setCopyTo(e.target.value)}
-              style={{fontSize:'12px',padding:'6px 10px',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',background:'var(--bg)',color:'var(--text)',fontFamily:'var(--font-body)',cursor:'pointer'}}
-            >
-              <option value="__all__">All other cities</option>
-              {cities.filter(c=>c!==copyFrom).map(c=><option key={c} value={c}>{c}</option>)}
-            </select>
-            <button
-              onClick={executeCopy}
-              disabled={copying||!copyFrom||(copyTo!=='__all__'&&copyTo===copyFrom)}
-              style={{
-                padding:'7px 14px',fontSize:'12px',fontWeight:500,
-                fontFamily:'var(--font-body)',background:'var(--app-accent)',color:'#fff',
-                border:'none',borderRadius:'var(--radius-sm)',cursor:'pointer',
-                opacity:(copying||!copyFrom||(copyTo!=='__all__'&&copyTo===copyFrom))?0.45:1,
-              }}
-            >{copying?'Copying…':'Copy'}</button>
-          </div>
+        <div style={{display:'flex',gap:'2px',marginBottom:'20px',borderBottom:'0.5px solid var(--border)',overflowX:'auto',scrollbarWidth:'none'}}>
+          {cities.map(c=>(
+            <button key={c} onClick={()=>setActiveCity(c)} style={{
+              padding:'8px 16px',fontSize:'13px',fontFamily:'var(--font-body)',
+              background:'none',border:'none',cursor:'pointer',whiteSpace:'nowrap',
+              color:activeCity===c?'var(--text)':'var(--text-tertiary)',
+              fontWeight:activeCity===c?600:400,
+              borderBottom:activeCity===c?'2px solid var(--app-accent)':'2px solid transparent',
+              marginBottom:'-1px',
+            }}>{c}</button>
+          ))}
         </div>
       )}
       <CityElements key={activeCity} event={event} city={activeCity} userRole={userRole} teamUsers={teamUsers}/>
