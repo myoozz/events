@@ -2,6 +2,43 @@ import { useState, useEffect } from 'react'
 import { Icon } from '../icons'
 import { supabase } from '../supabase'
 
+// Human-readable action labels; unknown actions fall back to Title Case.
+const ACTION_LABELS = {
+  event_deleted: 'Deleted event',
+  profile_updated: 'Updated profile',
+  invited: 'Invited user',
+  restored: 'Restored event',
+}
+function humanizeAction(action) {
+  if (!action) return ''
+  if (ACTION_LABELS[action]) return ACTION_LABELS[action]
+  return action.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+// Friendly labels for object-valued detail keys (prevents rendering [object Object]).
+const DETAIL_LABELS = {
+  full_event_snapshot: 'Event snapshot saved',
+}
+function renderDetails(details) {
+  if (typeof details === 'string') return details
+  if (!details || typeof details !== 'object') return ''
+  const parts = []
+  for (const [k, v] of Object.entries(details)) {
+    if (DETAIL_LABELS[k]) { parts.push(DETAIL_LABELS[k]); continue }
+    if (v == null) continue
+    if (Array.isArray(v)) { parts.push(`${k}: ${v.join(', ')}`); continue }
+    if (typeof v === 'object') {
+      const sub = Object.entries(v)
+        .filter(([, sv]) => sv != null && typeof sv !== 'object')
+        .map(([sk, sv]) => `${sk}: ${sv}`)
+      parts.push(sub.length ? sub.join(' · ') : `${k}: saved`)
+      continue
+    }
+    parts.push(`${k}: ${v}`)
+  }
+  return parts.join(' · ')
+}
+
 export default function ActivityLog() {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -65,11 +102,12 @@ export default function ActivityLog() {
   const allTypes = [...new Set(logs.map(l => l.entity_type).filter(Boolean))].sort()
 
   const ENTITY_COLORS = {
-    event:    { bg: 'var(--blue-light)',   color: 'var(--blue)' },
-    element:  { bg: 'var(--green-light)',  color: 'var(--green)' },
-    task:     { bg: 'var(--amber-light)',  color: 'var(--amber)' },
-    category: { bg: 'var(--app-surface)',             color: 'var(--app-text-dim)' },
-    user:     { bg: '#EDE9FE',             color: '#5B21B6' },
+    event:    { bg: 'var(--app-surface)',      color: 'var(--app-text-dim)' },
+    element:  { bg: 'var(--state-success-bg)', color: 'var(--state-success)' },
+    task:     { bg: 'var(--state-warning-bg)', color: 'var(--state-warning)' },
+    category: { bg: 'var(--app-surface)',      color: 'var(--app-text-dim)' },
+    user:     { bg: 'var(--state-info-bg)',    color: 'var(--state-info)' },
+    system:   { bg: 'var(--state-success-bg)', color: 'var(--state-success)' },
   }
 
   return (
@@ -219,13 +257,13 @@ export default function ActivityLog() {
                     <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>
                       {log.user_name || log.user_email?.split('@')[0]}
                     </span>
-                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}> {log.action}</span>
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}> {humanizeAction(log.action)}</span>
                     {log.entity_name && (
                       <span style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}> — {log.entity_name}</span>
                     )}
-                    {log.details && Object.keys(log.details).length > 0 && (
+                    {log.details && Object.keys(log.details).length > 0 && renderDetails(log.details) && (
                       <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '3px' }}>
-                        {Object.entries(log.details).map(([k, v]) => `${k}: ${v}`).join(' · ')}
+                        {renderDetails(log.details)}
                       </div>
                     )}
                   </div>
