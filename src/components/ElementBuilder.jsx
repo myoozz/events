@@ -225,6 +225,8 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
   const isGrid=viewMode==='grid'
 
   const [rateSuggestion,setRateSuggestion]=useState(null)
+  const [expanded,setExpanded]=useState(false)
+  const [rowHover,setRowHover]=useState(false)
   const parseSizeParts=(s)=>{ const m=(s||'').match(/^(\d*\.?\d*)x(\d*\.?\d*)(?:x(\d*\.?\d*))?$/); return m?[m[1],m[2],m[3]||'']:[s||'','',''] }
   const [sizeL,setSizeL]=useState(()=>parseSizeParts(el.size)[0])
   const [sizeB,setSizeB]=useState(()=>parseSizeParts(el.size)[1])
@@ -252,179 +254,88 @@ function ElementRow({ el, isAdmin, locked, onUpdate, onSave, onDelete, onCycleSt
     else{setRateSuggestion(null)}
   },[el.category,city,el.internal_lump,getRateSuggestion])
 
-  // ── GRID MODE ──
+  // ── GRID MODE → collapsible list row ──
   if(isGrid&&!isMobile){
-    const cols=getColTemplate(isAdmin,fv,'grid')
-    const zebra=rowIndex%2===0?'white':'#FAFAFA'
-    // Cell style: borderRight between cells
-    const cell=(hasLeftBorder,isLast,extraStyle={})=>({
-      borderRight:isLast?'none':'0.5px solid var(--border)',
-      borderLeft:hasLeftBorder?'2px solid #E5E7EB':'none',
-      display:'flex',alignItems:'center',
-      padding:'0',overflow:'hidden',
-      ...extraStyle,
-    })
+    const eInp={width:'100%',padding:'8px 10px',fontSize:'13px',fontFamily:'var(--font-body)',background:'var(--bg)',border:'0.5px solid var(--border-strong)',borderRadius:'var(--radius-sm)',color:'var(--text)',outline:'none',boxSizing:'border-box'}
+    const eLab={display:'block',fontSize:'10px',fontFamily:'var(--font-mono)',color:'var(--app-text-dim)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:'4px'}
+
+    if(!expanded){
+      return(
+        <div onClick={()=>setExpanded(true)}
+          onMouseEnter={()=>setRowHover(true)} onMouseLeave={()=>setRowHover(false)}
+          style={{display:'flex',alignItems:'center',gap:'10px',padding:'8px 14px',borderBottom:'0.5px solid var(--border)',cursor:'pointer',background:rowHover?'var(--bg-secondary)':'var(--bg)',transition:'background 0.1s'}}>
+          <Icon name="collapse" size={14} color="var(--app-text-dim)"/>
+          <div style={{flex:'2 1 0',minWidth:0,fontSize:'13px',fontWeight:500,color:el.element_name?'var(--text)':'var(--text-tertiary)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{el.element_name||'Untitled element'}</div>
+          <div style={{flex:'2 1 0',minWidth:0,fontSize:'12px',color:'var(--text-secondary)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{el.finish||''}</div>
+          <div style={{flexShrink:0,width:'44px',textAlign:'center',fontSize:'12px',color:'var(--text-tertiary)'}}>×{el.qty||1}</div>
+          <div style={{flexShrink:0,width:'92px',textAlign:'right',fontSize:'13px',fontWeight:500,color:'var(--text)'}}>{clientAmt>0?fmt(clientAmt):'—'}</div>
+          <button onClick={e=>{e.stopPropagation();onCycleStatus()}}
+            style={{flexShrink:0,width:'92px',padding:'4px 6px',fontSize:'10px',fontWeight:500,background:sc.bg,color:sc.color,border:'none',borderRadius:'4px',cursor:'pointer',fontFamily:'var(--font-body)'}}>{el.cost_status}</button>
+          <button onClick={e=>{e.stopPropagation();onDelete()}} title="Remove element"
+            style={{flexShrink:0,background:'none',border:'none',cursor:'pointer',color:'var(--state-danger)',padding:'2px',lineHeight:1,opacity:rowHover?1:0,transition:'opacity 0.1s'}}><Icon name="close" size={14}/></button>
+        </div>
+      )
+    }
+
     return(
-      <div style={{display:'grid',gridTemplateColumns:cols,alignItems:'stretch',borderBottom:'1px solid var(--border)',background:zebra,minHeight:'44px'}}>
-        {/* Element name + Finish/Specs — merged, wraps naturally */}
-        <div style={{...cell(false,false),flexDirection:'column',alignItems:'stretch',padding:'5px 0',gap:'2px'}}>
-          <input style={{...ginp(false),fontWeight:500,whiteSpace:'normal',wordBreak:'break-word',height:'auto',minHeight:'22px',lineHeight:'1.3'}}
-            placeholder="Element name" value={el.element_name}
-            disabled={locked}
-            onChange={e=>onUpdate('element_name',e.target.value)} onBlur={onSave}
-          />
-          <input style={{...ginp(false),whiteSpace:'normal',wordBreak:'break-word',height:'auto',minHeight:'18px',fontSize:'11px',color:'var(--text-secondary)',lineHeight:'1.3'}} placeholder="Finish / specs…" value={el.finish}
-            disabled={locked}
-            onChange={e=>onUpdate('finish',e.target.value)} onBlur={onSave}
-          />
+      <div style={{borderBottom:'0.5px solid var(--border)',background:'var(--bg-secondary)',padding:'10px 14px'}}>
+        <div onClick={()=>setExpanded(false)} style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',marginBottom:'12px'}}>
+          <Icon name="expand" size={14} color="var(--app-text-dim)"/>
+          <span style={{flex:1,fontSize:'13px',fontWeight:600,color:'var(--text)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{el.element_name||'Untitled element'}</span>
+          <button onClick={e=>{e.stopPropagation();onCycleStatus()}}
+            style={{flexShrink:0,padding:'4px 8px',fontSize:'10px',fontWeight:500,background:sc.bg,color:sc.color,border:'none',borderRadius:'4px',cursor:'pointer',fontFamily:'var(--font-body)'}}>{el.cost_status}</button>
+        </div>
+
+        <div style={{display:'flex',flexDirection:'column',gap:'12px',maxWidth:'600px'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+            <div><label style={eLab}>Element</label><input style={eInp} placeholder="Element name" value={el.element_name} disabled={locked} onChange={e=>onUpdate('element_name',e.target.value)} onBlur={onSave}/></div>
+            <div><label style={eLab}>Finish / specs</label><input style={eInp} placeholder="Material, specs…" value={el.finish} disabled={locked} onChange={e=>onUpdate('finish',e.target.value)} onBlur={onSave}/></div>
+          </div>
           {fv.size&&(
-            <div style={{display:'flex',gap:'3px',alignItems:'center',flexWrap:'wrap',paddingLeft:'8px',paddingBottom:'2px'}}>
-              <span style={{fontSize:'9px',color:'var(--text-tertiary)',flexShrink:0}}>L</span>
-              <input style={{...ginp(false),width:'28px',fontSize:'11px',flex:'0 0 auto'}}
-                type="number" min="0" step="any" placeholder="—" value={sizeL} disabled={locked}
-                onChange={e=>setSizeL(e.target.value)} onBlur={commitSize}
-              />
-              <span style={{fontSize:'9px',color:'var(--text-tertiary)',flexShrink:0}}>B</span>
-              <input style={{...ginp(false),width:'28px',fontSize:'11px',flex:'0 0 auto'}}
-                type="number" min="0" step="any" placeholder="—" value={sizeB} disabled={locked}
-                onChange={e=>setSizeB(e.target.value)} onBlur={commitSize}
-              />
-              <span style={{fontSize:'9px',color:'var(--text-tertiary)',flexShrink:0}}>H</span>
-              <input style={{...ginp(false),width:'28px',fontSize:'11px',flex:'0 0 auto'}}
-                type="number" min="0" step="any" placeholder="—" value={sizeH} disabled={locked}
-                onChange={e=>setSizeH(e.target.value)} onBlur={commitSize}
-              />
-              {sizeL&&sizeB&&!isNaN(+sizeL)&&!isNaN(+sizeB)&&(
-                <span style={{fontSize:'9px',color:'var(--text-tertiary)',background:'var(--app-surface)',border:'0.5px solid var(--border)',borderRadius:'3px',padding:'1px 3px',flexShrink:0,whiteSpace:'nowrap'}}>{(+sizeL*(+sizeB)).toLocaleString('en-IN')} sqft</span>
-              )}
-              <select value={el.size_unit||'sqft'} disabled={locked}
-                onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}}
-                style={{fontSize:'10px',padding:'2px 2px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:'var(--text-secondary)',fontFamily:'var(--font-body)',cursor:'pointer'}}
-              >
-                {SIZE_UNITS.map(u=><option key={u}>{u}</option>)}
-              </select>
+            <div><label style={eLab}>Dimensions</label>
+              <div style={{display:'flex',gap:'6px',alignItems:'center',flexWrap:'wrap'}}>
+                <span style={{fontSize:'11px',color:'var(--text-tertiary)'}}>L</span><input style={{...eInp,width:'60px'}} type="number" min="0" step="any" placeholder="—" value={sizeL} disabled={locked} onChange={e=>setSizeL(e.target.value)} onBlur={commitSize}/>
+                <span style={{fontSize:'11px',color:'var(--text-tertiary)'}}>B</span><input style={{...eInp,width:'60px'}} type="number" min="0" step="any" placeholder="—" value={sizeB} disabled={locked} onChange={e=>setSizeB(e.target.value)} onBlur={commitSize}/>
+                <span style={{fontSize:'11px',color:'var(--text-tertiary)'}}>H</span><input style={{...eInp,width:'60px'}} type="number" min="0" step="any" placeholder="—" value={sizeH} disabled={locked} onChange={e=>setSizeH(e.target.value)} onBlur={commitSize}/>
+                <select value={el.size_unit||'sqft'} disabled={locked} onChange={e=>{onUpdate('size_unit',e.target.value);onSave()}} style={{...eInp,width:'auto',cursor:'pointer'}}>{SIZE_UNITS.map(u=><option key={u}>{u}</option>)}</select>
+              </div>
             </div>
           )}
-        </div>
-
-        {/* Qty · Days — stacked with labels */}
-        {fv.days&&(
-          <div style={{...cell(false,false),padding:'5px 6px',gap:'4px',flexDirection:'column',alignItems:'stretch',justifyContent:'center'}}>
-            <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
-              <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'28px',flexShrink:0,fontWeight:500,letterSpacing:'0.2px'}}>QTY</span>
-              <input style={{...ginp(false),width:'40px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
-                type="number" min="1" value={el.qty} disabled={locked}
-                onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}
-              />
+          <div style={{display:'flex',gap:'16px'}}>
+            <div><label style={eLab}>Qty</label><input style={{...eInp,width:'90px'}} type="number" min="1" value={el.qty} disabled={locked} onChange={e=>onUpdate('qty',+e.target.value)} onBlur={onSave}/></div>
+            {fv.days&&<div><label style={eLab}>Days</label><input style={{...eInp,width:'90px'}} type="number" min="1" value={el.days} disabled={locked} onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}/></div>}
+          </div>
+          <div><label style={eLab}>Client</label>
+            <div style={{display:'flex',gap:'10px',alignItems:'center',flexWrap:'wrap'}}>
+              <input style={{...eInp,width:'150px'}} type="number" min="0" placeholder={locked?'On actuals':el.lump_sum?'Total ₹':'Rate ₹'} value={locked?'':(el.lump_sum?(el.amount||''):(el.rate||''))} disabled={locked} onChange={e=>onUpdate(el.lump_sum?'amount':'rate',+e.target.value)} onBlur={onSave}/>
+              {!locked&&<LumpToggle isLump={el.lump_sum} onUnit={()=>{onUpdate('lump_sum',false);onSave()}} onLump={()=>{onUpdate('lump_sum',true);onSave()}} muted={false}/>}
+              {clientAmt>0&&<span style={{fontSize:'12px',color:'var(--text-secondary)',fontWeight:500}}>= {fmt(clientAmt)}</span>}
             </div>
-            {fv.days&&(
-              <div style={{display:'flex',gap:'4px',alignItems:'center'}}>
-                <span style={{fontSize:'10px',color:'var(--text-tertiary)',width:'28px',flexShrink:0,fontWeight:500,letterSpacing:'0.2px'}}>DAYS</span>
-                <input style={{...ginp(false),width:'40px',fontSize:'12px',textAlign:'center',flex:'0 0 auto'}}
-                  type="number" min="1" value={el.days} disabled={locked}
-                  onChange={e=>onUpdate('days',+e.target.value)} onBlur={onSave}
-                />
+          </div>
+          {isAdmin&&(
+            <div><label style={eLab}>Internal</label>
+              <div style={{display:'flex',gap:'10px',alignItems:'center',flexWrap:'wrap'}}>
+                <input style={{...eInp,width:'150px'}} type="number" min="0" placeholder={el.internal_lump?'Total ₹':'Rate ₹'} value={el.internal_lump?(el.internal_amount||''):(el.internal_rate||'')} onChange={e=>onUpdate(el.internal_lump?'internal_amount':'internal_rate',+e.target.value)} onBlur={onSave}/>
+                <LumpToggle isLump={el.internal_lump} onUnit={()=>{onUpdate('internal_lump',false);onSave()}} onLump={()=>{onUpdate('internal_lump',true);onSave()}} muted={true}/>
+                {internalAmt>0&&<span style={{fontSize:'12px',color:'var(--app-text-dim)',fontWeight:500}}>= {fmt(internalAmt)}</span>}
+                {clientAmt>0&&internalAmt>0&&(<span style={{fontSize:'10px',fontWeight:600,padding:'2px 7px',borderRadius:'20px',background:margin>0?'var(--state-success-bg)':margin===0?'var(--state-warning-bg)':'var(--state-danger-bg)',color:margin>0?'var(--state-success)':margin===0?'var(--state-warning)':'var(--state-danger)'}}>{Math.round((margin/clientAmt)*100)}% margin</span>)}
               </div>
+              {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'4px',background:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success-bg)':'var(--state-info-bg)',color:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success)':'var(--state-info)',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
+            </div>
+          )}
+          {isAdmin&&fv.source&&(
+            <div><label style={eLab}>Vendor</label><input style={{...eInp,maxWidth:'300px'}} placeholder="Vendor name" value={el.source||''} onChange={e=>onUpdate('source',e.target.value)} onBlur={onSave}/></div>
+          )}
+          <div style={{display:'flex',gap:'16px',flexWrap:'wrap'}}>
+            <div><label style={eLab}>Type</label><select value={el.work_type||''} disabled={locked} onChange={e=>{onUpdate('work_type',e.target.value);onSave()}} style={{...eInp,width:'auto',minWidth:'150px',cursor:'pointer'}}><option value="">Type</option>{(workTypes||[]).map(t=><option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
+            {otherCategories&&otherCategories.length>0&&(
+              <div><label style={eLab}>Move to</label><select value="" onChange={e=>{if(e.target.value&&onMove)onMove(e.target.value)}} style={{...eInp,width:'auto',minWidth:'150px',cursor:'pointer'}}><option value="">Move to →</option>{otherCategories.map(oc=><option key={oc.name} value={oc.name}>{oc.name}</option>)}</select></div>
             )}
           </div>
-        )}
-
-        {/* Client cost */}
-        <div style={{...cell(false,false),flexDirection:'column',alignItems:'stretch',padding:'5px 8px',gap:'2px',justifyContent:'center'}}>
-          <input style={{...ginp(false),fontWeight:500,fontSize:'13px'}}
-            type="number" min="0"
-            placeholder={locked?'Actuals':el.lump_sum?'Total':'Rate'}
-            value={locked?'':(el.lump_sum?(el.amount||''):(el.rate||''))}
-            disabled={locked}
-            onChange={e=>onUpdate(el.lump_sum?'amount':'rate',+e.target.value)} onBlur={onSave}
-          />
-          {!locked&&(
-            <LumpToggle isLump={el.lump_sum}
-              onUnit={()=>{onUpdate('lump_sum',false);onSave()}}
-              onLump={()=>{onUpdate('lump_sum',true);onSave()}}
-              muted={false}
-            />
-          )}
-          {!locked&&clientAmt>0&&(
-            <div style={{fontSize:'11px',color:'var(--text-secondary)',fontWeight:500,marginTop:'1px'}}>= {fmt(clientAmt)}</div>
-          )}
-          {locked&&<div style={{fontSize:'10px',color:'var(--state-info)'}}>On actuals</div>}
-        </div>
-
-        {/* Internal cost — admin only */}
-        {isAdmin&&(
-          <div style={{...cell(true,!fv.source&&!fv.status,{flexDirection:'column',alignItems:'stretch',padding:'5px 8px',gap:'2px',justifyContent:'center'})}}>
-            <input style={ginp(true)}
-              type="number" min="0"
-              placeholder={el.internal_lump?'Total':'Rate'}
-              value={el.internal_lump?(el.internal_amount||''):(el.internal_rate||'')}
-              onChange={e=>onUpdate(el.internal_lump?'internal_amount':'internal_rate',+e.target.value)} onBlur={onSave}
-            />
-            <LumpToggle isLump={el.internal_lump}
-              onUnit={()=>{onUpdate('internal_lump',false);onSave()}}
-              onLump={()=>{onUpdate('internal_lump',true);onSave()}}
-              muted={true}
-            />
-            {rateSuggestion&&(<span style={{display:'inline-block',fontSize:'9px',fontWeight:600,padding:'2px 7px',borderRadius:'3px',marginTop:'3px',background:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success-bg)':'var(--state-info-bg)',color:rateSuggestion.rateType==='vendor_quoted'?'var(--state-success)':'#1a4b8a',letterSpacing:'0.3px'}}>Market range ₹{rateSuggestion.marketFloor.toLocaleString('en-IN')} – ₹{rateSuggestion.marketCeiling.toLocaleString('en-IN')} · {rateSuggestion.sources} source{rateSuggestion.sources!==1?'s':''}</span>)}
-            {!rateSuggestion&&!isAdmin&&!el.internal_lump&&<span onClick={async()=>{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:u}=await supabase.from('users').select('id,full_name').eq('id',user.id).single();if(u)createRateCardRequestNotification({requestingUser:u,elementName:el.element_name,category:el.category,eventId:el.event_id})}}} style={{fontSize:'9px',marginTop:'2px',color:'var(--app-text-dim-lg)',cursor:'pointer',display:'block'}}>Ask for rates</span>}
-            {internalAmt>0&&(
-              <div style={{fontSize:'11px',color:'var(--app-text-dim)',fontWeight:500,marginTop:'1px'}}>= {fmt(internalAmt)}</div>
-            )}
-            {clientAmt>0&&internalAmt>0&&(
-              <div style={{
-                display:'inline-flex',alignItems:'center',marginTop:'3px',
-                fontSize:'10px',fontWeight:600,padding:'2px 7px',borderRadius:'20px',width:'fit-content',
-                background:margin>0?'var(--state-success-bg)':margin===0?'var(--state-warning-bg)':'#FECACA',
-                color:margin>0?'var(--state-success)':margin===0?'var(--state-warning)':'var(--state-danger)',
-              }}>
-                {Math.round((margin/clientAmt)*100)}% margin
-              </div>
-            )}
+          <div style={{borderTop:'0.5px solid var(--border)',paddingTop:'12px',display:'flex',alignItems:'center',gap:'12px'}}>
+            <button onClick={onDelete} style={{fontSize:'12px',fontWeight:500,fontFamily:'var(--font-body)',color:'var(--state-danger)',background:'none',border:'1px solid var(--state-danger)',borderRadius:'var(--radius-sm)',padding:'6px 12px',cursor:'pointer'}}><Icon name="delete" size={12} style={{verticalAlign:'-2px',marginRight:4}}/> Remove element</button>
+            {isSaved&&(<button onClick={onMarkAsOption} style={{fontSize:'11px',color:'var(--text-tertiary)',background:'none',border:'none',cursor:'pointer',fontFamily:'var(--font-body)'}}>Move to alternates</button>)}
           </div>
-        )}
-
-        {/* Source — admin only */}
-        {isAdmin&&fv.source&&(
-          <div style={cell(true,!fv.status,{flexDirection:'column',alignItems:'stretch',padding:'5px 8px',justifyContent:'center'})}>
-            <input style={ginp(true)} placeholder="Vendor" value={el.source||''}
-              onChange={e=>onUpdate('source',e.target.value)} onBlur={onSave}
-            />
-          </div>
-        )}
-
-        {/* Status */}
-        {fv.status&&(
-          <div style={{...cell(false,false),padding:'4px',justifyContent:'center'}}>
-            <button onClick={onCycleStatus}
-              style={{width:'100%',padding:'5px 3px',fontSize:'10px',fontWeight:500,background:sc.bg,color:sc.color,border:'none',borderRadius:'4px',cursor:'pointer',fontFamily:'var(--font-body)',textAlign:'center'}}
-            >{el.cost_status}</button>
-          </div>
-        )}
-
-        {/* Work type */}
-        <div style={{...cell(false,false),padding:'4px 5px',alignItems:'center'}}>
-          <select
-            value={el.work_type||''} disabled={locked}
-            onChange={e=>{onUpdate('work_type',e.target.value);onSave()}}
-            style={{fontSize:'11px',padding:'2px 2px',border:'0.5px solid var(--border)',borderRadius:'3px',background:'var(--bg)',color:el.work_type?'var(--text-secondary)':'var(--text-tertiary)',fontFamily:'var(--font-body)',width:'100%',cursor:'pointer'}}
-          >
-            <option value="">Type</option>
-            {(workTypes||[]).map(t=><option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
-        </div>
-
-        {/* Delete + del */}
-        <div style={{...cell(false,true,{flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',padding:'4px 0'})}}>
-          <button onClick={onDelete}
-            style={{background:'none',border:'1px solid var(--app-accent)',borderRadius:'3px',cursor:'pointer',fontSize:'11px',color:'var(--app-accent)',padding:'2px 4px',lineHeight:1}}
-          ><Icon name="close" size={14} /></button>
-          {isSaved&&(
-            <button onClick={onMarkAsOption} title="Move to alternates — not in budget"
-              style={{background:'none',border:'none',cursor:'pointer',fontSize:'9px',color:'var(--text-tertiary)',padding:'1px 3px',lineHeight:1,fontFamily:'var(--font-body)'}}
-              onMouseOver={e=>e.currentTarget.style.color='var(--app-accent)'}
-              onMouseOut={e=>e.currentTarget.style.color='var(--text-tertiary)'}
-            >del</button>
-          )}
         </div>
       </div>
     )
@@ -905,24 +816,26 @@ function CategoryBlock({
             onChangeDefault={(n,f,v)=>onCatDefaultChange(n,f,v,mainItems.length)}
           />
 
-          {/* Column headers */}
+          {/* Column headers — card mode only; grid is now a collapsible list */}
+          {!isGrid&&(
           <div style={{
             display:'grid',gridTemplateColumns:colsForHeaders,gap:'6px',
             padding:'4px 14px',
-            background:isGrid?'var(--app-surface)':'var(--bg-secondary)',
+            background:'var(--bg-secondary)',
             borderBottom:'0.5px solid var(--border)',
           }}>
             {headerLabels.map((h,i)=>(
               <div key={i} style={{
                 fontSize:'10px',
-                color:isGrid?'var(--app-text-dim)':'var(--text-tertiary)',
-                fontWeight:isGrid?600:500,
+                color:'var(--text-tertiary)',
+                fontWeight:500,
                 textTransform:'uppercase',letterSpacing:'0.4px',
                 padding:'3px 0',
                 textAlign:i===0?'left':'center',
               }}>{h}</div>
             ))}
           </div>
+          )}
 
           {/* Empty state */}
           {mainItems.length===0&&(
