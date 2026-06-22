@@ -217,6 +217,7 @@ export default function EventCard({
         border: `1px solid ${hovered ? '#c8c2b8' : 'var(--app-border)'}`,
         borderRadius: '12px',
         padding: '16px 18px',
+        minHeight: '150px',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
@@ -263,19 +264,7 @@ export default function EventCard({
         <StatusPill status={event.status} isTest={event.is_test} />
       </div>
 
-      {/* Row 2: client */}
-      {clientStr && (
-        <p style={{
-          margin: 0,
-          fontFamily: 'DM Sans, sans-serif',
-          fontSize: '13px',
-          color: 'var(--app-text-dim-lg)',
-        }}>
-          {clientStr}
-        </p>
-      )}
-
-      {/* Row 3: city chips */}
+      {/* City chips */}
       {visibleCities.length > 0 && (
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {visibleCities.map((city) => (
@@ -319,71 +308,98 @@ export default function EventCard({
         </p>
       )}
 
-      {/* Row 5: avatar stack + relative time */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 'auto',
-      }}>
-        {avatarShow.length > 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            {avatarShow.map((user, i) => (
-              <div key={user.id || i} style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '6px',
-                background: 'var(--app-surface)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '10px',
-                fontWeight: 700,
-                fontFamily: 'DM Sans, sans-serif',
-                color: 'var(--app-text-dim-lg)',
-                border: '2px solid #ffffff',
-                marginLeft: i === 0 ? 0 : '-6px',
-                zIndex: avatarShow.length - i,
-                position: 'relative',
-                flexShrink: 0,
-              }}>
-                {getInitials(user.full_name)}
-              </div>
-            ))}
-            {avatarExtra > 0 && (
-              <div style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '6px',
-                background: 'var(--app-surface)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '10px',
-                fontWeight: 700,
-                fontFamily: 'DM Sans, sans-serif',
-                color: 'var(--app-text-dim-lg)',
-                border: '2px solid #ffffff',
-                marginLeft: '-6px',
-                position: 'relative',
-                zIndex: 0,
-                flexShrink: 0,
-              }}>
-                +{avatarExtra}
-              </div>
-            )}
-          </div>
-        ) : <div />}
-
-        {event.updated_at && (
-          <span style={{
-            fontSize: '11px',
-            fontFamily: 'DM Sans, sans-serif',
-            color: 'var(--app-text-dim-lg)',
-          }}>
-            {formatRelativeTime(event.updated_at)}
-          </span>
+      {/* Bottom block (pinned): client / category — left, Updated — right */}
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {(clientStr || event.event_type) && (
+          clientStr ? (
+            <p style={{
+              margin: 0,
+              fontFamily: 'var(--font-body)',
+              fontSize: '13px',
+              color: 'var(--app-text-dim)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
+              {clientStr}
+            </p>
+          ) : (
+            <span style={{
+              alignSelf: 'flex-start',
+              padding: '2px 8px',
+              fontSize: '11px',
+              fontFamily: 'var(--font-body)',
+              color: 'var(--app-text-dim)',
+              background: 'var(--app-surface)',
+              border: '1px solid var(--app-border)',
+              borderRadius: '6px',
+            }}>
+              {event.event_type}
+            </span>
+          )
         )}
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {avatarShow.length > 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {avatarShow.map((user, i) => (
+                <div key={user.id || i} style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '6px',
+                  background: 'var(--app-surface)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-body)',
+                  color: 'var(--app-text-dim-lg)',
+                  border: '2px solid var(--app-bg)',
+                  marginLeft: i === 0 ? 0 : '-6px',
+                  zIndex: avatarShow.length - i,
+                  position: 'relative',
+                  flexShrink: 0,
+                }}>
+                  {getInitials(user.full_name)}
+                </div>
+              ))}
+              {avatarExtra > 0 && (
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '6px',
+                  background: 'var(--app-surface)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-body)',
+                  color: 'var(--app-text-dim-lg)',
+                  border: '2px solid var(--app-bg)',
+                  marginLeft: '-6px',
+                  position: 'relative',
+                  zIndex: 0,
+                  flexShrink: 0,
+                }}>
+                  +{avatarExtra}
+                </div>
+              )}
+            </div>
+          ) : <div />}
+
+          {event.updated_at && (
+            <span style={{
+              fontSize: '11px',
+              fontFamily: 'var(--font-body)',
+              color: 'var(--app-text-dim-lg)',
+              flexShrink: 0,
+            }}>
+              {formatRelativeTime(event.updated_at)}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* ⋮ menu */}
@@ -406,6 +422,8 @@ export default function EventCard({
             borderRadius: '6px',
             fontSize: '18px',
             color: hovered || menuOpen ? 'var(--app-ink)' : 'var(--app-text-dim-lg)',
+            opacity: hovered || menuOpen || focused ? 1 : 0,
+            transition: 'opacity 0.15s',
             lineHeight: 1,
           }}
         >
