@@ -16,42 +16,36 @@ const DOCS = [
     icon: 'document',
     title: 'Proposal',
     desc: 'Full cost sheet as sent to client — city-wise with agency fee, GST and T&C',
-    color: '#1A1917',
   },
   {
     key: 'elements',
     icon: 'elements',
     title: 'Element master list',
     desc: 'All elements city-wise with size, qty, specification — in the format you need',
-    color: 'var(--state-info)',
   },
   {
     key: 'tasks',
     icon: 'users',
     title: 'Task assignment sheet',
     desc: 'Who owns what — category owner, assigned to, deadline, status',
-    color: '#5B21B6',
   },
   {
     key: 'production',
     icon: 'production',
     title: 'Production & print list',
     desc: 'Creative, fabrication and print status for every element',
-    color: 'var(--state-success)',
   },
   {
     key: 'vendors',
     icon: 'phone',
     title: 'Vendor contact sheet',
     desc: 'Element → vendor → contact — ready to share with your team',
-    color: 'var(--state-warning)',
   },
   {
     key: 'timeline',
     icon: 'timeline',
     title: 'Visual control chart',
     desc: 'Reverse timeline — every task mapped against dates. Your Gantt.',
-    color: '#9D174D',
   },
 ]
 
@@ -144,7 +138,7 @@ export default function DeliveredCenter({ event, session }) {
           <p style={{ fontSize: '12px', color: allDone ? 'var(--state-success)' : 'var(--text-tertiary)' }}>
             {allDone
               ? 'Your event has been delivered. All documents are ready to download.'
-              : 'Complete all tasks to unlock the full delivered state. Documents are available anytime.'}
+              : 'Download your event documents any time. Complete all tasks to mark this event as delivered.'}
           </p>
         </div>
         {taskTotal > 0 && (
@@ -169,7 +163,7 @@ export default function DeliveredCenter({ event, session }) {
             gap: '12px',
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-              <span style={{ flexShrink: 0 }}><Icon name={doc.icon} size={24} color={doc.color} /></span>
+              <span style={{ flexShrink: 0 }}><Icon name={doc.icon} size={24} color="var(--app-text-dim)" /></span>
               <div style={{ flex: 1 }}>
                 <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '4px' }}>{doc.title}</p>
                 <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', lineHeight: 1.6 }}>{doc.desc}</p>
