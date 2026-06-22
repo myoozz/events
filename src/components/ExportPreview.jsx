@@ -376,9 +376,9 @@ export default function ExportPreview({ event, userRole }) {
               <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>GST ({event.gst_percent || 18}%)</span>
               <span style={{ fontSize: '12px', color: 'var(--text)' }}>{fmt(gstAmt)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '0.5px solid var(--border)', marginTop: '4px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>Grand total</span>
-              <span style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text)', fontFamily: 'var(--font-display)' }}>{fmt(grandTotal)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: '10px', borderTop: '1px solid var(--app-border)', marginTop: '4px' }}>
+              <span style={{ fontSize: '14px', fontFamily: 'var(--font-body)', fontWeight: 500, color: 'var(--app-ink)' }}>Grand total</span>
+              <span style={{ fontSize: '20px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--app-ink)' }}>{fmt(grandTotal)}</span>
             </div>
             {allTnc.length > 0 && (
               <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '8px', paddingTop: '8px', borderTop: '0.5px solid var(--border)' }}>
@@ -386,8 +386,8 @@ export default function ExportPreview({ event, userRole }) {
               </div>
             )}
             {allTnc.length === 0 && (
-              <div style={{ fontSize: '11px', color: 'var(--state-warning)', marginTop: '8px', paddingTop: '8px', borderTop: '0.5px solid var(--border)' }}>
-                No T&C selected · Go to Cost Summary tab to add clauses
+              <div style={{ fontSize: '11px', color: 'var(--state-info)', marginTop: '8px', paddingTop: '8px', borderTop: '0.5px solid var(--border)' }}>
+                No T&C added · <span title="Open the Cost Summary tab to add T&C clauses" style={{ textDecoration: 'underline', cursor: 'help' }}>Go to Cost Summary</span> to add clauses →
               </div>
             )}
           </div>
@@ -405,8 +405,8 @@ export default function ExportPreview({ event, userRole }) {
           >
             {exporting ? 'Generating...' : <><Icon name="download" size={13} style={{ verticalAlign: '-2px', marginRight: 5 }} /> Download Excel</>}
           </button>
-          <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', textAlign: 'center', marginBottom: '20px' }}>
-            PDF & Word coming soon
+          <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--app-text-dim)', textAlign: 'center', marginBottom: '20px' }}>
+            <Icon name="calendar" size={11} style={{ verticalAlign: '-1px', marginRight: 4 }} /> PDF &amp; Word — coming soon
           </p>
 
           {/* Sheet type */}
