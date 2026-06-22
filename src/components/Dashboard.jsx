@@ -345,28 +345,34 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
     })
     const active  = events.filter(e => e.status === 'won' || e.status === 'active')
     const pitches = events.filter(e => e.status === 'pitch')
+    const today = new Date(new Date().toDateString())
+    const overdueProps = events.filter(e =>
+      e.proposal_due_date && new Date(e.proposal_due_date) < today &&
+      !['won', 'active', 'completed', 'archived'].includes(e.status)
+    )
 
+    if (events.length === 0) return {
+      greeting: `${timeGreeting}, ${name}`,
+      message: 'Your workspace is ready. Create your first event to get started.',
+      color: 'var(--app-text-dim)', bold: false,
+    }
     if (dueSoon.length > 0) return {
       greeting: `${timeGreeting}, ${name}`,
-      message: `⏰ ${dueSoon[0].event_name} proposal is due ${dueSoon[0].proposal_due_date === new Date().toISOString().split('T')[0] ? 'today' : 'in ' + Math.ceil((new Date(dueSoon[0].proposal_due_date) - new Date()) / (1000*60*60*24)) + ' days'}. Let's get it done.`,
-      urgent: true,
+      message: `${dueSoon[0].event_name} proposal is due ${dueSoon[0].proposal_due_date === new Date().toISOString().split('T')[0] ? 'today' : 'in ' + Math.ceil((new Date(dueSoon[0].proposal_due_date) - new Date()) / (1000*60*60*24)) + ' days'}.`,
+      color: 'var(--state-warning)', bold: true,
     }
-    if (active.length > 0) return {
-      greeting: `${timeGreeting}, ${name}`,
-      message: `${active.length} event${active.length > 1 ? 's' : ''} in execution — your stage is set.`,
-      urgent: false,
-    }
-    if (pitches.length > 0) return {
-      greeting: `${timeGreeting}, ${name}`,
-      message: `${pitches.length} pitch${pitches.length > 1 ? 'es' : ''} in pipeline — ready when you are.`,
-      urgent: false,
-    }
+    // Operational status line: events in execution + overdue proposals
+    const parts = []
+    parts.push(active.length > 0
+      ? `${active.length} event${active.length > 1 ? 's' : ''} in execution`
+      : 'No events in execution right now')
+    if (overdueProps.length > 0) parts.push(`${overdueProps.length} proposal${overdueProps.length > 1 ? 's' : ''} overdue`)
+    else if (pitches.length > 0) parts.push(`${pitches.length} in pipeline`)
     return {
       greeting: `${timeGreeting}, ${name}`,
-      message: events.length === 0
-        ? 'Your workspace is ready. Create your first event to get started.'
-        : 'Everything looks good. What are we building today?',
-      urgent: false,
+      message: parts.join(' · '),
+      color: overdueProps.length > 0 ? 'var(--state-danger)' : 'var(--app-text-dim)',
+      bold: overdueProps.length > 0,
     }
   }
 
@@ -439,7 +445,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
     )
   }
 
-  const { greeting, message, urgent } = getGreeting()
+  const { greeting, message, color: statusColor, bold: statusBold } = getGreeting()
 
   return (
     <motion.div
@@ -589,9 +595,9 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
         style={{
-          fontSize: '13px', color: 'var(--app-text-dim-lg)',
+          fontSize: '13px', color: statusColor,
           fontFamily: 'var(--font-body)', marginBottom: '16px',
-          ...(urgent ? { color: 'var(--state-warning)', fontWeight: 500 } : {}),
+          fontWeight: statusBold ? 500 : 400,
         }}
       >
         {message}
@@ -668,21 +674,16 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
         )}
       </div>
       {userRole === 'admin' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <button
-            onClick={() => setShowTestEvents(v => !v)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '7px',
-              padding: '5px 12px', fontSize: '12px', fontFamily: 'var(--font-body)',
-              background: showTestEvents ? 'var(--app-ink)' : 'none',
-              color: showTestEvents ? 'var(--app-bg)' : 'var(--app-text-dim-lg)',
-              border: '1px solid #c8c2b8', borderRadius: '20px',
-              cursor: 'pointer', transition: 'all 0.15s',
-            }}
-          >
-            <span style={{ fontSize: '10px', opacity: 0.7 }}>TEST</span>
-            {showTestEvents ? 'Showing test events' : 'Show test events'}
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
+            <input
+              type="checkbox"
+              checked={showTestEvents}
+              onChange={() => setShowTestEvents(v => !v)}
+              style={{ accentColor: 'var(--app-accent)', width: '14px', height: '14px', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '12px', color: 'var(--app-text-dim)', fontFamily: 'var(--font-body)' }}>Show test events</span>
+          </label>
         </div>
       )}
 

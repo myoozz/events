@@ -290,13 +290,13 @@ export default function DashboardWidgets({ userId, userRole, userName, userEmail
           background: var(--app-accent);
         }
         .dw-card .card-value {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 38px;
-          font-weight: 600;
+          font-family: var(--font-mono);
+          font-size: 34px;
+          font-weight: 500;
           color: var(--app-ink);
           line-height: 1;
           margin: 6px 0 5px;
-          letter-spacing: -0.5px;
+          letter-spacing: -0.02em;
         }
         .dw-card.hot .card-value {
           color: var(--app-accent);
