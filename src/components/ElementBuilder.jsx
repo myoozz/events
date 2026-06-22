@@ -797,15 +797,15 @@ function CategoryBlock({
         <>
           {/* Bundle override */}
           {cat.bundled&&(
-            <div style={{padding:'8px 14px',background:'var(--state-warning-bg)',borderBottom:'0.5px solid var(--border)',display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap'}}>
-              <span style={{fontSize:'12px',fontWeight:500,color:'var(--state-warning)'}}>Client sees one total:</span>
+            <div style={{padding:'8px 14px',background:'var(--app-surface)',borderBottom:'0.5px solid var(--app-border)',display:'flex',alignItems:'center',gap:'10px',flexWrap:'wrap'}}>
+              <span style={{fontSize:'12px',fontWeight:500,color:'var(--app-text-dim)'}}>Client sees one total:</span>
               <input type="number"
-                style={{width:'160px',fontSize:'13px',padding:'5px 10px',border:'0.5px solid var(--state-warning)',borderRadius:'4px',background:'white',color:'var(--state-warning)',fontFamily:'var(--font-body)',outline:'none'}}
+                style={{width:'160px',fontSize:'13px',padding:'5px 10px',border:'0.5px solid var(--app-border)',borderRadius:'4px',background:'var(--app-bg)',color:'var(--app-ink)',fontFamily:'var(--font-body)',outline:'none'}}
                 value={cat.bundle_amt||''}
                 placeholder={`Auto: ${fmt(autoSum)||'₹0'}`}
                 onChange={e=>onUpdateCat('bundle_amt',+e.target.value)}
               />
-              <span style={{fontSize:'11px',color:'var(--state-warning)',opacity:0.7}}>Auto-sum: {fmt(autoSum)||'₹0'} · Edit to override</span>
+              <span style={{fontSize:'11px',color:'var(--app-text-dim)',opacity:0.7}}>Auto-sum: {fmt(autoSum)||'₹0'} · Edit to override</span>
             </div>
           )}
 
