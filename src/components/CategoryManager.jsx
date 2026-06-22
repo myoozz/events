@@ -391,8 +391,12 @@ export default function CategoryManager({ userRole }) {
       ) : (
         <>
         <div style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)', borderRadius: 8 }}>
+          <style>{`
+            .cm-cat-slug { opacity: 0; transition: opacity 0.15s ease; }
+            .cm-cat-row:hover .cm-cat-slug { opacity: 1; }
+          `}</style>
           {categories.map((cat, index) => (
-            <div key={cat.id} style={{
+            <div key={cat.id} className="cm-cat-row" style={{
               display: 'flex', alignItems: 'center', gap: 12,
               padding: '12px 16px',
               borderBottom: index < categories.length - 1 ? '1px solid var(--app-surface)' : 'none',
@@ -443,7 +447,7 @@ export default function CategoryManager({ userRole }) {
                   )
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#b8b0a0' }}>
+                  <span className="cm-cat-slug" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--app-text-dim)' }}>
                     {cat.slug}
                   </span>
                   <span style={{ fontSize: 11, color: '#b8b0a0', flexShrink: 0 }}>Type</span>
@@ -472,8 +476,9 @@ export default function CategoryManager({ userRole }) {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{
-                  fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 3,
+                  fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 'var(--radius-sm)',
                   textTransform: 'uppercase', letterSpacing: 0.5, minWidth: 64, textAlign: 'center',
+                  fontFamily: 'var(--font-mono)',
                   background: cat.is_active ? 'var(--state-success-bg)' : '#e8e4dc',
                   color: cat.is_active ? 'var(--state-success)' : 'var(--app-text-dim-lg)'
                 }}>
@@ -490,7 +495,7 @@ export default function CategoryManager({ userRole }) {
                   )}
                   <button
                     onClick={() => handleToggleActive(cat)}
-                    style={{ fontSize: 11, color: 'var(--app-text-dim-lg)', background: 'var(--app-surface)', border: 'none', borderRadius: 3, padding: '3px 8px', cursor: 'pointer' }}
+                    style={{ fontSize: 11, color: cat.is_active ? 'var(--state-warning)' : 'var(--app-text-dim-lg)', background: 'var(--app-surface)', border: 'none', borderRadius: 3, padding: '3px 8px', cursor: 'pointer' }}
                   >
                     {cat.is_active ? 'Deactivate' : 'Activate'}
                   </button>
