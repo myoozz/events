@@ -223,7 +223,7 @@ function CityCueSheet({ event, city, sheetData, onSave, saving }) {
             <div style={{ display: 'flex', gap: '4px' }}>
               <input value={newScreen} onChange={e => setNewScreen(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addScreen()}
-                placeholder="Screen name..."
+                placeholder="Segment name..."
                 autoFocus
                 style={{ padding: '4px 8px', fontSize: '12px', border: '0.5px solid var(--border-strong)', borderRadius: '4px', fontFamily: 'var(--font-body)', outline: 'none', width: '130px' }} />
               <button onClick={addScreen} style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Add</button>
@@ -232,7 +232,7 @@ function CityCueSheet({ event, city, sheetData, onSave, saving }) {
           ) : (
             <button onClick={() => setShowAddScreen(true)}
               style={{ padding: '4px 10px', fontSize: '11px', fontFamily: 'var(--font-body)', background: 'none', border: '0.5px solid var(--border-strong)', borderRadius: '20px', cursor: 'pointer', color: 'var(--text)' }}>
-              + Add screen
+              + Add segment
             </button>
           )}
           {saving && <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Saving...</span>}
@@ -433,7 +433,7 @@ export default function CueSheet({ event }) {
             Cue sheet / Show flow
           </h3>
           <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>
-            Minute-by-minute flow with technical cues. Add screens for each technical department.
+            Minute-by-minute flow with technical cues. Add segments for each technical department.
           </p>
         </div>
         <button onClick={exportCueSheet} disabled={exporting}
@@ -487,7 +487,7 @@ export default function CueSheet({ event }) {
       {/* Help */}
       <div style={{ marginTop: '8px', padding: '10px 14px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '0.5px solid var(--border)', fontSize: '12px', color: 'var(--text-tertiary)', lineHeight: 1.7 }}>
         💡 <strong>Time tip:</strong> Set start time on first row. Enter duration — end time fills automatically. Each new row inherits the end time of the previous row as its start.
-        · <strong>Screens:</strong> Add one for each technical department — Sound, Light, LED Wall, Main Screen, Left Panel, etc.
+        · <strong>Segments:</strong> Add one for each technical department — Sound, Light, LED Wall, Main Screen, Left Panel, etc.
       </div>
     </div>
   )

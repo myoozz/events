@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import { Icon } from '../icons'
 
 export default function FeedbackAdmin() {
   const [items, setItems] = useState([])
@@ -83,8 +84,22 @@ export default function FeedbackAdmin() {
       {loading && <p style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>Loading...</p>}
 
       {!loading && filtered.length === 0 && (
-        <div style={{ padding: '48px', textAlign: 'center', border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius-sm)' }}>
-          <p style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>No feedback in this category.</p>
+        <div style={{
+          padding: '48px 24px', textAlign: 'center',
+          border: '0.5px dashed var(--border-strong)', borderRadius: 'var(--radius-sm)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px',
+        }}>
+          <Icon name="feedback" size={28} color="var(--app-text-dim)" strokeWidth={1.5} />
+          <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', margin: 0 }}>No feedback in this category.</p>
+          <div style={{
+            maxWidth: '380px',
+            background: 'var(--app-surface)', border: '1px solid var(--app-border)',
+            borderRadius: 'var(--radius-md)', padding: '16px',
+          }}>
+            <p style={{ fontSize: '12px', color: 'var(--app-text-dim)', lineHeight: 1.6, margin: 0 }}>
+              Feedback appears here when your team submits it via the feedback button (bottom-right corner).
+            </p>
+          </div>
         </div>
       )}
 
