@@ -11,11 +11,12 @@ const db = (table) => supabase.from(table);
 const STATUS_OPTIONS = ['pending', 'in_progress', 'done', 'blocked'];
 
 const STATUS_META = {
-  pending:     { label: 'Pending',     color: 'var(--app-text-dim-lg)', bg: 'var(--app-surface)' },
-  in_progress: { label: 'In Progress', color: 'var(--state-warning)', bg: 'var(--state-warning-bg)' },
-  done:        { label: 'Done',        color: '#059669', bg: 'var(--state-success-bg)' },
-  blocked:     { label: 'Blocked',     color: 'var(--state-danger)', bg: 'var(--state-danger-bg)' },
+  pending:     { label: 'Pending',     color: 'var(--app-text-dim)',  bg: 'var(--app-surface)',     border: 'var(--app-border)' },
+  in_progress: { label: 'In Progress', color: 'var(--state-info)',    bg: 'var(--state-info-bg)',    border: 'transparent' },
+  done:        { label: 'Done',        color: 'var(--state-success)', bg: 'var(--state-success-bg)', border: 'transparent' },
+  blocked:     { label: 'Blocked',     color: 'var(--state-danger)',  bg: 'var(--state-danger-bg)',  border: 'transparent' },
 };
+const OVERDUE_META = { label: 'Overdue', color: 'var(--state-danger)', bg: 'var(--state-danger-bg)', border: 'transparent' };
 
 const ROLE_CAN_ASSIGN = (role, scope) => {
   if (role === 'admin' || role === 'manager') return true;
@@ -216,6 +217,16 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
     }).eq('id', modal.taskId);
 
     if (!error) {
+      // Keep element_assignments in sync — the avatar is now the single per-row assignee control
+      if (modal.taskElementId) {
+        let q = db('element_assignments').delete().eq('element_id', modal.taskElementId);
+        if (activeCity) q = q.eq('city', activeCity); else q = q.is('city', null);
+        await q;
+        if (assignTo) {
+          await db('element_assignments').insert({ event_id: eventId, element_id: modal.taskElementId, city: activeCity || null, assigned_to: assignTo, assigned_by: session?.user?.id });
+        }
+        await fetchElementAssignments();
+      }
       // Apply to matching tasks in other cities
       if (applyAllCities && cities.length > 1) {
         const otherCityTasks = tasks.filter((t) =>
@@ -364,7 +375,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                 <span style={styles.addIcon}>+</span> Add Task
               </button>
               <button style={styles.importBtn} onClick={openImport}>
-                Import from Elements
+                <Icon name="download" size={13} style={{ marginRight: 4, verticalAlign: '-2px' }} /> Import from Elements
               </button>
             </div>
           ) : (
@@ -442,6 +453,14 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                     return (
                       <span style={{ fontSize: '10px', color: assignedCount === elTasks.length ? 'var(--state-info)' : 'var(--app-text-dim-lg)', marginLeft: 4 }}>
                         {assignedCount}/{elTasks.length} assigned
+                      </span>
+                    );
+                  })()}
+                  {(() => {
+                    const doneCount = grouped[cat].filter(t => t.status === 'done' || t.status === 'completed').length;
+                    return (
+                      <span style={{ fontSize: '10px', color: 'var(--app-text-dim)', marginLeft: 4 }}>
+                        {doneCount}/{grouped[cat].length} done
                       </span>
                     );
                   })()}
@@ -584,7 +603,8 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
             {collapsed[cat] && (
               <div style={styles.taskList}>
                 {grouped[cat].map((task) => {
-                  const sm   = STATUS_META[task.status] || STATUS_META.pending;
+                  const isOverdue = task.due_date && task.status !== 'done' && task.status !== 'completed' && new Date(task.due_date) < new Date(new Date().toDateString());
+                  const sm   = isOverdue ? OVERDUE_META : (STATUS_META[task.status] || STATUS_META.pending);
                   const ini  = task.assigned_name ? initials(task.assigned_name) : null;
                   return (
                     <div key={task.id} style={{
@@ -599,7 +619,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                         {/* status pill */}
                         <div style={{ position: 'relative' }}>
                           <button
-                            style={{ ...styles.statusPill, color: sm.color, background: sm.bg }}
+                            style={{ ...styles.statusPill, color: sm.color, background: sm.bg, border: `1px solid ${sm.border}` }}
                             onClick={() => canAssign && setStatusMenu(statusMenu === task.id ? null : task.id)}
                             title={canAssign ? 'Change status' : sm.label}
                           >
@@ -633,61 +653,6 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                           </span>
                         )}
 
-                        {/* Element-level assignee — only for tasks with element_id */}
-                        {task.element_id && canAssign && (() => {
-                          const key = `${task.element_id}_${activeCity ?? ''}`;
-                          const existing = elementAssignments[key];
-                          const assignedUser = existing?.assigned_to ? users.find(u => u.id === existing.assigned_to) : null;
-                          return (
-                            <select
-                              value={existing?.assigned_to ?? ''}
-                              onChange={async (e) => {
-                                const userId = e.target.value;
-                                let q = db('element_assignments').delete().eq('element_id', task.element_id);
-                                if (activeCity) q = q.eq('city', activeCity); else q = q.is('city', null);
-                                await q;
-                                if (userId) {
-                                  await db('element_assignments').insert({
-                                    event_id:    eventId,
-                                    element_id:  task.element_id,
-                                    city:        activeCity || null,
-                                    assigned_to: userId,
-                                    assigned_by: session?.user?.id,
-                                  });
-                                }
-                                await fetchElementAssignments();
-                              }}
-                              style={{
-                                fontSize: '11px',
-                                padding: '3px 6px',
-                                borderRadius: '4px',
-                                border: '0.5px solid var(--app-border)',
-                                background: assignedUser ? 'var(--state-info-bg)' : 'var(--app-surface)',
-                                color: assignedUser ? 'var(--state-info)' : 'var(--app-text-dim)',
-                                fontFamily: 'var(--font-body)',
-                                cursor: 'pointer',
-                                maxWidth: '120px',
-                              }}
-                            >
-                              <option value="">— Assign —</option>
-                              {users.map(u => (
-                                <option key={u.id} value={u.id}>{u.full_name}</option>
-                              ))}
-                            </select>
-                          );
-                        })()}
-                        {task.element_id && !canAssign && (() => {
-                          const key = `${task.element_id}_${activeCity ?? ''}`;
-                          const existing = elementAssignments[key];
-                          if (!existing?.assigned_to) return null;
-                          const assignedUser = users.find(u => u.id === existing.assigned_to);
-                          if (!assignedUser) return null;
-                          return (
-                            <span style={{ fontSize: '11px', color: 'var(--state-info)', background: '#EBF5FF', padding: '2px 7px', borderRadius: '4px', fontFamily: 'var(--font-body)' }}>
-                              {assignedUser.full_name}
-                            </span>
-                          );
-                        })()}
 
                         {/* assigned user pill */}
                         {ini ? (
@@ -697,7 +662,6 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
                             title={canAssign ? `Reassign (${task.assigned_name})` : task.assigned_name}
                           >
                             <span style={styles.initialsCircle}>{ini}</span>
-                            <span style={styles.assignedName}>{task.assigned_name}</span>
                           </button>
                         ) : (
                           canAssign && (
@@ -946,13 +910,14 @@ const styles = {
     alignItems: 'center',
     gap: 6,
     background: 'transparent',
-    border: '1.5px dashed #D1CBC3',
+    border: '1.5px solid var(--app-accent)',
     borderRadius: 8,
     padding: '8px 16px',
     cursor: 'pointer',
-    color: 'var(--app-text-dim-lg)',
+    color: 'var(--app-accent)',
     fontSize: 13,
-    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 500,
+    fontFamily: 'var(--font-body)',
     transition: 'border-color 0.15s, color 0.15s',
   },
   importBtn: {
@@ -960,14 +925,14 @@ const styles = {
     alignItems: 'center',
     gap: 6,
     background: 'transparent',
-    border: '1.5px solid #E5E1DC',
+    border: 'none',
     borderRadius: 8,
-    padding: '8px 16px',
+    padding: '8px 8px',
     cursor: 'pointer',
     color: 'var(--app-text-dim)',
     fontSize: 13,
-    fontFamily: "'DM Sans', sans-serif",
-    transition: 'border-color 0.15s, color 0.15s',
+    fontFamily: 'var(--font-body)',
+    transition: 'color 0.15s',
   },
   allCitiesRow: {
     display: 'flex',
@@ -1096,9 +1061,9 @@ const styles = {
     borderRadius: 12,
     fontSize: 11,
     fontWeight: 600,
-    border: 'none',
+    border: '1px solid transparent',
     cursor: 'pointer',
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: 'var(--font-body)',
     letterSpacing: '0.02em',
     textTransform: 'uppercase',
     whiteSpace: 'nowrap',
@@ -1155,12 +1120,12 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 6,
-    border: '1.5px solid #E5E1DC',
+    border: '1.5px solid var(--app-border)',
     borderRadius: 14,
-    background: '#FAFAF8',
-    padding: '3px 10px 3px 4px',
+    background: 'var(--bg)',
+    padding: '3px',
     cursor: 'pointer',
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: 'var(--font-body)',
     transition: 'border-color 0.15s',
   },
   initialsCircle: {
