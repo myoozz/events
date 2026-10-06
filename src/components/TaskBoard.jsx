@@ -169,6 +169,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
       .filter((el) => !existingIds.has(el.id))
       .map((el, i) => ({
         event_id:   eventId,
+        tenant_id:  event?.tenant_id,
         element_id: el.id,
         title:      el.element_name,
         category:   el.category || 'General',
@@ -328,6 +329,7 @@ export default function TaskBoard({ eventId, event, session, userRole, delegatio
     setAdding(true);
     const { error } = await db('tasks').insert({
       event_id:   eventId,
+      tenant_id:  event?.tenant_id,
       title:      newTask.title.trim(),
       category:   newTask.category || 'General',
       city:       newTask.city || activeCity || null,

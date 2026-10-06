@@ -973,7 +973,7 @@ function CityElements({ event, city, userRole, teamUsers }){
         await supabase.from('elements').delete().eq('event_id',event.id).eq('city',tgt)
       }
       await supabase.from('elements').insert(els.map(el=>({
-        event_id:event.id,city:tgt,category:el.category,
+        event_id:event.id,tenant_id:event.tenant_id,city:tgt,category:el.category,
         element_name:el.element_name,size:el.size,size_unit:el.size_unit,
         finish:el.finish,qty:el.qty,days:el.days,rate:el.rate,
         lump_sum:el.lump_sum,amount:el.amount,internal_rate:el.internal_rate,
@@ -1111,7 +1111,7 @@ function CityElements({ event, city, userRole, teamUsers }){
     setSaving(true)
     const ca=calcClient(el),ia=calcInternal(el)
     const payload={
-      event_id:event.id,city,category:el.category,
+      event_id:event.id,tenant_id:event.tenant_id,city,category:el.category,
       element_name:el.element_name||'',size:el.size||'',size_unit:el.size_unit||'ft',
       finish:el.finish||'',qty:el.qty||1,days:el.days||1,
       rate:el.rate||0,lump_sum:el.lump_sum||false,amount:el.lump_sum?(el.amount||0):ca,
@@ -1221,7 +1221,7 @@ function CityElements({ event, city, userRole, teamUsers }){
       for(let i=0;i<suggestions.length;i++){
         const s=suggestions[i]
         const {data}=await supabase.from('elements').insert({
-          event_id:event.id,city,category:name,
+          event_id:event.id,tenant_id:event.tenant_id,city,category:name,
           element_name:s.element_name,finish:s.finish||'',
           size:'',size_unit:s.size_unit,qty:s.qty!==''?s.qty:null,days:s.days,
           rate:0,lump_sum:false,amount:0,
@@ -1374,7 +1374,7 @@ function CityElements({ event, city, userRole, teamUsers }){
       for(let i=0;i<cat.items.length;i++){
         const el=cat.items[i]
         const {data}=await supabase.from('elements').insert({
-          event_id:event.id,city,category:cat.name,
+          event_id:event.id,tenant_id:event.tenant_id,city,category:cat.name,
           element_name:el.element_name||'',size:el.size||'',size_unit:el.size_unit||'ft',
           finish:el.finish||'',qty:el.qty||1,days:el.days||1,
           rate:el.rate||0,lump_sum:false,amount:calcClient(el),
