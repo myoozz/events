@@ -245,7 +245,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         gst_percent: a.gst,
         pax_count: a.paxCount ? parseInt(a.paxCount) : null,
         seating_format: a.seatingFormat || null,
-        budget_tier: a.budgetTier || 'standard',
+        budget_tier: a.budgetTier || null,
         per_pax_budget: a.perPaxBudget ? parseInt(a.perPaxBudget) : null,
         sub_events: a.hasSubEvents
           ? { count: a.subEventCount }
@@ -258,8 +258,6 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         review_status: userRole === 'event_lead' ? 'pending' : 'approved',
       }
 
-      console.log('budget_tier value being sent:', a.budgetTier)
-      console.log('FULL PAYLOAD:', JSON.stringify(payload, null, 2))
       const { data: event, error: dbErr } = await supabase
         .from('events').insert(payload).select().single()
       if (dbErr) throw dbErr
@@ -279,10 +277,9 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
       onCreated(event)
       onClose()
     } catch (err) {
-      console.log('RAW CREATE EVENT ERROR:', err)
+      // Raw DB error stays in the console — users only see plain words + a support code
       console.error('Create event error:', err)
-      const detail = err?.message || err?.details || err?.hint || JSON.stringify(err)
-      setError(detail || 'Something went wrong. Please try again.')
+      setError(`Couldn't save the event. Please try again. If it keeps failing, share this code with support: ${err?.code || 'ERR'}`)
     } finally {
       setLoading(false)
     }
@@ -461,16 +458,17 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
               )}
             </div>
 
-            {error && (
-              <div style={{
-                marginTop: '12px', padding: '10px 14px', background: 'var(--state-danger-bg)',
-                border: '1px solid var(--state-danger-bg)', borderRadius: '6px',
-                fontSize: '13px', color: 'var(--state-danger)',
-              }}>
-                {error}
-              </div>
-            )}
           </div>
+
+          {error && (
+            <div role="alert" style={{
+              margin: '0 28px 10px', padding: '10px 14px', background: 'var(--state-danger-bg)',
+              border: '1px solid var(--state-danger-bg)', borderRadius: '6px',
+              fontSize: '13px', color: 'var(--state-danger)', flexShrink: 0,
+            }}>
+              {error}
+            </div>
+          )}
 
           <div style={S.footer}>
             <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => setStep(TOTAL_STEPS)}>
@@ -640,16 +638,17 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
               </div>
             </div>
 
-            {error && (
-              <div style={{
-                marginTop: '12px', padding: '10px 14px', background: 'var(--state-danger-bg)',
-                border: '1px solid var(--state-danger-bg)', borderRadius: '6px',
-                fontSize: '13px', color: 'var(--state-danger)',
-              }}>
-                {error}
-              </div>
-            )}
           </div>
+
+          {error && (
+            <div role="alert" style={{
+              margin: '0 28px 10px', padding: '10px 14px', background: 'var(--state-danger-bg)',
+              border: '1px solid var(--state-danger-bg)', borderRadius: '6px',
+              fontSize: '13px', color: 'var(--state-danger)', flexShrink: 0,
+            }}>
+              {error}
+            </div>
+          )}
 
           <div style={S.footer}>
             <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => setFlowMode('entry')}>
@@ -1072,7 +1071,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
                 ...(a.budgetTier === t.value ? S.tileActive : {}),
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}
-              onClick={() => set('budgetTier', t.value)}
+              onClick={() => set('budgetTier', a.budgetTier === t.value ? '' : t.value)}
             >
               <div>
                 <div style={{
@@ -1090,6 +1089,29 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
               )}
             </button>
           ))}
+          <button
+            style={{
+              ...S.tile,
+              ...(!a.budgetTier ? S.tileActive : {}),
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}
+            onClick={() => set('budgetTier', '')}
+          >
+            <div>
+              <div style={{
+                fontWeight: 600, fontSize: '14px',
+                color: !a.budgetTier ? 'var(--app-accent)' : 'var(--app-ink)',
+              }}>
+                Not sure yet
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--app-text-dim-lg)', marginTop: '2px' }}>
+                Skip for now — you can set the tier later
+              </div>
+            </div>
+            {!a.budgetTier && (
+              <Icon name="check" size={16} color="var(--app-accent)" style={{ flexShrink: 0 }} />
+            )}
+          </button>
           <div style={{ marginTop: '8px' }}>
             <label style={S.label}>Per guest budget (₹) — optional</label>
             <input

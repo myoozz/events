@@ -345,6 +345,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     budget_tier: 'Budget tier', seating_format: 'Seating format',
     proposal_due_date: 'Proposal due', agency_fee_percent: 'Agency fee', gst_percent: 'GST',
   }
+  const BUDGET_TIER_LABELS = { budget: 'Budget', standard: 'Standard', premium: 'Premium', luxury: 'Luxury' }
   const ROLE_LABELS_MAP = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team', staff: 'Staff' }
 
   function startEdit(field, value) { setEditingField(field); setEditValue(value ?? '') }
@@ -655,7 +656,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
               {FieldCell({ label: 'Sub-category', field: 'sub_category', value: currentEvent.sub_category, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'PAX', field: 'pax_count', value: currentEvent.pax_count, type: 'number', cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
-              {FieldCell({ label: 'Budget tier', field: 'budget_tier', value: currentEvent.budget_tier, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
+              {FieldCell({ label: 'Budget tier', field: 'budget_tier', value: currentEvent.budget_tier, display: BUDGET_TIER_LABELS[currentEvent.budget_tier], cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'Seating', field: 'seating_format', value: currentEvent.seating_format, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'Proposal due', field: 'proposal_due_date', value: currentEvent.proposal_due_date, type: 'date', display: currentEvent.proposal_due_date ? new Date(currentEvent.proposal_due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'Fee', field: 'agency_fee_percent', value: currentEvent.agency_fee_percent, type: 'number', display: currentEvent.agency_fee_percent != null ? `${currentEvent.agency_fee_percent}%` : null, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
