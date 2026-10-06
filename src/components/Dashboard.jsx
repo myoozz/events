@@ -219,6 +219,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
 
     const { data: newEv, error } = await supabase.from('events').insert({
       event_name: newName,
+      tenant_id: ev.tenant_id,
       client_id: ev.client_id,
       event_type: ev.event_type,
       event_subtype: ev.event_subtype,
@@ -243,6 +244,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
       await supabase.from('elements').insert(
         elements.map(el => ({
           event_id: newEv.id,
+          tenant_id: newEv.tenant_id,
           city: el.city, category: el.category,
           element_name: el.element_name, size: el.size, size_unit: el.size_unit,
           finish: el.finish, qty: el.qty, days: el.days,
