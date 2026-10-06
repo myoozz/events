@@ -16,12 +16,25 @@ import { supabase } from '../supabase'
  *   import { logActivity } from '../utils/activityLogger'
  *   await logActivity({ action: 'created', entity_type: 'event', entity_name: ev.event_name })
  */
+// activity_log RLS requires tenant_id = get_my_tenant_id(). Resolve it from the user's
+// users row (same source as the event insert) once per signed-in user, then reuse.
+let _tenantCache = { authId: null, tenantId: null }
+async function getTenantId(authId) {
+  if (_tenantCache.authId === authId && _tenantCache.tenantId) return _tenantCache.tenantId
+  const { data } = await supabase.from('users').select('tenant_id').eq('auth_id', authId).single()
+  _tenantCache = { authId, tenantId: data?.tenant_id ?? null }
+  return _tenantCache.tenantId
+}
+
 export async function logActivity({ action, entity_type, entity_name, event_id, details }) {
   try {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) return
 
+    const tenantId = await getTenantId(session.user.id)
+
     const { error } = await supabase.from('activity_log').insert({
+      ...(tenantId ? { tenant_id: tenantId } : {}),
       action,
       entity_type,
       entity_name:  entity_name || null,

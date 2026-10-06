@@ -728,9 +728,9 @@ export default function RateCard({ session, userRole, canManageRateCards = false
   async function loadEvents() {
     const { data } = await supabase
       .from('events')
-      .select('id, name, cities, tenant_id')
+      .select('id, event_name, cities, tenant_id')
       .is('archived_at', null)
-      .order('name')
+      .order('event_name')
     setEvents(data || [])
   }
 

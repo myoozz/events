@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Icon } from '../icons'
 
 const MODES = [
@@ -84,6 +84,13 @@ export default function ModeSelector({ event, onSelect, onDismiss }) {
     onSelect(mode.tab)
   }
 
+  // × and Escape both mean the default view: Full event management
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onSelect('elements') }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onSelect])
+
   return (
     <div style={{
       position: 'fixed', inset: 0,
@@ -106,7 +113,14 @@ export default function ModeSelector({ event, onSelect, onDismiss }) {
         {step === 'pick' ? (
           <>
             {/* Header */}
-            <div style={{ padding: '28px 28px 20px', borderBottom: '0.5px solid var(--border)' }}>
+            <div style={{ padding: '28px 28px 20px', borderBottom: '0.5px solid var(--border)', position: 'relative' }}>
+              <button
+                aria-label="Close"
+                onClick={() => onSelect('elements')}
+                style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, lineHeight: 0 }}
+              >
+                <Icon name="close" size={16} />
+              </button>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 500, color: 'var(--text)', marginBottom: '6px' }}>
                 What do you need today?
               </h2>

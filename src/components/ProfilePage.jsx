@@ -86,7 +86,7 @@ export default function ProfilePage({ profileUserId, session, userRole, onBack }
 
   async function fetchEvents() {
     const { data } = await db('events')
-      .select('id, name, status, start_date, cities')
+      .select('id, event_name, status, start_date, cities')
       .contains('assigned_to', [profileUserId])
       .order('created_at', { ascending: false })
     setEvents(data || [])

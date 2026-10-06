@@ -79,14 +79,15 @@ export default function ProjectHeadPanel({ userId, onOpenEvent }) {
         .select('id, email, role')
         .eq('auth_id', session.user.id)
         .single()
+      const myId = userRow?.id
       const userEmail = userRow?.email
-      if (!userEmail) { setLoading(false); return }
+      if (!myId || !userEmail) { setLoading(false); return }
 
-      // (a) My events — created_by = email OR assigned_to JSONB array contains email
+      // (a) My events — created_by = my users.id (or email on older rows) OR assigned_to contains email
       const { data: evRows } = await supabase
         .from('events')
         .select('id, event_name, status, cities, start_date, end_date, event_date, clients(group_name, brand_name)')
-        .or(`created_by.eq.${userEmail},assigned_to.cs.["${userEmail}"]`)
+        .or(`created_by.eq.${myId},created_by.eq.${userEmail},assigned_to.cs.["${userEmail}"]`)
         .is('archived_at', null)
         .order('created_at', { ascending: false })
 

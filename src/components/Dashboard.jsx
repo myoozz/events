@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { Icon } from '../icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabase'
@@ -120,7 +121,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
   }, [resetKey])
 
   async function fetchTeam() {
-    const { data } = await supabase.from('users').select('email, full_name')
+    const { data } = await supabase.from('users').select('id, email, full_name')
       .neq('status', 'inactive')
     setTeamUsers(data || [])
   }
@@ -142,7 +143,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
       .order('created_at', { ascending: false })
 
     if (userRole !== 'admin') {
-      activeQuery = activeQuery.or(`assigned_to.cs.{"${session.user.email}"},created_by.eq.${session.user.email}`)
+      activeQuery = activeQuery.or(`assigned_to.cs.{"${session.user.email}"},created_by.eq.${userId},created_by.eq.${session.user.email}`)
     }
 
     const { data: active } = await activeQuery
@@ -155,9 +156,9 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
       .order('archived_at', { ascending: false })
 
     if (userRole !== 'admin') {
-      archivedQuery = archivedQuery.or(`assigned_to.cs.{"${session.user.email}"},created_by.eq.${session.user.email}`)
+      archivedQuery = archivedQuery.or(`assigned_to.cs.{"${session.user.email}"},created_by.eq.${userId},created_by.eq.${session.user.email}`)
     } else if (userRole === 'manager') {
-      archivedQuery = archivedQuery.eq('created_by', session.user.email)
+      archivedQuery = archivedQuery.or(`created_by.eq.${userId},created_by.eq.${session.user.email}`)
     }
 
     const { data: archived } = await archivedQuery
@@ -229,7 +230,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
       gst_percent: ev.gst_percent,
       status: 'pitch',
       assigned_to: ev.assigned_to,
-      created_by: session.user.email,
+      created_by: userId,
       created_by_role: userRole,
       review_status: userRole === 'admin' ? 'approved' : 'pending_review',
       field_visibility: ev.field_visibility,
@@ -574,7 +575,8 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
         </div>
       )}
 
-      {(showNewEvent || editEvent) && (
+      {/* Portalled to body so the root motion.div's entrance transform can't re-anchor the overlay */}
+      {(showNewEvent || editEvent) && createPortal(
         <NewEventForm
           onClose={() => { setShowNewEvent(false); setEditEvent(null) }}
           onCreated={handleCreated}
@@ -582,11 +584,13 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
           session={session}
           event={editEvent}
 		userRole={userRole}
-        />
+        />,
+        document.body
       )}
 
       <DashboardWidgets
         userId={session?.user?.id}
+        appUserId={userId}
         userRole={userRole}
         userName={userName}
         userEmail={session?.user?.email}
@@ -754,7 +758,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                   {ev.clients?.group_name}{ev.clients?.brand_name ? ` · ${ev.clients.brand_name}` : ''}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--state-warning)' }}>
-                  Created by {ev.created_by || 'team member'} · awaiting your review
+                  Created by {teamUsers.find(u => u.id === ev.created_by || u.email === ev.created_by)?.full_name || 'team member'} · awaiting your review
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
@@ -896,7 +900,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
       )}
       <ScreenGuide screen='dashboard' />
 
-      {modeSelectorEvent && (
+      {modeSelectorEvent && createPortal(
         <ModeSelector
           event={modeSelectorEvent}
           onSelect={(tab) => {
@@ -909,7 +913,8 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
             setOpenEvent(modeSelectorEvent)
             setModeSelectorEvent(null)
           }}
-        />
+        />,
+        document.body
       )}
     </motion.div>
   )
