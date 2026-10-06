@@ -301,6 +301,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   const [editingField,      setEditingField]      = useState(null)
   const [editValue,         setEditValue]         = useState('')
   const [savingField,       setSavingField]       = useState(false)
+  const [fieldError,        setFieldError]        = useState('')
   const [pendingEdits,      setPendingEdits]      = useState(currentEvent.pending_edits || null)
   const [showCitiesPopover, setShowCitiesPopover] = useState(false)
   const [showTeamPopover,   setShowTeamPopover]   = useState(false)
@@ -345,19 +346,35 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     budget_tier: 'Budget tier', seating_format: 'Seating format',
     proposal_due_date: 'Proposal due', agency_fee_percent: 'Agency fee', gst_percent: 'GST',
   }
+  const BUDGET_TIER_LABELS = { budget: 'Budget', standard: 'Standard', premium: 'Premium', luxury: 'Luxury' }
+  const BUDGET_TIER_OPTIONS = [{ value: '', label: 'None' }, ...Object.entries(BUDGET_TIER_LABELS).map(([value, label]) => ({ value, label }))]
   const ROLE_LABELS_MAP = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team', staff: 'Staff' }
 
-  function startEdit(field, value) { setEditingField(field); setEditValue(value ?? '') }
+  function startEdit(field, value) { setEditingField(field); setEditValue(value ?? ''); setFieldError('') }
 
   async function saveField(field) {
     setSavingField(true)
-    const val = editValue
+    setFieldError('')
+    // budget_tier is optional — "None" saves NULL, never an empty string
+    const val = field === 'budget_tier' ? (editValue || null) : editValue
     if (isAdmin) {
-      await supabase.from('events').update({ [field]: val }).eq('id', currentEvent.id)
+      const { error } = await supabase.from('events').update({ [field]: val }).eq('id', currentEvent.id)
+      if (error) {
+        console.error('Save field error:', error)
+        setFieldError(`Couldn't save. Please try again. If it keeps failing, share this code with support: ${error.code || 'ERR'}`)
+        setSavingField(false)
+        return
+      }
       setCurrentEvent(prev => ({ ...prev, [field]: val }))
     } else if (isManager) {
       const newPending = { ...(pendingEdits || {}), [field]: val }
-      await supabase.from('events').update({ pending_edits: newPending }).eq('id', currentEvent.id)
+      const { error } = await supabase.from('events').update({ pending_edits: newPending }).eq('id', currentEvent.id)
+      if (error) {
+        console.error('Save field error:', error)
+        setFieldError(`Couldn't save. Please try again. If it keeps failing, share this code with support: ${error.code || 'ERR'}`)
+        setSavingField(false)
+        return
+      }
       setCurrentEvent(prev => ({ ...prev, pending_edits: newPending }))
       setPendingEdits(newPending)
     }
@@ -447,7 +464,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
     return u?.full_name || email.split('@')[0]
   }
 
-  function FieldCell({ label, field, value, display, type, cellStyle }) {
+  function FieldCell({ label, field, value, display, type, options, cellStyle }) {
     const isEditing = editingField === field
     const canEdit = isAdmin || isManager
     const empty = value === null || value === undefined || value === ''
@@ -455,20 +472,37 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
       <div style={cellStyle}>
         <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '5px', fontWeight: 500 }}>{label}</div>
         {isEditing ? (
-          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-            <input
-              type={type || 'text'}
-              value={editValue}
-              onChange={e => setEditValue(e.target.value)}
-              autoFocus
-              onKeyDown={e => { if (e.key === 'Enter') saveField(field); if (e.key === 'Escape') setEditingField(null) }}
-              style={{ fontSize: '13px', padding: '3px 8px', border: '1px solid var(--accent)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', outline: 'none', fontFamily: 'var(--font-body)', width: 110 }}
-            />
+          <>
+          <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: options ? 'wrap' : 'nowrap' }}>
+            {options ? (
+              <select
+                value={editValue}
+                onChange={e => setEditValue(e.target.value)}
+                autoFocus
+                onKeyDown={e => { if (e.key === 'Escape') setEditingField(null) }}
+                style={{ fontSize: '13px', padding: '3px 6px', border: '1px solid var(--accent)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', outline: 'none', fontFamily: 'var(--font-body)', width: '100%' }}
+              >
+                {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            ) : (
+              <input
+                type={type || 'text'}
+                value={editValue}
+                onChange={e => setEditValue(e.target.value)}
+                autoFocus
+                onKeyDown={e => { if (e.key === 'Enter') saveField(field); if (e.key === 'Escape') setEditingField(null) }}
+                style={{ fontSize: '13px', padding: '3px 8px', border: '1px solid var(--accent)', borderRadius: 'var(--radius-sm)', background: 'var(--bg)', outline: 'none', fontFamily: 'var(--font-body)', width: 110 }}
+              />
+            )}
             <button onClick={() => saveField(field)} disabled={savingField} style={{ padding: '3px 8px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '11px' }}>
               {savingField ? '…' : <Icon name="check" size={12} />}
             </button>
             <button onClick={() => setEditingField(null)} style={{ padding: '3px 8px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '11px', color: 'var(--text-tertiary)' }}><Icon name="close" size={12} /></button>
           </div>
+          {fieldError && (
+            <div role="alert" style={{ marginTop: 6, fontSize: '11px', lineHeight: 1.4, color: 'var(--state-danger)' }}>{fieldError}</div>
+          )}
+          </>
         ) : (
           <div
             onClick={canEdit ? () => startEdit(field, String(value ?? '')) : undefined}
@@ -564,6 +598,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                     {savingField ? '…' : 'Save'}
                   </button>
                   <button onClick={() => setEditingField(null)} style={{ padding: '5px 9px', background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-tertiary)' }}><Icon name="close" size={14} /></button>
+                  {fieldError && (
+                    <span role="alert" style={{ fontSize: '12px', color: 'var(--state-danger)' }}>{fieldError}</span>
+                  )}
                 </div>
               ) : (
                 <h1
@@ -655,7 +692,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
               {FieldCell({ label: 'Sub-category', field: 'sub_category', value: currentEvent.sub_category, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'PAX', field: 'pax_count', value: currentEvent.pax_count, type: 'number', cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
-              {FieldCell({ label: 'Budget tier', field: 'budget_tier', value: currentEvent.budget_tier, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
+              {FieldCell({ label: 'Budget tier', field: 'budget_tier', value: currentEvent.budget_tier, display: BUDGET_TIER_LABELS[currentEvent.budget_tier], options: BUDGET_TIER_OPTIONS, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'Seating', field: 'seating_format', value: currentEvent.seating_format, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'Proposal due', field: 'proposal_due_date', value: currentEvent.proposal_due_date, type: 'date', display: currentEvent.proposal_due_date ? new Date(currentEvent.proposal_due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'Fee', field: 'agency_fee_percent', value: currentEvent.agency_fee_percent, type: 'number', display: currentEvent.agency_fee_percent != null ? `${currentEvent.agency_fee_percent}%` : null, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
