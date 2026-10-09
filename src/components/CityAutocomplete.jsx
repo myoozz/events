@@ -18,7 +18,38 @@ function getEnrichedCities() {
   return _enrichedCache
 }
 
+// Fuse index is cached at module level too: re-opening the New event form must not rebuild it
+let _fuseCache = null
+function getFuse() {
+  if (_fuseCache) return _fuseCache
+  _fuseCache = new Fuse(getEnrichedCities(), {
+    keys: ['city'],
+    threshold: 0.3,
+    distance: 80,
+    minMatchCharLength: 2,
+    includeScore: true,
+  })
+  return _fuseCache
+}
+
 const MAX_RESULTS = 8
+const CANDIDATES = 50 // rank a wider Fuse pool, then keep the top MAX_RESULTS
+// TODO: use the tenant's home country once tenants store it; India for now
+const HOME_COUNTRY = 'India'
+
+// Exact name match first, then home country, then Fuse score
+function rankHits(hits, query) {
+  const q = query.trim().toLowerCase()
+  const rank = h => [
+    h.item.city.toLowerCase() === q ? 0 : 1,
+    h.item.country === HOME_COUNTRY ? 0 : 1,
+    h.score ?? 1,
+  ]
+  return [...hits].sort((a, b) => {
+    const ra = rank(a), rb = rank(b)
+    return ra[0] - rb[0] || ra[1] - rb[1] || ra[2] - rb[2]
+  })
+}
 
 const S = {
   wrap: { position: 'relative', width: '100%' },
@@ -68,7 +99,7 @@ export default function CityAutocomplete({
   disabled = false,
   inputStyle: inputStyleOverride = {},
 }) {
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(() => _fuseCache !== null)
   const [results, setResults] = useState([])
   const [open, setOpen] = useState(false)
   const [cursor, setCursor] = useState(-1)
@@ -78,23 +109,19 @@ export default function CityAutocomplete({
   const inputRef = useRef(null)
   const listRef = useRef(null)
 
-  // Build Fuse index once on mount (deferred so it doesn't block paint)
+  // Fuse index: reuse the module cache if built; otherwise build deferred so it doesn't
+  // block paint — with a timeout, because on a busy page the idle callback may never fire.
+  // typeof check: Safari has no requestIdleCallback (a bare reference would throw).
   useEffect(() => {
-    const id = requestIdleCallback
-      ? requestIdleCallback(build)
-      : setTimeout(build, 0)
+    if (_fuseCache) { fuseRef.current = _fuseCache; setReady(true); return }
+    const hasIdle = typeof window.requestIdleCallback === 'function'
+    const id = hasIdle ? window.requestIdleCallback(build, { timeout: 500 }) : setTimeout(build, 0)
     function build() {
-      const cities = getEnrichedCities()
-      fuseRef.current = new Fuse(cities, {
-        keys: ['city'],
-        threshold: 0.3,
-        distance: 80,
-        minMatchCharLength: 2,
-      })
+      fuseRef.current = getFuse()
       setReady(true)
     }
     return () => {
-      if (typeof cancelIdleCallback !== 'undefined') cancelIdleCallback(id)
+      if (hasIdle) window.cancelIdleCallback(id)
       else clearTimeout(id)
     }
   }, [])
@@ -117,8 +144,8 @@ export default function CityAutocomplete({
       setOpen(false)
       return
     }
-    const hits = fuseRef.current.search(query, { limit: MAX_RESULTS })
-    setResults(hits.map(h => h.item))
+    const hits = fuseRef.current.search(query, { limit: CANDIDATES })
+    setResults(rankHits(hits, query).slice(0, MAX_RESULTS).map(h => h.item))
     setOpen(true)
     setCursor(-1)
   }, [])

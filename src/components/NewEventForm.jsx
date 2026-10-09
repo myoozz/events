@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../supabase'
 import { notifyApprovalRequired } from '../utils/notificationService'
 import CityAutocomplete from './CityAutocomplete'
 import { Icon } from '../icons'
+import { Modal, Button } from './ui'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -42,6 +44,26 @@ const TIERS = [
 ]
 
 const TOTAL_STEPS = 12
+
+const INITIAL_ANSWERS = {
+  eventName: '',
+  eventType: '', subCategory: '',
+  startDate: '', endDate: '',
+  cities: [],
+  paxCount: '',
+  seatingFormat: '',
+  budgetTier: '', perPaxBudget: '',
+  hasSubEvents: false, subEventCount: 2,
+  sub_events: '',
+  clientName: '', brandName: '',
+  clientSpocName: '', clientSpocPhone: '', clientSpocEmail: '',
+  agencyPocId: '',
+  proposalDueDate: '',
+  agencyFee: 10, gst: 18,
+}
+
+// Cities are stored lowercase (format change is Phase 2) — chips display title case
+const titleCase = (str) => String(str).replace(/\b\w/g, ch => ch.toUpperCase())
 
 // ─── Shared Styles ────────────────────────────────────────────────────────────
 
@@ -143,22 +165,30 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   const [error, setError] = useState('')
   const [stepError, setStepError] = useState('')
 
-  const [a, setA] = useState({
-    eventName: '',
-    eventType: '', subCategory: '',
-    startDate: '', endDate: '',
-    cities: [],
-    paxCount: '',
-    seatingFormat: '',
-    budgetTier: '', perPaxBudget: '',
-    hasSubEvents: false, subEventCount: 2,
-    sub_events: '',
-    clientName: '', brandName: '',
-    clientSpocName: '', clientSpocPhone: '', clientSpocEmail: '',
-    agencyPocId: '',
-    proposalDueDate: '',
-    agencyFee: 10, gst: 18,
-  })
+  const [a, setA] = useState(INITIAL_ANSWERS)
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+
+  // Anything typed or picked? Then closing asks first (C8).
+  const hasInput =
+    Object.keys(INITIAL_ANSWERS).some(k => JSON.stringify(a[k]) !== JSON.stringify(INITIAL_ANSWERS[k])) ||
+    cityInput.trim() !== '' || Object.keys(guidedCityDates).length > 0
+  const requestClose = () => { if (hasInput) setConfirmDiscard(true); else onClose() }
+
+  const discardPrompt = createPortal(
+    <Modal
+      open={confirmDiscard}
+      onClose={() => setConfirmDiscard(false)}
+      title="Discard this event?"
+      destructive
+      actions={<>
+        <Button variant="ghost" onClick={() => setConfirmDiscard(false)}>Keep editing</Button>
+        <Button variant="destructive" onClick={() => { setConfirmDiscard(false); onClose() }}>Discard</Button>
+      </>}
+    >
+      What you've entered will be lost.
+    </Modal>,
+    document.body
+  )
 
   useEffect(() => {
     supabase
@@ -250,12 +280,12 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         sub_events: a.hasSubEvents
           ? { count: a.subEventCount }
           : (a.sub_events ? { count: parseInt(a.sub_events) } : null),
-        status: 'active',
+        status: 'pitch',
         proposal_status: 'draft',
         created_by: resolvedUserId,
         created_by_role: userRole,
         tenant_id: userData?.tenant_id ?? null,
-        review_status: userRole === 'event_lead' ? 'pending' : 'approved',
+        review_status: userRole === 'event_lead' ? 'pending_review' : 'approved',
       }
 
       const { data: event, error: dbErr } = await supabase
@@ -289,13 +319,14 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   if (flowMode === 'entry') {
     return (
       <div style={S.overlay} onClick={(e) => e.stopPropagation()}>
+        {discardPrompt}
         <div style={S.modal}>
           <div style={S.header}>
             <div>
               <h2 style={S.title}>New event</h2>
               <p style={S.sub}>How do you want to start?</p>
             </div>
-            <button style={S.closeBtn} onClick={onClose}>×</button>
+            <button style={S.closeBtn} onClick={requestClose}>×</button>
           </div>
           <div style={{ ...S.body, display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '20px', paddingBottom: '28px' }}>
             <EntryTile
@@ -332,6 +363,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
 
     return (
       <div style={S.overlay} onClick={(e) => e.stopPropagation()}>
+        {discardPrompt}
         <div style={{ ...S.modal, ...(step === 6 ? { overflow: 'visible' } : {}) }}>
           <div style={{ ...S.header, alignItems: 'center' }}>
             <span style={{
@@ -339,7 +371,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
             }}>
               {step} / {TOTAL_STEPS}
             </span>
-            <button style={S.closeBtn} onClick={onClose}>×</button>
+            <button style={S.closeBtn} onClick={requestClose}>×</button>
           </div>
 
           {/* Progress bar */}
@@ -390,13 +422,14 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   if (flowMode === 'guided' && step === 'preview') {
     return (
       <div style={S.overlay} onClick={(e) => e.stopPropagation()}>
+        {discardPrompt}
         <div style={{ ...S.modal, maxWidth: '620px' }}>
           <div style={S.header}>
             <div>
               <h2 style={S.title}>{a.eventName || 'Your event'}</h2>
               <p style={S.sub}>Review everything before creating</p>
             </div>
-            <button style={S.closeBtn} onClick={onClose}>×</button>
+            <button style={S.closeBtn} onClick={requestClose}>×</button>
           </div>
           <div style={{ ...S.body, paddingTop: '20px', paddingBottom: '20px' }}>
 
@@ -492,13 +525,14 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
     const ci = { ...S.input, padding: '6px 12px' }
     return (
       <div style={S.overlay} onClick={(e) => e.stopPropagation()}>
+        {discardPrompt}
         <div style={{ ...S.modal, maxWidth: '896px' }}>
           <div style={S.header}>
             <div>
               <h2 style={S.title}>New event</h2>
               <p style={S.sub}>Fill in what you know. Everything can be edited later.</p>
             </div>
-            <button style={S.closeBtn} onClick={onClose}>×</button>
+            <button style={S.closeBtn} onClick={requestClose}>×</button>
           </div>
 
           <div style={{ ...S.body, paddingTop: '18px' }}>
@@ -597,7 +631,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
                   {a.cities.map(c => (
                     <span key={c} style={S.pill}>
-                      {c}
+                      {titleCase(c)}
                       <button onClick={() => removeCity(c)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer',
                           color: 'rgba(232,228,220,0.7)', padding: 0, fontSize: '15px',
@@ -886,7 +920,7 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginTop: '10px' }}>
               {a.cities.map(c => (
                 <span key={c} style={S.pill}>
-                  {c}
+                  {titleCase(c)}
                   <button onClick={() => removeCity(c)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer',
                       color: 'rgba(232,228,220,0.7)', padding: 0, fontSize: '16px',

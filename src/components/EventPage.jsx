@@ -11,6 +11,7 @@ import { createNotification } from '../utils/notificationService'
 import AssignEvent from './AssignEvent'
 import TravelItinerary from './TravelItinerary'
 import { Icon } from '../icons'
+import { eventTypeLabel } from '../utils/eventTypes'
 
 // ── Tab definitions — single source of truth for bar + bottom nav ──
 const TABS = [
@@ -342,11 +343,16 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
   }
 
   const FIELD_LABELS = {
-    event_name: 'Event name', sub_category: 'Sub-category', pax_count: 'PAX',
+    event_name: 'Event name', event_subtype: 'Sub-category', pax_count: 'PAX',
     budget_tier: 'Budget tier', seating_format: 'Seating format',
     proposal_due_date: 'Proposal due', agency_fee_percent: 'Agency fee', gst_percent: 'GST',
   }
   const BUDGET_TIER_LABELS = { budget: 'Budget', standard: 'Standard', premium: 'Premium', luxury: 'Luxury' }
+  // Pending-changes banner: tier shows its label (None for empty), everything else as-is
+  function pendingValueLabel(field, v) {
+    if (field === 'budget_tier') return BUDGET_TIER_LABELS[v] || 'None'
+    return String(v ?? '—')
+  }
   const BUDGET_TIER_OPTIONS = [{ value: '', label: 'None' }, ...Object.entries(BUDGET_TIER_LABELS).map(([value, label]) => ({ value, label }))]
   const ROLE_LABELS_MAP = { admin: 'Admin', manager: 'Manager', event_lead: 'Event Lead', team: 'Team', staff: 'Staff' }
 
@@ -541,9 +547,9 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                 {i > 0 && <span style={{ color: 'var(--text-tertiary)', margin: '0 5px' }}>·</span>}
                 <span style={{ fontWeight: 500 }}>{FIELD_LABELS[field] || field}</span>
                 {': '}
-                <span style={{ color: 'var(--text-tertiary)' }}>{String(currentEvent[field] ?? '—')}</span>
+                <span style={{ color: 'var(--text-tertiary)' }}>{pendingValueLabel(field, currentEvent[field])}</span>
                 {' → '}
-                <span style={{ color: 'var(--state-warning)' }}>{String(val)}</span>
+                <span style={{ color: 'var(--state-warning)' }}>{pendingValueLabel(field, val)}</span>
               </span>
             ))}
           </div>
@@ -572,7 +578,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5, flexWrap: 'wrap' }}>
                 {currentEvent.event_type && (
                   <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', padding: '2px 9px', borderRadius: 99, background: 'var(--bg-secondary)', border: '0.5px solid var(--border)' }}>
-                    {currentEvent.event_type}
+                    {eventTypeLabel(currentEvent.event_type)}
                   </span>
                 )}
                 {currentEvent.event_subtype && (
@@ -690,7 +696,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                 </div>
               </div>
 
-              {FieldCell({ label: 'Sub-category', field: 'sub_category', value: currentEvent.sub_category, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
+              {FieldCell({ label: 'Sub-category', field: 'event_subtype', value: currentEvent.event_subtype, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'PAX', field: 'pax_count', value: currentEvent.pax_count, type: 'number', cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'Budget tier', field: 'budget_tier', value: currentEvent.budget_tier, display: BUDGET_TIER_LABELS[currentEvent.budget_tier], options: BUDGET_TIER_OPTIONS, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}
               {FieldCell({ label: 'Seating', field: 'seating_format', value: currentEvent.seating_format, cellStyle: { padding: '9px 12px', borderLeft: '0.5px solid var(--border)', background: 'var(--bg)' } })}

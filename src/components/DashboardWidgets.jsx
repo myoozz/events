@@ -33,7 +33,7 @@ function formatShortDate(d) {
   return dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
-export default function DashboardWidgets({ userId, userRole, userName, userEmail }) {
+export default function DashboardWidgets({ userId, appUserId, userRole, userName, userEmail }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -82,7 +82,7 @@ export default function DashboardWidgets({ userId, userRole, userName, userEmail
         const { data: myEventRows } = await supabase
           .from('events')
           .select('id')
-          .or(`assigned_to.cs.{"${userEmail}"},created_by.eq.${userEmail}`)
+          .or(`assigned_to.cs.{"${userEmail}"},created_by.eq.${appUserId},created_by.eq.${userEmail}`)
           .eq('archived', false)
           .eq('is_test', false);
 

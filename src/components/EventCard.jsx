@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { eventTypeLabel } from '../utils/eventTypes'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -334,7 +335,7 @@ export default function EventCard({
               border: '1px solid var(--app-border)',
               borderRadius: '6px',
             }}>
-              {event.event_type}
+              {eventTypeLabel(event.event_type)}
             </span>
           )
         )}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 // Guide content per screen
 const GUIDES = {
@@ -80,7 +81,9 @@ export default function ScreenGuide({ screen }) {
 
   const isLast = step === guide.steps.length - 1
 
-  return (
+  // Portal to body: inside an animating (transformed) parent, position:fixed anchors to that
+  // parent — on the dashboard this card briefly sat on top of "+ New event" and ate the click.
+  return createPortal(
     <div style={{
       position: 'fixed', bottom: '24px', right: '24px',
       width: '320px', zIndex: 500,
@@ -153,5 +156,5 @@ export default function ScreenGuide({ screen }) {
         </div>
       </div>
     </div>
-  )
+  , document.body)
 }

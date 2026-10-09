@@ -500,7 +500,7 @@ function TenantDetail({ tenant, onBack, showToast, showError }) {
 
   async function loadEvents() {
     setEventsLoading(true)
-    const { data } = await supabase.from('events').select('id,name,status,cities,created_at').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(50)
+    const { data } = await supabase.from('events').select('id,event_name,status,cities,created_at').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(50)
     setEvents(data || [])
     setEventsLoading(false)
   }
@@ -686,7 +686,7 @@ function TenantDetail({ tenant, onBack, showToast, showError }) {
                   ? <tr><td colSpan={4} style={{ ...tdStyle, textAlign: 'center', color: 'var(--app-text-dim-lg)' }}>No events</td></tr>
                   : events.map(ev => (
                     <tr key={ev.id}>
-                      <td style={{ ...tdStyle, fontWeight: 500 }}>{ev.name}</td>
+                      <td style={{ ...tdStyle, fontWeight: 500 }}>{ev.event_name}</td>
                       <td style={tdStyle}><StatusPill status={ev.status} /></td>
                       <td style={tdStyle}>{Array.isArray(ev.cities) ? ev.cities.join(', ') : (ev.cities || '—')}</td>
                       <td style={{ ...tdStyle, color: 'var(--app-text-dim-lg)' }}>{fmtDate(ev.created_at)}</td>
