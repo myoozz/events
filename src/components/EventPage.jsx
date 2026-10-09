@@ -244,6 +244,28 @@ const CONFETTI_PIECES = Array.from({ length: 44 }, (_, i) => ({
   delay:    ((i % 10) * 0.07).toFixed(2),
 }))
 
+// Phase 0D: areas/venues picked for a city (events.locations), shown read-only under it
+function placesFor(ev, city) {
+  const c = String(city || '').toLowerCase()
+  return (Array.isArray(ev.locations) ? ev.locations : [])
+    .filter(l => l && l.level !== 'city' && String(l.city || '').toLowerCase() === c)
+}
+
+function PlaceLine({ loc }) {
+  const href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address || loc.label)}`
+    + (loc.place_id ? `&query_place_id=${encodeURIComponent(loc.place_id)}` : '')
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" title={loc.address ? `${loc.address} — open in Google Maps` : 'Open in Google Maps'}
+      style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 2, fontSize: '11px', lineHeight: 1.35, color: 'var(--text-secondary)', textDecoration: 'none', minWidth: 0 }}>
+      <Icon name="location" size={12} style={{ flexShrink: 0, marginTop: 1 }} />
+      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ color: 'var(--text)' }}>{loc.label}</span>
+        {loc.address ? <span> · {loc.address}</span> : null}
+      </span>
+    </a>
+  )
+}
+
 export default function EventPage({ event, userRole, session, onBack, onUpdated, initialTab }) {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768)
   useEffect(() => {
@@ -763,6 +785,20 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
               )}
 
             </div>
+
+            {/* Phase 0D: areas & venues under their city — read-only */}
+            {(currentEvent.cities || []).some(c => placesFor(currentEvent, c).length > 0) && (
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {(currentEvent.cities || []).filter(c => placesFor(currentEvent, c).length > 0).map(c => (
+                  <div key={c} style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
+                    <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text)', textTransform: 'capitalize', flexShrink: 0 }}>{c}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                      {placesFor(currentEvent, c).map(loc => <PlaceLine key={loc.place_id || loc.label} loc={loc} />)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

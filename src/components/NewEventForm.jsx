@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../supabase'
 import { notifyApprovalRequired } from '../utils/notificationService'
 import CityAutocomplete from './CityAutocomplete'
+import { hasPlacesKey } from '../utils/googlePlaces'
 import { Icon } from '../icons'
 import { Modal, Button } from './ui'
 
@@ -50,6 +51,7 @@ const INITIAL_ANSWERS = {
   eventType: '', subCategory: '',
   startDate: '', endDate: '',
   cities: [],
+  locations: [], // Phase 0D: what was picked — city, area or venue (each area/venue also adds its city)
   paxCount: '',
   seatingFormat: '',
   budgetTier: '', perPaxBudget: '',
@@ -64,6 +66,14 @@ const INITIAL_ANSWERS = {
 
 // Cities are stored lowercase (format change is Phase 2) — chips display title case
 const titleCase = (str) => String(str).replace(/\b\w/g, ch => ch.toUpperCase())
+
+// Without a Google key the box is cities-only, exactly as before
+const CITY_PLACEHOLDER = hasPlacesKey() ? 'Search a city, area or venue…' : 'Search and add a city…'
+
+// Chip text: "Mumbai" for a city, "Taj Lands End · Mumbai" for an area or venue
+const locationChipLabel = (loc) =>
+  loc.level === 'city' ? titleCase(loc.city) : `${loc.label} · ${titleCase(loc.city)}`
+const locationKey = (loc) => loc.level === 'city' ? `city:${loc.city.toLowerCase()}` : `place:${loc.place_id}`
 
 // ─── Shared Styles ────────────────────────────────────────────────────────────
 
@@ -205,8 +215,37 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
   const set = (key, val) => setA(prev => ({ ...prev, [key]: val }))
 
   const removeCity = (c) => {
-    set('cities', a.cities.filter(x => x !== c))
+    setA(prev => ({
+      ...prev,
+      cities: prev.cities.filter(x => x !== c),
+      locations: prev.locations.filter(l => l.city.toLowerCase() !== c),
+    }))
     setGuidedCityDates(prev => { const next = { ...prev }; delete next[c]; return next })
+  }
+
+  // A pick from the city box: always adds its city to `cities` once (per-city cost tabs
+  // depend on it); the pick itself — city, area or venue — goes into `locations`.
+  const addLocation = (pick) => {
+    const normalised = pick.city.trim().toLowerCase()
+    const entry = pick.level === 'city'
+      ? { level: 'city', label: titleCase(pick.city), city: titleCase(pick.city), state: pick.state || '', country: pick.country || '' }
+      : pick
+    setA(prev => ({
+      ...prev,
+      cities: prev.cities.includes(normalised) ? prev.cities : [...prev.cities, normalised],
+      locations: prev.locations.some(l => locationKey(l) === locationKey(entry))
+        ? prev.locations
+        : [...prev.locations, entry],
+    }))
+    setCityInput('')
+  }
+
+  // Removing the last pick for a city also drops the city (and its dates)
+  const removeLocation = (loc) => {
+    const city = loc.city.toLowerCase()
+    const rest = a.locations.filter(l => locationKey(l) !== locationKey(loc))
+    if (rest.some(l => l.city.toLowerCase() === city)) set('locations', rest)
+    else removeCity(city)
   }
 
   const validateStep = (currentStep) => {
@@ -268,6 +307,8 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         primary_city: a.cities[0] || null,
         cities: a.cities,
         city_dates: Object.keys(cityDates).length ? cityDates : null,
+        // Phase 0D: only written when an area/venue was picked — a city-only event saves exactly as before
+        ...(a.locations.some(l => l.level !== 'city') ? { locations: a.locations } : {}),
         start_date: a.startDate || null,
         end_date: a.endDate || null,
         proposal_due_date: a.proposalDueDate || null,
@@ -288,8 +329,15 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
         review_status: userRole === 'event_lead' ? 'pending_review' : 'approved',
       }
 
-      const { data: event, error: dbErr } = await supabase
+      let { data: event, error: dbErr } = await supabase
         .from('events').insert(payload).select().single()
+      // Schema without the `locations` column yet (migration pending, or demo): save without it
+      if (dbErr?.code === 'PGRST204' && payload.locations) {
+        console.warn('events.locations not available — saving cities only')
+        delete payload.locations
+        ;({ data: event, error: dbErr } = await supabase
+          .from('events').insert(payload).select().single())
+      }
       if (dbErr) throw dbErr
 
       // Fire-and-forget: notify admins that an event_lead created an event pending approval
@@ -386,6 +434,7 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
             <GuidedStepContent
               step={step} a={a} set={set}
               cityInput={cityInput} setCityInput={setCityInput}
+              addLocation={addLocation} removeLocation={removeLocation}
               removeCity={removeCity}
               users={users} setStep={setStep} stepError={stepError}
               guidedCityDates={guidedCityDates} setGuidedCityDates={setGuidedCityDates}
@@ -620,19 +669,16 @@ export default function NewEventForm({ onClose, onCreated, userRole, session }) 
               <CityAutocomplete
                 value={cityInput}
                 onChange={setCityInput}
-                onSelect={({ city }) => {
-                  const normalised = city.trim().toLowerCase()
-                  if (!a.cities.includes(normalised)) set('cities', [...a.cities, normalised])
-                  setCityInput('')
-                }}
-                placeholder="Search and add a city…"
+                onSelect={addLocation}
+                allowPlaces
+                placeholder={CITY_PLACEHOLDER}
               />
-              {a.cities.length > 0 && (
+              {a.locations.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-                  {a.cities.map(c => (
-                    <span key={c} style={S.pill}>
-                      {titleCase(c)}
-                      <button onClick={() => removeCity(c)}
+                  {a.locations.map(loc => (
+                    <span key={locationKey(loc)} style={S.pill} title={loc.address || undefined}>
+                      {locationChipLabel(loc)}
+                      <button onClick={() => removeLocation(loc)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer',
                           color: 'rgba(232,228,220,0.7)', padding: 0, fontSize: '15px',
                           lineHeight: 1, fontFamily: 'inherit' }}>×</button>
@@ -746,7 +792,7 @@ function EntryTile({ icon, title, desc, onClick, accent, disabled, badge }) {
 
 // ─── Guided Step Content ──────────────────────────────────────────────────────
 
-function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, users, setStep, stepError, guidedCityDates, setGuidedCityDates }) {
+function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, addLocation, removeLocation, users, setStep, stepError, guidedCityDates, setGuidedCityDates }) {
   const inputRef = useRef(null)
   const selectedType = EVENT_TYPES.find(t => t.value === a.eventType)
 
@@ -909,19 +955,16 @@ function GuidedStepContent({ step, a, set, cityInput, setCityInput, removeCity, 
           <CityAutocomplete
             value={cityInput}
             onChange={setCityInput}
-            onSelect={({ city }) => {
-              const normalised = city.trim().toLowerCase()
-              if (!a.cities.includes(normalised)) set('cities', [...a.cities, normalised])
-              setCityInput('')
-            }}
-            placeholder="Search and add a city…"
+            onSelect={addLocation}
+            allowPlaces
+            placeholder={CITY_PLACEHOLDER}
           />
-          {a.cities.length > 0 && (
+          {a.locations.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginTop: '10px' }}>
-              {a.cities.map(c => (
-                <span key={c} style={S.pill}>
-                  {titleCase(c)}
-                  <button onClick={() => removeCity(c)}
+              {a.locations.map(loc => (
+                <span key={locationKey(loc)} style={S.pill} title={loc.address || undefined}>
+                  {locationChipLabel(loc)}
+                  <button onClick={() => removeLocation(loc)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer',
                       color: 'rgba(232,228,220,0.7)', padding: 0, fontSize: '16px',
                       lineHeight: 1, fontFamily: 'inherit' }}>×</button>
