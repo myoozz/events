@@ -14,8 +14,11 @@ import markRaw from '../../assets/brand/me-mark.svg?raw'
  */
 
 // Use the supplied asset verbatim; only strip its fixed pixel box so it scales to `size`.
+// Strip width/height on the ROOT <svg> tag only. The previous global regex also stripped
+// them from the two <clipPath> rects, which clipped the whole mark away (rendered blank —
+// found 12 Oct 2026 in ui-preview; MeMark was not yet used on any production screen).
 const SVG = markRaw
-  .replace(/\s(?:width|height)="[^"]*"/g, '')
+  .replace(/<svg\b[^>]*>/, (tag) => tag.replace(/\s(?:width|height)="[^"]*"/g, ''))
   .replace('<svg ', '<svg style="height:100%;width:auto;display:block" ')
 
 export function MeMark({ size = 28, color = 'currentColor', title = 'Me', style }) {
