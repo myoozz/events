@@ -13,7 +13,8 @@ import FeedbackAdmin from './FeedbackAdmin'
 import ActivityLog from './ActivityLog'
 import ProfilePage from './ProfilePage'
 import NotificationBell from './NotificationBell'
-import { fetchUnreadCount, subscribeToNotifications } from '../utils/notificationService'
+import { fetchUnreadCount, subscribeToNotifications, notifMeta, resolveNotificationTarget } from '../utils/notificationService'
+import { toast } from './ui'
 import { Icon } from '../icons'
 import SuperAdminPanel from './SuperAdminPanel'
 import OnboardingModal from './OnboardingModal'
@@ -55,6 +56,8 @@ export default function AppShell({ session }) {
 
   // Phase C — Notifications
   const [unreadCount,  setUnreadCount]  = useState(0)
+  const [notifRefreshKey, setNotifRefreshKey] = useState(0)   // bumps on realtime insert → open panel re-fetches
+  const [eventDeepLink,   setEventDeepLink]   = useState(null) // { eventId, tab, nonce } from a notification
   const unsubNotifRef = useRef(null)  // holds realtime unsubscribe fn
 
   // Bug 10 — increment this to tell Dashboard to go back to events list
@@ -156,8 +159,19 @@ export default function AppShell({ session }) {
     fetchUnreadCount(userId).then(setUnreadCount)
 
     // Realtime — new notification → increment badge instantly
-    unsubNotifRef.current = subscribeToNotifications(userId, () => {
+    unsubNotifRef.current = subscribeToNotifications(userId, (n) => {
       setUnreadCount(c => c + 1)
+      setNotifRefreshKey(k => k + 1)
+      // Live toast — the only way a user learns of a notification without opening the bell
+      const meta = notifMeta(n.type)
+      const target = resolveNotificationTarget(n)
+      toast.show({
+        title: n.title,
+        body: n.body,
+        tone: meta.tone,
+        icon: meta.icon,
+        action: target ? { label: meta.cta || 'Open', onClick: () => openNotificationTarget(target) } : undefined,
+      })
     })
 
     // Cleanup on unmount or userId change
@@ -174,6 +188,16 @@ export default function AppShell({ session }) {
   function handleOnboardingComplete(action) {
     setWelcomedAt(new Date().toISOString())
     if (action === 'invite-team') setActiveTab('team')
+  }
+
+  // Oct 2026 — notification click / toast action → the thing it is about.
+  // { tab } switches the main tab; { eventId, eventTab } is handed to Dashboard as a deep link.
+  function openNotificationTarget(target) {
+    if (!target) return
+    if (target.eventId) {
+      setEventDeepLink({ eventId: target.eventId, tab: target.eventTab, nonce: Date.now() })
+    }
+    setActiveTab(target.tab || 'events')
   }
 
   // Phase C — called by NotificationBell when user marks read
@@ -780,6 +804,8 @@ export default function AppShell({ session }) {
             userId={userId}
             unreadCount={unreadCount}
             onMarkAllRead={handleMarkAllRead}
+            onNavigate={openNotificationTarget}
+            refreshKey={notifRefreshKey}
           />
         </div>
 
@@ -795,6 +821,7 @@ export default function AppShell({ session }) {
               userName={userName}
               userId={userId}
               resetKey={dashboardResetKey}
+              deepLink={eventDeepLink}
             />
           )}
           {activeTab === 'analytics' && (

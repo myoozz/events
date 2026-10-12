@@ -1,0 +1,286 @@
+/* ════════════════════════════════════════════════════════════════════════
+   me-ui.css — styles for the primitives that wrap third-party behaviour
+   (Sonner toasts, Radix Popover / AlertDialog, input-otp) plus HoldButton and
+   DeviceFrame. These need :hover / :focus-visible / [data-state] selectors that
+   inline styles cannot express. Tokens only — no hex literals in this file.
+   Every class is namespaced .me-* so nothing leaks into existing screens.
+   Imported once from components/ui/index.js.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── shared focus ring ─────────────────────────────────────────────────── */
+.me-focus:focus-visible,
+.me-notif-item:focus-visible,
+.me-notif-tab:focus-visible,
+.me-textbtn:focus-visible,
+.me-bell:focus-visible,
+.me-hold:focus-visible,
+.me-btn:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+}
+
+/* ── small buttons used inside these primitives ───────────────────────── */
+.me-btn {
+  font: 600 13px/1 var(--font-body);
+  height: 36px; padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  white-space: nowrap; cursor: pointer;
+  transition: background var(--dur-quick) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.me-btn:active { transform: scale(0.98); }
+.me-btn--primary { background: var(--app-accent); color: white; }
+.me-btn--primary:hover { background: var(--app-accent-hover); }
+.me-btn--danger { background: var(--state-danger); color: white; }
+.me-btn--danger:hover { filter: brightness(0.92); }
+.me-btn--secondary { background: transparent; color: var(--app-ink); border-color: var(--app-ink); }
+.me-btn--secondary:hover { background: var(--app-surface); }
+.me-btn--ghost { background: transparent; color: var(--app-text-dim); }
+.me-btn--ghost:hover { background: var(--app-surface); color: var(--app-ink); }
+.me-btn[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
+
+.me-textbtn {
+  font: 500 12px/1 var(--font-body); color: var(--app-accent);
+  background: none; border: 0; padding: 6px 8px; border-radius: var(--radius-sm);
+  cursor: pointer; white-space: nowrap;
+}
+.me-textbtn:hover { background: var(--state-danger-bg); }
+
+/* ── tone tiles (icon in a rounded square — avatars are squares, never circles) ── */
+.me-tone { display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 36px; height: 36px; border-radius: var(--radius-md); }
+.me-tone--action  { background: var(--state-warning-bg); color: var(--state-warning); }
+.me-tone--assign  { background: var(--state-danger-bg);  color: var(--app-accent); }
+.me-tone--done    { background: var(--state-success-bg); color: var(--state-success); }
+.me-tone--info    { background: var(--state-info-bg);    color: var(--state-info); }
+.me-tone--neutral { background: var(--app-surface);      color: var(--app-text-dim); }
+
+/* ════════════════════════════════════════════════════════════════════════
+   NOTIFICATION CENTRE (Radix Popover)
+   ════════════════════════════════════════════════════════════════════════ */
+.me-bell {
+  position: relative; width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 0; border-radius: var(--radius-md);
+  color: var(--app-text-dim); cursor: pointer;
+  transition: background var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out);
+}
+.me-bell:hover, .me-bell[data-state="open"] { background: var(--app-surface); color: var(--app-ink); }
+.me-bell[data-unread="true"] { color: var(--app-ink); }
+.me-bell__count {
+  position: absolute; top: 6px; right: 5px;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 9px; background: var(--app-accent); color: white;
+  font: 600 11px/18px var(--font-body); text-align: center;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--app-bg);
+  pointer-events: none;
+}
+
+.me-notif {
+  width: min(420px, calc(100vw - 24px));
+  max-height: min(600px, calc(100vh - 96px));
+  display: flex; flex-direction: column;
+  background: var(--app-bg);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-3);
+  overflow: hidden;
+  z-index: var(--z-popover);
+  font-family: var(--font-body);
+  transform-origin: var(--radix-popover-content-transform-origin);
+}
+.me-notif[data-state="open"]   { animation: me-pop-in var(--dur-modal-in) var(--ease-out); }
+.me-notif[data-state="closed"] { animation: me-pop-out var(--dur-modal-out) var(--ease-in); }
+@keyframes me-pop-in  { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes me-pop-out { from { opacity: 1; } to { opacity: 0; transform: translateY(-4px) scale(.98); } }
+
+.me-notif__head { padding: 16px 16px 0; display: grid; gap: 12px; flex: none; }
+.me-notif__titlerow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.me-notif__title { font: 600 22px/1.1 var(--font-heading); color: var(--app-ink); margin: 0; }
+.me-notif__sub { font: 500 11px/1.4 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--app-text-dim); }
+
+.me-notif__tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--app-border); }
+.me-notif-tab {
+  position: relative; background: none; border: 0; cursor: pointer;
+  padding: 8px 10px 10px; font: 500 13px/1 var(--font-body); color: var(--app-text-dim);
+  display: inline-flex; gap: 6px; align-items: center; white-space: nowrap;
+}
+.me-notif-tab:hover { color: var(--app-ink); }
+.me-notif-tab[aria-selected="true"] { color: var(--app-ink); }
+.me-notif-tab[aria-selected="true"]::after {
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px;
+  background: var(--app-accent); border-radius: 1px;
+}
+.me-notif-tab__n { font: 500 11px/1 var(--font-mono); color: var(--app-text-dim);
+  background: var(--app-surface); padding: 3px 6px; border-radius: var(--radius-sm); font-variant-numeric: tabular-nums; }
+.me-notif-tab[aria-selected="true"] .me-notif-tab__n { background: var(--app-ink); color: var(--app-bg); }
+
+.me-notif__list { overflow-y: auto; flex: 1; overscroll-behavior: contain; padding-bottom: 8px; }
+.me-notif__group {
+  position: sticky; top: 0; z-index: 1;
+  padding: 12px 16px 6px; background: var(--app-bg);
+  font: 500 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--app-text-dim);
+}
+
+.me-notif-item {
+  width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer;
+  display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 12px; align-items: start;
+  padding: 10px 16px; font-family: var(--font-body);
+  transition: background var(--dur-quick) var(--ease-out);
+}
+.me-notif-item:hover { background: var(--app-surface); }
+.me-notif-item[data-unread="true"] { background: color-mix(in srgb, var(--app-surface) 55%, var(--app-bg)); }
+.me-notif-item[data-unread="true"]:hover { background: var(--app-surface); }
+.me-notif-item__title { display: block; font-size: 14px; line-height: 1.35; color: var(--app-ink); font-weight: 500; margin: 0; }
+.me-notif-item[data-unread="true"] .me-notif-item__title { font-weight: 600; }
+.me-notif-item__body {
+  font-size: 13px; line-height: 1.45; color: var(--app-text-dim); margin: 2px 0 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.me-notif-item__meta { display: flex; gap: 8px; align-items: center; margin-top: 6px;
+  font: 500 11px/1 var(--font-mono); color: var(--app-text-dim); white-space: nowrap; }
+.me-notif-item__meta i { font-style: normal; }
+.me-notif-item__side { display: grid; justify-items: end; gap: 8px; padding-top: 2px; }
+.me-notif-item__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--app-accent); }
+.me-notif-item__cta {
+  font: 600 12px/1 var(--font-body); color: var(--app-ink);
+  border: 1px solid var(--app-border); background: var(--app-bg);
+  padding: 6px 10px; border-radius: var(--radius-sm); white-space: nowrap;
+}
+.me-notif-item:hover .me-notif-item__cta { border-color: var(--app-ink); }
+
+.me-notif__empty { padding: 48px 24px; display: grid; justify-items: center; gap: 8px; text-align: center; }
+.me-notif__empty strong { font: 600 20px/1.2 var(--font-heading); color: var(--app-ink); }
+.me-notif__empty p { font-size: 13px; color: var(--app-text-dim); max-width: 30ch; margin: 0; }
+.me-notif__foot { flex: none; border-top: 1px solid var(--app-border); padding: 10px 16px;
+  font: 500 11px/1.4 var(--font-mono); color: var(--app-text-dim); text-align: center; }
+.me-notif__skeleton { padding: 12px 16px; display: grid; gap: 14px; }
+.me-notif__skeleton div { height: 44px; border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--app-surface), var(--app-bg), var(--app-surface));
+  background-size: 200% 100%; animation: me-shimmer 1.2s linear infinite; }
+@keyframes me-shimmer { to { background-position: -200% 0; } }
+
+/* ════════════════════════════════════════════════════════════════════════
+   TOASTS (Sonner, unstyled mode)
+   ════════════════════════════════════════════════════════════════════════ */
+.me-toast {
+  width: min(380px, calc(100vw - 32px));
+  display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 12px; align-items: start;
+  padding: 14px 14px 14px 12px;
+  background: var(--app-bg); color: var(--app-ink);
+  border: 1px solid var(--app-border); border-radius: var(--radius-lg);
+  box-shadow: var(--elev-3);
+  font-family: var(--font-body);
+}
+.me-toast__title { font-size: 14px; font-weight: 600; line-height: 1.35; margin: 0; }
+.me-toast__body  { font-size: 13px; line-height: 1.45; color: var(--app-text-dim); margin: 2px 0 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.me-toast__actions { display: flex; gap: 6px; align-items: center; }
+.me-toast__close { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; background: none; color: var(--app-text-dim); border-radius: var(--radius-sm); cursor: pointer; }
+.me-toast__close:hover { background: var(--app-surface); color: var(--app-ink); }
+
+/* ════════════════════════════════════════════════════════════════════════
+   CONFIRM DIALOG (Radix AlertDialog) — same look as ui/Modal
+   ════════════════════════════════════════════════════════════════════════ */
+.me-confirm__overlay {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  background: var(--modal-overlay);
+  backdrop-filter: blur(var(--modal-blur)); -webkit-backdrop-filter: blur(var(--modal-blur));
+  animation: me-fade var(--dur-modal-in) var(--ease-out);
+}
+.me-confirm {
+  position: fixed; z-index: var(--z-modal); left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(460px, calc(100vw - 32px));
+  background: var(--app-bg); border: 1px solid var(--app-border);
+  border-radius: var(--radius-lg); box-shadow: var(--elev-3);
+  padding: 22px 24px 20px; font-family: var(--font-body);
+  animation: me-confirm-in var(--dur-modal-in) var(--ease-out);
+}
+@keyframes me-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes me-confirm-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.98); } to { opacity: 1; transform: translate(-50%, -50%); } }
+.me-confirm__eyebrow { font: 500 11px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--app-text-dim); margin-bottom: 10px; }
+.me-confirm[data-destructive="true"] .me-confirm__eyebrow { color: var(--state-danger); }
+.me-confirm__title { font: 600 24px/1.2 var(--font-heading); color: var(--app-ink); margin: 0 0 8px; }
+.me-confirm__body { font-size: 14px; line-height: 1.6; color: var(--app-text-dim); margin: 0 0 18px; }
+.me-confirm__type { display: grid; gap: 6px; margin: 0 0 18px; }
+.me-confirm__type label { font-size: 13px; color: var(--app-text-dim); }
+.me-confirm__type b { font-family: var(--font-mono); font-weight: 500; color: var(--app-ink); }
+.me-confirm__type input {
+  height: 44px; padding: 0 12px; font: 400 15px var(--font-body); color: var(--app-ink);
+  background: white; border: 1px solid var(--app-border); border-radius: var(--radius-md); outline: none;
+}
+.me-confirm__type input:focus { border-color: var(--app-accent); box-shadow: 0 0 0 3px var(--state-danger-bg); }
+.me-confirm__actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   OTP INPUT (input-otp)
+   ════════════════════════════════════════════════════════════════════════ */
+.me-otp { display: flex; gap: 8px; align-items: center; }
+.me-otp__slot {
+  position: relative; width: 48px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  font: 500 22px/1 var(--font-mono); color: var(--app-ink);
+  background: white; border: 1px solid var(--app-border); border-radius: var(--radius-md);
+  transition: border-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
+}
+.me-otp__slot[data-filled="true"] { background: var(--app-surface); }
+.me-otp__slot[data-active="true"] { border-color: var(--app-accent); box-shadow: 0 0 0 3px var(--state-danger-bg); }
+.me-otp[data-complete="true"] .me-otp__slot { border-color: var(--state-success); }
+.me-otp[data-error="true"] .me-otp__slot { border-color: var(--state-danger); }
+.me-otp__caret { width: 1px; height: 24px; background: var(--app-ink); animation: me-blink 1s steps(2, start) infinite; }
+.me-otp__gap { width: 10px; height: 1px; background: var(--app-border); }
+@keyframes me-blink { to { visibility: hidden; } }
+@media (max-width: 420px) { .me-otp { gap: 6px; } .me-otp__slot { width: 42px; height: 52px; font-size: 20px; } }
+
+/* ════════════════════════════════════════════════════════════════════════
+   HOLD BUTTON — press-and-hold for destructive admin actions
+   ════════════════════════════════════════════════════════════════════════ */
+.me-hold {
+  position: relative; overflow: hidden; isolation: isolate;
+  height: 44px; padding: 0 20px; min-width: 200px;
+  font: 600 14px/1 var(--font-body); color: var(--state-danger);
+  background: var(--app-bg); border: 1px solid var(--state-danger); border-radius: var(--radius-md);
+  cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none;
+}
+.me-hold__fill { position: absolute; inset: 0; z-index: -1; background: var(--state-danger);
+  transform: scaleX(var(--p, 0)); transform-origin: left; }
+.me-hold[data-armed="true"] { color: white; }
+.me-hold[data-done="true"] { color: white; background: var(--state-danger); }
+.me-hold[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   DEVICE FRAMES — landing only. Screens show real 2x captures or the mark.
+   ════════════════════════════════════════════════════════════════════════ */
+.me-device { position: relative; max-width: 100%; }
+.me-device__screen { position: relative; overflow: hidden; background: var(--device-screen); }
+.me-device__screen > img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+
+.me-device--browser { width: 100%; border-radius: 12px; overflow: hidden; background: var(--device-chrome);
+  border: 1px solid var(--device-line); box-shadow: var(--device-shadow); }
+.me-device__bar { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--device-line); }
+.me-device__dots { display: flex; gap: 6px; } .me-device__dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--device-body-edge); }
+.me-device__url { flex: 1; min-width: 0; display: flex; gap: 8px; align-items: center; overflow: hidden; white-space: nowrap;
+  font: 12px var(--font-mono); color: var(--dark-text); opacity: .75;
+  background: var(--device-screen); border: 1px solid var(--device-line); border-radius: 999px; padding: 5px 12px; }
+.me-device__lock { width: 7px; height: 7px; border-radius: 50%; background: var(--brand-aqua); flex: none; }
+.me-device--browser .me-device__screen { aspect-ratio: 16 / 10; }
+
+.me-device--tablet { width: min(100%, 320px); aspect-ratio: 3 / 4; padding: 12px; border-radius: 24px;
+  background: var(--device-body); box-shadow: inset 0 0 0 1px var(--device-body-edge), var(--device-shadow); }
+.me-device--tablet::before { content: ""; position: absolute; top: 5px; left: 50%; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--device-bezel); }
+.me-device--tablet .me-device__screen { height: 100%; border-radius: 12px; }
+
+.me-device--phone { width: min(100%, 220px); aspect-ratio: 70.6 / 146.6; padding: 9px; border-radius: 34px;
+  background: var(--device-body); box-shadow: inset 0 0 0 1px var(--device-body-edge), var(--device-shadow); }
+.me-device--phone .me-device__screen { height: 100%; border-radius: 26px; }
+.me-device__island { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); width: 30%; height: 18px; border-radius: 999px; background: var(--device-bezel); z-index: 1; }
+.me-device__btn { position: absolute; width: 2px; background: var(--device-body-edge); border-radius: 2px 0 0 2px; }
+
+.me-device__placeholder { height: 100%; display: grid; place-items: center; align-content: center; gap: 8px;
+  background: radial-gradient(60% 50% at 50% 40%, var(--brand-teal-dim), transparent 70%), var(--device-screen);
+  color: var(--brand-teal-soft); }
+.me-device__placeholder small { font: 500 10px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dark-text); opacity: .55; }

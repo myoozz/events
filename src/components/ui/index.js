@@ -17,3 +17,12 @@ export { Tabs } from './Tabs'
 export { EmptyState } from './EmptyState'
 export { LoadingSkeleton } from './LoadingSkeleton'
 export { ErrorState } from './ErrorState'
+
+/* Oct 2026 — behaviour from audited open-source packages (pinned, MIT), look from ME tokens.
+   Styles for these live in me-ui.css (needs :hover / :focus-visible / [data-state]). */
+import './me-ui.css'
+export { toast, ToastHost } from './Toast'
+export { ConfirmDialog, ConfirmHost, confirmAction } from './ConfirmDialog'
+export { OtpInput } from './OtpInput'
+export { HoldButton } from './HoldButton'
+export { DeviceFrame } from './DeviceFrame'

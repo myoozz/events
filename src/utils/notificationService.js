@@ -10,13 +10,17 @@
 
 import { supabase } from '../supabase';
 
-async function resolveUserId(authId) {
-  if (!authId) return null;
+// Callers pass either an auth uid (session.user.id) or an app users.id.
+// users.id never equals auth_id (verified 12 Oct 2026: 0 of 15), so try auth_id first,
+// then accept the value as-is if it is already a users.id.
+async function resolveUserId(anyId) {
+  if (!anyId) return null;
   const { data } = await supabase
     .from('users')
     .select('id')
-    .eq('auth_id', authId)
-    .single();
+    .or(`auth_id.eq.${anyId},id.eq.${anyId}`)
+    .limit(1)
+    .maybeSingle();
   return data?.id ?? null;
 }
 
@@ -31,20 +35,57 @@ export const NOTIF_TYPES = {
   APPROVAL_REQUIRED:    'approval_required',
   EVENT_CREATED:        'event_created',
   RATE_CARD_REQUESTED:  'rate_card_requested',
+  REMINDER:             'reminder',
 };
 
 // ─────────────────────────────────────────────
-// ICON + COLOUR MAP (used in NotificationBell)
+// ICON + TONE MAP (used by NotificationBell + live toasts)
 // ─────────────────────────────────────────────
+// tone → .me-tone--{tone} in components/ui/me-ui.css (semantic tokens only, no hex).
+//   action  = someone is waiting on you      (warning)
+//   assign  = new work landed on you         (app accent)
+//   done    = something finished             (success)
+//   info    = FYI                            (info)
+// needsAction items are pinned under the "Needs you" filter and get a CTA.
 export const NOTIF_META = {
-  task_assigned:       { icon: 'taskAssigned',  colour: '#bc1723', label: 'Task Assigned' },
-  event_assigned:      { icon: 'calendar',      colour: '#2563eb', label: 'Event Assigned' },
-  task_status_changed: { icon: 'statusChanged', colour: '#d97706', label: 'Status Updated' },
-  task_completed:      { icon: 'taskCompleted', colour: '#16a34a', label: 'Task Completed' },
-  approval_required:   { icon: 'approvals',     colour: '#bc1723', label: 'Needs Approval' },
-  event_created:       { icon: 'newEvent',      colour: '#7c3aed', label: 'New Event' },
-  rate_card_requested: { icon: 'rateRequested', colour: '#d97706', label: 'Rate Requested' },
+  task_assigned:       { icon: 'taskAssigned',  tone: 'assign', label: 'Task assigned',   cta: 'Open task' },
+  event_assigned:      { icon: 'calendar',      tone: 'assign', label: 'Added to event',  cta: 'Open event' },
+  task_status_changed: { icon: 'statusChanged', tone: 'info',   label: 'Status update' },
+  task_completed:      { icon: 'taskCompleted', tone: 'done',   label: 'Task done' },
+  approval_required:   { icon: 'approvals',     tone: 'action', label: 'Needs approval',  cta: 'Review', needsAction: true },
+  event_created:       { icon: 'newEvent',      tone: 'info',   label: 'New event' },
+  rate_card_requested: { icon: 'rateRequested', tone: 'action', label: 'Rate request',    cta: 'Add rates', needsAction: true },
+  reminder:            { icon: 'bell',          tone: 'action', label: 'Reminder',        cta: 'Open', needsAction: true },
 };
+const META_FALLBACK = { icon: 'notifFallback', tone: 'neutral', label: 'Update' };
+export function notifMeta(type) { return NOTIF_META[type] || META_FALLBACK; }
+
+// ─────────────────────────────────────────────
+// WHERE A NOTIFICATION TAKES YOU
+// ─────────────────────────────────────────────
+// Before Oct 2026 action_url was written but never read, so every notification was a
+// dead end. Resolve from the structured columns first; action_url is only a hint.
+// Returns { tab, eventId?, eventTab? } for AppShell, or null when there is nowhere to go.
+export function resolveNotificationTarget(n) {
+  if (!n) return null;
+  const url = n.action_url || '';
+  if (n.entity_type === 'rate_card' || url.includes('rate-card')) return { tab: 'ratecard' };
+  const qs = new URLSearchParams(url.startsWith('?') ? url : url.split('?')[1] || '');
+  const eventId = n.event_id || qs.get('event') || (n.entity_type === 'event' ? n.entity_id : null);
+  if (!eventId) return { tab: 'events' };
+  const eventTab = n.entity_type === 'task' || qs.get('tab') === 'tasks' ? 'tasks' : undefined;
+  return { tab: 'events', eventId, eventTab };
+}
+
+/** Day bucket for grouping in the panel: 'Today' | 'Yesterday' | 'Earlier' */
+export function dayBucket(dateString) {
+  const d = new Date(dateString);
+  const start = new Date(); start.setHours(0, 0, 0, 0);
+  if (d >= start) return 'Today';
+  const y = new Date(start); y.setDate(y.getDate() - 1);
+  if (d >= y) return 'Yesterday';
+  return 'Earlier';
+}
 
 // ─────────────────────────────────────────────
 // CREATE A NOTIFICATION
@@ -176,10 +217,21 @@ export async function notifyEventCreated({ adminIds = [], actorId, eventName, ev
 
 /** Notify all admins that a user asked for rates on an element */
 export async function createRateCardRequestNotification({ requestingUser, elementName, category, eventId }) {
+  // Tenant-scoped: only admins of the requester's own workspace (master data-isolation rule).
+  // Previously selected every admin on the platform.
+  if (!requestingUser?.id) return;
+  const { data: me } = await supabase
+    .from('users')
+    .select('tenant_id')
+    .eq('id', requestingUser.id)
+    .single();
+  if (!me?.tenant_id) return;
+
   const { data: admins } = await supabase
     .from('users')
     .select('id')
-    .eq('role', 'admin');
+    .eq('role', 'admin')
+    .eq('tenant_id', me.tenant_id);
 
   if (!admins?.length) return;
 

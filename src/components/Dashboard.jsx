@@ -76,7 +76,7 @@ function useIsMobile() {
 }
 
 // Bug 10: Added userName and resetKey props
-export default function Dashboard({ userRole, session, userName, userId, resetKey }) {
+export default function Dashboard({ userRole, session, userName, userId, resetKey, deepLink }) {
   const [events, setEvents] = useState([])
   const [archivedEvents, setArchivedEvents] = useState([])
   const [pendingEvents, setPendingEvents] = useState([])
@@ -90,6 +90,20 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
   const [showNewEvent, setShowNewEvent] = useState(false)
   const [editEvent, setEditEvent] = useState(null)
   const [openEvent, setOpenEvent] = useState(null)
+  const [forceTab, setForceTab] = useState(null)
+
+  // Oct 2026 — notification deep link: open the event (and tab) it is about.
+  // Kept above the role router so the hook order is identical for every role.
+  useEffect(() => {
+    if (!deepLink?.eventId) return
+    let live = true
+    supabase.from('events').select('*').eq('id', deepLink.eventId).maybeSingle().then(({ data }) => {
+      if (!live || !data) return
+      setForceTab(deepLink.tab || null)
+      setOpenEvent(data)
+    })
+    return () => { live = false }
+  }, [deepLink?.nonce])
 
   // Role router — non-admin roles get specialised panels (Track B).
   // Admin (and any unmapped role) falls through to the existing Dashboard view.
@@ -441,9 +455,10 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
         event={openEvent}
         userRole={userRole}
         session={session}
-        onBack={() => { setOpenEvent(null); setInitialTab('elements') }}
+        onBack={() => { setOpenEvent(null); setInitialTab('elements'); setForceTab(null) }}
         onUpdated={handleUpdated}
         initialTab={initialTab}
+        forceTab={forceTab}
       />
     )
   }
