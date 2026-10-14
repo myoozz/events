@@ -72,6 +72,14 @@
   /* 11 · MODAL BACKDROP */
   --modal-overlay: rgba(26,16,8,0.40);  --modal-blur: 8px;
 
+  /* 12 · DEVICE FRAMES — landing / marketing surfaces only (DeviceFrame primitive) */
+  --device-body: #1B1F22;  --device-body-edge: #2E3439;  --device-bezel: #0B0D0F;
+  --device-screen: #06171D;  --device-line: rgba(140,178,188,0.18);  --device-chrome: #0E1B22;
+  --device-shadow: 0 24px 60px -24px rgba(0,0,0,0.75);
+
+  /* 13 · LAYERS */
+  --z-popover: 1100;  --z-toast: 1200;  --z-modal: 1300;
+
   /* ===== Legacy aliases -> V2 (existing var(--x) usages cascade to V2) ===== */
   --accent: var(--app-accent);  --accent-deep: var(--app-accent-hover);  --me: var(--app-accent);
   --red: var(--app-accent);  --red-deep: var(--app-accent-hover);  --red-dark: var(--app-accent-hover);
@@ -160,4 +168,17 @@ button {
 
   /* Readable font sizes */
   input, select, textarea { font-size: 16px !important; } /* prevents iOS zoom */
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────
+   Referenced by ui/Modal.jsx ("neutralised by the global prefers-reduced-motion
+   rule in index.css") but never existed until now. CSS animations/transitions only;
+   framer-motion components handle this via useReducedMotion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

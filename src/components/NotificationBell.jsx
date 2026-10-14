@@ -1,318 +1,188 @@
 // ============================================================
-// NotificationBell.jsx
-// Myoozz Events — Phase C
-// Path: src/components/NotificationBell.jsx
-// ============================================================
-// Bell icon in AppShell header.
-// Shows unread badge count.
-// Click opens dropdown log (last 30 notifications).
-// Mark individual or all as read.
-// Realtime subscription handled in AppShell — this is display only.
+// NotificationBell.jsx — notification centre in the AppShell header
+// Rebuilt 12 Oct 2026 on Radix Popover 1.1.23 (focus, Esc, outside click,
+// collision handling) with ME tokens (.me-notif* in ui/me-ui.css).
+//
+// What changed vs Phase C:
+//   · every item opens what it is about (onNavigate) — action_url was never read before
+//   · filters: All / Unread / Needs you (approvals, rate requests, reminders)
+//   · grouped Today / Yesterday / Earlier, 2-line bodies, type label on each row
+//   · panel re-fetches when a realtime insert arrives while it is open (refreshKey)
+//   · semantic tone tokens instead of off-palette hex
+// Data access still goes only through utils/notificationService.js.
 // ============================================================
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react'
+import * as Popover from '@radix-ui/react-popover'
 import {
   fetchNotifications,
   markNotificationRead,
   markAllNotificationsRead,
-  NOTIF_META,
+  notifMeta,
+  resolveNotificationTarget,
+  dayBucket,
   timeAgo,
-} from '../utils/notificationService';
-import { Icon } from '../icons';
+} from '../utils/notificationService'
+import { Icon } from '../icons'
 
-export default function NotificationBell({ userId, unreadCount, onMarkAllRead }) {
-  const [open, setOpen]               = useState(false);
-  const [notifications, setNotifs]    = useState([]);
-  const [loading, setLoading]         = useState(false);
-  const dropdownRef                   = useRef(null);
+const FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'unread', label: 'Unread' },
+  { id: 'action', label: 'Needs you' },
+]
+const GROUP_ORDER = ['Today', 'Yesterday', 'Earlier']
 
-  // ── Load notifications when dropdown opens ──────────────────
+// `load` is injectable for ui-preview only; the app always uses the service.
+export default function NotificationBell({ userId, unreadCount = 0, onMarkAllRead, onNavigate, refreshKey = 0, load = fetchNotifications, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [filter, setFilter] = useState('all')
+
   useEffect(() => {
-    if (!open || !userId) return;
-    setLoading(true);
-    fetchNotifications(userId, 30).then((data) => {
-      setNotifs(data);
-      setLoading(false);
-    });
-  }, [open, userId]);
+    if (!open || !userId) return
+    let live = true
+    setLoading(true)
+    load(userId, 50).then((data) => {
+      if (!live) return
+      setItems(data)
+      setLoading(false)
+    })
+    return () => { live = false }
+  }, [open, userId, refreshKey, load])
 
-  // ── Close on outside click ───────────────────────────────────
-  useEffect(() => {
-    function handleOutside(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpen(false);
-      }
+  const counts = useMemo(() => ({
+    all: items.length,
+    unread: items.filter(n => !n.is_read).length,
+    action: items.filter(n => !n.is_read && notifMeta(n.type).needsAction).length,
+  }), [items])
+
+  const groups = useMemo(() => {
+    const shown = items.filter(n =>
+      filter === 'unread' ? !n.is_read :
+      filter === 'action' ? !n.is_read && notifMeta(n.type).needsAction : true)
+    const map = {}
+    shown.forEach(n => { (map[dayBucket(n.created_at)] ||= []).push(n) })
+    return GROUP_ORDER.filter(g => map[g]).map(g => [g, map[g]])
+  }, [items, filter])
+
+  async function openItem(n) {
+    if (!n.is_read) {
+      setItems(prev => prev.map(x => (x.id === n.id ? { ...x, is_read: true } : x)))
+      onMarkAllRead?.('single')
+      if (load === fetchNotifications) markNotificationRead(n.id)   // fire-and-forget; service never throws
     }
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
-
-  // ── Mark single as read ──────────────────────────────────────
-  async function handleMarkRead(notif) {
-    if (notif.is_read) return;
-    await markNotificationRead(notif.id);
-    setNotifs((prev) =>
-      prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
-    );
-    if (onMarkAllRead) onMarkAllRead('single');
+    const target = resolveNotificationTarget(n)
+    if (target && onNavigate) {
+      setOpen(false)
+      onNavigate(target, n)
+    }
   }
 
-  // ── Mark all as read ─────────────────────────────────────────
-  async function handleMarkAll() {
-    await markAllNotificationsRead(userId);
-    setNotifs((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    if (onMarkAllRead) onMarkAllRead('all');
+  async function markAll() {
+    setItems(prev => prev.map(n => ({ ...n, is_read: true })))
+    onMarkAllRead?.('all')
+    if (load === fetchNotifications) await markAllNotificationsRead(userId)
   }
 
-  const hasUnread = unreadCount > 0;
+  const badge = unreadCount > 99 ? '99+' : unreadCount
 
   return (
-    <div style={{ position: 'relative' }} ref={dropdownRef}>
-
-      {/* ── Bell Button ── */}
-      <button
-        onClick={() => setOpen((o) => !o)}
-        title="Notifications"
-        style={{
-          position:        'relative',
-          background:      'none',
-          border:          'none',
-          cursor:          'pointer',
-          padding:         '6px',
-          borderRadius:    '8px',
-          display:         'flex',
-          alignItems:      'center',
-          justifyContent:  'center',
-          transition:      'background 0.15s',
-          backgroundColor: open ? '#f5f0ef' : 'transparent',
-        }}
-        onMouseEnter={(e) => { if (!open) e.currentTarget.style.backgroundColor = '#f5f0ef'; }}
-        onMouseLeave={(e) => { if (!open) e.currentTarget.style.backgroundColor = 'transparent'; }}
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger
+        className="me-bell"
+        data-unread={unreadCount > 0 ? 'true' : 'false'}
+        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
       >
-        {/* Bell SVG */}
-        <svg
-          width="20" height="20" viewBox="0 0 24 24"
-          fill="none" stroke={hasUnread ? 'var(--app-accent)' : 'var(--app-text-dim)'}
-          strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-        >
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          {hasUnread && (
-            <circle cx="18" cy="5" r="4" fill="var(--app-accent)" stroke="var(--bg)" strokeWidth="1.5" />
-          )}
-        </svg>
+        <Icon name="bell" size={20} />
+        {unreadCount > 0 && <span className="me-bell__count" aria-hidden="true">{badge}</span>}
+      </Popover.Trigger>
 
-        {/* Badge */}
-        {hasUnread && (
-          <span style={{
-            position:      'absolute',
-            top:           '2px',
-            right:         '2px',
-            minWidth:      '16px',
-            height:        '16px',
-            borderRadius:  '8px',
-            backgroundColor: 'var(--app-accent)',
-            color:         '#fff',
-            fontSize:      '10px',
-            fontFamily:    'DM Sans, sans-serif',
-            fontWeight:    '700',
-            display:       'flex',
-            alignItems:    'center',
-            justifyContent:'center',
-            padding:       '0 3px',
-            lineHeight:    1,
-            border:        '1.5px solid #FAFAF8',
-            pointerEvents: 'none',
-          }}>
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
-      </button>
-
-      {/* ── Dropdown Panel ── */}
-      {open && (
-        <div style={{
-          position:     'absolute',
-          top:          'calc(100% + 8px)',
-          right:        0,
-          width:        '340px',
-          maxHeight:    '480px',
-          background:   '#FAFAF8',
-          borderRadius: '12px',
-          boxShadow:    '0 8px 32px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.07)',
-          border:       '1px solid #ede8e4',
-          zIndex:       1000,
-          display:      'flex',
-          flexDirection:'column',
-          overflow:     'hidden',
-        }}>
-
-          {/* Header */}
-          <div style={{
-            display:        'flex',
-            alignItems:     'center',
-            justifyContent: 'space-between',
-            padding:        '14px 16px 10px',
-            borderBottom:   '1px solid #ede8e4',
-            flexShrink:     0,
-          }}>
-            <span style={{
-              fontFamily: 'Cormorant Garamond, serif',
-              fontSize:   '17px',
-              fontWeight: '600',
-              color:      'var(--app-ink)',
-            }}>
-              Notifications
-            </span>
-            {hasUnread && (
-              <button
-                onClick={handleMarkAll}
-                style={{
-                  background:  'none',
-                  border:      'none',
-                  cursor:      'pointer',
-                  fontSize:    '12px',
-                  fontFamily:  'DM Sans, sans-serif',
-                  color:       'var(--app-accent)',
-                  fontWeight:  '500',
-                  padding:     '2px 6px',
-                  borderRadius:'4px',
-                  transition:  'background 0.15s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--state-danger-bg)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-              >
-                Mark all read
-              </button>
-            )}
-          </div>
-
-          {/* List */}
-          <div style={{ overflowY: 'auto', flex: 1 }}>
-
-            {loading && (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: '#9a9a9a', fontFamily: 'DM Sans, sans-serif', fontSize: '13px' }}>
-                Loading…
-              </div>
-            )}
-
-            {!loading && notifications.length === 0 && (
-              <div style={{ padding: '40px 16px', textAlign: 'center' }}>
-                <div style={{ marginBottom: '8px' }}><Icon name="bell" size={28} color="var(--app-text-dim)" /></div>
-                <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#9a9a9a' }}>
-                  You're all caught up
+      <Popover.Portal>
+        <Popover.Content className="me-notif" align="end" sideOffset={8} collisionPadding={12}>
+          <div className="me-notif__head">
+            <div className="me-notif__titlerow">
+              <div>
+                <h2 className="me-notif__title">Notifications</h2>
+                <div className="me-notif__sub">
+                  {counts.unread ? `${counts.unread} unread` : 'All caught up'}
+                  {counts.action ? ` · ${counts.action} need you` : ''}
                 </div>
               </div>
-            )}
-
-            {!loading && notifications.map((notif) => {
-              const meta = NOTIF_META[notif.type] || { icon: 'notifFallback', colour: 'var(--app-text-dim)', label: '' };
-              return (
-                <div
-                  key={notif.id}
-                  onClick={() => handleMarkRead(notif)}
-                  style={{
-                    display:         'flex',
-                    alignItems:      'flex-start',
-                    gap:             '10px',
-                    padding:         '12px 16px',
-                    borderBottom:    '1px solid #f0ebe6',
-                    cursor:          notif.is_read ? 'default' : 'pointer',
-                    backgroundColor: notif.is_read ? 'transparent' : '#fff8f8',
-                    transition:      'background 0.15s',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!notif.is_read) e.currentTarget.style.backgroundColor = 'var(--state-danger-bg)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = notif.is_read ? 'transparent' : '#fff8f8';
-                  }}
-                >
-                  {/* Icon circle */}
-                  <div style={{
-                    width:          '34px',
-                    height:         '34px',
-                    borderRadius:   '50%',
-                    backgroundColor: `${meta.colour}15`,
-                    display:        'flex',
-                    alignItems:     'center',
-                    justifyContent: 'center',
-                    fontSize:       '15px',
-                    flexShrink:     0,
-                    marginTop:      '1px',
-                  }}>
-                    <Icon name={meta.icon} size={16} color={meta.colour} />
-                  </div>
-
-                  {/* Text */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontFamily:  'DM Sans, sans-serif',
-                      fontSize:    '13px',
-                      fontWeight:  notif.is_read ? '400' : '600',
-                      color:       'var(--app-ink)',
-                      lineHeight:  '1.35',
-                      marginBottom:'2px',
-                    }}>
-                      {notif.title}
-                    </div>
-                    {notif.body && (
-                      <div style={{
-                        fontFamily:   'DM Sans, sans-serif',
-                        fontSize:     '12px',
-                        color:        'var(--app-text-dim)',
-                        whiteSpace:   'nowrap',
-                        overflow:     'hidden',
-                        textOverflow: 'ellipsis',
-                        marginBottom: '3px',
-                      }}>
-                        {notif.body}
-                      </div>
-                    )}
-                    <div style={{
-                      fontFamily: 'DM Sans, sans-serif',
-                      fontSize:   '11px',
-                      color:      'var(--app-text-dim-lg)',
-                    }}>
-                      {timeAgo(notif.created_at)}
-                    </div>
-                  </div>
-
-                  {/* Unread dot */}
-                  {!notif.is_read && (
-                    <div style={{
-                      width:           '7px',
-                      height:          '7px',
-                      borderRadius:    '50%',
-                      backgroundColor: 'var(--app-accent)',
-                      flexShrink:      0,
-                      marginTop:       '5px',
-                    }} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Footer */}
-          {notifications.length > 0 && (
-            <div style={{
-              padding:       '10px 16px',
-              borderTop:     '1px solid #ede8e4',
-              textAlign:     'center',
-              flexShrink:    0,
-            }}>
-              <span style={{
-                fontFamily: 'DM Sans, sans-serif',
-                fontSize:   '11px',
-                color:      'var(--app-text-dim-lg)',
-              }}>
-                Showing last {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
-              </span>
+              {counts.unread > 0 && (
+                <button type="button" className="me-textbtn" onClick={markAll}>Mark all read</button>
+              )}
             </div>
+            <div className="me-notif__tabs" role="tablist" aria-label="Filter notifications">
+              {FILTERS.map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === f.id}
+                  className="me-notif-tab"
+                  onClick={() => setFilter(f.id)}
+                >
+                  {f.label}
+                  {f.id !== 'all' && counts[f.id] > 0 && <span className="me-notif-tab__n">{counts[f.id]}</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="me-notif__list" role="tabpanel">
+            {loading && items.length === 0 && (
+              <div className="me-notif__skeleton" aria-label="Loading notifications"><div /><div /><div /></div>
+            )}
+
+            {!loading && groups.length === 0 && (
+              <div className="me-notif__empty">
+                <span className="me-tone me-tone--neutral" aria-hidden="true"><Icon name="bell" size={18} /></span>
+                <strong>{filter === 'action' ? 'Nothing waiting on you' : filter === 'unread' ? 'No unread notifications' : "You're all caught up"}</strong>
+                <p>Assignments, approvals and rate requests appear here the moment they happen.</p>
+              </div>
+            )}
+
+            {groups.map(([label, list]) => (
+              <div key={label} role="group" aria-label={label}>
+                <div className="me-notif__group">{label}</div>
+                {list.map(n => {
+                  const meta = notifMeta(n.type)
+                  const unread = !n.is_read
+                  return (
+                    <button
+                      key={n.id}
+                      type="button"
+                      className="me-notif-item"
+                      data-unread={unread ? 'true' : 'false'}
+                      onClick={() => openItem(n)}
+                    >
+                      <span className={`me-tone me-tone--${meta.tone}`} aria-hidden="true">
+                        <Icon name={meta.icon} size={18} />
+                      </span>
+                      <span style={{ minWidth: 0 }}>
+                        <span className="me-notif-item__title">{n.title}</span>
+                        {n.body && <span className="me-notif-item__body">{n.body}</span>}
+                        <span className="me-notif-item__meta">
+                          <i>{meta.label}</i><span aria-hidden="true">·</span><time dateTime={n.created_at}>{timeAgo(n.created_at)}</time>
+                        </span>
+                      </span>
+                      <span className="me-notif-item__side">
+                        {unread && <span className="me-notif-item__dot" aria-label="Unread" />}
+                        {unread && meta.cta && <span className="me-notif-item__cta">{meta.cta}</span>}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+
+          {items.length > 0 && (
+            <div className="me-notif__foot">Latest {items.length} · select one to open it</div>
           )}
-        </div>
-      )}
-    </div>
-  );
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  )
 }

@@ -8,6 +8,7 @@ import AppShell       from './components/AppShell'
 import AccessGate    from './components/AccessGate'
 import PrivacyPolicy  from './components/PrivacyPolicy'
 import TermsOfUse     from './components/TermsOfUse'
+import { ToastHost, ConfirmHost } from './components/ui'
 
 // ─── Splash screen (hardcoded colors — no CSS vars) ──────
 function Splash({ message = 'Loading...' }) {
@@ -129,6 +130,8 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <ToastHost />
+      <ConfirmHost />
       <BrowserRouter>
         <Routes>
 

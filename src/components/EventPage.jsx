@@ -266,7 +266,7 @@ function PlaceLine({ loc }) {
   )
 }
 
-export default function EventPage({ event, userRole, session, onBack, onUpdated, initialTab }) {
+export default function EventPage({ event, userRole, session, onBack, onUpdated, initialTab, forceTab }) {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768)
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth < 768)
@@ -276,6 +276,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
 
   const getDefaultTab = (ps) => ps === 'won' ? 'execution' : 'elements';
   const [activeTab,    setActiveTab]    = useState(() => {
+    if (forceTab) return forceTab   // set when opened from a notification
     const stored = localStorage.getItem(`myoozz_tab_${event?.id}`)
     return stored || initialTab || getDefaultTab(event?.proposal_status)
   })
@@ -1177,7 +1178,7 @@ export default function EventPage({ event, userRole, session, onBack, onUpdated,
                     await createNotification(targets.map(u => ({
                       user_id:      u.id,
                       triggered_by: actorId,
-                      type:         'task_assigned',
+                      type:         'reminder',
                       title:        `Reminder from ${senderName}`,
                       body:         `Reminder: You have elements assigned on ${event.event_name}.`,
                       entity_type:  'event',
