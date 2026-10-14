@@ -107,38 +107,29 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
     }
   }, [resetKey])
 
+  // The last event EventPage reported as changed. The admin list maps it in
+  // via an effect so the list stays current without a refetch on Back.
+  const [lastUpdatedEvent, setLastUpdatedEvent] = useState(null)
+
   function openEventWithTab(ev, tab) {
     if (tab) setInitialTab(tab)
     setOpenEvent(ev)
   }
   function handleEventUpdated(updatedEvent) {
     setOpenEvent(prev => (prev?.id === updatedEvent.id ? updatedEvent : prev))
+    setLastUpdatedEvent(updatedEvent)
   }
 
   if (!userRole) return <LoadingSkeleton lines={4} style={{ padding: '24px' }} />
 
-  if (openEvent) {
-    return (
-      <EventPage
-        event={openEvent}
-        userRole={userRole}
-        session={session}
-        onBack={() => { setOpenEvent(null); setInitialTab('elements'); setForceTab(null) }}
-        onUpdated={handleEventUpdated}
-        initialTab={initialTab}
-        forceTab={forceTab}
-      />
-    )
-  }
-
   // Role router — non-admin roles get specialised panels (Track B).
   // Admin (and any unmapped role) falls through to the admin dashboard.
-  if (userRole === 'manager')    return <ProjectHeadPanel userId={userId} onOpenEvent={openEventWithTab} />
-  if (userRole === 'event_lead') return <ManagerPanel    userId={userId} onOpenEvent={openEventWithTab} />
-  if (userRole === 'team')       return <TeamPanel       userId={userId} />
-  if (userRole === 'staff')      return <StaffPanel      userId={userId} />
-
-  return (
+  let roleView
+  if (userRole === 'manager')         roleView = <ProjectHeadPanel userId={userId} onOpenEvent={openEventWithTab} />
+  else if (userRole === 'event_lead') roleView = <ManagerPanel    userId={userId} onOpenEvent={openEventWithTab} />
+  else if (userRole === 'team')       roleView = <TeamPanel       userId={userId} />
+  else if (userRole === 'staff')      roleView = <StaffPanel      userId={userId} />
+  else roleView = (
     <AdminDashboard
       userRole={userRole}
       session={session}
@@ -147,14 +138,36 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
       onOpenEvent={openEventWithTab}
       onOpenEventWithTab={openEventWithTab}
       onEventUpdated={handleEventUpdated}
-      openEventId={null}
+      lastUpdatedEvent={lastUpdatedEvent}
     />
+  )
+
+  // The role view stays mounted (hidden) while an event is open, so search,
+  // filters, view tab and "Show test events" survive Back without a refetch.
+  // EventPage is keyed by event id: it seeds currentEvent/activeTab from props
+  // once, so switching from A to B (e.g. a notification deep link) must remount.
+  return (
+    <>
+      {openEvent && (
+        <EventPage
+          key={openEvent.id}
+          event={openEvent}
+          userRole={userRole}
+          session={session}
+          onBack={() => { setOpenEvent(null); setInitialTab('elements'); setForceTab(null) }}
+          onUpdated={handleEventUpdated}
+          initialTab={initialTab}
+          forceTab={forceTab}
+        />
+      )}
+      <div hidden={!!openEvent}>{roleView}</div>
+    </>
   )
 }
 
 // The admin dashboard body — unchanged behaviour, hooks moved here as-is.
 // Opening an event goes through the router's callbacks; nothing here renders EventPage.
-function AdminDashboard({ userRole, session, userName, userId, onOpenEvent, onOpenEventWithTab, onEventUpdated, openEventId }) {
+function AdminDashboard({ userRole, session, userName, userId, onOpenEvent, onOpenEventWithTab, onEventUpdated, lastUpdatedEvent }) {
   const [events, setEvents] = useState([])
   const [archivedEvents, setArchivedEvents] = useState([])
   const [pendingEvents, setPendingEvents] = useState([])
@@ -178,6 +191,12 @@ function AdminDashboard({ userRole, session, userName, userId, onOpenEvent, onOp
   const [showTestEvents, setShowTestEvents] = useState(false)
 
   useEffect(() => { if (userRole) { fetchEvents(); fetchTeam() } }, [userRole])
+
+  // Keep the list current with edits made inside EventPage (we stay mounted while it is open).
+  useEffect(() => {
+    if (!lastUpdatedEvent) return
+    setEvents(prev => prev.map(e => e.id === lastUpdatedEvent.id ? lastUpdatedEvent : e))
+  }, [lastUpdatedEvent])
 
   async function fetchTeam() {
     const { data } = await supabase.from('users').select('id, email, full_name')
