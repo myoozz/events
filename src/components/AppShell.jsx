@@ -14,7 +14,7 @@ import ActivityLog from './ActivityLog'
 import ProfilePage from './ProfilePage'
 import NotificationBell from './NotificationBell'
 import { fetchUnreadCount, subscribeToNotifications, notifMeta, resolveNotificationTarget } from '../utils/notificationService'
-import { toast } from './ui'
+import { toast, ErrorState } from './ui'
 import { Icon } from '../icons'
 import SuperAdminPanel from './SuperAdminPanel'
 import OnboardingModal from './OnboardingModal'
@@ -48,6 +48,8 @@ export default function AppShell({ session }) {
   const [userId,             setUserId]             = useState(null)
   const [canManageRateCards, setCanManageRateCards] = useState(false)
   const [userLoading,        setUserLoading]        = useState(true)
+  const [userError,          setUserError]          = useState(null)   // 'not_found' | 'error' | null
+  const [userRetryKey,       setUserRetryKey]       = useState(0)      // bump to re-run fetchUser
   const [activeTab,   setActiveTab]   = useState('events')
   const [profileUserId, setProfileUserId] = useState(null)  // whose profile is open
   const [prevTab,     setPrevTab]     = useState('events')  // to go back from profile
@@ -75,21 +77,23 @@ export default function AppShell({ session }) {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // Oct 2026 — fail closed. The profile is looked up by auth_id (never email),
+  // and a missing row, an error or a slow response never falls back to admin:
+  // the shell shows ErrorState with Retry instead. userId is always users.id,
+  // never the auth uid (notifications and assignments key on users.id).
   useEffect(() => {
+    let live = true
     async function fetchUser() {
-      const timeout = setTimeout(() => {
-        setUserRole('admin')
-        setUserName(session.user.email)
-        setUserId(session.user.id)
-        setUserLoading(false)
-      }, 4000)
+      setUserLoading(true)
+      setUserError(null)
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('users')
           .select('id, role, full_name, can_manage_rate_cards, welcomed_at')
-          .eq('email', session.user.email)
-          .single()
-        clearTimeout(timeout)
+          .eq('auth_id', session.user.id)
+          .maybeSingle()
+        if (!live) return
+        if (error) throw error
         if (data) {
           setUserRole(data.role)
           setUserName(data.full_name || session.user.email)
@@ -97,22 +101,19 @@ export default function AppShell({ session }) {
           setCanManageRateCards(data.can_manage_rate_cards === true)
           setWelcomedAt(data.welcomed_at ?? null)
         } else {
-          setUserRole('admin')
-          setUserName(session.user.email)
-          setUserId(session.user.id)
+          setUserError('not_found')
         }
       } catch (err) {
-        clearTimeout(timeout)
+        if (!live) return
         console.error('fetchUser error:', err)
-        setUserRole('admin')
-        setUserName(session.user.email)
-        setUserId(session.user.id)
+        setUserError('error')
       } finally {
-        setUserLoading(false)
+        if (live) setUserLoading(false)
       }
     }
     fetchUser()
-  }, [session])
+    return () => { live = false }
+  }, [session, userRetryKey])
 
   // Tenant info + platform role — decoded from JWT on mount
   useEffect(() => {
@@ -254,6 +255,20 @@ export default function AppShell({ session }) {
         fontSize: '11px', fontWeight: 700, color: '#fff',
       }}>ME</div>
       <p style={{ fontSize: '13px', color: '#9C9488' }}>Loading your workspace...</p>
+    </div>
+  )
+
+  // Profile lookup failed or no users row for this auth_id — never assume a role.
+  if (userError || !userRole) return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--bg)', padding: '24px',
+    }}>
+      <ErrorState
+        line="Couldn't load your profile."
+        onRetry={() => setUserRetryKey(k => k + 1)}
+        style={{ width: 'min(420px, 100%)' }}
+      />
     </div>
   )
 

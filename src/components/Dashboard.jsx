@@ -17,6 +17,7 @@ import ProjectHeadPanel from './panels/ProjectHeadPanel'
 import ManagerPanel from './panels/ManagerPanel'
 import TeamPanel from './panels/TeamPanel'
 import StaffPanel from './panels/StaffPanel'
+import { LoadingSkeleton } from './ui'
 
 const containerVariants = {
   hidden: {},
@@ -75,25 +76,18 @@ function useIsMobile() {
   return mobile
 }
 
-// Bug 10: Added userName and resetKey props
+// Oct 2026 — Dashboard is now a thin router. It owns only the open-event state
+// (openEvent / initialTab / forceTab), the notification deep link and the
+// resetKey effect, then hands off by role. Every hook here runs on every
+// render regardless of role, so a role change after first mount can no longer
+// change the hook count (React error #300). Non-admins get EventPage through
+// the same path as admins, so panel clicks and deep links open the event.
 export default function Dashboard({ userRole, session, userName, userId, resetKey, deepLink }) {
-  const [events, setEvents] = useState([])
-  const [archivedEvents, setArchivedEvents] = useState([])
-  const [pendingEvents, setPendingEvents] = useState([])
-  const [modeSelectorEvent, setModeSelectorEvent] = useState(null)
-  const [initialTab, setInitialTab] = useState('elements')
-  const [search, setSearch] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
-  const [filterType, setFilterType] = useState('')
-  const [filterClient, setFilterClient] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [showNewEvent, setShowNewEvent] = useState(false)
-  const [editEvent, setEditEvent] = useState(null)
   const [openEvent, setOpenEvent] = useState(null)
+  const [initialTab, setInitialTab] = useState('elements')
   const [forceTab, setForceTab] = useState(null)
 
-  // Oct 2026 — notification deep link: open the event (and tab) it is about.
-  // Kept above the role router so the hook order is identical for every role.
+  // Notification deep link: open the event (and tab) it is about.
   useEffect(() => {
     if (!deepLink?.eventId) return
     let live = true
@@ -105,14 +99,73 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
     return () => { live = false }
   }, [deepLink?.nonce])
 
+  // Bug 10: When AppShell increments resetKey, go back to events list
+  useEffect(() => {
+    if (resetKey > 0) {
+      setOpenEvent(null)
+      setInitialTab('elements')
+    }
+  }, [resetKey])
+
+  function openEventWithTab(ev, tab) {
+    if (tab) setInitialTab(tab)
+    setOpenEvent(ev)
+  }
+  function handleEventUpdated(updatedEvent) {
+    setOpenEvent(prev => (prev?.id === updatedEvent.id ? updatedEvent : prev))
+  }
+
+  if (!userRole) return <LoadingSkeleton lines={4} style={{ padding: '24px' }} />
+
+  if (openEvent) {
+    return (
+      <EventPage
+        event={openEvent}
+        userRole={userRole}
+        session={session}
+        onBack={() => { setOpenEvent(null); setInitialTab('elements'); setForceTab(null) }}
+        onUpdated={handleEventUpdated}
+        initialTab={initialTab}
+        forceTab={forceTab}
+      />
+    )
+  }
+
   // Role router — non-admin roles get specialised panels (Track B).
-  // Admin (and any unmapped role) falls through to the existing Dashboard view.
-  // Placed after openEvent useState so panels can call setOpenEvent via onOpenEvent.
-  if (userRole === 'manager')    return <ProjectHeadPanel userId={userId} onOpenEvent={setOpenEvent} />
-  if (userRole === 'event_lead') return <ManagerPanel    userId={userId} onOpenEvent={setOpenEvent} />
+  // Admin (and any unmapped role) falls through to the admin dashboard.
+  if (userRole === 'manager')    return <ProjectHeadPanel userId={userId} onOpenEvent={openEventWithTab} />
+  if (userRole === 'event_lead') return <ManagerPanel    userId={userId} onOpenEvent={openEventWithTab} />
   if (userRole === 'team')       return <TeamPanel       userId={userId} />
   if (userRole === 'staff')      return <StaffPanel      userId={userId} />
 
+  return (
+    <AdminDashboard
+      userRole={userRole}
+      session={session}
+      userName={userName}
+      userId={userId}
+      onOpenEvent={openEventWithTab}
+      onOpenEventWithTab={openEventWithTab}
+      onEventUpdated={handleEventUpdated}
+      openEventId={null}
+    />
+  )
+}
+
+// The admin dashboard body — unchanged behaviour, hooks moved here as-is.
+// Opening an event goes through the router's callbacks; nothing here renders EventPage.
+function AdminDashboard({ userRole, session, userName, userId, onOpenEvent, onOpenEventWithTab, onEventUpdated, openEventId }) {
+  const [events, setEvents] = useState([])
+  const [archivedEvents, setArchivedEvents] = useState([])
+  const [pendingEvents, setPendingEvents] = useState([])
+  const [modeSelectorEvent, setModeSelectorEvent] = useState(null)
+  const [search, setSearch] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterType, setFilterType] = useState('')
+  const [filterClient, setFilterClient] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [showNewEvent, setShowNewEvent] = useState(false)
+  const [editEvent, setEditEvent] = useState(null)
   const [assignEvent, setAssignEvent] = useState(null)
   const [confirmArchive, setConfirmArchive] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -125,14 +178,6 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
   const [showTestEvents, setShowTestEvents] = useState(false)
 
   useEffect(() => { if (userRole) { fetchEvents(); fetchTeam() } }, [userRole])
-
-  // Bug 10: When AppShell increments resetKey, go back to events list
-  useEffect(() => {
-    if (resetKey > 0) {
-      setOpenEvent(null)
-      setInitialTab('elements')
-    }
-  }, [resetKey])
 
   async function fetchTeam() {
     const { data } = await supabase.from('users').select('id, email, full_name')
@@ -277,7 +322,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
 
   function handleUpdated(updatedEvent) {
     setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e))
-    if (openEvent?.id === updatedEvent.id) setOpenEvent(updatedEvent)
+    onEventUpdated?.(updatedEvent)
   }
 
   async function confirmAndArchive() {
@@ -448,20 +493,6 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
     }
     return filtered
   }, [events, archivedEvents, view, search, filterStatus, filterType, filterClient, filterCity, filterSort, showTestEvents])
-
-  if (openEvent) {
-    return (
-      <EventPage
-        event={openEvent}
-        userRole={userRole}
-        session={session}
-        onBack={() => { setOpenEvent(null); setInitialTab('elements'); setForceTab(null) }}
-        onUpdated={handleUpdated}
-        initialTab={initialTab}
-        forceTab={forceTab}
-      />
-    )
-  }
 
   const { greeting, message, color: statusColor, bold: statusBold } = getGreeting()
 
@@ -765,7 +796,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
               padding: '14px 16px', marginBottom: '8px', background: 'var(--state-warning-bg)',
               display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px',
             }}>
-              <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setOpenEvent(ev)}>
+              <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => onOpenEvent(ev)}>
                 <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '3px' }}>
                   {ev.event_name}
                 </div>
@@ -870,7 +901,7 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
                           assignedUsers={assignedUsers}
                           hasOverdueTasks={false}
                           isPendingApproval={ev.review_status === 'pending_review'}
-                          onOpen={setOpenEvent}
+                          onOpen={onOpenEvent}
                           onArchive={setConfirmArchive}
                           onUnarchive={handleRestore}
                           onDelete={handleDeleteEvent}
@@ -919,13 +950,11 @@ export default function Dashboard({ userRole, session, userName, userId, resetKe
         <ModeSelector
           event={modeSelectorEvent}
           onSelect={(tab) => {
-            setInitialTab(tab)
-            setOpenEvent(modeSelectorEvent)
+            onOpenEventWithTab(modeSelectorEvent, tab)
             setModeSelectorEvent(null)
           }}
           onDismiss={() => {
-            setInitialTab('elements')
-            setOpenEvent(modeSelectorEvent)
+            onOpenEventWithTab(modeSelectorEvent, 'elements')
             setModeSelectorEvent(null)
           }}
         />,
