@@ -1,5 +1,10 @@
 -- Notifications — make them visible to their recipient, and only to their recipient.
--- DRAFT · 12 Oct 2026 · public schema · NOT APPLIED. Apply only after Vikram's approval.
+-- APPLIED 14 Oct 2026 by Vikram via Supabase SQL Editor (approved in chat). public schema.
+-- DO NOT RUN AGAIN — kept in the repo as the record. Verified live 14 Oct 2026:
+--   3 policies (insert_same_tenant / select_own / update_own, all to authenticated),
+--   trigger notifications_set_tenant enabled, 19 rows · 0 tenant mismatches · 0 NULL,
+--   simulated recipient (owns 3) sees exactly 3 of 19.
+-- Written 12 Oct 2026.
 --
 -- Verified live on rjscsnakkexunvsfhdut, 12 Oct 2026, before writing this:
 --   * notifications.user_id holds public.users.id; users.id never equals users.auth_id (0 of 15).
